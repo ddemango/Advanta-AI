@@ -1,0 +1,100 @@
+Advanta AI Website Structure & Features (Final Scope)
+
+1. Homepage
+	•	Hero Section:
+	•	Headline: “Engineering the Future of Intelligence”
+	•	Animated neural background (Lottie or WebGL)
+	•	Live chatbot/GPT preview embedded
+	•	CTA: [Book a Discovery Call] [Test the AI Suite]
+	•	Interactive Product Cards:
+	•	NeuroAds™, PromptCore™, SignalFlow™, VisionBoard™
+	•	Hover animations + micro-interactions
+	•	Direct links to live demos or case studies
+	•	Dynamic Results Preview:
+	•	Animated KPI counters
+	•	Auto-play testimonial carousel
+
+⸻
+
+2. Services Page (Modular AI Suite Layout)
+	•	Visual breakdown of core service areas:
+	•	AI Marketing Automation
+	•	Custom GPT & Assistant Development
+	•	Predictive Data Dashboards
+	•	Workflow AI/CRM Integrations
+	•	Each module includes:
+	•	Animated icon
+	•	Short explainer video or demo
+	•	CTA: [Schedule Custom Build Session]
+
+⸻
+
+3. Case Studies Page
+	•	Industry filters: eCommerce, SaaS, Real Estate, Hospitality
+	•	Each case study includes:
+	•	Client logo
+	•	Challenge → AI Solution → Results
+	•	Interactive before/after UI comparison
+	•	Quote or video testimonial
+
+⸻
+
+4. Testimonials Page
+	•	Video testimonials gallery
+	•	Trust signals: Clutch, G2, Google Reviews
+	•	Star rating component
+	•	Carousel + tag filters (e.g. “automation”, “GPT”, “dashboards”)
+
+⸻
+
+5. AI Assessment Tool (Game-Changing Feature)
+	•	Interactive questionnaire:
+	•	“Is your business ready for AI?”
+	•	Custom roadmap output based on answers
+	•	Email capture for downloadable results
+	•	SEO boost: “AI readiness audit,” “business AI checklist”
+
+⸻
+
+6. Virtual AI Consultant Tool
+	•	Embedded chatbot (powered by PromptCore™)
+	•	Acts as a pre-sales assistant
+	•	Asks about business model, pain points, goals
+	•	Recommends a tailored solution package
+	•	CTA: [Send Me a Proposal]
+
+⸻
+
+7. Interactive Demos
+	•	Front-end sandbox demo of a GPT
+	•	Sample VisionBoard™ dashboards with real data (mock)
+	•	Live flow visualizer for SignalFlow™
+
+⸻
+
+8. Blog / Resource Hub
+	•	SEO-focused content strategy:
+	•	“AI-powered marketing campaigns”
+	•	“How GPTs are transforming service industries”
+	•	“Automation for eCommerce: 2025 Playbook”
+	•	Downloadable whitepapers, use-case guides
+	•	Newsletter signup with GPT-powered curation
+
+⸻
+
+9. Conversion & Engagement Features
+	•	Sticky CTAs on scroll
+	•	Smart lead forms that personalize based on visitor behavior
+	•	Real-time chatbot support + AI agent handoff
+	•	Integrated Calendly for instant consultation booking
+	•	Option to launch onboarding flow right after lead submission
+
+⸻
+
+10. SEO & Technical Optimization
+	•	Built with best practices for Core Web Vitals
+	•	Structured data/schema for services, reviews, FAQs
+	•	Targeted SEO keywords:
+	•	“AI automation agency,” “custom GPT development,”
+	•	“AI dashboard solutions,” “predictive business intelligence,”
+	•	“autonomous marketing platform,” “AI-powered CRM workflows”
