@@ -44,6 +44,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/calculator" component={Calculator} />
       <Route component={NotFound} />
     </Switch>
   );

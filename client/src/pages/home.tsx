@@ -6,6 +6,7 @@ import CaseStudies from '@/components/home/CaseStudies';
 import AiAssessment from '@/components/home/AiAssessment';
 import Testimonials from '@/components/home/Testimonials';
 import AiDemo from '@/components/home/AiDemo';
+import PricingCta from '@/components/home/PricingCta';
 import Contact from '@/components/home/Contact';
 import { Helmet } from 'react-helmet';
 
@@ -30,6 +31,7 @@ export default function Home() {
         <AiAssessment />
         <Testimonials />
         <AiDemo />
+        <PricingCta />
         <Contact />
       </main>
       

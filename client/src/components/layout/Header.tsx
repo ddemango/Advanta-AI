@@ -46,6 +46,12 @@ export default function Header() {
             <a href="#case-studies" className="text-gray-300 hover:text-white font-medium transition-colors">Case Studies</a>
             <a href="#testimonials" className="text-gray-300 hover:text-white font-medium transition-colors">Testimonials</a>
             <a href="#ai-demo" className="text-gray-300 hover:text-white font-medium transition-colors">AI Demo</a>
+            <a 
+              onClick={() => setLocation('/calculator')}
+              className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer"
+            >
+              Cost Calculator
+            </a>
             <a href="#contact" className="text-gray-300 hover:text-white font-medium transition-colors">Contact</a>
           </nav>
           
@@ -96,6 +102,15 @@ export default function Header() {
               onClick={closeMenu}
             >
               AI Demo
+            </a>
+            <a 
+              onClick={() => {
+                setLocation('/calculator');
+                closeMenu();
+              }} 
+              className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer"
+            >
+              Cost Calculator
             </a>
             <a 
               href="#contact" 
