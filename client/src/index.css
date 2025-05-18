@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 267 59% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 160 84% 39%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 217 91% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+
+  /* Chart colors */
+  --chart-1: 267 59% 58%;
+  --chart-2: 217 91% 60%;
+  --chart-3: 160 84% 39%;
+  --chart-4: 262 83% 58%;
+  --chart-5: 0 84% 60%;
+
+  /* Dark mode color values */
+  --dark: 222 47% 11%;
+  --dark-50: 222 47% 15%;
+  --dark-100: 223 47% 20%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .neural-bg {
+    background-image: radial-gradient(circle at 20% 80%, hsl(var(--primary) / 0.1) 0, transparent 50%),
+                      radial-gradient(circle at 80% 20%, hsl(var(--accent) / 0.1) 0, transparent 50%);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-secondary bg-size-200 animate-gradient;
+  }
+
+  .bg-size-200 {
+    background-size: 200% 100%;
+  }
+
+  .animate-gradient {
+    animation: gradient 15s ease infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-5px);
+    @apply shadow-lg shadow-primary/10;
+  }
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+/* Additional custom styles */
+.dot {
+  @apply h-2.5 w-2.5 mx-1 rounded-full bg-muted transition-colors duration-300;
+}
+
+.dot.active {
+  @apply bg-primary;
+}
+
+.stats-bar {
+  width: 0;
+  height: 0.25rem;
+  background-image: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+  border-radius: 9999px;
+  transition: all 1.5s ease-out;
+}
+
+@keyframes stats-bar-animation {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.stats-bar.animate {
+  width: 100%;
+}
