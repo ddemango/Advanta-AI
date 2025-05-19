@@ -13,6 +13,8 @@ import AiDemo from '@/components/home/AiDemo';
 import OnboardingWizard from '@/components/home/OnboardingWizard';
 import PricingCta from '@/components/home/PricingCta';
 import Contact from '@/components/home/Contact';
+import AiProductSandbox from '@/components/sandbox/AiProductSandbox';
+import ClientPortal from '@/components/portal/ClientPortal';
 import { CookieConsent } from '@/components/ui/cookie-consent';
 import { Helmet } from 'react-helmet';
 
@@ -41,6 +43,8 @@ export default function Home() {
         <AiAssessment />
         <Testimonials />
         <AiDemo />
+        <AiProductSandbox />
+        <ClientPortal />
         <OnboardingWizard />
         <PricingCta />
         <Contact />
