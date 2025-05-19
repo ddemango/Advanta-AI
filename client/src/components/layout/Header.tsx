@@ -65,6 +65,12 @@ export default function Header() {
                   >
                     AI ROI Calculator
                   </a>
+                  <a 
+                    onClick={() => setLocation('/marketplace')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    AI Plugin Marketplace
+                  </a>
                 </div>
               </div>
             </div>
@@ -144,6 +150,15 @@ export default function Header() {
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   AI ROI Calculator
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/marketplace');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  AI Plugin Marketplace
                 </a>
               </div>
             </div>
