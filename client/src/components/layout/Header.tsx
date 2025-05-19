@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { AiTypingAnimation } from '../ui/ai-typing-animation';
+import { AiStatusIndicator } from '../ui/ai-status-indicator';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -57,9 +57,9 @@ export default function Header() {
             <a href="#contact" className="text-gray-300 hover:text-white font-medium transition-colors">Contact</a>
           </nav>
           
-          {/* AI Typing Animation, CTA Button and Theme Toggle */}
+          {/* AI Status Indicator, CTA Button and Theme Toggle */}
           <div className="hidden md:flex items-center space-x-3">
-            <AiTypingAnimation />
+            <AiStatusIndicator />
             <ThemeToggle />
             <Button asChild className="bg-primary hover:bg-primary/90">
               <a href="/calculator">Build My AI Stack</a>

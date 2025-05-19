@@ -52,15 +52,16 @@ export function AiTypingAnimation({ className = '' }: TypingAnimationProps) {
   return (
     <div className={`relative ${className}`}>
       <div className="flex items-center">
-        <div className="bg-gradient-to-r from-primary to-accent p-0.5 rounded">
-          <div className="bg-background px-3 py-1 rounded">
-            <span className="text-sm font-mono">
+        <div className="bg-gradient-to-r from-primary to-accent p-1 rounded shadow-lg shadow-primary/20">
+          <div className="bg-background px-4 py-2 rounded">
+            <span className="text-base font-mono font-medium text-white flex items-center">
+              <span className="text-primary mr-2 text-lg">AI:</span>
               {text}
-              <span className="animate-pulse">_</span>
+              <span className="animate-pulse ml-1 text-primary">_</span>
             </span>
           </div>
         </div>
-        <div className="ml-2 h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+        <div className="ml-2 h-3 w-3 rounded-full bg-primary animate-ping"></div>
       </div>
     </div>
   );
