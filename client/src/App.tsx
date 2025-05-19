@@ -9,6 +9,7 @@ import Marketplace from "@/pages/marketplace";
 import Dashboard from "@/pages/dashboard";
 import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
+import Sandbox from "@/pages/sandbox";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
