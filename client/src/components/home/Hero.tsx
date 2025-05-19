@@ -168,18 +168,7 @@ export default function Hero() {
             </motion.div>
             
             {/* Gradient decorative elements */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2, delay: 0.8 }}
-              className="absolute -bottom-6 -right-6 w-64 h-64 bg-gradient-to-r from-primary/30 to-accent/30 rounded-xl blur-lg"
-            ></motion.div>
-            <motion.div 
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2, delay: 1 }}
-              className="absolute -top-6 -left-6 w-32 h-32 bg-gradient-to-r from-secondary/30 to-primary/30 rounded-xl blur-lg"
-            ></motion.div>
+{/* Removed gradient animations */}
           </motion.div>
         </motion.div>
         
