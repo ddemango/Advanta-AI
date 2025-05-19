@@ -111,6 +111,8 @@ export function AIBrain({ className = '' }: AIBrainProps) {
     let pulseInterval = 100; // ms
     
     const animate = (timestamp: number) => {
+      if (!canvas || !ctx) return;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Generate pulses periodically

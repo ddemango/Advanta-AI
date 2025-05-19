@@ -291,7 +291,7 @@ const Step4 = ({ onNext, onPrev }: StepProps) => {
 };
 
 // Step 5: Launch or schedule call
-const Step5 = ({ onPrev }: StepProps) => {
+const Step5 = ({ onPrev, onNext = () => {} }: StepProps) => {
   return (
     <div>
       <div className="mb-8 text-center">
@@ -380,7 +380,7 @@ export default function OnboardingWizard() {
     <Step2 key={2} onNext={handleNext} onPrev={handlePrev} />,
     <Step3 key={3} onNext={handleNext} onPrev={handlePrev} />,
     <Step4 key={4} onNext={handleNext} onPrev={handlePrev} />,
-    <Step5 key={5} onPrev={handlePrev} />
+    <Step5 key={5} onPrev={handlePrev} onNext={handleNext} />
   ];
 
   return (
