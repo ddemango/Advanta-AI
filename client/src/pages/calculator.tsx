@@ -204,7 +204,7 @@ export default function Calculator() {
       
       <Header />
       
-      <main className="py-28 bg-background neural-bg">
+      <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             variants={staggerContainer}
