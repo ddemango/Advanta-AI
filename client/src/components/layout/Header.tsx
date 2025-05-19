@@ -70,7 +70,7 @@ export default function Header() {
                     AI Product Sandbox
                   </a>
                   <a 
-                    onClick={() => setLocation('/calculator')}
+                    onClick={() => setLocation('/roi-calculator')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
                     AI ROI Calculator
