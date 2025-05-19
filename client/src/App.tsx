@@ -73,7 +73,6 @@ function App() {
         onLoadingComplete={() => setIsLoading(false)}
         loadingDuration={4800} // Slightly shorter than the timeout to ensure smooth transition
       />
-      <AnimatedBackground />
       <Toaster />
       <Router />
     </TooltipProvider>
