@@ -96,6 +96,95 @@ export const quotesRelations = relations(quotes, ({ one }) => ({
   }),
 }));
 
+// --- Blog and Resources related tables ---
+
+export const categoryEnum = pgEnum("category", [
+  "ai_technology",
+  "business_strategy",
+  "case_studies",
+  "tutorials",
+  "industry_insights",
+  "news",
+  "resources"
+]);
+
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  author_id: integer("author_id").references(() => users.id).notNull(),
+  featured_image: text("featured_image"),
+  category: categoryEnum("category").notNull(),
+  tags: jsonb("tags").notNull().$type<string[]>(),
+  is_published: boolean("is_published").default(false),
+  publish_date: timestamp("publish_date"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+  reading_time: integer("reading_time"), // in minutes
+  view_count: integer("view_count").default(0)
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).pick({
+  title: true,
+  slug: true,
+  summary: true,
+  content: true,
+  author_id: true,
+  featured_image: true,
+  category: true,
+  tags: true,
+  is_published: true,
+  publish_date: true,
+  reading_time: true
+});
+
+export const resources = pgTable("resources", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  resource_type: text("resource_type").notNull(), // whitepaper, ebook, template, tool, etc.
+  download_url: text("download_url"),
+  featured_image: text("featured_image"),
+  category: categoryEnum("category").notNull(),
+  tags: jsonb("tags").notNull().$type<string[]>(),
+  is_published: boolean("is_published").default(false),
+  publish_date: timestamp("publish_date"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+  download_count: integer("download_count").default(0)
+});
+
+export const insertResourceSchema = createInsertSchema(resources).pick({
+  title: true,
+  slug: true,
+  description: true,
+  resource_type: true,
+  download_url: true,
+  featured_image: true,
+  category: true,
+  tags: true,
+  is_published: true,
+  publish_date: true
+});
+
+// --- Relations ---
+
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  author: one(users, {
+    fields: [blogPosts.author_id],
+    references: [users.id]
+  })
+}));
+
+// Extend user relations to include blog posts
+export const extendedUserRelations = relations(users, ({ many }) => ({
+  quotes: many(quotes),
+  blogPosts: many(blogPosts)
+}));
+
 // --- Types ---
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -106,3 +195,9 @@ export type Quote = typeof quotes.$inferSelect;
 
 export type InsertContact = z.infer<typeof insertContactSchema>;
 export type Contact = typeof contactSubmissions.$inferSelect;
+
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
+
+export type InsertResource = z.infer<typeof insertResourceSchema>;
+export type Resource = typeof resources.$inferSelect;

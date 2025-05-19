@@ -2,12 +2,18 @@ import {
   users, 
   contactSubmissions, 
   quotes,
+  blogPosts,
+  resources,
   type User, 
   type InsertUser, 
   type InsertContact, 
   type Contact,
   type InsertQuote,
-  type Quote
+  type Quote,
+  type BlogPost,
+  type InsertBlogPost,
+  type Resource,
+  type InsertResource
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -25,6 +31,24 @@ export interface IStorage {
   createQuote(quote: InsertQuote): Promise<Quote>;
   getQuoteById(id: number): Promise<Quote | undefined>;
   getQuotesByUserId(userId: number): Promise<Quote[]>;
+  
+  // Blog operations
+  getBlogPosts(options?: { limit?: number, offset?: number, category?: string, tag?: string, published?: boolean }): Promise<BlogPost[]>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  getBlogPostById(id: number): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<boolean>;
+  incrementBlogPostViewCount(id: number): Promise<void>;
+  
+  // Resource operations
+  getResources(options?: { limit?: number, offset?: number, category?: string, type?: string, published?: boolean }): Promise<Resource[]>;
+  getResourceBySlug(slug: string): Promise<Resource | undefined>;
+  getResourceById(id: number): Promise<Resource | undefined>;
+  createResource(resource: InsertResource): Promise<Resource>;
+  updateResource(id: number, resource: Partial<InsertResource>): Promise<Resource>;
+  deleteResource(id: number): Promise<boolean>;
+  incrementResourceDownloadCount(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
