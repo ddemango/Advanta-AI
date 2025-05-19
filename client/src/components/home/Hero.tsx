@@ -155,16 +155,7 @@ export default function Hero() {
               
               {/* Removed AI Brain Visualization */}
               
-              {/* Bottom labels and metrics */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5, duration: 0.8 }}
-                className="absolute bottom-4 left-0 right-0 flex justify-between px-6 text-xs text-white/70 z-30"
-              >
-                <div>Real-time analytics</div>
-                <div>ML confidence: 98.7%</div>
-              </motion.div>
+              {/* Removed bottom labels and metrics */}
             </motion.div>
             
             {/* Gradient decorative elements */}
