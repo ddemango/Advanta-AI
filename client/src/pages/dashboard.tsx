@@ -167,7 +167,10 @@ export default function Dashboard() {
                 <h1 className="text-3xl md:text-4xl font-bold">Welcome back, {userEmail.split('@')[0]}</h1>
                 <p className="text-muted-foreground">Here's what's happening with your AI assistants today.</p>
               </div>
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setLocation('/onboarding')}
+              >
                 <i className="fas fa-plus mr-2"></i>
                 Create New Assistant
               </Button>
