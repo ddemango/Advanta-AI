@@ -8,6 +8,7 @@ import Login from "@/pages/login";
 import Marketplace from "@/pages/marketplace";
 import Dashboard from "@/pages/dashboard";
 import Onboarding from "@/pages/onboarding";
+import Demo from "@/pages/demo";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/onboarding" component={Onboarding} />
+      <Route path="/demo" component={Demo} />
       <Route component={NotFound} />
     </Switch>
   );

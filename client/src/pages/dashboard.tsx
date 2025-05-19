@@ -120,6 +120,7 @@ function useAuthGuard() {
 export default function Dashboard() {
   const { isAuthenticated, loading } = useAuthGuard();
   const [userEmail, setUserEmail] = useState<string>('');
+  const [, setLocation] = useLocation();
   
   useEffect(() => {
     const email = sessionStorage.getItem('userEmail');

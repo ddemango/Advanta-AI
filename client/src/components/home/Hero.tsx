@@ -65,7 +65,7 @@ export default function Hero() {
                 <a href="/calculator">⚡ Build My AI Stack</a>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <a href="#ai-demo">🚀 Try the Live Demo</a>
+                <a href="/demo">🚀 Try the Live Demo</a>
               </Button>
             </motion.div>
           </motion.div>
