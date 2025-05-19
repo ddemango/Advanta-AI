@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { DigitalRain } from '@/components/ui/digital-rain';
+import { ParticleText } from '@/components/ui/particle-text';
+import { GlassCard } from '@/components/ui/glass-card';
 
 // Testimonial data
 const testimonials = [
@@ -78,8 +81,13 @@ export default function Testimonials() {
   };
 
   return (
-    <section id="testimonials" className="py-20 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="testimonials" className="py-20 bg-background relative overflow-hidden">
+      {/* Digital rain background effect */}
+      <div className="absolute inset-0 opacity-10">
+        <DigitalRain />
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           variants={staggerContainer}
           initial="hidden"
@@ -87,7 +95,9 @@ export default function Testimonials() {
           viewport={{ once: true, amount: 0.25 }}
           className="text-center mb-16"
         >
-          <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">What Our Clients Say</motion.h2>
+          <motion.div variants={fadeInUp} className="inline-block h-16 md:h-20 mb-6">
+            <ParticleText text="What Our Clients Say" fontSize={40} color="#ffffff" className="h-full" />
+          </motion.div>
           <motion.p variants={fadeInUp} className="text-xl text-muted-foreground max-w-3xl mx-auto">
             From startups to enterprise organizations, our clients experience measurable results with our AI solutions.
           </motion.p>
@@ -102,7 +112,14 @@ export default function Testimonials() {
             >
               {testimonials.map((testimonial, index) => (
                 <div key={testimonial.id} className="testimonial-slide w-full lg:w-1/2 flex-shrink-0 px-4">
-                  <TestimonialCard testimonial={testimonial} />
+                  <motion.div 
+                    whileHover={{ scale: 1.03 }} 
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <GlassCard>
+                      <TestimonialCard testimonial={testimonial} />
+                    </GlassCard>
+                  </motion.div>
                 </div>
               ))}
             </div>
@@ -138,14 +155,21 @@ export default function Testimonials() {
           </div>
         </div>
         
-        {/* ROI Calculator */}
+        {/* Advanced ROI Calculator */}
         <motion.div
           variants={fadeIn}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.25 }}
-          className="mt-20 bg-muted rounded-2xl overflow-hidden border border-border"
+          className="mt-20 relative rounded-2xl overflow-hidden"
         >
+          {/* Animated background effects */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/95 z-10" />
+            <div className="absolute inset-0 overflow-hidden opacity-30">
+              <FlowingData />
+            </div>
+          </div>
           <div className="p-8">
             <h3 className="text-2xl font-bold mb-4">AI ROI Calculator</h3>
             <p className="text-muted-foreground mb-6">
