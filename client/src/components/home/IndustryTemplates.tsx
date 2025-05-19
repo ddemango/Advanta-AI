@@ -348,9 +348,8 @@ export default function IndustryTemplates() {
                       
                       <div className="flex flex-col sm:flex-row gap-4">
                         <Button asChild className={`bg-gradient-to-r ${template.color} hover:opacity-90 transition-opacity`}>
-                          <a href="/calculator" className="flex items-center">
+                          <a href="/calculator">
                             Build My {template.name} AI
-                            <ArrowRight size={16} className="ml-2" />
                           </a>
                         </Button>
                         <Button variant="outline" asChild>

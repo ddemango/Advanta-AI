@@ -4,6 +4,7 @@ import Hero from '@/components/home/Hero';
 import HowItWorks from '@/components/home/HowItWorks';
 import ServicesPreview from '@/components/home/ServicesPreview';
 import IndustryTemplates from '@/components/home/IndustryTemplates';
+import QuickStartTemplates from '@/components/home/QuickStartTemplates';
 import WhyAdvantaAI from '@/components/home/WhyAdvantaAI';
 import Services from '@/components/home/Services';
 import CaseStudies from '@/components/home/CaseStudies';
@@ -37,6 +38,7 @@ export default function Home() {
         <HowItWorks />
         <ServicesPreview />
         <IndustryTemplates />
+        <QuickStartTemplates />
         <WhyAdvantaAI />
         <Services />
         <CaseStudies />
