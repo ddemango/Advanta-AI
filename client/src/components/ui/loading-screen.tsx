@@ -348,7 +348,7 @@ export function LoadingScreen({
                 <GradientText>Advanta AI</GradientText>
               </h1>
               <p className="text-white/60 text-center mt-2">
-                Initializing Neural Systems
+                Loading Resources
               </p>
             </motion.div>
             
@@ -362,10 +362,10 @@ export function LoadingScreen({
             
             {/* Status text */}
             <div className="text-white/70 text-sm mt-4 font-mono">
-              {progress < 30 ? "Loading neural architecture..." :
-               progress < 60 ? "Calibrating AI parameters..." :
-               progress < 90 ? "Optimizing network weights..." :
-               "Finalizing system activation..."}
+              {progress < 30 ? "Loading assets..." :
+               progress < 60 ? "Preparing resources..." :
+               progress < 90 ? "Optimizing content..." :
+               "Almost ready..."}
             </div>
             
             {/* Moving data points */}

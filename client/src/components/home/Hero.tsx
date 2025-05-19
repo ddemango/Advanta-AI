@@ -153,32 +153,7 @@ export default function Hero() {
                 </svg>
               </motion.div>
               
-              {/* AI Brain Visualization */}
-              <div className="absolute inset-0 flex items-center justify-center z-30">
-                <div className="relative w-full h-full">
-                  {/* Neural AI brain animation */}
-                  <div className="absolute inset-0 scale-90">
-                    <AIBrain />
-                  </div>
-                  
-                  {/* Text overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 1.2, duration: 0.8, type: "spring" }}
-                      className="text-center backdrop-blur-sm bg-black/10 px-6 py-4 rounded-xl border border-white/10"
-                    >
-                      <h3 className="font-black text-xl md:text-2xl text-white mb-2">
-                        <GradientText>Neural AI Engine</GradientText>
-                      </h3>
-                      <p className="text-white/80 text-sm">
-                        Advanced processing with dynamic learning capabilities
-                      </p>
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
+              {/* Removed AI Brain Visualization */}
               
               {/* Bottom labels and metrics */}
               <motion.div 
