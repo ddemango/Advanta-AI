@@ -5,6 +5,7 @@ interface AnimatedBackgroundProps {
 }
 
 export function AnimatedBackground({ className = '' }: AnimatedBackgroundProps) {
+  // Default z-index is -1, but we need to increase it to ensure it's visible on all pages
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
@@ -24,11 +25,11 @@ export function AnimatedBackground({ className = '' }: AnimatedBackgroundProps) 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    // Background elements configuration
+    // Background elements configuration - increased count for more visible animation
     const particles: Particle[] = [];
     const flows: Flow[] = [];
-    const particleCount = 60;
-    const flowCount = 30;
+    const particleCount = 120;
+    const flowCount = 50;
     
     // Create particles
     for (let i = 0; i < particleCount; i++) {
@@ -274,7 +275,7 @@ export function AnimatedBackground({ className = '' }: AnimatedBackgroundProps) 
     <canvas
       ref={canvasRef}
       className={`fixed inset-0 w-full h-full pointer-events-none ${className}`}
-      style={{ zIndex: -1 }}
+      style={{ zIndex: 1 }}
     />
   );
 }
