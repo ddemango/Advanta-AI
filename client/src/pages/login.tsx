@@ -28,8 +28,11 @@ export default function Login() {
       // In a real implementation, this would call an authentication API
       // For demo purposes, we'll simulate a successful login with a timeout
       setTimeout(() => {
-        // For demo: Any email with @advanta.ai domain and password longer than 6 chars is "valid"
-        if (email.endsWith('@advanta.ai') && password.length >= 6) {
+        // Check for admin credentials
+        if ((email === 'admin' && password === '12345') ||
+            // Also keep the email-based login for flexibility
+            (email.endsWith('@advanta.ai') && password.length >= 6)) {
+          
           // Store authentication in session/local storage
           sessionStorage.setItem('isAuthenticated', 'true');
           sessionStorage.setItem('userEmail', email);
