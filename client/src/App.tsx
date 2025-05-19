@@ -6,6 +6,7 @@ import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { AnimatedBackground } from "@/components/ui/animated-background";
 
 function Router() {
   // Implement smooth scrolling for anchor links
@@ -72,6 +73,7 @@ function App() {
         onLoadingComplete={() => setIsLoading(false)}
         loadingDuration={4800} // Slightly shorter than the timeout to ensure smooth transition
       />
+      <AnimatedBackground />
       <Toaster />
       <Router />
     </TooltipProvider>
