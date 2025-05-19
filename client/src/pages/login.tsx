@@ -38,8 +38,8 @@ export default function Login() {
           sessionStorage.setItem('isAuthenticated', 'true');
           sessionStorage.setItem('userEmail', email);
           
-          // Redirect to client portal section
-          window.location.href = '/#client-portal';
+          // Redirect to client dashboard
+          window.location.href = '/dashboard';
         } else {
           setError('Invalid email or password. Please try again.');
         }

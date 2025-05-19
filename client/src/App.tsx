@@ -6,6 +6,7 @@ import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import Login from "@/pages/login";
 import Marketplace from "@/pages/marketplace";
+import Dashboard from "@/pages/dashboard";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/calculator" component={Calculator} />
       <Route path="/login" component={Login} />
       <Route path="/marketplace" component={Marketplace} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );
