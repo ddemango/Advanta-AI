@@ -57,6 +57,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/demo" component={Demo} />
+      <Route path="/sandbox" component={Sandbox} />
       <Route component={NotFound} />
     </Switch>
   );

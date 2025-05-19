@@ -57,8 +57,18 @@ export default function Header() {
               </button>
               <div className="absolute z-50 left-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left">
                 <div className="bg-background/95 backdrop-blur-md shadow-lg rounded-md border border-border py-1">
-                  <a href="#ai-demo" className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors">AI Demo</a>
-                  <a href="#ai-sandbox" className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors">AI Product Sandbox</a>
+                  <a 
+                    onClick={() => setLocation('/demo')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    AI Demo
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/sandbox')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    AI Product Sandbox
+                  </a>
                   <a 
                     onClick={() => setLocation('/calculator')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
@@ -129,16 +139,20 @@ export default function Header() {
               <div className="text-gray-300 font-medium mb-2">Resources</div>
               <div className="pl-4 flex flex-col space-y-2">
                 <a 
-                  href="#ai-demo" 
-                  className="text-gray-300 hover:text-white transition-colors"
-                  onClick={closeMenu}
+                  onClick={() => {
+                    setLocation('/demo');
+                    closeMenu();
+                  }}
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   AI Demo
                 </a>
                 <a 
-                  href="#ai-sandbox" 
-                  className="text-gray-300 hover:text-white transition-colors"
-                  onClick={closeMenu}
+                  onClick={() => {
+                    setLocation('/sandbox');
+                    closeMenu();
+                  }}
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   AI Product Sandbox
                 </a>
