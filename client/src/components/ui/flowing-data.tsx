@@ -137,8 +137,10 @@ function updateFlowLine(line: FlowLine, width: number, height: number) {
     }
   });
   
-  // Randomly change opacity for pulsing effect
-  line.opacity = Math.max(0.2, Math.min(0.8, line.opacity + (Math.random() * 0.1 - 0.05)));
+  // Randomly change opacity for pulsing effect with safety bounds
+  const opacityDelta = (Math.random() * 0.1 - 0.05);
+  const newOpacity = line.opacity + opacityDelta;
+  line.opacity = Math.max(0.2, Math.min(0.8, newOpacity));
 }
 
 function drawFlowLine(ctx: CanvasRenderingContext2D, line: FlowLine) {
@@ -156,7 +158,9 @@ function drawFlowLine(ctx: CanvasRenderingContext2D, line: FlowLine) {
   }
   
   // Style the line
-  ctx.strokeStyle = line.color.replace('0.6', line.opacity.toString());
+  // Ensure opacity is valid (between 0 and 1)
+  const safeOpacity = Math.max(0, Math.min(1, line.opacity));
+  ctx.strokeStyle = line.color.replace('0.6', safeOpacity.toString());
   ctx.lineWidth = line.width;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';

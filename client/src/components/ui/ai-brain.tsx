@@ -145,14 +145,22 @@ export function AIBrain({ className = '' }: AIBrainProps) {
         const brightness = neuron.brightness * (0.6 + 0.4 * Math.sin(timestamp * neuron.pulseSpeed + neuron.pulseOffset));
         
         // Soft glow
-        const glow = ctx.createRadialGradient(
-          neuron.x, neuron.y, 0,
-          neuron.x, neuron.y, neuron.size * 4
-        );
-        glow.addColorStop(0, `rgba(100, 200, 255, ${brightness * 0.8})`);
-        glow.addColorStop(1, 'rgba(100, 200, 255, 0)');
+        // Ensure we have valid coordinates and size
+        if (!isFinite(neuron.x) || !isFinite(neuron.y) || !isFinite(neuron.size)) continue;
         
-        ctx.fillStyle = glow;
+        try {
+          const glow = ctx.createRadialGradient(
+            neuron.x, neuron.y, 0,
+            neuron.x, neuron.y, neuron.size * 4
+          );
+          glow.addColorStop(0, `rgba(100, 200, 255, ${Math.min(1, Math.max(0, brightness * 0.8))})`);
+          glow.addColorStop(1, 'rgba(100, 200, 255, 0)');
+          ctx.fillStyle = glow;
+        } catch (e) {
+          // Fallback if gradient creation fails
+          ctx.fillStyle = `rgba(100, 200, 255, ${Math.min(1, Math.max(0, brightness * 0.5))})`;
+        }
+        
         ctx.beginPath();
         ctx.arc(neuron.x, neuron.y, neuron.size * 4, 0, Math.PI * 2);
         ctx.fill();
@@ -190,15 +198,20 @@ export function AIBrain({ className = '' }: AIBrainProps) {
       }
       
       // Center brain core
-      const coreGlow = ctx.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, baseRadius
-      );
-      coreGlow.addColorStop(0, 'rgba(60, 170, 255, 0.3)');
-      coreGlow.addColorStop(0.5, 'rgba(100, 200, 255, 0.1)');
-      coreGlow.addColorStop(1, 'rgba(100, 200, 255, 0)');
+      try {
+        const coreGlow = ctx.createRadialGradient(
+          centerX, centerY, 0,
+          centerX, centerY, baseRadius
+        );
+        coreGlow.addColorStop(0, 'rgba(60, 170, 255, 0.3)');
+        coreGlow.addColorStop(0.5, 'rgba(100, 200, 255, 0.1)');
+        coreGlow.addColorStop(1, 'rgba(100, 200, 255, 0)');
+        ctx.fillStyle = coreGlow;
+      } catch (e) {
+        // Fallback if gradient creation fails
+        ctx.fillStyle = 'rgba(80, 180, 255, 0.15)';
+      }
       
-      ctx.fillStyle = coreGlow;
       ctx.beginPath();
       ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
       ctx.fill();
