@@ -46,7 +46,7 @@ export default function PricingCta() {
             className="text-lg"
             asChild
           >
-            <a href="#contact">Get a Custom Quote</a>
+            <a href="/calculator">Build My AI Stack</a>
           </Button>
         </motion.div>
         
