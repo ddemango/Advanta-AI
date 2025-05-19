@@ -62,7 +62,7 @@ export default function Hero() {
               transition={{ delay: 1.2, duration: 0.5 }}
             >
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                <a href="#contact">⚡ Build My AI Stack</a>
+                <a href="/calculator">⚡ Build My AI Stack</a>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <a href="#ai-demo">🚀 Try the Live Demo</a>
@@ -164,7 +164,7 @@ export default function Hero() {
         </motion.div>
         
         {/* Stats Strip */}
-        <div ref={ref} className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" ref={ref}>
           <div className="bg-muted p-6 rounded-xl">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={98} start={0} duration={2000} inView={inView} suffix="%" />

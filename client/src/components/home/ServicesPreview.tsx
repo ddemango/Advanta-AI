@@ -138,7 +138,7 @@ export default function ServicesPreview() {
           className="mt-16 text-center"
         >
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-            <a href="#contact">Explore All Solutions</a>
+            <a href="/calculator">Build My AI Stack</a>
           </Button>
         </motion.div>
       </div>

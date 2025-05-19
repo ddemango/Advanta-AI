@@ -123,7 +123,7 @@ export default function Header() {
             </a>
             <div className="pt-2">
               <Button asChild className="bg-primary hover:bg-primary/90 w-full">
-                <a href="#contact" onClick={closeMenu}>Book a Call</a>
+                <a href="/calculator" onClick={closeMenu}>Build My AI Stack</a>
               </Button>
             </div>
           </div>
