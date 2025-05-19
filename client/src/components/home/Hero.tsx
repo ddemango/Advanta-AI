@@ -6,6 +6,7 @@ import { GradientText } from '@/components/ui/gradient-text';
 import { AnimatedParticles } from '@/components/ui/animated-particles';
 import { AnimatedText } from '@/components/ui/animated-text';
 import { FlowingData } from '@/components/ui/flowing-data';
+import { AIBrain } from '@/components/ui/ai-brain';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { useRef } from 'react';
 
@@ -152,30 +153,31 @@ export default function Hero() {
                 </svg>
               </motion.div>
               
-              {/* Analytics overlay elements */}
+              {/* AI Brain Visualization */}
               <div className="absolute inset-0 flex items-center justify-center z-30">
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2, duration: 0.8 }}
-                  className="text-center"
-                >
-                  <div className="font-bold text-xl md:text-2xl text-white mb-2">AI-Powered Insights</div>
-                  <div className="w-16 h-16 rounded-full bg-primary/40 backdrop-blur-sm mx-auto flex items-center justify-center border border-primary/60">
-                    <motion.div 
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        opacity: [0.7, 1, 0.7]
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                      className="w-8 h-8 rounded-full bg-primary"
-                    />
+                <div className="relative w-full h-full">
+                  {/* Neural AI brain animation */}
+                  <div className="absolute inset-0 scale-90">
+                    <AIBrain />
                   </div>
-                </motion.div>
+                  
+                  {/* Text overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 1.2, duration: 0.8, type: "spring" }}
+                      className="text-center backdrop-blur-sm bg-black/10 px-6 py-4 rounded-xl border border-white/10"
+                    >
+                      <h3 className="font-black text-xl md:text-2xl text-white mb-2">
+                        <GradientText>Neural AI Engine</GradientText>
+                      </h3>
+                      <p className="text-white/80 text-sm">
+                        Advanced processing with dynamic learning capabilities
+                      </p>
+                    </motion.div>
+                  </div>
+                </div>
               </div>
               
               {/* Bottom labels and metrics */}
