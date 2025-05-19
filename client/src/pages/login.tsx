@@ -28,8 +28,9 @@ export default function Login() {
       // In a real implementation, this would call an authentication API
       // For demo purposes, we'll simulate a successful login with a timeout
       setTimeout(() => {
-        // Check for admin credentials
+        // Check for specific credentials
         if ((email === 'admin' && password === '12345') ||
+            (email === 'd.s.demango@gmail.com' && password === '12345') || 
             // Also keep the email-based login for flexibility
             (email.endsWith('@advanta.ai') && password.length >= 6)) {
           
