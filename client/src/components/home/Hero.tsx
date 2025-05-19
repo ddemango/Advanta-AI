@@ -5,18 +5,29 @@ import { Counter } from '@/components/ui/counter';
 import { GradientText } from '@/components/ui/gradient-text';
 import { AnimatedParticles } from '@/components/ui/animated-particles';
 import { AnimatedText } from '@/components/ui/animated-text';
+import { FlowingData } from '@/components/ui/flowing-data';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { useRef } from 'react';
 
 export default function Hero() {
   const { ref: statsRef, inView } = useIntersectionObserver({ threshold: 0.1 });
 
   return (
     <section className="pt-28 pb-20 relative overflow-hidden" id="hero">
-      {/* Animated background with particles */}
-      <div className="absolute top-0 left-0 right-0 bottom-0 opacity-80">
-        <AnimatedParticles />
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/40 blur-[80px] animate-pulse-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-accent/40 blur-[80px] animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+      {/* Advanced animated background */}
+      <div className="absolute top-0 left-0 right-0 bottom-0">
+        {/* Flowing data visualization */}
+        <FlowingData className="z-0" />
+        
+        {/* Subtle particle effect layer */}
+        <div className="absolute top-0 left-0 right-0 bottom-0 opacity-40 z-10">
+          <AnimatedParticles />
+        </div>
+        
+        {/* Abstract gradient blobs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/30 blur-[100px] animate-pulse-slow z-0"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-accent/30 blur-[100px] animate-pulse-slow z-0" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 right-1/3 w-48 h-48 rounded-full bg-secondary/20 blur-[80px] animate-pulse-slow z-0" style={{ animationDelay: '2s' }}></div>
       </div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -58,21 +69,128 @@ export default function Hero() {
             </motion.div>
           </motion.div>
           
-          {/* Hero Image/Animation */}
+          {/* Advanced Data Visualization */}
           <motion.div 
             variants={fadeIn}
             className="lg:w-1/2 relative"
           >
-            {/* A futuristic neural network visualization */}
-            <motion.img 
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=600" 
-              alt="Futuristic AI visualization with glowing neural network connections" 
-              className="rounded-xl shadow-2xl w-full h-auto relative z-10"
-            />
-            {/* Animated decorative elements */}
+            {/* Data visualization container */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 shadow-2xl z-10"
+            >
+              {/* Inner flowing data animation */}
+              <div className="absolute inset-0">
+                <FlowingData className="opacity-80" />
+              </div>
+              
+              {/* Animated data nodes */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8, duration: 1 }}
+                className="absolute inset-0 z-20"
+              >
+                {/* Data nodes */}
+                {[...Array(8)].map((_, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ 
+                      x: Math.random() * 100 - 50 + "%", 
+                      y: Math.random() * 100 - 50 + "%",
+                      scale: 0 
+                    }}
+                    animate={{ 
+                      scale: Math.random() * 0.5 + 0.5,
+                      opacity: Math.random() * 0.7 + 0.3
+                    }}
+                    transition={{ 
+                      delay: 1 + i * 0.2, 
+                      duration: 0.8,
+                      repeatType: "reverse",
+                      repeat: Infinity,
+                      repeatDelay: Math.random() * 3 + 2
+                    }}
+                    className={`absolute w-4 h-4 rounded-full bg-${
+                      ['primary', 'secondary', 'accent'][i % 3]
+                    }/80`}
+                    style={{
+                      left: `${Math.random() * 80 + 10}%`,
+                      top: `${Math.random() * 80 + 10}%`,
+                      filter: "blur(1px)",
+                    }}
+                  />
+                ))}
+                
+                {/* Connection lines */}
+                <svg className="absolute inset-0 w-full h-full z-10 opacity-60">
+                  <g className="connections">
+                    {[...Array(12)].map((_, i) => (
+                      <motion.path
+                        key={i}
+                        stroke={`hsl(${200 + i * 10}, 80%, 60%)`}
+                        strokeWidth="1"
+                        fill="none"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ 
+                          pathLength: 1, 
+                          opacity: [0, 0.8, 0.2, 0.8, 0],
+                          d: `M${Math.random() * 100} ${Math.random() * 100} Q${Math.random() * 100 + 50} ${Math.random() * 100 - 50}, ${Math.random() * 100 + 100} ${Math.random() * 100}`
+                        }}
+                        transition={{ 
+                          delay: i * 0.3,
+                          duration: 4,
+                          repeat: Infinity,
+                          repeatType: "loop",
+                          ease: "easeInOut"
+                        }}
+                      />
+                    ))}
+                  </g>
+                </svg>
+              </motion.div>
+              
+              {/* Analytics overlay elements */}
+              <div className="absolute inset-0 flex items-center justify-center z-30">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2, duration: 0.8 }}
+                  className="text-center"
+                >
+                  <div className="font-bold text-xl md:text-2xl text-white mb-2">AI-Powered Insights</div>
+                  <div className="w-16 h-16 rounded-full bg-primary/40 backdrop-blur-sm mx-auto flex items-center justify-center border border-primary/60">
+                    <motion.div 
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        opacity: [0.7, 1, 0.7]
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className="w-8 h-8 rounded-full bg-primary"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+              
+              {/* Bottom labels and metrics */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5, duration: 0.8 }}
+                className="absolute bottom-4 left-0 right-0 flex justify-between px-6 text-xs text-white/70 z-30"
+              >
+                <div>Real-time analytics</div>
+                <div>ML confidence: 98.7%</div>
+              </motion.div>
+            </motion.div>
+            
+            {/* Gradient decorative elements */}
             <motion.div 
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
