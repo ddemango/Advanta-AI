@@ -47,13 +47,30 @@ export default function Header() {
             <a href="#services" className="text-gray-300 hover:text-white font-medium transition-colors">Services</a>
             <a href="#case-studies" className="text-gray-300 hover:text-white font-medium transition-colors">Case Studies</a>
             <a href="#testimonials" className="text-gray-300 hover:text-white font-medium transition-colors">Testimonials</a>
-            <a href="#ai-demo" className="text-gray-300 hover:text-white font-medium transition-colors">AI Demo</a>
-            <a 
-              onClick={() => setLocation('/calculator')}
-              className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer"
-            >
-              Cost Calculator
-            </a>
+            
+            {/* Resources Dropdown */}
+            <div className="relative group">
+              <button className="text-gray-300 hover:text-white font-medium transition-colors flex items-center">
+                Resources
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transform group-hover:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="absolute z-50 left-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left">
+                <div className="bg-background/95 backdrop-blur-md shadow-lg rounded-md border border-border py-1">
+                  <a href="#ai-demo" className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors">AI Demo</a>
+                  <a href="#ai-sandbox" className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors">AI Product Sandbox</a>
+                  <a 
+                    onClick={() => setLocation('/calculator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    AI ROI Calculator
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <a href="#client-portal" className="text-gray-300 hover:text-white font-medium transition-colors">Client Portal</a>
             <a href="#contact" className="text-gray-300 hover:text-white font-medium transition-colors">Contact</a>
           </nav>
           
@@ -103,21 +120,42 @@ export default function Header() {
             >
               Testimonials
             </a>
+            {/* Resources Section */}
+            <div className="mb-2">
+              <div className="text-gray-300 font-medium mb-2">Resources</div>
+              <div className="pl-4 flex flex-col space-y-2">
+                <a 
+                  href="#ai-demo" 
+                  className="text-gray-300 hover:text-white transition-colors"
+                  onClick={closeMenu}
+                >
+                  AI Demo
+                </a>
+                <a 
+                  href="#ai-sandbox" 
+                  className="text-gray-300 hover:text-white transition-colors"
+                  onClick={closeMenu}
+                >
+                  AI Product Sandbox
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/calculator');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  AI ROI Calculator
+                </a>
+              </div>
+            </div>
+            
             <a 
-              href="#ai-demo" 
+              href="#client-portal" 
               className="text-gray-300 hover:text-white font-medium transition-colors"
               onClick={closeMenu}
             >
-              AI Demo
-            </a>
-            <a 
-              onClick={() => {
-                setLocation('/calculator');
-                closeMenu();
-              }} 
-              className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer"
-            >
-              Cost Calculator
+              Client Portal
             </a>
             <a 
               href="#contact" 
