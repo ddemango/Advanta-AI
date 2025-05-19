@@ -1,24 +1,30 @@
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
+import HowItWorks from '@/components/home/HowItWorks';
+import ServicesPreview from '@/components/home/ServicesPreview';
+import IndustryTemplates from '@/components/home/IndustryTemplates';
+import WhyAdvantaAI from '@/components/home/WhyAdvantaAI';
 import Services from '@/components/home/Services';
 import CaseStudies from '@/components/home/CaseStudies';
 import AiAssessment from '@/components/home/AiAssessment';
 import Testimonials from '@/components/home/Testimonials';
 import AiDemo from '@/components/home/AiDemo';
+import OnboardingWizard from '@/components/home/OnboardingWizard';
 import PricingCta from '@/components/home/PricingCta';
 import Contact from '@/components/home/Contact';
+import { CookieConsent } from '@/components/ui/cookie-consent';
 import { Helmet } from 'react-helmet';
 
 export default function Home() {
   return (
     <>
       <Helmet>
-        <title>Advanta AI - Engineering the Future of Intelligence</title>
-        <meta name="description" content="Advanta AI delivers custom AI solutions, machine learning development, and industry-specific AI applications to transform your business." />
-        <meta name="keywords" content="AI-powered business solutions, custom machine learning development, industry-specific AI applications, AI consulting services" />
-        <meta property="og:title" content="Advanta AI - Engineering the Future of Intelligence" />
-        <meta property="og:description" content="Advanta AI delivers custom AI solutions, machine learning development, and industry-specific AI applications to transform your business." />
+        <title>Advanta AI - Unlock AI-Powered Growth—No Code. No Delay.</title>
+        <meta name="description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
+        <meta name="keywords" content="GPT agents, AI automations, chatbots, machine learning, AI consulting, predictive dashboards, white-label AI" />
+        <meta property="og:title" content="Advanta AI - Unlock AI-Powered Growth—No Code. No Delay." />
+        <meta property="og:description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
         <meta property="og:type" content="website" />
       </Helmet>
       
@@ -26,16 +32,22 @@ export default function Home() {
       
       <main>
         <Hero />
+        <HowItWorks />
+        <ServicesPreview />
+        <IndustryTemplates />
+        <WhyAdvantaAI />
         <Services />
         <CaseStudies />
         <AiAssessment />
         <Testimonials />
         <AiDemo />
+        <OnboardingWizard />
         <PricingCta />
         <Contact />
       </main>
       
       <Footer />
+      <CookieConsent />
     </>
   );
 }
