@@ -3,16 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>Advanta AI - Engineering the Future of Intelligence</title>
-    <meta name="description" content="Advanta AI delivers custom AI solutions, machine learning development, and industry-specific AI applications to transform your business." />
-    <meta property="og:title" content="Advanta AI - Engineering the Future of Intelligence" />
-    <meta property="og:description" content="Advanta AI delivers custom AI solutions, machine learning development, and industry-specific AI applications to transform your business." />
+    <title>Advanta AI - Unlock AI-Powered Growth—No Code. No Delay.</title>
+    <meta name="description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
+    <meta name="keywords" content="AI assistants, custom GPT, business automation, predictive analytics, AI consulting, machine learning, chatbots" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://advantaai.com" />
+    <meta property="og:title" content="Advanta AI - Unlock AI-Powered Growth—No Code. No Delay." />
+    <meta property="og:description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
+    <meta property="og:image" content="https://advantaai.com/og-image.jpg" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://advantaai.com" />
+    <meta property="twitter:title" content="Advanta AI - Unlock AI-Powered Growth—No Code. No Delay." />
+    <meta property="twitter:description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
+    <meta property="twitter:image" content="https://advantaai.com/twitter-card.jpg" />
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Theme -->
+    <script>
+      // Set initial theme based on preference
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+        document.documentElement.classList.add(theme === 'dark' ? 'dark-theme' : 'light-theme');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

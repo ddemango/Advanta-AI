@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,8 +56,9 @@ export default function Header() {
             <a href="#contact" className="text-gray-300 hover:text-white font-medium transition-colors">Contact</a>
           </nav>
           
-          {/* CTA Button */}
-          <div className="hidden md:block">
+          {/* CTA Button and Theme Toggle */}
+          <div className="hidden md:flex items-center space-x-3">
+            <ThemeToggle />
             <Button asChild className="bg-primary hover:bg-primary/90">
               <a href="#contact">Book a Call</a>
             </Button>

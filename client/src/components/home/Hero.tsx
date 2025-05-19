@@ -44,8 +44,8 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight">
-              <span className="block mb-2">Engineering the</span>
-              <GradientText>Future of Intelligence</GradientText>
+              <span className="block mb-2">Unlock AI-Powered Growth—</span>
+              <GradientText>No Code. No Delay.</GradientText>
             </h1>
             <motion.p 
               className="text-xl text-gray-300 mb-8 leading-relaxed"
@@ -53,7 +53,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Transforming businesses with AI-powered solutions, custom machine learning development, and industry-specific applications that drive real results.
+              GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
@@ -62,10 +62,10 @@ export default function Hero() {
               transition={{ delay: 1.2, duration: 0.5 }}
             >
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                <a href="#contact">Book a Discovery Call</a>
+                <a href="#contact">⚡ Build My AI Stack</a>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <a href="#ai-demo">Test the AI Suite</a>
+                <a href="#ai-demo">🚀 Try the Live Demo</a>
               </Button>
             </motion.div>
           </motion.div>
