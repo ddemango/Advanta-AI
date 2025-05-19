@@ -203,8 +203,15 @@ export function LoadingScreen({
           // Gradient for active connection
           const gradient = ctx.createLinearGradient(sourceNode.x, sourceNode.y, targetNode.x, targetNode.y);
           gradient.addColorStop(0, 'rgba(0, 200, 255, 0.8)');
-          gradient.addColorStop(connection.signal, 'rgba(0, 200, 255, 0.8)');
-          gradient.addColorStop(connection.signal + 0.01, 'rgba(0, 120, 255, 0.2)');
+          
+          // Ensure signal value is within valid range (0-1)
+          const safeSignal = Math.min(0.99, Math.max(0, connection.signal));
+          gradient.addColorStop(safeSignal, 'rgba(0, 200, 255, 0.8)');
+          
+          // Ensure the next stop is also within range and greater than the previous
+          const nextStop = Math.min(0.999, Math.max(safeSignal + 0.01, 0.01));
+          gradient.addColorStop(nextStop, 'rgba(0, 120, 255, 0.2)');
+          
           gradient.addColorStop(1, 'rgba(0, 120, 255, 0.2)');
           
           ctx.strokeStyle = gradient;

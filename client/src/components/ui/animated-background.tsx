@@ -233,8 +233,9 @@ export function AnimatedBackground({ className = '' }: AnimatedBackgroundProps) 
             area.x, area.y, area.radius
           );
           
+          // Ensure color stops are within valid range (0-1)
           gradient.addColorStop(0, area.color1);
-          gradient.addColorStop(1, area.color2);
+          gradient.addColorStop(0.99, area.color2);
           
           ctx.fillStyle = gradient;
           ctx.beginPath();
