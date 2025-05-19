@@ -80,7 +80,7 @@ export default function Hero() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="relative aspect-[4/3] w-full rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 shadow-2xl z-10"
+              className="relative aspect-[4/3] w-full z-10"
             >
               {/* Inner flowing data animation */}
               <div className="absolute inset-0">
