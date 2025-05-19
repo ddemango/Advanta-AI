@@ -165,7 +165,7 @@ export default function Testimonials() {
         >
           {/* Animated background effects */}
           <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/95 z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/70 z-10" />
             <div className="absolute inset-0 overflow-hidden opacity-30">
               <DigitalRain />
             </div>
