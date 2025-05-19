@@ -57,10 +57,13 @@ export default function Header() {
             <a href="#contact" className="text-gray-300 hover:text-white font-medium transition-colors">Contact</a>
           </nav>
           
-          {/* AI Status Indicator, CTA Button and Theme Toggle */}
+          {/* AI Status Indicator, Login, Theme Toggle and CTA Button */}
           <div className="hidden md:flex items-center space-x-3">
             <AiStatusIndicator />
             <ThemeToggle />
+            <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary">
+              <a href="/login">Client Login</a>
+            </Button>
             <Button asChild className="bg-primary hover:bg-primary/90">
               <a href="/calculator">Build My AI Stack</a>
             </Button>
@@ -123,7 +126,10 @@ export default function Header() {
             >
               Contact
             </a>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col space-y-2">
+              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full">
+                <a href="/login" onClick={closeMenu}>Client Login</a>
+              </Button>
               <Button asChild className="bg-primary hover:bg-primary/90 w-full">
                 <a href="/calculator" onClick={closeMenu}>Build My AI Stack</a>
               </Button>
