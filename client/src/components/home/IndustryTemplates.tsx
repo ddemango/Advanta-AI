@@ -1,83 +1,224 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GradientText } from '@/components/ui/gradient-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { ArrowRight, Check, Star } from 'lucide-react';
 
+// Detailed industry templates with expanded information
 const industryTemplates = [
   {
     id: 'real-estate',
     name: 'Real Estate',
     icon: 'fa-solid fa-house',
+    color: 'from-blue-500 to-sky-700',
+    badgeColor: 'bg-blue-500/20 text-blue-400',
     features: [
-      'Property listing chatbot',
-      'Automated lead qualification',
-      'Personalized property recommendations',
-      'Market analysis reports'
+      'Property listing chatbot with virtual tours integration',
+      'AI-powered lead qualification with 24/7 response',
+      'Personalized property recommendations based on buyer preferences',
+      'Automated market analysis reports with pricing predictions',
+      'Smart document processing for faster transactions'
     ],
-    description: 'AI assistants that help real estate professionals qualify leads, answer property questions, and schedule viewings 24/7.'
+    metrics: [
+      { label: 'Lead Response Time', value: '< 1 minute' },
+      { label: 'Conversion Rate Increase', value: '32%' },
+      { label: 'Agent Hours Saved', value: '15-20 hrs/week' }
+    ],
+    useCases: [
+      {
+        title: 'Automated Property Matching',
+        description: 'AI analyzes client preferences and matches them with available properties, considering factors beyond basic search criteria.'
+      },
+      {
+        title: '24/7 Inquiry Handling',
+        description: 'Virtual assistants answer detailed questions about properties, neighborhoods, and pricing at any time of day.'
+      }
+    ],
+    testimonial: {
+      quote: "The AI assistant helped us respond to leads 24/7 and increased our conversion rate by 38%. Our agents now focus on closing deals instead of answering basic questions.",
+      author: "Jessica Miller",
+      company: "ReMax Premier Properties"
+    },
+    description: 'AI assistants that help real estate professionals qualify leads, answer property questions, and schedule viewings 24/7 while providing detailed market insights and personalized recommendations.'
   },
   {
     id: 'med-spas',
     name: 'Med Spas',
     icon: 'fa-solid fa-spa',
+    color: 'from-purple-500 to-pink-600',
+    badgeColor: 'bg-purple-500/20 text-purple-400',
     features: [
-      'Treatment recommendation bot',
-      'Appointment scheduling',
-      'Post-treatment follow-ups',
-      'Personalized skincare plans'
+      'AI-driven treatment recommendation engine based on skin analysis',
+      'Intelligent appointment scheduling with capacity optimization',
+      'Automated post-treatment follow-ups with personalized care tips',
+      'Customized skincare regimen planning with product recommendations',
+      'Patient retention workflows with timed promotions'
     ],
-    description: 'Intelligent virtual assistants that help med spas automate consultations, follow-ups, and create personalized treatment plans.'
+    metrics: [
+      { label: 'Booking Increase', value: '46%' },
+      { label: 'Patient Retention', value: '27% higher' },
+      { label: 'Treatment Upgrades', value: '35% increase' }
+    ],
+    useCases: [
+      {
+        title: 'Personalized Treatment Planning',
+        description: 'AI analyzes patient history, skin type, and concerns to recommend optimal treatment sequences and products.'
+      },
+      {
+        title: 'Intelligent Follow-up System',
+        description: 'Automated follow-ups that adapt based on treatment type, patient response, and results tracking.'
+      }
+    ],
+    testimonial: {
+      quote: "Our AI assistant helped us create personalized treatment plans that increased our patient satisfaction scores to 4.9/5. The automated follow-ups have been a game-changer for retention.",
+      author: "Dr. Amanda Chen",
+      company: "Radiance Med Spa"
+    },
+    description: 'Intelligent virtual assistants that help med spas automate consultations, treatment recommendations, follow-ups, and create personalized skincare regimens based on individual patient needs and goals.'
   },
   {
     id: 'agencies',
     name: 'Agencies',
     icon: 'fa-solid fa-people-group',
+    color: 'from-orange-500 to-amber-600',
+    badgeColor: 'bg-orange-500/20 text-orange-400',
     features: [
-      'Client onboarding automation',
-      'Project status updates',
-      'Resource allocation assistant',
-      'Content idea generation'
+      'Streamlined client onboarding with automated data collection',
+      'Real-time project status updates with predictive timeline alerts',
+      'AI-powered resource allocation based on team capacity and skills',
+      'Content idea generation with trend analysis and performance prediction',
+      'Automated reporting with client-specific insights dashboard'
     ],
-    description: 'AI solutions that help agencies streamline project management, generate creative content, and automate client communications.'
+    metrics: [
+      { label: 'Project Delivery', value: '28% faster' },
+      { label: 'Admin Time Reduced', value: '42%' },
+      { label: 'Client Satisfaction', value: '+31% improvement' }
+    ],
+    useCases: [
+      {
+        title: 'Creative Content Generation',
+        description: 'AI assists with generating campaign ideas, copy variations, and visual concepts based on brand guidelines and past performance.'
+      },
+      {
+        title: 'Resource Optimization',
+        description: 'Smart allocation of team members based on skills, workload, and project requirements to maximize efficiency.'
+      }
+    ],
+    testimonial: {
+      quote: "The AI assistant has transformed our workflow. We've reduced administrative tasks by over 40% and improved our creative output with AI-generated concepts and optimization.",
+      author: "Mark Thompson",
+      company: "Elevate Digital Agency"
+    },
+    description: 'AI solutions that help agencies streamline project management, generate creative content, optimize resource allocation, and automate client communications with data-driven insights.'
   },
   {
     id: 'law-firms',
     name: 'Law Firms',
     icon: 'fa-solid fa-scale-balanced',
+    color: 'from-emerald-500 to-teal-600',
+    badgeColor: 'bg-emerald-500/20 text-emerald-400',
     features: [
-      'Legal FAQ assistant',
-      'Case intake automation',
-      'Document analysis',
-      'Precedent research'
+      'Comprehensive legal FAQ assistant with regulation updates',
+      'Intelligent case intake with conflict checking and complexity assessment',
+      'Advanced document analysis with clause identification and risk flagging',
+      'Precedent research with relevance ranking and jurisdiction filtering',
+      'Client portal with secure document handling and case status updates'
     ],
-    description: 'AI assistants that help law firms automate routine client inquiries, document review, and preliminary case analysis.'
+    metrics: [
+      { label: 'Document Review', value: '73% faster' },
+      { label: 'Case Intake Time', value: 'Reduced by 62%' },
+      { label: 'Billable Hours Increase', value: '22%' }
+    ],
+    useCases: [
+      {
+        title: 'Contract Analysis',
+        description: 'AI reviews contracts to flag potential issues, compare against standard templates, and suggest modifications based on historical outcomes.'
+      },
+      {
+        title: 'Case Precedent Research',
+        description: 'Intelligent research assistant that finds relevant cases, analyzes similarities and differences, and highlights key arguments.'
+      }
+    ],
+    testimonial: {
+      quote: "Our AI assistant has revolutionized how we review documents and conduct research. Tasks that took days now take hours, allowing our attorneys to focus on strategic case work instead of administrative tasks.",
+      author: "Benjamin Walsh",
+      company: "Walsh & Parker Law"
+    },
+    description: 'AI assistants that help law firms automate routine client inquiries, document review, preliminary case analysis, and streamline research with intelligent filtering and relevance scoring.'
   },
   {
     id: 'ecommerce',
     name: 'eCommerce',
     icon: 'fa-solid fa-cart-shopping',
+    color: 'from-red-500 to-rose-600',
+    badgeColor: 'bg-red-500/20 text-red-400',
     features: [
-      'Product recommendation engine',
-      'Shopping assistant',
-      'Inventory prediction',
-      'Customer support automation'
+      'Advanced product recommendation engine with purchase pattern analysis',
+      'Conversational shopping assistant with product comparison capabilities',
+      'Predictive inventory management with seasonal trend forecasting',
+      'Multilingual customer support automation with sentiment analysis',
+      'Personalized email campaigns with timing optimization'
     ],
-    description: 'AI-powered shopping assistants and recommendation engines that boost conversions and provide 24/7 customer support.'
+    metrics: [
+      { label: 'Cart Value', value: '+24% increase' },
+      { label: 'Customer Support', value: '67% automation' },
+      { label: 'Return Rate', value: 'Decreased by 18%' }
+    ],
+    useCases: [
+      {
+        title: 'Personalized Shopping Experience',
+        description: 'AI creates custom shopping experiences by analyzing browsing behavior, purchase history, and similar customer profiles.'
+      },
+      {
+        title: 'Intelligent Inventory Management',
+        description: 'Predictive system that forecasts inventory needs based on multiple factors including seasonality, marketing campaigns, and external events.'
+      }
+    ],
+    testimonial: {
+      quote: "The AI recommendation engine increased our average order value by 24%. Customer service inquiries are down 40% thanks to the shopping assistant, and our inventory forecasting is now remarkably accurate.",
+      author: "Sarah Chen",
+      company: "StyleHub Boutique"
+    },
+    description: 'AI-powered shopping assistants and recommendation engines that boost conversions, provide 24/7 customer support, and optimize inventory management with predictive analytics.'
   },
   {
     id: 'healthcare',
     name: 'Healthcare',
     icon: 'fa-solid fa-stethoscope',
+    color: 'from-blue-600 to-indigo-700',
+    badgeColor: 'bg-blue-600/20 text-blue-400',
     features: [
-      'Patient screening bot',
-      'Appointment scheduling',
-      'Medication reminders',
-      'Care plan explanations'
+      'HIPAA-compliant patient screening with symptom analysis',
+      'Smart appointment scheduling with urgency prioritization',
+      'Personalized medication reminders with adherence tracking',
+      'Detailed care plan explanations with visual aids and simple language',
+      'Physician assistant with medical record summarization'
     ],
-    description: 'HIPAA-compliant AI assistants that streamline patient intake, answer common questions, and provide care information.'
+    metrics: [
+      { label: 'Patient Wait Times', value: 'Reduced by 41%' },
+      { label: 'Medication Adherence', value: 'Improved by 32%' },
+      { label: 'Administrative Tasks', value: '58% reduction' }
+    ],
+    useCases: [
+      {
+        title: 'Intelligent Triage System',
+        description: 'AI assesses patient symptoms and medical history to prioritize appointments and prepare relevant information for providers.'
+      },
+      {
+        title: 'Treatment Adherence Program',
+        description: 'Personalized reminder system that adapts based on patient behavior, medication complexity, and reported side effects.'
+      }
+    ],
+    testimonial: {
+      quote: "Our AI assistant has transformed our practice workflow. Patient satisfaction is up, administrative burden is down, and our providers have more time to focus on direct patient care.",
+      author: "Dr. James Wilson",
+      company: "Cornerstone Medical Group"
+    },
+    description: 'HIPAA-compliant AI assistants that streamline patient intake, appointment prioritization, treatment plan explanations, and medical adherence monitoring with intelligent follow-up systems.'
   }
 ];
 
@@ -112,7 +253,7 @@ export default function IndustryTemplates() {
               Industry-Specific <GradientText>Templates</GradientText>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Pre-built AI solutions optimized for your business type—deploy in days, not months
+              Pre-built AI solutions tailored specifically for your industry's unique challenges and opportunities
             </p>
           </motion.div>
         </motion.div>
@@ -148,48 +289,131 @@ export default function IndustryTemplates() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center"
+                className="grid grid-cols-1 lg:grid-cols-3 gap-8"
               >
-                <GlassCard>
-                  <div className="p-8">
-                    <div className="mb-6 flex items-center">
-                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl mr-4">
-                        <i className={template.icon}></i>
+                {/* Main solution details */}
+                <div className="lg:col-span-2">
+                  <GlassCard>
+                    <div className="p-8">
+                      <div className="mb-8 flex items-center">
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${template.color} flex items-center justify-center text-white text-2xl mr-5 shadow-lg`}>
+                          <i className={template.icon}></i>
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold">{template.name} AI Solution</h3>
+                          <Badge className={`mt-2 ${template.badgeColor}`}>Industry-Optimized</Badge>
+                        </div>
                       </div>
-                      <h3 className="text-2xl font-bold">{template.name} AI Template</h3>
-                    </div>
-                    
-                    <p className="text-gray-300 mb-6">{template.description}</p>
-                    
-                    <div className="mb-6">
-                      <h4 className="text-lg font-medium mb-3">Includes:</h4>
-                      <ul className="space-y-2">
-                        {template.features.map((feature, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="text-primary mr-2">✓</span>
-                            <span>{feature}</span>
-                          </li>
+                      
+                      <p className="text-gray-300 mb-8 text-lg leading-relaxed">{template.description}</p>
+                      
+                      <div className="mb-8">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <span className="bg-primary/20 p-1 rounded text-primary mr-2"><Check size={16} /></span>
+                          Key Features & Capabilities
+                        </h4>
+                        <ul className="space-y-3 ml-2">
+                          {template.features.map((feature, index) => (
+                            <li key={index} className="flex items-start bg-background/40 p-3 rounded-lg border border-muted">
+                              <span className="text-primary mr-3 mt-0.5">✓</span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div className="mb-8">
+                        <h4 className="text-lg font-semibold mb-4 flex items-center">
+                          <span className="bg-primary/20 p-1 rounded text-primary mr-2"><Star size={16} /></span>
+                          Performance Metrics
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {template.metrics.map((metric, index) => (
+                            <div key={index} className="bg-background/40 p-4 rounded-lg border border-muted text-center">
+                              <div className="text-2xl font-bold text-primary mb-1">{metric.value}</div>
+                              <div className="text-sm text-muted-foreground">{metric.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                        {template.useCases.map((useCase, index) => (
+                          <div key={index} className="bg-background/40 p-5 rounded-lg border border-muted">
+                            <h5 className="font-medium text-primary mb-2">{useCase.title}</h5>
+                            <p className="text-sm text-muted-foreground">{useCase.description}</p>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Button asChild className={`bg-gradient-to-r ${template.color} hover:opacity-90 transition-opacity`}>
+                          <a href="/calculator" className="flex items-center">
+                            Build My {template.name} AI
+                            <ArrowRight size={16} className="ml-2" />
+                          </a>
+                        </Button>
+                        <Button variant="outline" asChild>
+                          <a href="/demo">See Live Demo</a>
+                        </Button>
+                      </div>
+                    </div>
+                  </GlassCard>
+                </div>
+                
+                {/* Sidebar with testimonial and preview */}
+                <div className="space-y-6">
+                  {/* Testimonial */}
+                  <GlassCard className="bg-gradient-to-br from-background/80 to-background/30">
+                    <div className="p-6">
+                      <div className="flex justify-center mb-4">
+                        <div className="flex -space-x-2">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center text-black text-xs">★</div>
+                          ))}
+                        </div>
+                      </div>
+                      <blockquote className="text-gray-300 italic mb-4 text-sm">
+                        "{template.testimonial.quote}"
+                      </blockquote>
+                      <div className="text-right">
+                        <div className="font-medium text-white">{template.testimonial.author}</div>
+                        <div className="text-xs text-muted-foreground">{template.testimonial.company}</div>
+                      </div>
+                    </div>
+                  </GlassCard>
+                  
+                  {/* Assistant Preview */}
+                  <div className="rounded-lg overflow-hidden bg-black/40 backdrop-blur-md border border-white/10 relative">
+                    <div className="absolute top-0 left-0 right-0 h-10 bg-background/40 flex items-center px-4 border-b border-white/10">
+                      <div className="flex space-x-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                      <div className="text-xs text-center flex-1">{template.name} Assistant</div>
                     </div>
                     
-                    <Button asChild className="w-full">
-                      <a href="/calculator">Build My AI Stack</a>
-                    </Button>
-                  </div>
-                </GlassCard>
-                
-                <div className="rounded-lg overflow-hidden bg-black/40 backdrop-blur-md border border-white/10 h-[300px] relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center p-6">
-                      <div className="text-5xl text-primary mb-4">
+                    <div className="pt-12 pb-6 px-6 flex flex-col items-center justify-center min-h-[280px]">
+                      <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${template.color} flex items-center justify-center text-white text-3xl mb-4 shadow-lg`}>
                         <i className={template.icon}></i>
                       </div>
                       <h4 className="text-xl font-bold mb-2">{template.name} Assistant</h4>
-                      <p className="text-gray-400 mb-4">Interactive AI customized for your business</p>
-                      <Button variant="outline" size="sm" className="mt-2" asChild>
-                        <a href="/calculator"><i className="fas fa-cogs mr-2"></i> Build My AI Stack</a>
+                      <p className="text-gray-400 mb-4 text-center text-sm">Intelligent AI customized for {template.name.toLowerCase()} businesses</p>
+                      <Button asChild size="sm" className={`bg-gradient-to-r ${template.color} hover:opacity-90 transition-opacity mt-2`}>
+                        <a href="/calculator">Try Demo</a>
                       </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Industry Stats */}
+                  <div className="bg-background/20 rounded-lg border border-muted p-4">
+                    <h5 className="font-medium mb-3 text-sm">Implementation Timeline</h5>
+                    <div className="flex items-center">
+                      <div className="flex-1 bg-muted h-2 rounded-full overflow-hidden">
+                        <div className={`h-full bg-gradient-to-r ${template.color}`} style={{width: '80%'}}></div>
+                      </div>
+                      <span className="text-sm ml-3 font-bold">3-4 weeks</span>
                     </div>
                   </div>
                 </div>
@@ -198,21 +422,16 @@ export default function IndustryTemplates() {
           ))}
         </Tabs>
         
-        <motion.div 
-          variants={fadeIn}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          className="mt-16 text-center"
-        >
-          <p className="text-white/70 mb-6 max-w-3xl mx-auto">
-            Don't see your industry? We build custom AI solutions for any business type.
-          </p>
-          <Button asChild variant="outline" size="lg" className="mx-auto">
-            <a href="#contact">Request Custom Template</a>
+        <div className="mt-16 text-center">
+          <p className="text-muted-foreground mb-6">Don't see your industry? We create custom AI solutions for any business type.</p>
+          <Button variant="outline" size="lg" className="mx-auto" asChild>
+            <a href="/calculator">
+              <i className="fas fa-industry mr-2"></i>
+              Request Custom Industry Solution
+            </a>
           </Button>
-        </motion.div>
+        </div>
       </div>
     </section>
-  );
+  )
 }
