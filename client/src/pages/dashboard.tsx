@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
 import Header from '@/components/layout/Header';
@@ -10,6 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { HoverCardEffect } from '@/components/ui/hover-card-effect';
+import { FloatingElement } from '@/components/ui/floating-element';
+import { PulseButton } from '@/components/ui/pulse-button';
+import { ClickRipple } from '@/components/ui/click-ripple';
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 // Mock data for dashboard
@@ -168,13 +172,14 @@ export default function Dashboard() {
                 <h1 className="text-3xl md:text-4xl font-bold">Welcome back, {userEmail.split('@')[0]}</h1>
                 <p className="text-muted-foreground">Here's what's happening with your AI assistants today.</p>
               </div>
-              <Button 
+              <PulseButton 
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setLocation('/onboarding')}
+                pulseIntensity={0.6}
               >
                 <i className="fas fa-plus mr-2"></i>
                 Create New Assistant
-              </Button>
+              </PulseButton>
             </motion.div>
             
             {/* Dashboard Overview Cards */}
@@ -182,70 +187,80 @@ export default function Dashboard() {
               variants={fadeInUp}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
             >
-              <Card className="bg-muted border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-medium">Total Interactions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between">
-                    <div className="text-3xl font-bold">8,111</div>
-                    <div className="text-green-500 flex items-center text-sm">
-                      <i className="fas fa-arrow-up mr-1"></i>
-                      12.5%
+              <HoverCardEffect className="rounded-lg">
+                <Card className="bg-muted border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Total Interactions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">8,111</div>
+                      <div className="text-green-500 flex items-center text-sm">
+                        <i className="fas fa-arrow-up mr-1"></i>
+                        12.5%
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">vs. last month</p>
-                </CardContent>
-              </Card>
+                    <p className="text-xs text-muted-foreground mt-1">vs. last month</p>
+                  </CardContent>
+                </Card>
+              </HoverCardEffect>
               
-              <Card className="bg-muted border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-medium">Active Assistants</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between">
-                    <div className="text-3xl font-bold">3</div>
-                    <div className="text-green-500 flex items-center text-sm">
-                      <i className="fas fa-check-circle mr-1"></i>
-                      Healthy
+              <HoverCardEffect className="rounded-lg">
+                <Card className="bg-muted border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Active Assistants</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">3</div>
+                      <div className="text-green-500 flex items-center text-sm">
+                        <i className="fas fa-check-circle mr-1"></i>
+                        <FloatingElement yOffset={3} duration={2}>
+                          Healthy
+                        </FloatingElement>
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">1 assistant paused</p>
-                </CardContent>
-              </Card>
+                    <p className="text-xs text-muted-foreground mt-1">1 assistant paused</p>
+                  </CardContent>
+                </Card>
+              </HoverCardEffect>
               
-              <Card className="bg-muted border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-medium">Token Usage</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between">
-                    <div className="text-3xl font-bold">72%</div>
-                    <div className="text-yellow-500 flex items-center text-sm">
-                      <i className="fas fa-exclamation-circle mr-1"></i>
-                      Moderate
+              <HoverCardEffect className="rounded-lg">
+                <Card className="bg-muted border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Token Usage</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">72%</div>
+                      <div className="text-yellow-500 flex items-center text-sm">
+                        <i className="fas fa-exclamation-circle mr-1 animate-pulse"></i>
+                        Moderate
+                      </div>
                     </div>
-                  </div>
-                  <Progress value={72} className="h-2 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">720K/1M tokens used</p>
-                </CardContent>
-              </Card>
+                    <Progress value={72} className="h-2 mt-2" />
+                    <p className="text-xs text-muted-foreground mt-1">720K/1M tokens used</p>
+                  </CardContent>
+                </Card>
+              </HoverCardEffect>
               
-              <Card className="bg-muted border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-medium">Avg. Efficiency</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between">
-                    <div className="text-3xl font-bold">80%</div>
-                    <div className="text-green-500 flex items-center text-sm">
-                      <i className="fas fa-arrow-up mr-1"></i>
-                      5.2%
+              <HoverCardEffect className="rounded-lg">
+                <Card className="bg-muted border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Avg. Efficiency</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">80%</div>
+                      <div className="text-green-500 flex items-center text-sm">
+                        <i className="fas fa-arrow-up mr-1"></i>
+                        5.2%
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">vs. industry avg. (74.8%)</p>
-                </CardContent>
-              </Card>
+                    <p className="text-xs text-muted-foreground mt-1">vs. industry avg. (74.8%)</p>
+                  </CardContent>
+                </Card>
+              </HoverCardEffect>
             </motion.div>
           </motion.div>
           
@@ -281,68 +296,81 @@ export default function Dashboard() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {aiAssistants.map((assistant) => (
-                    <Card key={assistant.id} className={`bg-muted border-border transition-all hover:shadow-md ${assistant.status === 'paused' ? 'opacity-70' : ''}`}>
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-start">
-                          <div className="flex gap-2 items-center">
-                            <div className={`h-8 w-8 rounded-md flex items-center justify-center ${
-                              assistant.type === 'chatbot' ? 'bg-primary/20' :
-                              assistant.type === 'email' ? 'bg-blue-500/20' :
-                              'bg-green-500/20'
-                            }`}>
-                              <i className={`fas fa-${
-                                assistant.type === 'chatbot' ? 'robot' :
-                                assistant.type === 'email' ? 'envelope' :
-                                'chart-pie'
-                              } text-${
-                                assistant.type === 'chatbot' ? 'primary' :
-                                assistant.type === 'email' ? 'blue-500' :
-                                'green-500'
-                              }`}></i>
+                    <HoverCardEffect key={assistant.id} className="rounded-lg">
+                      <Card className={`bg-muted border-border transition-all ${assistant.status === 'paused' ? 'opacity-70' : ''}`}>
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex gap-2 items-center">
+                              <FloatingElement yOffset={3} duration={3} delay={assistant.id * 0.1}>
+                                <div className={`h-8 w-8 rounded-md flex items-center justify-center ${
+                                  assistant.type === 'chatbot' ? 'bg-primary/20' :
+                                  assistant.type === 'email' ? 'bg-blue-500/20' :
+                                  'bg-green-500/20'
+                                }`}>
+                                  <i className={`fas fa-${
+                                    assistant.type === 'chatbot' ? 'robot' :
+                                    assistant.type === 'email' ? 'envelope' :
+                                    'chart-pie'
+                                  } text-${
+                                    assistant.type === 'chatbot' ? 'primary' :
+                                    assistant.type === 'email' ? 'blue-500' :
+                                    'green-500'
+                                  }`}></i>
+                                </div>
+                              </FloatingElement>
+                              <CardTitle className="text-lg">{assistant.name}</CardTitle>
                             </div>
-                            <CardTitle className="text-lg">{assistant.name}</CardTitle>
+                            <Badge 
+                              variant={assistant.status === 'active' ? 'default' : 'secondary'}
+                              className={assistant.status === 'active' ? 'animate-pulse' : ''}
+                            >
+                              {assistant.status === 'active' ? 'Active' : 'Paused'}
+                            </Badge>
                           </div>
-                          <Badge variant={assistant.status === 'active' ? 'default' : 'secondary'}>
-                            {assistant.status === 'active' ? 'Active' : 'Paused'}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <p className="text-sm text-muted-foreground">{assistant.description}</p>
-                        <div className="flex justify-between text-sm">
-                          <span>Interactions</span>
-                          <span className="font-medium">{assistant.interactions.toLocaleString()}</span>
-                        </div>
-                        <div className="space-y-2">
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <p className="text-sm text-muted-foreground">{assistant.description}</p>
                           <div className="flex justify-between text-sm">
-                            <span>Efficiency</span>
-                            <span className="font-medium">{assistant.efficiency}%</span>
+                            <span>Interactions</span>
+                            <span className="font-medium">{assistant.interactions.toLocaleString()}</span>
                           </div>
-                          <Progress value={assistant.efficiency} className="h-1.5" />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Engagement</span>
-                            <span className="font-medium">{assistant.engagement}%</span>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span>Efficiency</span>
+                              <span className="font-medium">{assistant.efficiency}%</span>
+                            </div>
+                            <Progress value={assistant.efficiency} className="h-1.5" />
                           </div>
-                          <Progress value={assistant.engagement} className="h-1.5" />
-                        </div>
-                        <div className="pt-2 flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <i className="fas fa-edit mr-1"></i> Edit
-                          </Button>
-                          {assistant.status === 'active' ? (
-                            <Button variant="outline" size="sm" className="flex-1">
-                              <i className="fas fa-pause mr-1"></i> Pause
-                            </Button>
-                          ) : (
-                            <Button variant="outline" size="sm" className="flex-1">
-                              <i className="fas fa-play mr-1"></i> Resume
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span>Engagement</span>
+                              <span className="font-medium">{assistant.engagement}%</span>
+                            </div>
+                            <Progress value={assistant.engagement} className="h-1.5" />
+                          </div>
+                          <div className="pt-2 flex gap-2">
+                            <ClickRipple className="flex-1">
+                              <Button variant="outline" size="sm" className="w-full">
+                                <i className="fas fa-edit mr-1"></i> Edit
+                              </Button>
+                            </ClickRipple>
+                            {assistant.status === 'active' ? (
+                              <ClickRipple className="flex-1">
+                                <Button variant="outline" size="sm" className="w-full">
+                                  <i className="fas fa-pause mr-1"></i> Pause
+                                </Button>
+                              </ClickRipple>
+                            ) : (
+                              <ClickRipple className="flex-1">
+                                <Button variant="outline" size="sm" className="w-full">
+                                  <i className="fas fa-play mr-1"></i> Resume
+                                </Button>
+                              </ClickRipple>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </HoverCardEffect>
                   ))}
                 </div>
               </TabsContent>
