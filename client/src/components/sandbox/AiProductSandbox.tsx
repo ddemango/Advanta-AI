@@ -89,8 +89,17 @@ export default function AiProductSandbox() {
     
     // Simulate AI processing time
     setTimeout(() => {
-      // In a real implementation, this would call an API like DALL-E
-      setGeneratedImageUrl('https://via.placeholder.com/512x512/0072f5/ffffff?text=AI+Generated+Image');
+      // Generate a URL that's more likely to work in our environment
+      // Using an encoded SVG for a reliable placeholder
+      const encodedSVG = encodeURIComponent(`
+        <svg width="${imageSize[0]}" height="${imageSize[0]}" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="#0072f5"/>
+          <text x="50%" y="50%" font-family="Arial" font-size="24" fill="white" text-anchor="middle">
+            AI Generated: ${imageStyle}
+          </text>
+        </svg>
+      `);
+      setGeneratedImageUrl(`data:image/svg+xml;charset=UTF-8,${encodedSVG}`);
       setLoading(false);
     }, 2000);
   };
