@@ -299,7 +299,7 @@ export default function Testimonials() {
                 Results are estimates based on industry averages and client results.
               </div>
               <Button asChild className="bg-primary hover:bg-primary/90">
-                <a href="#contact">Get Detailed Analysis</a>
+                <a href="/calculator">Build My AI Stack</a>
               </Button>
             </div>
           </div>

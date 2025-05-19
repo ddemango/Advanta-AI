@@ -255,8 +255,9 @@ export default function Contact() {
                 variant="outline" 
                 size="lg"
                 className="mt-6"
+                asChild
               >
-                <i className="far fa-calendar-alt mr-2"></i> Schedule Call
+                <a href="/calculator">Build My AI Stack</a>
               </Button>
             </div>
           </motion.div>

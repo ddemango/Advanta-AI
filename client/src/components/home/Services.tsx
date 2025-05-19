@@ -172,8 +172,8 @@ export default function Services() {
                         </li>
                       ))}
                     </ul>
-                    <a href="#" className="inline-flex items-center text-primary hover:text-primary/90 font-medium mt-2">
-                      Learn more 
+                    <a href="/calculator" className="inline-flex items-center text-primary hover:text-primary/90 font-medium mt-2">
+                      Build my AI stack 
                       <motion.span 
                         animate={{ x: [0, 5, 0] }} 
                         transition={{ repeat: Infinity, duration: 1.5 }}
