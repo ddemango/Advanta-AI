@@ -11,7 +11,7 @@ import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { useRef } from 'react';
 
 export default function Hero() {
-  const { ref: statsRef, inView } = useIntersectionObserver({ threshold: 0.1 });
+  const { ref, inView } = useIntersectionObserver({ threshold: 0.1 });
 
   return (
     <section className="pt-28 pb-20 relative overflow-hidden" id="hero">
@@ -209,7 +209,7 @@ export default function Hero() {
         </motion.div>
         
         {/* Stats Strip */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div ref={ref} className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="bg-muted p-6 rounded-xl">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={98} start={0} duration={2000} inView={inView} suffix="%" />
