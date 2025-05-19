@@ -174,7 +174,7 @@ export default function IndustryTemplates() {
                     </div>
                     
                     <Button asChild className="w-full">
-                      <a href="#contact">See Template Details</a>
+                      <a href="/calculator">Build My AI Stack</a>
                     </Button>
                   </div>
                 </GlassCard>
@@ -187,8 +187,8 @@ export default function IndustryTemplates() {
                       </div>
                       <h4 className="text-xl font-bold mb-2">{template.name} Assistant</h4>
                       <p className="text-gray-400 mb-4">Interactive AI customized for your business</p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        <i className="fas fa-play mr-2"></i> Preview Demo
+                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                        <a href="/calculator"><i className="fas fa-cogs mr-2"></i> Build My AI Stack</a>
                       </Button>
                     </div>
                   </div>
