@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 function Router() {
   // Implement smooth scrolling for anchor links
@@ -51,8 +52,26 @@ function Router() {
 }
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Show the loading screen for a fixed duration to create an immersive experience
+  useEffect(() => {
+    // We'll show the loading screen for a meaningful amount of time
+    // to allow users to enjoy the machine learning visualization
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000); // 5 seconds is a good balance
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   return (
     <TooltipProvider>
+      <LoadingScreen 
+        isLoading={isLoading} 
+        onLoadingComplete={() => setIsLoading(false)}
+        loadingDuration={4800} // Slightly shorter than the timeout to ensure smooth transition
+      />
       <Toaster />
       <Router />
     </TooltipProvider>
