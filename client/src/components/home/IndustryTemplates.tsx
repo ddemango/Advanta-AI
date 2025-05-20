@@ -386,30 +386,26 @@ export default function IndustryTemplates() {
                   <i className="fas fa-chevron-left"></i>
                 </button>
                 
-                <div className="overflow-x-hidden flex-1 relative">
-                  <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#151515] via-[rgba(21,21,21,0.7)] to-transparent z-10 pointer-events-none rounded-l-full"></div>
-                  
-                  <TabsList className="industry-tabs-container flex overflow-x-auto flex-nowrap scrollbar-hide py-2 px-2 bg-transparent border-0" style={{ scrollBehavior: 'smooth' }}>
+                <div className="overflow-x-auto flex-1 relative mx-4">
+                  <TabsList className="industry-tabs-container flex gap-1 px-1 py-1 bg-transparent border-0" style={{ scrollBehavior: 'smooth' }}>
                     {industryTemplates.map(template => {
                       const isActive = activeTab === template.id;
                       return (
                         <TabsTrigger 
                           key={template.id} 
                           value={template.id}
-                          className={`rounded-full px-4 py-2.5 mx-1 whitespace-nowrap flex-shrink-0 transition-all duration-200 font-medium text-sm ${
+                          className={`rounded-full px-3 py-1.5 whitespace-nowrap flex-shrink-0 transition-all duration-200 font-medium text-xs ${
                             isActive 
                               ? `bg-white text-black` 
                               : 'bg-transparent hover:bg-white/10 text-white'
                           }`}
                         >
-                          <i className={`${template.icon} mr-2`}></i>
+                          <i className={`${template.icon} mr-1.5`}></i>
                           {template.name}
                         </TabsTrigger>
                       );
                     })}
                   </TabsList>
-                  
-                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#151515] via-[rgba(21,21,21,0.7)] to-transparent z-10 pointer-events-none rounded-r-full"></div>
                 </div>
                 
                 <button 
