@@ -81,6 +81,12 @@ export default function Header() {
                   >
                     AI Plugin Marketplace
                   </a>
+                  <a 
+                    onClick={() => setLocation('/industry-templates')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Industry AI Solutions
+                  </a>
                 </div>
               </div>
             </div>
@@ -173,6 +179,15 @@ export default function Header() {
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   AI Plugin Marketplace
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/industry-templates');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  Industry AI Solutions
                 </a>
               </div>
             </div>
