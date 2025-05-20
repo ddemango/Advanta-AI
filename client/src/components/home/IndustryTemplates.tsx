@@ -219,6 +219,111 @@ const industryTemplates = [
       company: "Cornerstone Medical Group"
     },
     description: 'HIPAA-compliant AI assistants that streamline patient intake, appointment prioritization, treatment plan explanations, and medical adherence monitoring with intelligent follow-up systems.'
+  },
+  {
+    id: 'entertainment-media',
+    name: 'Entertainment & Media',
+    icon: 'fa-solid fa-film',
+    color: 'from-pink-500 to-purple-600',
+    badgeColor: 'bg-pink-500/20 text-pink-400',
+    features: [
+      'Content recommendation engine with personalized viewer profiles',
+      'Automated video editing and scene selection tools',
+      'AI scriptwriting and story development assistants',
+      'Audience sentiment analysis for content optimization',
+      'Smart content distribution and promotional targeting'
+    ],
+    metrics: [
+      { label: 'Content Production', value: '35% faster' },
+      { label: 'Viewer Engagement', value: '+47% increase' },
+      { label: 'Audience Growth', value: '29% improvement' }
+    ],
+    useCases: [
+      {
+        title: 'Personalized Content Delivery',
+        description: 'AI analyzes viewer preferences and behavior to deliver tailored content recommendations that increase watch time and retention.'
+      },
+      {
+        title: 'Automated Content Creation',
+        description: 'Smart assistants that streamline video editing, caption generation, and promotional material creation for multi-platform distribution.'
+      }
+    ],
+    testimonial: {
+      quote: "Our AI content system has revolutionized how we create and distribute media. Production time is down by a third, and viewer engagement metrics have skyrocketed across all our platforms.",
+      author: "Michael Rodriguez",
+      company: "Stellar Media Productions"
+    },
+    description: 'AI-powered solutions for media companies to streamline content creation, personalize viewer experiences, optimize distribution, and analyze audience engagement across multiple platforms.'
+  },
+  {
+    id: 'cybersecurity',
+    name: 'Cybersecurity',
+    icon: 'fa-solid fa-shield-alt',
+    color: 'from-gray-700 to-slate-800',
+    badgeColor: 'bg-gray-700/20 text-gray-400',
+    features: [
+      'Real-time threat detection and anomaly identification',
+      'Automated security incident response and remediation',
+      'Predictive risk analysis and vulnerability scanning',
+      'Intelligent phishing prevention with user behavior analysis',
+      'Advanced network traffic monitoring with pattern recognition'
+    ],
+    metrics: [
+      { label: 'Threat Detection', value: '98.7% accuracy' },
+      { label: 'Response Time', value: 'Under 3 minutes' },
+      { label: 'False Positives', value: 'Reduced by 64%' }
+    ],
+    useCases: [
+      {
+        title: 'Intelligent Security Operations',
+        description: 'AI continuously monitors systems and network traffic to identify threats and respond to security incidents automatically.'
+      },
+      {
+        title: 'Proactive Defense System',
+        description: 'Predictive analysis identifies potential vulnerabilities and security gaps before they can be exploited by attackers.'
+      }
+    ],
+    testimonial: {
+      quote: "The AI security platform has transformed our cybersecurity operations. We've dramatically reduced our mean time to detect and respond to threats while allowing our security team to focus on strategic initiatives.",
+      author: "Alexandra Chen",
+      company: "SecureDefend Technologies"
+    },
+    description: 'AI-powered cybersecurity platforms that provide continuous threat monitoring, automated incident response, predictive risk analysis, and proactive vulnerability management.'
+  },
+  {
+    id: 'education',
+    name: 'Education',
+    icon: 'fa-solid fa-graduation-cap',
+    color: 'from-green-500 to-emerald-600',
+    badgeColor: 'bg-green-500/20 text-green-400',
+    features: [
+      'Personalized learning paths with adaptive difficulty scaling',
+      'Automated grading and feedback generation',
+      'Student engagement monitoring with intervention recommendations',
+      'AI tutoring with conceptual explanations and examples',
+      'Learning analytics dashboard for educators'
+    ],
+    metrics: [
+      { label: 'Student Performance', value: '+31% improvement' },
+      { label: 'Teacher Time Saved', value: '12+ hours/week' },
+      { label: 'Learner Satisfaction', value: '92% positive' }
+    ],
+    useCases: [
+      {
+        title: 'Adaptive Learning System',
+        description: 'AI analyzes student performance to create personalized learning experiences that adapt to individual strengths, weaknesses, and learning styles.'
+      },
+      {
+        title: 'Educator Support Dashboard',
+        description: 'Comprehensive analytics and early intervention tools that help teachers identify at-risk students and provide targeted support.'
+      }
+    ],
+    testimonial: {
+      quote: "Our AI education platform has revolutionized how we teach and support students. We've seen remarkable improvements in learning outcomes while reducing teacher administrative burden significantly.",
+      author: "Dr. Rebecca Johnson",
+      company: "Evergreen Learning Academy"
+    },
+    description: 'AI-powered education solutions that personalize learning experiences, automate administrative tasks, provide intelligent tutoring, and deliver actionable insights to educators and administrators.'
   }
 ];
 
