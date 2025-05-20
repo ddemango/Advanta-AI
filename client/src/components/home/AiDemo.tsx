@@ -14,7 +14,7 @@ type Message = {
 };
 
 // Demo messages
-const initialMessages: Message[] = [
+const initialMessages = [
   {
     id: 1,
     type: 'ai',
