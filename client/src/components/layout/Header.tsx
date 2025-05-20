@@ -93,6 +93,12 @@ export default function Header() {
                   >
                     Quick Start Templates
                   </a>
+                  <a 
+                    onClick={() => setLocation('/template-assistant')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Template Customization Assistant
+                  </a>
                 </div>
               </div>
             </div>
@@ -203,6 +209,15 @@ export default function Header() {
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer"
                 >
                   Quick Start Templates
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/template-assistant');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  Template Customization Assistant
                 </a>
               </div>
             </div>

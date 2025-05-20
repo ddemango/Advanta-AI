@@ -13,6 +13,7 @@ import Sandbox from "@/pages/sandbox";
 import ROICalculator from "@/pages/roi-calculator";
 import IndustryTemplatesPage from "@/pages/industry-templates";
 import QuickStartTemplatesPage from "@/pages/quick-start-templates";
+import TemplateAssistantPage from "@/pages/template-assistant";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/roi-calculator" component={ROICalculator} />
       <Route path="/industry-templates" component={IndustryTemplatesPage} />
       <Route path="/quick-start-templates" component={QuickStartTemplatesPage} />
+      <Route path="/template-assistant" component={TemplateAssistantPage} />
       <Route component={NotFound} />
     </Switch>
   );
