@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { GradientText } from '@/components/ui/gradient-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { SectionDivider } from '@/components/ui/section-divider';
 
 interface ServiceTileProps {
   icon: string;
@@ -92,8 +93,16 @@ export default function ServicesPreview() {
   ];
 
   return (
-    <section id="services-preview" className="py-20 bg-background relative">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="services-preview" className="py-20 bg-background relative overflow-hidden">
+      {/* Top section divider */}
+      <SectionDivider 
+        variant="curve" 
+        color="#0f172a" 
+        height={80} 
+        className="opacity-70" 
+      />
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -142,6 +151,15 @@ export default function ServicesPreview() {
           </Button>
         </motion.div>
       </div>
+      
+      {/* Bottom section divider */}
+      <SectionDivider 
+        variant="wave" 
+        color="#0f172a" 
+        height={80} 
+        className="opacity-70"
+        flip={true}
+      />
     </section>
   );
 }

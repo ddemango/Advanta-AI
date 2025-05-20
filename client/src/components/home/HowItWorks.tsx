@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { GradientText } from '@/components/ui/gradient-text';
+import { SectionDivider } from '@/components/ui/section-divider';
 
 export default function HowItWorks() {
   const steps = [
@@ -27,6 +28,14 @@ export default function HowItWorks() {
 
   return (
     <section id="how-it-works" className="py-20 bg-black/60 relative overflow-hidden">
+      {/* Top section divider */}
+      <SectionDivider 
+        variant="angle" 
+        color="#0f172a" 
+        height={60} 
+        className="opacity-70" 
+      />
+      
       {/* Animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/0 to-background/80 z-0"></div>
       
@@ -98,6 +107,15 @@ export default function HowItWorks() {
           </p>
         </motion.div>
       </div>
+      
+      {/* Bottom section divider */}
+      <SectionDivider 
+        variant="triangle" 
+        color="#0f172a" 
+        height={70} 
+        className="opacity-70"
+        flip={true}
+      />
     </section>
   );
 }
