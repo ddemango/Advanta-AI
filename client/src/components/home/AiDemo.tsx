@@ -5,8 +5,16 @@ import { Input } from '@/components/ui/input';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { SectionDivider } from '@/components/ui/section-divider';
 
+type Message = {
+  id: number;
+  type: 'ai' | 'user';
+  content: string;
+  list?: string[];
+  footer?: string;
+};
+
 // Demo messages
-const initialMessages = [
+const initialMessages: Message[] = [
   {
     id: 1,
     type: 'ai',
@@ -30,14 +38,6 @@ const initialMessages = [
     footer: 'Our clients in the eCommerce sector typically see a 25-40% increase in conversion rates and 15-30% higher average order values. Would you like to hear about a specific solution in more detail?'
   }
 ];
-
-type Message = {
-  id: number;
-  type: 'ai' | 'user';
-  content: string;
-  list?: string[];
-  footer?: string;
-};
 
 export default function AiDemo() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -71,8 +71,16 @@ export default function AiDemo() {
   };
 
   return (
-    <section id="ai-demo" className="py-20 bg-muted">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="ai-demo" className="py-20 bg-muted relative overflow-hidden">
+      {/* Top section divider */}
+      <SectionDivider 
+        variant="curve" 
+        color="#0f172a" 
+        height={70} 
+        className="opacity-70" 
+      />
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           variants={staggerContainer}
           initial="hidden"
@@ -194,6 +202,15 @@ export default function AiDemo() {
           </div>
         </motion.div>
       </div>
+      
+      {/* Bottom section divider */}
+      <SectionDivider 
+        variant="triangle" 
+        color="#0f172a" 
+        height={70} 
+        className="opacity-70"
+        flip={true}
+      />
     </section>
   );
 }
