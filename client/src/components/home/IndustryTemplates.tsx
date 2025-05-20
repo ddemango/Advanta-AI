@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -329,6 +329,80 @@ const industryTemplates = [
 
 export default function IndustryTemplates() {
   const [activeTab, setActiveTab] = useState('real-estate');
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  
+  // Track scroll position to show/hide arrows
+  const handleScroll = () => {
+    if (tabsContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabsContainerRef.current;
+      
+      // Show left arrow if scrolled right
+      setShowLeftArrow(scrollLeft > 20);
+      
+      // Hide right arrow if reached end of scroll
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
+    }
+  };
+  
+  // Set up scroll event listener
+  useEffect(() => {
+    const scrollContainer = tabsContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      // Initial check
+      handleScroll();
+    }
+    
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+  
+  // Scroll to active tab when it changes
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      const container = tabsContainerRef.current;
+      const activeElement = container.querySelector(`[value="${activeTab}"]`) as HTMLElement;
+      
+      if (activeElement) {
+        // Calculate the scroll position to center the active element
+        const containerWidth = container.offsetWidth;
+        const activeElementLeft = activeElement.offsetLeft;
+        const activeElementWidth = activeElement.offsetWidth;
+        
+        const scrollTo = activeElementLeft - (containerWidth / 2) + (activeElementWidth / 2);
+        
+        // Smooth scroll to the position
+        container.scrollTo({
+          left: Math.max(0, scrollTo),
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeTab]);
+  
+  // Scroll left/right functions
+  const scrollLeft = () => {
+    if (tabsContainerRef.current) {
+      tabsContainerRef.current.scrollBy({
+        left: -200,
+        behavior: 'smooth'
+      });
+    }
+  };
+  
+  const scrollRight = () => {
+    if (tabsContainerRef.current) {
+      tabsContainerRef.current.scrollBy({
+        left: 200,
+        behavior: 'smooth'
+      });
+    }
+  };
   const activeTemplate = industryTemplates.find(template => template.id === activeTab);
 
   return (
@@ -375,19 +449,23 @@ export default function IndustryTemplates() {
             <div className="w-full max-w-4xl">
               <div className="relative mx-auto flex items-center justify-center bg-white/5 backdrop-blur-lg rounded-full p-1">
                 <button 
-                  className="h-10 w-10 flex items-center justify-center rounded-full transition-colors z-20 text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={() => {
-                    const tabsContainer = document.querySelector('.industry-tabs-container');
-                    if (tabsContainer) {
-                      tabsContainer.scrollLeft -= 300;
-                    }
-                  }}
+                  className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors z-20 
+                    ${showLeftArrow ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-white/20 cursor-default'}`}
+                  onClick={scrollLeft}
+                  disabled={!showLeftArrow}
+                  aria-label="Scroll left"
                 >
                   <i className="fas fa-chevron-left"></i>
                 </button>
                 
                 <div className="overflow-x-auto flex-1 relative mx-4">
-                  <TabsList className="industry-tabs-container flex gap-1 px-1 py-1 bg-transparent border-0" style={{ scrollBehavior: 'smooth' }}>
+                  <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#151515] via-[rgba(21,21,21,0.7)] to-transparent z-10 pointer-events-none"></div>
+                  
+                  <TabsList 
+                    ref={tabsContainerRef}
+                    className="flex gap-1 px-1 py-1 bg-transparent border-0 overflow-x-auto scrollbar-hide" 
+                    style={{ scrollBehavior: 'smooth' }}
+                  >
                     {industryTemplates.map(template => {
                       const isActive = activeTab === template.id;
                       return (
@@ -406,16 +484,16 @@ export default function IndustryTemplates() {
                       );
                     })}
                   </TabsList>
+                  
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#151515] via-[rgba(21,21,21,0.7)] to-transparent z-10 pointer-events-none"></div>
                 </div>
                 
                 <button 
-                  className="h-10 w-10 flex items-center justify-center rounded-full transition-colors z-20 text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={() => {
-                    const tabsContainer = document.querySelector('.industry-tabs-container');
-                    if (tabsContainer) {
-                      tabsContainer.scrollLeft += 300;
-                    }
-                  }}
+                  className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors z-20 
+                    ${showRightArrow ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-white/20 cursor-default'}`}
+                  onClick={scrollRight}
+                  disabled={!showRightArrow}
+                  aria-label="Scroll right"
                 >
                   <i className="fas fa-chevron-right"></i>
                 </button>
