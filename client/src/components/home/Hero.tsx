@@ -43,28 +43,29 @@ export default function Hero() {
             variants={fadeInUp}
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight">
-              <span className="block mb-2">Transformative AI Solutions</span>
-              <GradientText>That Outperform Competitors</GradientText>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 leading-tight">
+              <span className="block mb-1 sm:mb-2">Transformative AI</span>
+              <span className="block mb-1 sm:mb-2">Solutions</span>
+              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">That Outperform Competitors</GradientText>
             </h1>
             <motion.p 
-              className="text-xl text-gray-300 mb-8 leading-relaxed"
+              className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Harness breakthrough AI technology that delivers measurable ROI within 30 days. Our proprietary algorithms drive revenue growth, automate workflows, and provide actionable intelligence other solutions can't match.
+              Harness breakthrough AI technology that delivers measurable ROI within 30 days. Our proprietary algorithms drive revenue growth, automate workflows, and provide actionable intelligence.
             </motion.p>
             <motion.div 
-              className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
+              className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.2, duration: 0.5 }}
             >
-              <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+              <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-sm sm:text-base">
                 <a href="/calculator">⚡ Get Your Custom AI Solution</a>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="lg" variant="outline" className="text-sm sm:text-base">
                 <a href="/template-assistant">🚀 Generate Code Now</a>
               </Button>
             </motion.div>
@@ -164,7 +165,7 @@ export default function Hero() {
         </motion.div>
         
         {/* Stats Strip */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" ref={ref}>
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" ref={ref as any}>
           <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={385} start={0} duration={2000} inView={inView} suffix="%" />

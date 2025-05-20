@@ -33,9 +33,9 @@ export default function Header() {
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div className="flex items-center">
-            <a href="#" className="text-white font-bold text-xl flex items-center" onClick={() => setLocation('/')}>
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center mr-2">
-                <i className="fas fa-brain text-white"></i>
+            <a href="#" className="text-white font-bold text-lg sm:text-xl flex items-center" onClick={() => setLocation('/')}>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center mr-2">
+                <i className="fas fa-brain text-white text-sm sm:text-base"></i>
               </div>
               <span>Advanta<span className="text-primary">AI</span></span>
             </a>
@@ -129,39 +129,39 @@ export default function Header() {
         </div>
         
         {/* Mobile Navigation */}
-        <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} pb-4`}>
-          <div className="flex flex-col space-y-4">
+        <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} pb-4 bg-background/95 backdrop-blur-md border-t border-border/20 mt-4`}>
+          <div className="flex flex-col space-y-3 py-3">
             <a 
               href="#services" 
-              className="text-gray-300 hover:text-white font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
               onClick={closeMenu}
             >
               Services
             </a>
             <a 
               href="#case-studies" 
-              className="text-gray-300 hover:text-white font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
               onClick={closeMenu}
             >
               Case Studies
             </a>
             <a 
               href="#testimonials" 
-              className="text-gray-300 hover:text-white font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
               onClick={closeMenu}
             >
               Testimonials
             </a>
             {/* Resources Section */}
-            <div className="mb-2">
-              <div className="text-gray-300 font-medium mb-2">Resources</div>
-              <div className="pl-4 flex flex-col space-y-2">
+            <div className="mb-1 px-2">
+              <div className="text-gray-300 font-medium mb-1">Resources</div>
+              <div className="pl-3 flex flex-col space-y-2 mt-1">
                 <a 
                   onClick={() => {
                     setLocation('/demo');
                     closeMenu();
                   }}
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   AI Demo
                 </a>
@@ -170,7 +170,7 @@ export default function Header() {
                     setLocation('/sandbox');
                     closeMenu();
                   }}
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   AI Product Sandbox
                 </a>
@@ -179,7 +179,7 @@ export default function Header() {
                     setLocation('/calculator');
                     closeMenu();
                   }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   AI ROI Calculator
                 </a>
@@ -188,7 +188,7 @@ export default function Header() {
                     setLocation('/marketplace');
                     closeMenu();
                   }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   AI Plugin Marketplace
                 </a>
@@ -197,25 +197,16 @@ export default function Header() {
                     setLocation('/industry-templates');
                     closeMenu();
                   }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   Industry AI Solutions
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/quick-start-templates');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
-                >
-                  Quick Start Templates
                 </a>
                 <a 
                   onClick={() => {
                     setLocation('/template-assistant');
                     closeMenu();
                   }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer"
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   Template Customization Assistant
                 </a>
@@ -224,24 +215,24 @@ export default function Header() {
             
             <a 
               href="#client-portal" 
-              className="text-gray-300 hover:text-white font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
               onClick={closeMenu}
             >
               Client Portal
             </a>
             <a 
               href="#contact" 
-              className="text-gray-300 hover:text-white font-medium transition-colors"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
               onClick={closeMenu}
             >
               Contact
             </a>
-            <div className="pt-2 flex flex-col space-y-2">
-              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full">
+            <div className="pt-2 flex flex-col space-y-2 px-2">
+              <Button asChild variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full">
                 <a href="/login" onClick={closeMenu}>Client AI Suite</a>
               </Button>
-              <Button asChild className="bg-primary hover:bg-primary/90 w-full">
-                <a href="/calculator" onClick={closeMenu}>Build My AI Stack</a>
+              <Button asChild size="sm" className="bg-primary hover:bg-primary/90 w-full text-sm">
+                <a href="/calculator" onClick={closeMenu}>Get Your Custom AI Solution</a>
               </Button>
             </div>
           </div>
