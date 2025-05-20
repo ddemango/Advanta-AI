@@ -1,0 +1,481 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Link } from 'wouter';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { GradientText } from '@/components/ui/gradient-text';
+import { Button } from '@/components/ui/button';
+import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { Helmet } from 'react-helmet';
+
+type ServiceCategory = 'all' | 'custom-ai' | 'analytics' | 'automation' | 'integration';
+
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  features: string[];
+  icon: string;
+  category: ServiceCategory;
+  caseStudyLink?: string;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+export default function ServicesPage() {
+  const [activeCategory, setActiveCategory] = useState<ServiceCategory>('all');
+  
+  const services: Service[] = [
+    {
+      id: 'custom-gpt-agents',
+      title: 'Custom GPT Agents',
+      description: 'AI assistants tailored to your brand voice, trained on your business data, and optimized for your specific use cases.',
+      features: [
+        'Personalized Knowledge Base',
+        'Multi-language Support',
+        'Custom Training on Private Data',
+        'Voice & Tone Matching',
+        'Secure Data Handling',
+        'Performance Analytics Dashboard'
+      ],
+      icon: 'fas fa-robot',
+      category: 'custom-ai',
+      caseStudyLink: '/case-studies/ecommerce',
+      primaryColor: 'from-blue-500',
+      secondaryColor: 'to-indigo-600'
+    },
+    {
+      id: 'ai-workflow-automation',
+      title: 'AI Workflow Automation',
+      description: 'Automate repetitive tasks, data processing, and customer journeys with intelligent AI workflows.',
+      features: [
+        'Document Processing Automation',
+        'Intelligent Form Handling',
+        'Decision Support Systems',
+        'Customer Journey Orchestration',
+        'Process Mining & Optimization',
+        'Conditional Logic Workflows'
+      ],
+      icon: 'fas fa-cogs',
+      category: 'automation',
+      caseStudyLink: '/case-studies/saas',
+      primaryColor: 'from-purple-500',
+      secondaryColor: 'to-pink-600'
+    },
+    {
+      id: 'predictive-dashboards',
+      title: 'Predictive Dashboards',
+      description: 'Real-time analytics and forecasting dashboards powered by AI to help you make data-driven decisions.',
+      features: [
+        'Real-time Data Visualization',
+        'Trend Prediction & Anomaly Detection',
+        'Customizable KPI Tracking',
+        'Multi-source Data Integration',
+        'Interactive Business Intelligence',
+        'Automated Reporting Systems'
+      ],
+      icon: 'fas fa-chart-line',
+      category: 'analytics',
+      caseStudyLink: '/case-studies/finance',
+      primaryColor: 'from-green-500',
+      secondaryColor: 'to-emerald-600'
+    },
+    {
+      id: 'multilingual-support-bots',
+      title: 'Multilingual Support Bots',
+      description: 'AI assistants that communicate fluently in multiple languages to serve your global customer base.',
+      features: [
+        'Support for 95+ Languages',
+        'Cultural Context Adaptation',
+        'Speech-to-Text Capabilities',
+        'Accent & Dialect Recognition',
+        'Seamless Language Switching',
+        'Idiom & Slang Understanding'
+      ],
+      icon: 'fas fa-language',
+      category: 'custom-ai',
+      primaryColor: 'from-amber-500',
+      secondaryColor: 'to-orange-600'
+    },
+    {
+      id: 'crm-app-integrations',
+      title: 'CRM/App Integrations',
+      description: 'Seamlessly connect your AI solutions with your existing CRM, marketing, and business tools.',
+      features: [
+        'Native Salesforce & HubSpot Integration',
+        'Custom API Development',
+        'Two-way Data Synchronization',
+        'Workflow Trigger Management',
+        'Compliance & Security Controls',
+        'Cross-platform Compatibility'
+      ],
+      icon: 'fas fa-plug',
+      category: 'integration',
+      primaryColor: 'from-sky-500',
+      secondaryColor: 'to-blue-600'
+    },
+    {
+      id: 'ai-trained-on-client-data',
+      title: 'AI Trained on Client Data',
+      description: 'Custom AI models trained on your proprietary data for maximum relevance and effectiveness.',
+      features: [
+        'Secure Data Processing Pipeline',
+        'Custom Model Training',
+        'Proprietary Algorithm Development',
+        'Iterative Performance Optimization',
+        'Model Versioning & Management',
+        'Ethical AI Implementation'
+      ],
+      icon: 'fas fa-database',
+      category: 'custom-ai',
+      caseStudyLink: '/case-studies/healthcare',
+      primaryColor: 'from-red-500',
+      secondaryColor: 'to-pink-600'
+    },
+    {
+      id: 'white-label-portals',
+      title: 'White-Label Portals',
+      description: 'Offer clients their own branded portal with analytics, bot controls, and CRM integrations.',
+      features: [
+        'Fully Customizable Branding',
+        'Client Access Management',
+        'Multi-tenant Architecture',
+        'Usage & Performance Analytics',
+        'Configurable Feature Sets',
+        'Tiered Service Levels'
+      ],
+      icon: 'fas fa-copyright',
+      category: 'integration',
+      primaryColor: 'from-violet-500',
+      secondaryColor: 'to-purple-600'
+    },
+    {
+      id: 'autoblog-faq-generator',
+      title: 'AutoBlog + FAQ Generator',
+      description: 'AI-powered content generation for blogs, FAQs, and help documentation based on your business data.',
+      features: [
+        'SEO-optimized Content Creation',
+        'Topic & Keyword Research',
+        'Scheduled Publishing',
+        'Content Style Adaptation',
+        'Multimedia Content Suggestions',
+        'Multilingual Content Generation'
+      ],
+      icon: 'fas fa-brain',
+      category: 'automation',
+      primaryColor: 'from-blue-500',
+      secondaryColor: 'to-cyan-600'
+    },
+    {
+      id: 'ai-lead-scoring',
+      title: 'AI Lead Scoring & Qualification',
+      description: 'Intelligent prioritization of sales leads based on AI-analyzed likelihood to convert.',
+      features: [
+        'Behavioral Pattern Analysis',
+        'Engagement Scoring Algorithm',
+        'Custom Qualification Criteria',
+        'Pipeline Velocity Optimization',
+        'Real-time Lead Reassignment',
+        'Conversion Probability Prediction'
+      ],
+      icon: 'fas fa-user-check',
+      category: 'analytics',
+      primaryColor: 'from-green-500',
+      secondaryColor: 'to-teal-600'
+    },
+    {
+      id: 'sentiment-analysis',
+      title: 'Sentiment Analysis Engine',
+      description: 'Advanced AI that monitors customer feedback, reviews, and communications to detect sentiment trends.',
+      features: [
+        'Multilingual Sentiment Detection',
+        'Emotion Classification',
+        'Topic & Entity Extraction',
+        'Trend Analysis Dashboard',
+        'Real-time Alert System',
+        'Competitive Benchmark Comparison'
+      ],
+      icon: 'fas fa-smile',
+      category: 'analytics',
+      primaryColor: 'from-yellow-500',
+      secondaryColor: 'to-amber-600'
+    },
+    {
+      id: 'ai-product-recommendation',
+      title: 'AI Product Recommendation',
+      description: 'Personalized product suggestions that adapt to user behavior and preferences in real-time.',
+      features: [
+        'Behavioral Analytics Engine',
+        'Cross-selling Optimization',
+        'Visual Similarity Matching',
+        'Seasonal Trend Adaptation',
+        'Inventory-aware Recommendations',
+        'A/B Testing Framework'
+      ],
+      icon: 'fas fa-gift',
+      category: 'custom-ai',
+      caseStudyLink: '/case-studies/retail',
+      primaryColor: 'from-red-500',
+      secondaryColor: 'to-rose-600'
+    },
+    {
+      id: 'predictive-maintenance',
+      title: 'Predictive Maintenance AI',
+      description: 'AI systems that predict equipment failures before they happen, reducing downtime and maintenance costs.',
+      features: [
+        'IoT Sensor Data Integration',
+        'Failure Pattern Recognition',
+        'Maintenance Schedule Optimization',
+        'Cost Savings Calculator',
+        'Remote Monitoring Interface',
+        'Asset Lifetime Prediction'
+      ],
+      icon: 'fas fa-tools',
+      category: 'analytics',
+      primaryColor: 'from-blue-500',
+      secondaryColor: 'to-sky-600'
+    }
+  ];
+  
+  const categories = [
+    { id: 'all', name: 'All Services', icon: 'fas fa-th-large' },
+    { id: 'custom-ai', name: 'Custom AI', icon: 'fas fa-robot' },
+    { id: 'analytics', name: 'Analytics & Intelligence', icon: 'fas fa-chart-line' },
+    { id: 'automation', name: 'Automation', icon: 'fas fa-cogs' },
+    { id: 'integration', name: 'Integration & Portals', icon: 'fas fa-plug' }
+  ];
+  
+  const filteredServices = activeCategory === 'all' 
+    ? services 
+    : services.filter(service => service.category === activeCategory);
+
+  return (
+    <>
+      <Helmet>
+        <title>AI Services & Solutions | Advanta AI</title>
+        <meta name="description" content="Explore our comprehensive suite of AI solutions including custom GPT agents, predictive analytics, workflow automation, and system integrations." />
+        <meta name="keywords" content="AI services, custom GPT, analytics, predictive dashboards, AI automation, machine learning solutions" />
+        <meta property="og:title" content="AI Services & Solutions | Advanta AI" />
+        <meta property="og:description" content="Explore our comprehensive suite of AI solutions including custom GPT agents, predictive analytics, workflow automation, and system integrations." />
+        <meta property="og:type" content="website" />
+      </Helmet>
+      
+      <Header />
+      
+      <main>
+        {/* Hero Section */}
+        <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
+          
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div 
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="text-center mb-12"
+            >
+              <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                Our Enterprise <GradientText>AI Solutions</GradientText>
+              </motion.h1>
+              <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+                Transformative intelligence that delivers measurable business outcomes through our suite of specialized AI services.
+              </motion.p>
+            </motion.div>
+            
+            {/* Category Navigation */}
+            <motion.div 
+              variants={fadeIn}
+              initial="hidden"
+              animate="show"
+              className="flex flex-wrap justify-center gap-3 mb-16"
+            >
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={activeCategory === category.id ? 'default' : 'outline'}
+                  className={`text-sm font-medium ${activeCategory === category.id ? 'bg-primary text-white' : ''}`}
+                  onClick={() => setActiveCategory(category.id as ServiceCategory)}
+                >
+                  <i className={`${category.icon} mr-2`}></i>
+                  {category.name}
+                </Button>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+        
+        {/* Services Listing */}
+        <section className="py-16 bg-muted">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {filteredServices.map((service, index) => (
+                <motion.div 
+                  key={service.id}
+                  variants={fadeIn}
+                  transition={{ delay: index * 0.1 }}
+                  className="h-full"
+                >
+                  <div className="bg-background rounded-xl overflow-hidden border border-white/10 h-full flex flex-col">
+                    <div className={`bg-gradient-to-r ${service.primaryColor} ${service.secondaryColor} p-5`}>
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-xl">
+                        <i className={service.icon}></i>
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 flex-grow">
+                      <h3 className="text-xl font-bold mb-2">{service.title}</h3>
+                      <p className="text-gray-400 mb-4">{service.description}</p>
+                      
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Key Features:</h4>
+                        <ul className="space-y-1">
+                          {service.features.slice(0, 4).map((feature, i) => (
+                            <li key={i} className="flex items-start">
+                              <span className="text-primary mr-2">•</span>
+                              <span className="text-sm text-gray-400">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 pt-0 mt-auto">
+                      <Link href={`/service/${service.id}`}>
+                        <Button variant="outline" className="w-full">
+                          Learn More
+                          <i className="fas fa-arrow-right ml-2"></i>
+                        </Button>
+                      </Link>
+                      
+                      {service.caseStudyLink && (
+                        <div className="mt-3 text-center">
+                          <Link href={service.caseStudyLink} className="text-xs text-primary hover:underline">
+                            View Case Study
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+        
+        {/* Implementation Process */}
+        <section className="py-20 bg-black/60 relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
+          
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
+                Enterprise-Grade <GradientText>Implementation Process</GradientText>
+              </motion.h2>
+              <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
+                Our systematic approach ensures rapid deployment with minimal disruption to your operations.
+              </motion.p>
+            </motion.div>
+            
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+            >
+              {[
+                {
+                  number: '1',
+                  title: 'Strategic AI Discovery Session',
+                  description: 'Our AI architects analyze your business processes to identify high-ROI automation opportunities and competitive advantages.',
+                  icon: 'fa-solid fa-lightbulb'
+                },
+                {
+                  number: '2',
+                  title: 'Proprietary Algorithm Implementation',
+                  description: 'We deploy our enterprise-grade algorithms trained on your specific industry data for maximum accuracy and performance.',
+                  icon: 'fa-solid fa-code'
+                },
+                {
+                  number: '3',
+                  title: 'Accelerated Market Deployment',
+                  description: 'Launch within 14 days with real-time analytics dashboard monitoring performance, ROI metrics, and competitive intelligence.',
+                  icon: 'fa-solid fa-rocket'
+                }
+              ].map((step, index) => (
+                <motion.div
+                  key={index}
+                  variants={fadeIn}
+                  className="relative"
+                >
+                  <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-8 h-full">
+                    {/* Step number */}
+                    <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                      <span className="text-xl font-bold">{step.number}</span>
+                    </div>
+                    
+                    {/* Connector line */}
+                    {index < 2 && (
+                      <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-[2px] bg-primary/40 z-0">
+                        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 rounded-full bg-primary"></div>
+                      </div>
+                    )}
+                    
+                    <div className="mb-4 text-3xl text-primary mt-4">
+                      <i className={step.icon}></i>
+                    </div>
+                    
+                    <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                    <p className="text-gray-300">{step.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+        
+        {/* Call to Action */}
+        <section className="py-20 bg-primary/10">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="max-w-4xl mx-auto text-center"
+            >
+              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-6">
+                Ready to Transform Your Business with <GradientText>Enterprise AI</GradientText>?
+              </motion.h2>
+              <motion.p variants={fadeInUp} className="text-xl text-gray-300 mb-8">
+                Schedule a consultation with our AI specialists to explore how our services can be tailored to your specific needs.
+              </motion.p>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" asChild>
+                  <Link href="/contact">Schedule Consultation</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/calculator">Build Custom AI Stack</Link>
+                </Button>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+      </main>
+      
+      <Footer />
+    </>
+  );
+}

@@ -43,7 +43,7 @@ export default function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <a href="#services" className="text-gray-300 hover:text-white font-medium transition-colors">Services</a>
+            <a onClick={() => setLocation('/services')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Services</a>
             <a href="#case-studies" className="text-gray-300 hover:text-white font-medium transition-colors">Case Studies</a>
             <a href="#testimonials" className="text-gray-300 hover:text-white font-medium transition-colors">Testimonials</a>
             
@@ -132,9 +132,11 @@ export default function Header() {
         <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} pb-4 bg-background/95 backdrop-blur-md border-t border-border/20 mt-4`}>
           <div className="flex flex-col space-y-3 py-3">
             <a 
-              href="#services" 
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
-              onClick={closeMenu}
+              onClick={() => {
+                setLocation('/services');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
             >
               Services
             </a>
