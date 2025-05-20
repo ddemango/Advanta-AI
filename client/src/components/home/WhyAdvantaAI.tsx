@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { GradientText } from '@/components/ui/gradient-text';
 import { NeuralNetwork } from '@/components/ui/neural-network';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { SectionDivider } from '@/components/ui/section-divider';
 
 interface FeatureCardProps {
   icon: string;
@@ -53,6 +54,14 @@ export default function WhyAdvantaAI() {
 
   return (
     <section id="why-advanta" className="py-20 relative overflow-hidden">
+      {/* Section divider at the top */}
+      <SectionDivider 
+        variant="wave" 
+        color="#0f172a" 
+        height={60} 
+        className="opacity-80" 
+      />
+      
       {/* Dynamic background with neural network */}
       <div className="absolute inset-0 opacity-30">
         <NeuralNetwork nodeCount={40} />
@@ -119,6 +128,15 @@ export default function WhyAdvantaAI() {
           </div>
         </motion.div>
       </div>
+      
+      {/* Section divider at the bottom */}
+      <SectionDivider 
+        variant="curve" 
+        color="#0f172a" 
+        height={60} 
+        className="opacity-80"
+        flip={true}
+      />
     </section>
   );
 }

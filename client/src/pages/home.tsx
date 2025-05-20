@@ -33,18 +33,31 @@ export default function Home() {
       <Header />
       
       <main>
+        {/* Main Hero Section */}
         <Hero />
-        <HowItWorks />
-        <ServicesPreview />
+        
+        {/* Value Proposition Section */}
         <WhyAdvantaAI />
+        <HowItWorks />
+        
+        {/* Solutions Section */}
+        <ServicesPreview />
         <Services />
+        
+        {/* Proof of Value Section */}
         <CaseStudies />
-        <AiAssessment />
         <Testimonials />
+        
+        {/* Interactive Tools Section */}
         <AiDemo />
         <AiProductSandbox />
+        <AiAssessment />
+        
+        {/* Client Experience Section */}
         <ClientPortal />
         <OnboardingWizard />
+        
+        {/* Conversion Section */}
         <PricingCta />
         <Contact />
       </main>
