@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { TestimonialCard } from '@/components/ui/testimonial-card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { DigitalRain } from '@/components/ui/digital-rain';
 import { ParticleText } from '@/components/ui/particle-text';
@@ -43,9 +41,7 @@ const testimonials = [
 export default function Testimonials() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slideWidth, setSlideWidth] = useState(0);
-  const [industry, setIndustry] = useState('eCommerce');
-  const [companySize, setCompanySize] = useState(60);
-  const [efficiency, setEfficiency] = useState(60);
+  
   const sliderRef = useRef<HTMLDivElement>(null);
 
   // Recalculate slide width on window resize
@@ -155,155 +151,7 @@ export default function Testimonials() {
           </div>
         </div>
         
-        {/* Advanced ROI Calculator */}
-        <motion.div
-          variants={fadeIn}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.25 }}
-          className="mt-20 relative rounded-2xl overflow-hidden"
-        >
-          {/* Animated background effects */}
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/70 z-10" />
-            <div className="absolute inset-0 overflow-hidden opacity-30">
-              <DigitalRain />
-            </div>
-          </div>
-          <div className="p-8">
-            <h3 className="text-2xl font-bold mb-4">AI ROI Calculator</h3>
-            <p className="text-muted-foreground mb-6">
-              Estimate your potential return on investment with our AI solutions. Adjust the sliders to match your business scenario.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <label className="text-white font-medium">Industry</label>
-                    <span className="text-muted-foreground">{industry}</span>
-                  </div>
-                  <Select
-                    value={industry}
-                    onValueChange={setIndustry}
-                  >
-                    <SelectTrigger className="w-full bg-background border border-border text-white rounded-lg p-3">
-                      <SelectValue placeholder="Select an industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="eCommerce">eCommerce</SelectItem>
-                      <SelectItem value="SaaS">SaaS</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                      <SelectItem value="Retail">Retail</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <label className="text-white font-medium">Company Size</label>
-                    <span className="text-muted-foreground">
-                      {companySize < 25 ? '1-50 employees' : 
-                       companySize < 50 ? '50-200 employees' : 
-                       companySize < 75 ? '201-500 employees' : '500+ employees'}
-                    </span>
-                  </div>
-                  <Slider
-                    value={[companySize]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => setCompanySize(value[0])}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1-50</span>
-                    <span>50-200</span>
-                    <span>201-500</span>
-                    <span>500+</span>
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <label className="text-white font-medium">Current Process Efficiency</label>
-                    <span className="text-muted-foreground">{efficiency}%</span>
-                  </div>
-                  <Slider
-                    value={[efficiency]}
-                    min={20}
-                    max={90}
-                    step={1}
-                    onValueChange={(value) => setEfficiency(value[0])}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Low</span>
-                    <span>Medium</span>
-                    <span>High</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-background rounded-xl p-6">
-                <h4 className="text-lg font-bold mb-4">Estimated Results</h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Efficiency Improvement</span>
-                      <span className="text-white font-medium">35-45%</span>
-                    </div>
-                    <div className="w-full bg-muted h-2 rounded-full mt-1">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: '40%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Cost Reduction</span>
-                      <span className="text-white font-medium">20-30%</span>
-                    </div>
-                    <div className="w-full bg-muted h-2 rounded-full mt-1">
-                      <div className="bg-secondary h-2 rounded-full" style={{ width: '25%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Revenue Growth</span>
-                      <span className="text-white font-medium">15-25%</span>
-                    </div>
-                    <div className="w-full bg-muted h-2 rounded-full mt-1">
-                      <div className="bg-accent h-2 rounded-full" style={{ width: '20%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <div className="flex justify-between font-bold">
-                      <span className="text-white">Estimated ROI</span>
-                      <span className="text-primary">210-280%</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">Over 12-18 months</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t border-border p-6 bg-background bg-opacity-50">
-            <div className="flex flex-col sm:flex-row justify-between items-center">
-              <div className="text-sm text-muted-foreground mb-4 sm:mb-0">
-                Results are estimates based on industry averages and client results.
-              </div>
-              <Button asChild className="bg-primary hover:bg-primary/90">
-                <a href="/calculator">Build My AI Stack</a>
-              </Button>
-            </div>
-          </div>
-        </motion.div>
+
       </div>
     </section>
   );
