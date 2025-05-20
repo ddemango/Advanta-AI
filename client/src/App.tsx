@@ -14,6 +14,7 @@ import ROICalculator from "@/pages/roi-calculator";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
+import { ChatButton } from "@/components/chat/ChatButton";
 
 function Router() {
   // Implement smooth scrolling for anchor links
@@ -89,6 +90,7 @@ function App() {
       />
       <Toaster />
       <Router />
+      {!isLoading && <ChatButton />}
     </TooltipProvider>
   );
 }

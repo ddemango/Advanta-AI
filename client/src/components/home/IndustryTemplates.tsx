@@ -369,84 +369,78 @@ export default function IndustryTemplates() {
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <div className="flex justify-center mb-10 relative">
-            <motion.div 
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-primary/80 to-accent/80 text-white shadow-[0_0_15px_rgba(120,80,255,0.5)] border border-primary/20 backdrop-blur-sm hover:shadow-[0_0_20px_rgba(120,80,255,0.7)] transition-all duration-300"
-                onClick={() => {
-                  const tabsContainer = document.querySelector('.industry-tabs-container');
-                  if (tabsContainer) {
-                    tabsContainer.scrollLeft -= 300;
-                  }
-                }}
-              >
-                <i className="fas fa-chevron-left"></i>
-              </Button>
-            </motion.div>
+          <div className="flex flex-col items-center mb-8">
+            <h3 className="text-xl font-semibold mb-4 text-center">Select Your Industry</h3>
             
-            <div className="overflow-hidden relative max-w-4xl px-4">
-              <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background pointer-events-none z-10"></div>
-              <TabsList className="industry-tabs-container px-8 py-2 overflow-x-auto flex no-scrollbar scroll-smooth gap-3 border-0 bg-transparent" style={{ scrollBehavior: 'smooth' }}>
-                {industryTemplates.map(template => {
-                  const isActive = activeTab === template.id;
-                  return (
-                    <motion.div
-                      key={template.id}
-                      initial={{ opacity: 0.8, y: 0 }}
-                      animate={{ 
-                        opacity: isActive ? 1 : 0.8,
-                        y: isActive ? -3 : 0,
-                        scale: isActive ? 1.05 : 1
-                      }}
-                      whileHover={{ 
-                        y: -3, 
-                        opacity: 1,
-                        scale: 1.05
-                      }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <TabsTrigger 
-                        value={template.id}
-                        className={`rounded-full px-5 py-2.5 flex-shrink-0 font-medium ${
-                          isActive 
-                            ? `bg-gradient-to-r ${template.color} text-white shadow-lg` 
-                            : 'bg-background/20 backdrop-blur-md border border-white/10 hover:border-white/20 transition-all duration-300'
-                        }`}
-                      >
-                        <i className={`${template.icon} mr-2`}></i>
-                        {template.name}
-                      </TabsTrigger>
-                    </motion.div>
-                  );
-                })}
-              </TabsList>
+            <div className="relative w-full max-w-3xl">
+              <div className="overflow-hidden relative w-full px-2">
+                {/* Left fade gradient */}
+                <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10"></div>
+                
+                {/* Main tab list */}
+                <div className="flex items-center w-full">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 p-0 rounded-full bg-background/10 backdrop-blur-xl border border-white/10 flex-shrink-0 z-20"
+                    onClick={() => {
+                      const tabsContainer = document.querySelector('.industry-tabs-container');
+                      if (tabsContainer) {
+                        tabsContainer.scrollLeft -= 250;
+                      }
+                    }}
+                  >
+                    <i className="fas fa-chevron-left text-xs"></i>
+                  </Button>
+                  
+                  <div className="overflow-x-auto mx-2 flex-1 no-scrollbar">
+                    <TabsList className="industry-tabs-container flex space-x-2 py-2 border-0 bg-transparent scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+                      {industryTemplates.map(template => {
+                        const isActive = activeTab === template.id;
+                        return (
+                          <TabsTrigger 
+                            key={template.id} 
+                            value={template.id}
+                            className={`rounded-full px-4 py-2 whitespace-nowrap transition-all duration-300 ${
+                              isActive 
+                                ? `bg-gradient-to-r ${template.color} text-white shadow-lg` 
+                                : 'bg-background/20 hover:bg-background/40 backdrop-blur-md'
+                            }`}
+                          >
+                            <i className={`${template.icon} mr-2`}></i>
+                            {template.name}
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+                  </div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 p-0 rounded-full bg-background/10 backdrop-blur-xl border border-white/10 flex-shrink-0 z-20"
+                    onClick={() => {
+                      const tabsContainer = document.querySelector('.industry-tabs-container');
+                      if (tabsContainer) {
+                        tabsContainer.scrollLeft += 250;
+                      }
+                    }}
+                  >
+                    <i className="fas fa-chevron-right text-xs"></i>
+                  </Button>
+                </div>
+                
+                {/* Right fade gradient */}
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10"></div>
+              </div>
             </div>
             
-            <motion.div 
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 p-0 rounded-full bg-gradient-to-r from-accent/80 to-primary/80 text-white shadow-[0_0_15px_rgba(120,80,255,0.5)] border border-primary/20 backdrop-blur-sm hover:shadow-[0_0_20px_rgba(120,80,255,0.7)] transition-all duration-300"
-                onClick={() => {
-                  const tabsContainer = document.querySelector('.industry-tabs-container');
-                  if (tabsContainer) {
-                    tabsContainer.scrollLeft += 300;
-                  }
-                }}
-              >
-                <i className="fas fa-chevron-right"></i>
-              </Button>
-            </motion.div>
+            {/* Industry description - adds context to what the user is selecting */}
+            <div className="mt-4 text-center max-w-xl">
+              <p className="text-sm text-muted-foreground">
+                {industryTemplates.find(t => t.id === activeTab)?.description.slice(0, 120)}...
+              </p>
+            </div>
           </div>
 
           {industryTemplates.map(template => (
