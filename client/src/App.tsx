@@ -11,6 +11,7 @@ import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
 import Sandbox from "@/pages/sandbox";
 import ServicesPage from "@/pages/services";
+import ContactPage from "@/pages/contact";
 import ROICalculator from "@/pages/roi-calculator";
 import IndustryTemplatesPage from "@/pages/industry-templates";
 import QuickStartTemplatesPage from "@/pages/quick-start-templates";
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/demo" component={Demo} />
       <Route path="/sandbox" component={Sandbox} />
       <Route path="/services" component={ServicesPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route path="/roi-calculator" component={ROICalculator} />
       <Route path="/industry-templates" component={IndustryTemplatesPage} />
       <Route path="/quick-start-templates" component={QuickStartTemplatesPage} />

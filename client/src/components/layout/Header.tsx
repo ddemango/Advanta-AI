@@ -104,7 +104,7 @@ export default function Header() {
             </div>
             
             <a href="#client-portal" className="text-gray-300 hover:text-white font-medium transition-colors">Client Portal</a>
-            <a href="#contact" className="text-gray-300 hover:text-white font-medium transition-colors">Contact</a>
+            <a onClick={() => setLocation('/contact')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Contact</a>
           </nav>
           
           {/* Login, Theme Toggle and CTA Button */}
@@ -223,9 +223,11 @@ export default function Header() {
               Client Portal
             </a>
             <a 
-              href="#contact" 
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
-              onClick={closeMenu}
+              onClick={() => {
+                setLocation('/contact');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
             >
               Contact
             </a>
