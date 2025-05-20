@@ -37,7 +37,6 @@ export default function Home() {
         <Hero />
         <HowItWorks />
         <ServicesPreview />
-        <IndustryTemplates />
         <QuickStartTemplates />
         <WhyAdvantaAI />
         <Services />
