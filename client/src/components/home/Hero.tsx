@@ -44,8 +44,8 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight">
-              <span className="block mb-2">Unlock AI-Powered Growth—</span>
-              <GradientText>No Code. No Delay.</GradientText>
+              <span className="block mb-2">Smarter Growth Starts Here</span>
+              <GradientText>Your AI-Powered Partner</GradientText>
             </h1>
             <motion.p 
               className="text-xl text-gray-300 mb-8 leading-relaxed"
@@ -53,7 +53,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months.
+              Unleash the full power of AI to automate, scale, and outperform your competition. Expert solutions for Marketing, Automation & Analytics.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
