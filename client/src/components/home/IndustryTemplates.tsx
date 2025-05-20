@@ -372,76 +372,79 @@ export default function IndustryTemplates() {
           <div className="flex flex-col items-center mb-8">
             <h3 className="text-xl font-semibold mb-4 text-center">Select Your Industry</h3>
             
-            <div className="relative w-full max-w-3xl">
-              <div className="overflow-hidden relative w-full px-2">
-                {/* Left fade gradient */}
-                <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10"></div>
+            <div className="w-full max-w-4xl">
+              <div className="relative mx-auto flex items-center justify-center">
+                <Button 
+                  variant="default" 
+                  className="absolute left-0 z-20 h-8 w-8 rounded-full p-0 bg-primary/90 text-white shadow-lg hover:bg-primary/80 transition-all duration-200"
+                  onClick={() => {
+                    const tabsContainer = document.querySelector('.industry-tabs-container');
+                    if (tabsContainer) {
+                      tabsContainer.scrollLeft -= 300;
+                    }
+                  }}
+                >
+                  <i className="fas fa-chevron-left text-xs"></i>
+                </Button>
                 
-                {/* Main tab list */}
-                <div className="flex items-center w-full">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 p-0 rounded-full bg-background/10 backdrop-blur-xl border border-white/10 flex-shrink-0 z-20"
-                    onClick={() => {
-                      const tabsContainer = document.querySelector('.industry-tabs-container');
-                      if (tabsContainer) {
-                        tabsContainer.scrollLeft -= 250;
-                      }
-                    }}
-                  >
-                    <i className="fas fa-chevron-left text-xs"></i>
-                  </Button>
-                  
-                  <div className="overflow-x-auto mx-2 flex-1 no-scrollbar">
-                    <TabsList className="industry-tabs-container flex space-x-2 py-2 border-0 bg-transparent scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
-                      {industryTemplates.map(template => {
-                        const isActive = activeTab === template.id;
-                        return (
+                <div className="overflow-x-hidden w-full max-w-3xl mx-auto px-4">
+                  <div className="industry-tabs-container flex gap-3 py-2 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth mask-horizontal" style={{ scrollBehavior: 'smooth' }}>
+                    {industryTemplates.map(template => {
+                      const isActive = activeTab === template.id;
+                      return (
+                        <div
+                          key={template.id}
+                          className="snap-center flex-shrink-0"
+                        >
                           <TabsTrigger 
-                            key={template.id} 
                             value={template.id}
-                            className={`rounded-full px-4 py-2 whitespace-nowrap transition-all duration-300 ${
+                            className={`rounded-full px-5 py-3 whitespace-nowrap transition-all duration-200 ${
                               isActive 
                                 ? `bg-gradient-to-r ${template.color} text-white shadow-lg` 
-                                : 'bg-background/20 hover:bg-background/40 backdrop-blur-md'
+                                : 'bg-black/40 hover:bg-black/60 backdrop-blur-xl border border-white/10'
                             }`}
+                            style={{
+                              transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                              boxShadow: isActive ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : 'none'
+                            }}
                           >
                             <i className={`${template.icon} mr-2`}></i>
                             {template.name}
                           </TabsTrigger>
-                        );
-                      })}
-                    </TabsList>
+                        </div>
+                      );
+                    })}
                   </div>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 p-0 rounded-full bg-background/10 backdrop-blur-xl border border-white/10 flex-shrink-0 z-20"
-                    onClick={() => {
-                      const tabsContainer = document.querySelector('.industry-tabs-container');
-                      if (tabsContainer) {
-                        tabsContainer.scrollLeft += 250;
-                      }
-                    }}
-                  >
-                    <i className="fas fa-chevron-right text-xs"></i>
-                  </Button>
                 </div>
                 
-                {/* Right fade gradient */}
-                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10"></div>
+                <Button 
+                  variant="default"
+                  className="absolute right-0 z-20 h-8 w-8 rounded-full p-0 bg-primary/90 text-white shadow-lg hover:bg-primary/80 transition-all duration-200"
+                  onClick={() => {
+                    const tabsContainer = document.querySelector('.industry-tabs-container');
+                    if (tabsContainer) {
+                      tabsContainer.scrollLeft += 300;
+                    }
+                  }}
+                >
+                  <i className="fas fa-chevron-right text-xs"></i>
+                </Button>
               </div>
             </div>
             
             {/* Industry description - adds context to what the user is selecting */}
             <div className="mt-4 text-center max-w-xl">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-300">
                 {industryTemplates.find(t => t.id === activeTab)?.description.slice(0, 120)}...
               </p>
             </div>
           </div>
+          
+          <style jsx>{`
+            .mask-horizontal {
+              mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            }
+          `}</style>
 
           {industryTemplates.map(template => (
             <TabsContent 
