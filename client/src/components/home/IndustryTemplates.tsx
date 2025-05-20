@@ -373,10 +373,9 @@ export default function IndustryTemplates() {
             <h3 className="text-xl font-semibold mb-4 text-center">Select Your Industry</h3>
             
             <div className="w-full max-w-4xl">
-              <div className="relative mx-auto flex items-center justify-center">
-                <Button 
-                  variant="default" 
-                  className="absolute left-0 z-20 h-8 w-8 rounded-full p-0 bg-primary/90 text-white shadow-lg hover:bg-primary/80 transition-all duration-200"
+              <div className="relative mx-auto flex items-center justify-center bg-white/5 backdrop-blur-lg rounded-full p-1">
+                <button 
+                  className="h-10 w-10 flex items-center justify-center rounded-full transition-colors z-20 text-white/80 hover:text-white hover:bg-white/10"
                   onClick={() => {
                     const tabsContainer = document.querySelector('.industry-tabs-container');
                     if (tabsContainer) {
@@ -384,42 +383,37 @@ export default function IndustryTemplates() {
                     }
                   }}
                 >
-                  <i className="fas fa-chevron-left text-xs"></i>
-                </Button>
+                  <i className="fas fa-chevron-left"></i>
+                </button>
                 
-                <div className="overflow-x-hidden w-full max-w-3xl mx-auto px-4">
-                  <div className="relative">
-                    {/* Left gradient fade */}
-                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
-                    
-                    <TabsList className="industry-tabs-container flex gap-3 py-2 overflow-x-auto flex-nowrap scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
-                      {industryTemplates.map(template => {
-                        const isActive = activeTab === template.id;
-                        return (
-                          <TabsTrigger 
-                            key={template.id} 
-                            value={template.id}
-                            className={`rounded-full px-5 py-3 whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
-                              isActive 
-                                ? `bg-gradient-to-r ${template.color} text-white shadow-lg` 
-                                : 'bg-black/40 hover:bg-black/60 backdrop-blur-xl border border-white/10'
-                            }`}
-                          >
-                            <i className={`${template.icon} mr-2`}></i>
-                            {template.name}
-                          </TabsTrigger>
-                        );
-                      })}
-                    </TabsList>
-                    
-                    {/* Right gradient fade */}
-                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
-                  </div>
+                <div className="overflow-x-hidden flex-1 relative">
+                  <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#151515] via-[rgba(21,21,21,0.7)] to-transparent z-10 pointer-events-none rounded-l-full"></div>
+                  
+                  <TabsList className="industry-tabs-container flex overflow-x-auto flex-nowrap scrollbar-hide py-2 px-2 bg-transparent border-0" style={{ scrollBehavior: 'smooth' }}>
+                    {industryTemplates.map(template => {
+                      const isActive = activeTab === template.id;
+                      return (
+                        <TabsTrigger 
+                          key={template.id} 
+                          value={template.id}
+                          className={`rounded-full px-4 py-2.5 mx-1 whitespace-nowrap flex-shrink-0 transition-all duration-200 font-medium text-sm ${
+                            isActive 
+                              ? `bg-white text-black` 
+                              : 'bg-transparent hover:bg-white/10 text-white'
+                          }`}
+                        >
+                          <i className={`${template.icon} mr-2`}></i>
+                          {template.name}
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
+                  
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#151515] via-[rgba(21,21,21,0.7)] to-transparent z-10 pointer-events-none rounded-r-full"></div>
                 </div>
                 
-                <Button 
-                  variant="default"
-                  className="absolute right-0 z-20 h-8 w-8 rounded-full p-0 bg-primary/90 text-white shadow-lg hover:bg-primary/80 transition-all duration-200"
+                <button 
+                  className="h-10 w-10 flex items-center justify-center rounded-full transition-colors z-20 text-white/80 hover:text-white hover:bg-white/10"
                   onClick={() => {
                     const tabsContainer = document.querySelector('.industry-tabs-container');
                     if (tabsContainer) {
@@ -427,8 +421,8 @@ export default function IndustryTemplates() {
                     }
                   }}
                 >
-                  <i className="fas fa-chevron-right text-xs"></i>
-                </Button>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
               </div>
             </div>
             
