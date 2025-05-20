@@ -29,7 +29,7 @@ export function ChatInterface({ isOpen, onToggle, minimized, onMinimize }: ChatI
     {
       id: '1',
       type: 'assistant',
-      content: 'Hello! I\'m your AI consultant from Advanta AI. How can I help you today?',
+      content: 'Hello! I\'m your Virtual AI Consultant from Advanta AI. I can help with AI solution recommendations, ROI calculations, implementation timelines, and technical guidance. How can I assist you today?',
       timestamp: new Date()
     }
   ]);
@@ -63,19 +63,53 @@ export function ChatInterface({ isOpen, onToggle, minimized, onMinimize }: ChatI
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Generate sample AI response based on user input
+      // Advanced response generation with more intelligence and domain knowledge
       let response = '';
+      const userMessageLower = inputValue.toLowerCase();
       
-      if (inputValue.toLowerCase().includes('pricing') || inputValue.toLowerCase().includes('cost')) {
-        response = "Our pricing is tailored to your specific needs. We offer three tiers: Basic (starting at $499/mo), Standard ($999/mo), and Enterprise (custom pricing). Would you like to discuss which would be best for your requirements?";
-      } else if (inputValue.toLowerCase().includes('demo') || inputValue.toLowerCase().includes('trial')) {
-        response = "Yes! We offer a free demonstration of our AI capabilities. I can schedule one for you with our solutions team, or you can explore our sandbox environment immediately. What would you prefer?";
-      } else if (inputValue.toLowerCase().includes('help') || inputValue.toLowerCase().includes('support')) {
-        response = "I'm here to help! You can ask me about our AI solutions, industry templates, pricing, implementation timelines, or anything else. What specific information are you looking for?";
-      } else if (inputValue.toLowerCase().includes('contact') || inputValue.toLowerCase().includes('sales')) {
-        response = "I'd be happy to connect you with our team. Please provide your email and a brief description of your needs, and a consultant will reach out within 24 hours. Alternatively, you can call us at (555) 123-4567.";
-      } else {
-        response = "Thanks for your message! Based on what you're asking, I think our AI solutions could help streamline your operations and boost efficiency. Would you like to explore specific industry templates or discuss a custom solution?";
+      // Pricing and ROI questions
+      if (userMessageLower.includes('pricing') || userMessageLower.includes('cost') || userMessageLower.includes('price')) {
+        response = "Our pricing is tailored to your specific needs and projected ROI. We offer three tiers:\n\n• Basic ($499/mo): AI-powered analytics and one custom automation\n• Standard ($999/mo): Advanced AI solutions with 3 custom integrations\n• Enterprise (custom pricing): Full suite with unlimited AI capabilities\n\nWould you like me to estimate which would deliver the best ROI for your business?";
+      } 
+      // Implementation and technical questions
+      else if (userMessageLower.includes('implementation') || userMessageLower.includes('setup') || userMessageLower.includes('deploy')) {
+        response = "Our implementation process is designed for speed and efficiency. Most solutions are deployed within 14-30 days following our methodology:\n\n1. Strategic discovery session (2-3 days)\n2. AI solution customization (7-14 days)\n3. Integration with your systems (3-7 days)\n4. Testing and optimization (2-5 days)\n\nWould you like to see our implementation timeline for your specific industry?";
+      } 
+      // Demo and trial requests
+      else if (userMessageLower.includes('demo') || userMessageLower.includes('trial') || userMessageLower.includes('try')) {
+        response = "Absolutely! We offer a fully interactive demonstration of our AI capabilities. You have two options:\n\n1. Schedule a personalized demo with our solutions team who can tailor the experience to your industry\n2. Explore our AI Sandbox right now where you can test our technology with your own scenarios\n\nWhich would you prefer?";
+      } 
+      // Industry-specific questions
+      else if (userMessageLower.includes('industry') || userMessageLower.includes('template') || userMessageLower.includes('solution')) {
+        response = "We offer specialized AI solutions for several industries including:\n\n• Finance: Fraud detection, algorithmic trading, risk assessment\n• Healthcare: Patient outcome prediction, medical imaging analysis\n• Retail: Inventory optimization, personalized recommendations\n• Manufacturing: Predictive maintenance, quality control\n• Legal: Document analysis, case outcome prediction\n\nWhich industry are you in? I can provide specific examples of how our AI has delivered measurable results.";
+      }
+      // Integration questions
+      else if (userMessageLower.includes('integrate') || userMessageLower.includes('connect') || userMessageLower.includes('api')) {
+        response = "Our platform features robust API capabilities and pre-built integrations with most enterprise systems. We support:\n\n• CRM systems (Salesforce, HubSpot, Microsoft Dynamics)\n• ERP solutions (SAP, Oracle, NetSuite)\n• Marketing platforms (Marketo, Mailchimp, HubSpot)\n• Custom systems via our REST/GraphQL APIs\n\nDo you have specific systems you'd like to integrate with?";
+      }
+      // Help and support requests
+      else if (userMessageLower.includes('help') || userMessageLower.includes('support') || userMessageLower.includes('assistance')) {
+        response = "I'm your AI consultant and can help with:\n\n• AI solution recommendations tailored to your business\n• ROI projections and cost-benefit analysis\n• Implementation timelines and technical requirements\n• Integration capabilities with your existing systems\n• Industry-specific use cases and success stories\n\nWhat specific aspect would you like to explore first?";
+      } 
+      // Contact and sales inquiries
+      else if (userMessageLower.includes('contact') || userMessageLower.includes('sales') || userMessageLower.includes('consultant')) {
+        response = "I'd be happy to connect you with our team of AI specialists. You have several options:\n\n• Provide your email and I'll have a consultant reach out within 24 hours\n• Schedule a call directly through our calendar: calendly.com/advanta-ai\n• Call our solutions team: (555) 123-4567\n• Email: solutions@advanta-ai.com\n\nWhat's your preferred contact method?";
+      }
+      // Technical capabilities questions
+      else if (userMessageLower.includes('technology') || userMessageLower.includes('tech stack') || userMessageLower.includes('machine learning')) {
+        response = "Our technology stack leverages state-of-the-art AI/ML capabilities including:\n\n• Large Language Models for natural language understanding\n• Computer vision systems for image/video analysis\n• Predictive analytics using proprietary algorithms\n• Neural networks for pattern recognition\n• Reinforcement learning for optimization tasks\n\nAll solutions run on our secure, scalable cloud infrastructure with 99.9% uptime guarantee. Would you like more details on a specific technology?";
+      }
+      // Security and compliance questions
+      else if (userMessageLower.includes('security') || userMessageLower.includes('compliance') || userMessageLower.includes('data')) {
+        response = "Security and compliance are foundational to our platform. We maintain:\n\n• SOC 2 Type II certification\n• GDPR and CCPA compliance\n• HIPAA compliance for healthcare solutions\n• End-to-end encryption for all data\n• Regular penetration testing and security audits\n\nOur data processing agreements ensure you maintain ownership and control of your data at all times. Would you like our detailed security whitepaper?";
+      }
+      // Greeting or introduction
+      else if (userMessageLower.includes('hello') || userMessageLower.includes('hi') || userMessageLower.includes('hey') || userMessageLower.includes('greetings')) {
+        response = "Hello! I'm your Virtual AI Consultant from Advanta AI. I'm here to help you discover how our AI solutions can transform your business operations, boost efficiency, and drive growth. What brings you here today?";
+      }
+      // Default response for other queries
+      else {
+        response = "Thanks for your message! Based on what you're asking, I believe our AI solutions could help streamline your operations and boost efficiency. To provide the most relevant information, could you share:\n\n1. Your industry or business type\n2. The specific challenges you're looking to address\n3. Any current systems you'd want to integrate with\n\nThis will help me tailor my recommendations to your specific needs.";
       }
 
       // Add AI response
