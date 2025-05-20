@@ -695,12 +695,33 @@ def optimize_inventory_levels(product_id, store_id, forecast):
   }
 ];
 
-export default function QuickStartTemplates() {
+interface QuickStartTemplatesProps {
+  categoryFilter?: string;
+}
+
+export default function QuickStartTemplates({ categoryFilter }: QuickStartTemplatesProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>(quickStartTemplates[0].id);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const isMobile = useIsMobile();
   
-  const template = quickStartTemplates.find(t => t.id === selectedTemplate) || quickStartTemplates[0];
+  // Filter templates by category if categoryFilter is provided
+  const filteredTemplates = categoryFilter && categoryFilter !== 'all'
+    ? quickStartTemplates.filter(template => {
+        // Match templates with the category filter
+        return template.industry.toLowerCase().includes(categoryFilter.toLowerCase());
+      })
+    : quickStartTemplates;
+  
+  // If we have filtered templates and the current selection is not in the filtered list,
+  // select the first template from the filtered list
+  useEffect(() => {
+    if (filteredTemplates.length > 0 && !filteredTemplates.some(t => t.id === selectedTemplate)) {
+      setSelectedTemplate(filteredTemplates[0].id);
+    }
+  }, [categoryFilter, selectedTemplate]);
+  
+  const template = filteredTemplates.find(t => t.id === selectedTemplate) || 
+    (filteredTemplates.length > 0 ? filteredTemplates[0] : quickStartTemplates[0]);
 
   return (
     <section id="quick-start-templates" className="py-20 bg-background relative overflow-hidden">
