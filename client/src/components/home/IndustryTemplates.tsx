@@ -388,32 +388,32 @@ export default function IndustryTemplates() {
                 </Button>
                 
                 <div className="overflow-x-hidden w-full max-w-3xl mx-auto px-4">
-                  <div className="industry-tabs-container flex gap-3 py-2 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth mask-horizontal" style={{ scrollBehavior: 'smooth' }}>
-                    {industryTemplates.map(template => {
-                      const isActive = activeTab === template.id;
-                      return (
-                        <div
-                          key={template.id}
-                          className="snap-center flex-shrink-0"
-                        >
+                  <div className="relative">
+                    {/* Left gradient fade */}
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
+                    
+                    <TabsList className="industry-tabs-container flex gap-3 py-2 overflow-x-auto flex-nowrap scrollbar-hide" style={{ scrollBehavior: 'smooth' }}>
+                      {industryTemplates.map(template => {
+                        const isActive = activeTab === template.id;
+                        return (
                           <TabsTrigger 
+                            key={template.id} 
                             value={template.id}
-                            className={`rounded-full px-5 py-3 whitespace-nowrap transition-all duration-200 ${
+                            className={`rounded-full px-5 py-3 whitespace-nowrap flex-shrink-0 transition-all duration-200 ${
                               isActive 
                                 ? `bg-gradient-to-r ${template.color} text-white shadow-lg` 
                                 : 'bg-black/40 hover:bg-black/60 backdrop-blur-xl border border-white/10'
                             }`}
-                            style={{
-                              transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                              boxShadow: isActive ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)' : 'none'
-                            }}
                           >
                             <i className={`${template.icon} mr-2`}></i>
                             {template.name}
                           </TabsTrigger>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </TabsList>
+                    
+                    {/* Right gradient fade */}
+                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
                   </div>
                 </div>
                 
@@ -439,12 +439,6 @@ export default function IndustryTemplates() {
               </p>
             </div>
           </div>
-          
-          <style jsx>{`
-            .mask-horizontal {
-              mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-            }
-          `}</style>
 
           {industryTemplates.map(template => (
             <TabsContent 
