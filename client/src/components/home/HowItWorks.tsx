@@ -7,20 +7,20 @@ export default function HowItWorks() {
   const steps = [
     {
       number: '1',
-      title: 'Choose your industry + use case',
-      description: 'Select from industry-specific templates or customize a solution for your unique needs.',
-      icon: 'fa-regular fa-building'
+      title: 'Strategic AI Discovery Session',
+      description: 'Our AI architects analyze your business processes to identify high-ROI automation opportunities and competitive advantages.',
+      icon: 'fa-solid fa-lightbulb'
     },
     {
       number: '2',
-      title: 'Upload your data + personalize your AI',
-      description: 'Train your AI on your business data, customize the tone, appearance, and knowledge base.',
-      icon: 'fa-solid fa-cloud-arrow-up'
+      title: 'Proprietary Algorithm Implementation',
+      description: 'We deploy our enterprise-grade algorithms trained on your specific industry data for maximum accuracy and performance.',
+      icon: 'fa-solid fa-code'
     },
     {
       number: '3',
-      title: 'Launch your assistant + monitor performance',
-      description: 'Deploy your AI solution in days and track metrics through your personalized dashboard.',
+      title: 'Accelerated Market Deployment',
+      description: 'Launch within 14 days with real-time analytics dashboard monitoring performance, ROI metrics, and competitive intelligence.',
       icon: 'fa-solid fa-rocket'
     }
   ];
@@ -40,10 +40,10 @@ export default function HowItWorks() {
         >
           <motion.div variants={fadeInUp}>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              How It <GradientText>Works</GradientText>
+              Enterprise-Grade <GradientText>AI Implementation</GradientText>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              From concept to deployment in three simple steps
+              Our proprietary deployment methodology delivers results in just 14 days
             </p>
           </motion.div>
         </motion.div>
@@ -94,7 +94,7 @@ export default function HowItWorks() {
           className="mt-12 text-center"
         >
           <p className="text-white/70 text-lg max-w-2xl mx-auto">
-            Our platform + agency model ensures you get both cutting-edge technology and expert support throughout your AI journey.
+            Our elite team of AI specialists has delivered transformative solutions for industry leaders across finance, healthcare, manufacturing, and retail sectors.
           </p>
         </motion.div>
       </div>

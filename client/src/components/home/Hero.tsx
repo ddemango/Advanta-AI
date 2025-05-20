@@ -44,8 +44,8 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight">
-              <span className="block mb-2">Smarter Growth Starts Here</span>
-              <GradientText>Your AI-Powered Partner</GradientText>
+              <span className="block mb-2">Transformative AI Solutions</span>
+              <GradientText>That Outperform Competitors</GradientText>
             </h1>
             <motion.p 
               className="text-xl text-gray-300 mb-8 leading-relaxed"
@@ -53,7 +53,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Unleash the full power of AI to automate, scale, and outperform your competition. Expert solutions for Marketing, Automation & Analytics.
+              Harness breakthrough AI technology that delivers measurable ROI within 30 days. Our proprietary algorithms drive revenue growth, automate workflows, and provide actionable intelligence other solutions can't match.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
@@ -62,10 +62,10 @@ export default function Hero() {
               transition={{ delay: 1.2, duration: 0.5 }}
             >
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
-                <a href="/calculator">⚡ Build My AI Stack</a>
+                <a href="/calculator">⚡ Get Your Custom AI Solution</a>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <a href="/demo">🚀 Try the Live Demo</a>
+                <a href="/template-assistant">🚀 Generate Code Now</a>
               </Button>
             </motion.div>
           </motion.div>
@@ -165,32 +165,32 @@ export default function Hero() {
         
         {/* Stats Strip */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" ref={ref}>
-          <div className="bg-muted p-6 rounded-xl">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
-              <Counter value={98} start={0} duration={2000} inView={inView} suffix="%" />
+              <Counter value={385} start={0} duration={2000} inView={inView} suffix="%" />
             </div>
-            <div className="text-muted-foreground">Client Satisfaction Rate</div>
+            <div className="text-muted-foreground font-medium">Average Revenue Increase</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-muted p-6 rounded-xl">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
-              <Counter value={87} start={0} duration={2000} inView={inView} suffix="M+" />
+              <Counter value={94} start={0} duration={2000} inView={inView} suffix="%" />
             </div>
-            <div className="text-muted-foreground">AI Predictions Generated</div>
+            <div className="text-muted-foreground font-medium">Workflow Automation Rate</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-muted p-6 rounded-xl">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
-              <Counter value={42} start={0} duration={2000} inView={inView} suffix="+" />
+              <Counter value={60} start={0} duration={2000} inView={inView} suffix="+" />
             </div>
-            <div className="text-muted-foreground">Enterprise Clients</div>
+            <div className="text-muted-foreground font-medium">Fortune 500 Clients</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-muted p-6 rounded-xl">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
-              <Counter value={310} start={0} duration={2000} inView={inView} suffix="%" />
+              <Counter value={28} start={0} duration={2000} inView={inView} suffix="M+" />
             </div>
-            <div className="text-muted-foreground">Average ROI Delivered</div>
+            <div className="text-muted-foreground font-medium">Daily AI Decisions Made</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
         </div>
