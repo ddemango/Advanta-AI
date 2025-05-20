@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { SectionDivider } from '@/components/ui/section-divider';
 
 // Demo messages
 const initialMessages = [

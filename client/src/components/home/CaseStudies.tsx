@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CaseStudyCard } from '@/components/ui/case-study-card';
 import { Button } from '@/components/ui/button';
 import { fadeIn, staggerContainer } from '@/lib/animations';
+import { SectionDivider } from '@/components/ui/section-divider';
 
 // Case study data
 const caseStudies = [
@@ -120,8 +121,16 @@ export default function CaseStudies() {
   const hasMore = visibleCaseStudies.length < filteredCaseStudies.length;
 
   return (
-    <section id="case-studies" className="py-20 bg-muted">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="case-studies" className="py-20 bg-muted relative overflow-hidden">
+      {/* Top section divider */}
+      <SectionDivider 
+        variant="triangle" 
+        color="#1e293b" 
+        height={70} 
+        className="opacity-70" 
+      />
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           variants={staggerContainer}
           initial="hidden"
@@ -185,6 +194,15 @@ export default function CaseStudies() {
           </div>
         )}
       </div>
+      
+      {/* Bottom section divider */}
+      <SectionDivider 
+        variant="wave" 
+        color="#1e293b" 
+        height={70} 
+        className="opacity-70"
+        flip={true}
+      />
     </section>
   );
 }
