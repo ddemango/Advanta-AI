@@ -151,48 +151,7 @@ export const CaseStudy = ({
                 </span>
                 Data Insights
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="bg-black/40 border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                    <h5 className="text-sm font-medium text-white">Implementation Timeline</h5>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-3xl font-bold text-white">14-21</span>
-                    <span className="text-gray-400 text-xs">days from kickoff to deployment</span>
-                  </div>
-                </div>
-                <div className="bg-black/40 border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></div>
-                    <h5 className="text-sm font-medium text-white">ROI Timeline</h5>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-3xl font-bold text-white">2.8x</span>
-                    <span className="text-gray-400 text-xs">average return in first 90 days</span>
-                  </div>
-                </div>
-                <div className="bg-black/40 border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
-                    <h5 className="text-sm font-medium text-white">Team Adoption</h5>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-3xl font-bold text-white">94%</span>
-                    <span className="text-gray-400 text-xs">active user engagement</span>
-                  </div>
-                </div>
-                <div className="bg-black/40 border border-gray-800 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-3 h-3 rounded-full bg-purple-500 mr-2"></div>
-                    <h5 className="text-sm font-medium text-white">System Reliability</h5>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <span className="text-3xl font-bold text-white">99.9%</span>
-                    <span className="text-gray-400 text-xs">uptime with continuous monitoring</span>
-                  </div>
-                </div>
-              </div>
+              {/* No grid with metrics here anymore - removed as requested */}
               
               {/* Service-specific insights */}
               <div className="mt-4 bg-black/40 border border-gray-800 rounded-lg p-5">
