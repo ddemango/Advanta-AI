@@ -14,7 +14,75 @@ interface ContactFormData {
   consent: boolean;
 }
 
+// Simple scheduler to generate blog posts daily
+class BlogScheduler {
+  private interval: NodeJS.Timeout | null = null;
+  private lastRun: Date | null = null;
+  private isRunning: boolean = false;
+  
+  constructor(private articlesPerDay: number = 2) {}
+  
+  start() {
+    if (this.interval) {
+      return; // Already started
+    }
+    
+    log("Starting automated blog post scheduler", "blog-scheduler");
+    
+    // Run immediately if never run before
+    if (!this.lastRun) {
+      this.generatePosts();
+    }
+    
+    // Check every hour if we need to generate posts for today
+    this.interval = setInterval(() => {
+      const now = new Date();
+      
+      // If we haven't run today yet and it's after 1 AM
+      if ((!this.lastRun || !this.isToday(this.lastRun)) && now.getHours() >= 1) {
+        this.generatePosts();
+      }
+    }, 60 * 60 * 1000); // Check every hour
+  }
+  
+  stop() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+      log("Stopped automated blog post scheduler", "blog-scheduler");
+    }
+  }
+  
+  private isToday(date: Date): boolean {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  }
+  
+  private async generatePosts() {
+    if (this.isRunning) {
+      return; // Prevent concurrent runs
+    }
+    
+    this.isRunning = true;
+    try {
+      log(`Generating ${this.articlesPerDay} blog posts for today`, "blog-scheduler");
+      await generateMultipleBlogPosts(this.articlesPerDay);
+      this.lastRun = new Date();
+      log("Successfully generated blog posts for today", "blog-scheduler");
+    } catch (error) {
+      log(`Error generating blog posts: ${error}`, "blog-scheduler");
+    } finally {
+      this.isRunning = false;
+    }
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Start the blog scheduler to generate 2 articles daily
+  const blogScheduler = new BlogScheduler(2);
+  blogScheduler.start();
   // API route for contact form submissions
   app.post('/api/contact', async (req, res) => {
     try {
