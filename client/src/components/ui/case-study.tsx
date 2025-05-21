@@ -97,15 +97,19 @@ export const CaseStudy = ({
           
           {/* Metrics */}
           <motion.div variants={fadeInUp} className="mt-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {metrics.map((metric, index) => (
-                <Card key={index} className="p-4 bg-background/50 border-gray-800 flex flex-col items-center text-center">
-                  <span className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 flex items-center justify-center mb-3">
-                    <i className={`${metric.icon || 'fas fa-chart-bar'} text-indigo-400`}></i>
-                  </span>
-                  <p className="text-xl font-bold text-white mb-1">{metric.value}</p>
-                  <p className="text-xs text-gray-400">{metric.label}</p>
-                </Card>
+                <div key={index} className="bg-black/80 border border-gray-800 rounded-lg overflow-hidden">
+                  <div className="flex flex-col items-center p-6">
+                    <div className="mb-4 bg-indigo-500/20 p-3 rounded-full">
+                      <i className={`${metric.icon || 'fas fa-chart-bar'} text-indigo-400 text-xl`}></i>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl md:text-3xl font-bold text-primary">{metric.value}</p>
+                      <p className="text-sm text-gray-400 mt-1">{metric.label}</p>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </motion.div>

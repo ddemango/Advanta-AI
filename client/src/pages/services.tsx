@@ -424,6 +424,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-brain',
       category: 'automation',
+      caseStudyLink: '/case-studies/digital-media',
+      caseStudy: {
+        client: "TechVantage Media",
+        industry: "Digital Publishing & Media",
+        challenge: "TechVantage Media needed to produce high-quality content across 6 different technology blogs but struggled with scaling production and maintaining consistency. Their team of 4 writers could only publish 3-4 articles per week, had inconsistent SEO practices, and couldn't keep their FAQ sections updated with new product information. Their organic traffic had plateaued at around 120,000 monthly visitors for over a year.",
+        solution: "We implemented an AI-powered content generation system that could create SEO-optimized blog posts, product FAQs, and help documentation based on TechVantage's existing content library and industry data. The system was trained on their brand voice, incorporated keyword research, and could generate content in multiple formats including long-form articles, FAQ sections, and social media snippets.",
+        results: [
+          "Increased content production from 16 articles per month to 120+ without additional staff",
+          "Improved organic search traffic by 213% within 6 months",
+          "Reduced content production costs by 67% per article",
+          "Expanded coverage to emerging technology topics that previously lacked resources"
+        ],
+        metrics: [
+          {
+            label: "SEO Rankings",
+            value: "+342 keywords in top 10",
+            icon: "fas fa-search"
+          },
+          {
+            label: "Conversion Rate",
+            value: "4.2% (from 1.8%)",
+            icon: "fas fa-funnel-dollar"
+          },
+          {
+            label: "Time Savings",
+            value: "76 hours/week",
+            icon: "fas fa-clock"
+          }
+        ],
+        testimonial: {
+          quote: "The AutoBlog system has revolutionized our content strategy. We're now able to cover more topics, respond to industry trends faster, and maintain a consistent publishing schedule across all our properties. The AI-generated content is remarkably on-brand, and with light editing from our team, readers can't tell the difference. The ROI has exceeded our expectations.",
+          author: "Robert Chen",
+          position: "Content Director, TechVantage Media"
+        }
+      },
       primaryColor: 'from-blue-500',
       secondaryColor: 'to-cyan-600'
     },
@@ -441,6 +476,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-user-check',
       category: 'analytics',
+      caseStudyLink: '/case-studies/tech-saas',
+      caseStudy: {
+        client: "GrowthForce Technologies",
+        industry: "Tech SaaS",
+        challenge: "GrowthForce's sales team was spending an excessive amount of time on low-value leads. Their manual lead scoring process was inconsistent, relying on basic demographic data and gut feelings rather than behavioral patterns. As a result, only 12% of sales team effort was being directed toward high-potential prospects, and their conversion rate hovered at just 1.7%.",
+        solution: "We implemented an AI-powered lead scoring and qualification system that analyzed over 50 prospect data points, including website behavior, engagement patterns, company growth signals, and industry-specific conversion indicators. The system prioritized leads based on their likelihood to convert and automatically routed them to the appropriate sales representatives.",
+        results: [
+          "Increased lead-to-opportunity conversion rate from 1.7% to 6.3%",
+          "Reduced sales cycle length by 37% by focusing on high-quality leads",
+          "Improved sales team efficiency with 68% of effort now directed at high-value prospects",
+          "Boosted marketing ROI by identifying the most effective lead generation channels"
+        ],
+        metrics: [
+          {
+            label: "Revenue Impact",
+            value: "+43% YoY",
+            icon: "fas fa-chart-line"
+          },
+          {
+            label: "Predictive Accuracy",
+            value: "92%",
+            icon: "fas fa-bullseye"
+          },
+          {
+            label: "Time Savings",
+            value: "128 hours/month",
+            icon: "fas fa-clock"
+          }
+        ],
+        testimonial: {
+          quote: "The AI lead scoring system from Advanta AI has fundamentally transformed our sales process. Our team now knows exactly which leads to prioritize and when to contact them. We've seen a dramatic improvement in conversion rates and our sales team is more productive than ever. The system continues to learn and improve, which means our results keep getting better over time.",
+          author: "Jason Winters",
+          position: "VP of Sales, GrowthForce Technologies"
+        }
+      },
       primaryColor: 'from-green-500',
       secondaryColor: 'to-teal-600'
     },
@@ -458,6 +528,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-smile',
       category: 'analytics',
+      caseStudyLink: '/case-studies/hospitality',
+      caseStudy: {
+        client: "GlobalStar Resorts",
+        industry: "Hospitality",
+        challenge: "GlobalStar Resorts, a luxury hotel chain with 27 properties worldwide, was struggling to effectively process and analyze the 125,000+ guest reviews they received annually across multiple platforms (their own app, TripAdvisor, Booking.com, social media, etc.). Their manual review analysis was inconsistent, time-consuming, and often missed emerging issues until they became significant problems affecting their reputation.",
+        solution: "We implemented a comprehensive sentiment analysis engine that automatically collected, processed, and analyzed all guest feedback across platforms in real-time. The system categorized feedback by sentiment, property, department, and specific service elements, while identifying emerging trends and critical issues requiring immediate attention.",
+        results: [
+          "Reduced response time to negative reviews from 24+ hours to under 30 minutes",
+          "Identified recurring pain points that were previously undetected, leading to targeted service improvements",
+          "Enabled property-specific benchmarking to identify best practices across the chain",
+          "Increased positive review response rate from 12% to 87%"
+        ],
+        metrics: [
+          {
+            label: "Guest Satisfaction",
+            value: "+22% improvement",
+            icon: "fas fa-smile"
+          },
+          {
+            label: "Review Analysis",
+            value: "99.4% accuracy",
+            icon: "fas fa-check-double"
+          },
+          {
+            label: "Revenue Impact",
+            value: "+8.3% ADR",
+            icon: "fas fa-dollar-sign"
+          }
+        ],
+        testimonial: {
+          quote: "The sentiment analysis engine from Advanta AI has transformed how we understand and respond to guest feedback. We can now identify and address concerns before they become widespread issues. Our management teams have real-time insights into what's working and what needs attention across all properties. This has not only improved our guest experience but has had a measurable impact on our repeat booking rates and average daily rates.",
+          author: "Elena Rodriguez",
+          position: "Chief Guest Experience Officer, GlobalStar Resorts"
+        }
+      },
       primaryColor: 'from-yellow-500',
       secondaryColor: 'to-amber-600'
     },
