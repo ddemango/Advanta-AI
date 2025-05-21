@@ -10,6 +10,24 @@ import { Helmet } from 'react-helmet';
 
 type ServiceCategory = 'all' | 'custom-ai' | 'analytics' | 'automation' | 'integration';
 
+interface CaseStudy {
+  client: string;
+  industry: string;
+  challenge: string;
+  solution: string;
+  results: string[];
+  metrics: {
+    label: string;
+    value: string;
+    icon?: string;
+  }[];
+  testimonial?: {
+    quote: string;
+    author: string;
+    position: string;
+  };
+}
+
 interface Service {
   id: string;
   title: string;
@@ -18,6 +36,7 @@ interface Service {
   icon: string;
   category: ServiceCategory;
   caseStudyLink?: string;
+  caseStudy?: CaseStudy;
   primaryColor: string;
   secondaryColor: string;
 }
@@ -41,6 +60,40 @@ export default function ServicesPage() {
       icon: 'fas fa-robot',
       category: 'custom-ai',
       caseStudyLink: '/case-studies/ecommerce',
+      caseStudy: {
+        client: 'GlobalShop',
+        industry: 'E-commerce / Retail',
+        challenge: "GlobalShop was struggling with a 34% cart abandonment rate and overwhelmed customer service team handling over 12,000 inquiries per month. Their existing chatbot couldn't handle complex product questions, leading to frustrated customers and lost sales.",
+        solution: "We deployed a custom GPT agent trained on GlobalShop's entire product catalog, customer service history, and brand voice guidelines. The agent could answer detailed product questions, make personalized recommendations, and handle order issues in real-time across 14 languages.",
+        results: [
+          'Reduced cart abandonment rate by 42% in the first quarter',
+          'Automated 78% of customer inquiries, freeing up human agents',
+          'Increased average order value by 23% through intelligent product recommendations',
+          'Customer satisfaction scores improved from 3.2/5 to 4.7/5'
+        ],
+        metrics: [
+          {
+            label: 'ROI',
+            value: '386%',
+            icon: 'fas fa-chart-line'
+          },
+          {
+            label: 'Revenue Increase',
+            value: '$4.2M annually',
+            icon: 'fas fa-dollar-sign'
+          },
+          {
+            label: 'Customer Support Cost Reduction',
+            value: '62%',
+            icon: 'fas fa-hand-holding-usd'
+          }
+        ],
+        testimonial: {
+          quote: "The Advanta AI custom agent completely transformed our customer experience. Our customers actually prefer the AI for most questions, and our team can focus on complex cases. The ROI has been remarkable—we've seen sales growth far beyond our expectations.",
+          author: "Sarah Chen",
+          position: "VP of Digital Experience, GlobalShop"
+        }
+      },
       primaryColor: 'from-blue-500',
       secondaryColor: 'to-indigo-600'
     },
@@ -59,6 +112,40 @@ export default function ServicesPage() {
       icon: 'fas fa-cogs',
       category: 'automation',
       caseStudyLink: '/case-studies/saas',
+      caseStudy: {
+        client: 'CloudSoft Solutions',
+        industry: 'SaaS / Software',
+        challenge: 'CloudSoft was experiencing lengthy customer onboarding times (averaging 28 days) and high error rates in their documentation processing. Their manual data verification process required 4 full-time employees and still had a 12% error rate, delaying revenue recognition.',
+        solution: 'We implemented an AI-powered workflow automation system that intelligently processed client documents, validated data across systems, and orchestrated the entire onboarding journey with conditional logic based on client type and requirements.',
+        results: [
+          'Reduced onboarding time from 28 days to just 4 days',
+          'Decreased document processing errors by 94%',
+          'Automated 87% of the verification steps with human oversight for complex cases',
+          'Enabled faster revenue recognition and improved cash flow'
+        ],
+        metrics: [
+          {
+            label: 'Productivity Increase',
+            value: '340%',
+            icon: 'fas fa-tasks'
+          },
+          {
+            label: 'Cost Savings',
+            value: '$1.8M annually',
+            icon: 'fas fa-hand-holding-usd'
+          },
+          {
+            label: 'Employee Satisfaction',
+            value: '+47%',
+            icon: 'fas fa-smile'
+          }
+        ],
+        testimonial: {
+          quote: "Advanta AI's workflow automation transformed our operations. What used to take a month now happens in days, and our team is freed up for high-value work instead of manual data entry. Our customers are delighted with the seamless experience, and we've been able to scale without adding headcount.",
+          author: "Michael Torres",
+          position: "COO, CloudSoft Solutions"
+        }
+      },
       primaryColor: 'from-purple-500',
       secondaryColor: 'to-pink-600'
     },
