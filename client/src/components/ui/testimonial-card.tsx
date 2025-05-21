@@ -72,7 +72,7 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
         {testimonial.tags.map((tag, index) => (
           <span 
             key={index} 
-            className="text-xs bg-primary bg-opacity-20 text-primary px-3 py-1 rounded-full"
+            className="text-xs bg-primary bg-opacity-20 text-white px-3 py-1 rounded-full"
           >
             {tag}
           </span>

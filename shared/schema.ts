@@ -110,16 +110,17 @@ export const categoryEnum = pgEnum("category", [
 
 export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull().unique(),
+  title: varchar("title").notNull(),
+  slug: varchar("slug").notNull().unique(),
   summary: text("summary").notNull(),
   content: text("content").notNull(),
   author_id: integer("author_id").references(() => users.id).notNull(),
+  image_url: text("image_url"),
   featured_image: text("featured_image"),
   category: categoryEnum("category").notNull(),
-  tags: jsonb("tags").notNull().$type<string[]>(),
-  is_published: boolean("is_published").default(false),
-  publish_date: timestamp("publish_date"),
+  tags: text("tags").array().notNull(),
+  published: boolean("published").default(false),
+  featured: boolean("featured").default(false),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
   reading_time: integer("reading_time"), // in minutes

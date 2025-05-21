@@ -240,6 +240,7 @@ async function generateBlogPost(category: keyof typeof blogTopics): Promise<Inse
       author_id: authorId,
       category: category,
       tags,
+      featured_image: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
       reading_time: readingTime,
       publish_date: now,
       is_published: true,
