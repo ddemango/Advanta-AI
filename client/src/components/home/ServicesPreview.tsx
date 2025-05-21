@@ -112,7 +112,7 @@ export default function ServicesPreview() {
         >
           <motion.div variants={fadeInUp}>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Our <GradientText>AI Suite</GradientText> of Solutions
+              Enterprise <GradientText>AI Platform</GradientText> Solutions
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Modular, enterprise-grade AI tools designed to solve specific business challenges while integrating seamlessly with your existing systems.
