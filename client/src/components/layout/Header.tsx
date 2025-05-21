@@ -104,24 +104,24 @@ export default function Header() {
             </div>
             
             <div className="relative group">
-              <a className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer flex items-center">
+              <button className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer flex items-center bg-transparent border-0 p-0">
                 Content
                 <i className="fas fa-chevron-down ml-1 text-xs"></i>
-              </a>
+              </button>
               <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-background/95 backdrop-blur-md ring-1 ring-black ring-opacity-5 focus:outline-none border border-border/50 z-50 hidden group-hover:block">
                 <div className="py-1 divide-y divide-border/20">
-                  <a 
+                  <button 
                     onClick={() => setLocation('/blog')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                    className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
                     Blog
-                  </a>
-                  <a 
+                  </button>
+                  <button 
                     onClick={() => setLocation('/resources')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                    className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
                     Resources Hub
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
