@@ -62,7 +62,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
             {post.category}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            {formatDate(post.publish_date || post.created_at)}
+            {formatDate(post.created_at)}
           </span>
         </div>
         <CardTitle className="line-clamp-2 hover:text-primary transition-colors">{post.title}</CardTitle>

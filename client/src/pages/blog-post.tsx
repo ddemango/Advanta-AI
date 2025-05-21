@@ -42,7 +42,7 @@ const RelatedPostCard = ({ post }: { post: BlogPost }) => {
         <CardTitle className="text-lg line-clamp-2 hover:text-primary transition-colors">{post.title}</CardTitle>
       </CardHeader>
       <CardFooter className="pt-0 pb-3 flex justify-between items-center text-sm text-muted-foreground">
-        <span>{formatDate(post.publish_date || post.created_at)}</span>
+        <span>{formatDate(post.created_at)}</span>
         <span>{post.reading_time || 5} min read</span>
       </CardFooter>
     </Card>
@@ -158,7 +158,7 @@ export default function BlogPostPage() {
         <meta property="og:description" content={post.summary} />
         {post.featured_image && <meta property="og:image" content={post.featured_image} />}
         <meta property="og:type" content="article" />
-        <meta property="article:published_time" content={new Date(post.publish_date || post.created_at).toISOString()} />
+        <meta property="article:published_time" content={new Date(post.created_at).toISOString()} />
         <meta property="article:section" content={post.category} />
         {post.tags?.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
@@ -201,7 +201,7 @@ export default function BlogPostPage() {
                   <div>
                     <p className="font-medium">{post.author?.firstName || 'Advanta'} {post.author?.lastName || 'AI'}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatDate(post.publish_date || post.created_at)}
+                      {formatDate(post.created_at)}
                     </p>
                   </div>
                 </div>
