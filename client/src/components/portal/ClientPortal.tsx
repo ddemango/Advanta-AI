@@ -234,9 +234,9 @@ export default function ClientPortal() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Client Portal</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Client AI Suite</h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Manage your AI solutions with comprehensive tools for analytics, bot controls, and CRM integrations.
+            Access enterprise-grade tools to manage your AI solutions with comprehensive dashboards for analytics, bot controls, and CRM integrations.
           </p>
         </motion.div>
         
