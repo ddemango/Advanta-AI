@@ -789,6 +789,45 @@ export default function ServicesPage() {
                           ))}
                         </ul>
                       </div>
+                      
+                      {/* Data Insights for Service Cards */}
+                      <div className="mb-4 mt-6">
+                        <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center">
+                          <i className="fas fa-chart-line text-blue-400 mr-2"></i>
+                          Business Impact
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-black/40 border border-gray-800 rounded-lg p-2">
+                            <div className="flex items-center mb-1">
+                              <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
+                              <h5 className="text-xs font-medium text-white">Implementation</h5>
+                            </div>
+                            <div className="flex items-end justify-between">
+                              <span className="text-lg font-bold text-white">14-21d</span>
+                              <span className="text-gray-400 text-[10px]">rapid deployment</span>
+                            </div>
+                          </div>
+                          <div className="bg-black/40 border border-gray-800 rounded-lg p-2">
+                            <div className="flex items-center mb-1">
+                              <div className="w-2 h-2 rounded-full bg-indigo-500 mr-1"></div>
+                              <h5 className="text-xs font-medium text-white">ROI</h5>
+                            </div>
+                            <div className="flex items-end justify-between">
+                              <span className="text-lg font-bold text-white">2.8x</span>
+                              <span className="text-gray-400 text-[10px]">in 90 days</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-2 bg-black/30 border border-gray-800 rounded-lg p-3">
+                          <div className="flex items-start text-xs">
+                            <div className="flex-shrink-0 w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center mt-0.5 mr-2">
+                              <i className="fas fa-check text-white text-[8px]"></i>
+                            </div>
+                            <p className="text-gray-300"><span className="text-white font-medium">Success Rate:</span> 97% enterprise adoption with 37% improved performance vs. competing solutions</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="p-6 pt-0 mt-auto">
