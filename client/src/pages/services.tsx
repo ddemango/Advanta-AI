@@ -632,6 +632,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-tools',
       category: 'analytics',
+      caseStudyLink: '/case-studies/manufacturing',
+      caseStudy: {
+        client: "Global Machinery Corp",
+        industry: "Industrial Manufacturing",
+        challenge: "Global Machinery was experiencing costly unplanned downtime averaging 127 hours per quarter across their production facilities. Their reactive maintenance approach meant machines would fail unexpectedly, leading to production halts, emergency repair costs, and missed delivery deadlines. Each hour of downtime cost the company approximately $45,000, resulting in quarterly losses exceeding $5.7 million, not including replacement parts and overtime labor.",
+        solution: "We implemented a comprehensive Predictive Maintenance AI system that collected and analyzed real-time data from 850+ sensors across their machine fleet. The system used advanced machine learning algorithms to identify subtle patterns that preceded component failures. It integrated with their existing ERP and maintenance systems to automatically schedule preventive maintenance at optimal times that minimized disruption to production schedules.",
+        results: [
+          "Reduced unplanned downtime by 83% (from 127 hours to 21 hours per quarter)",
+          "Extended average machine component lifespan by 37%",
+          "Optimized maintenance scheduling, reducing maintenance labor hours by 24%",
+          "Decreased spare parts inventory by 31% through more accurate forecasting"
+        ],
+        metrics: [
+          {
+            label: "Cost Savings",
+            value: "$4.8M quarterly",
+            icon: "fas fa-dollar-sign"
+          },
+          {
+            label: "Production Uptime",
+            value: "97% (from 86%)",
+            icon: "fas fa-industry"
+          },
+          {
+            label: "ROI Timeline",
+            value: "4.2 months",
+            icon: "fas fa-calendar-check"
+          }
+        ],
+        testimonial: {
+          quote: "The Predictive Maintenance AI from Advanta AI has completely transformed our operational efficiency. We've gone from constantly fighting fires with unexpected breakdowns to a smooth, predictable maintenance schedule that keeps our production lines running. The system continues to become more intelligent over time, now detecting potential issues we wouldn't have noticed until complete failure occurred.",
+          author: "Michael Reeves",
+          position: "Director of Operations, Global Machinery Corp"
+        }
+      },
       primaryColor: 'from-blue-500',
       secondaryColor: 'to-sky-600'
     }
