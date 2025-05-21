@@ -118,8 +118,8 @@ export class DatabaseStorage implements IStorage {
           updated_at: new Date(),
           reading_time: 5,
           view_count: 120,
-          image_url: null,
-          featured_image: null
+          image_url: "https://images.unsplash.com/photo-1677442135136-760c813dce9b?q=80&w=1932&auto=format&fit=crop",
+          featured_image: "https://images.unsplash.com/photo-1677442135136-760c813dce9b?q=80&w=1932&auto=format&fit=crop"
         },
         {
           id: 2,
@@ -136,8 +136,8 @@ export class DatabaseStorage implements IStorage {
           updated_at: new Date(),
           reading_time: 7,
           view_count: 85,
-          image_url: null,
-          featured_image: null
+          image_url: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2006&auto=format&fit=crop",
+          featured_image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2006&auto=format&fit=crop"
         },
         {
           id: 3,
@@ -154,8 +154,8 @@ export class DatabaseStorage implements IStorage {
           updated_at: new Date(),
           reading_time: 10,
           view_count: 210,
-          image_url: null,
-          featured_image: null
+          image_url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=2070&auto=format&fit=crop",
+          featured_image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=2070&auto=format&fit=crop"
         }
       ];
       
