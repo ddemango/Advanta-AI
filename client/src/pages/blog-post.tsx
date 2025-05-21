@@ -50,7 +50,7 @@ const RelatedPostCard = ({ post }: { post: BlogPost }) => {
 };
 
 // Blog Post Page
-export default function BlogPost() {
+export default function BlogPostPage() {
   const [location] = useLocation();
   const slug = location.split('/').pop() || '';
   
