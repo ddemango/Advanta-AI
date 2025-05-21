@@ -4,7 +4,7 @@ import { TestimonialCard } from '@/components/ui/testimonial-card';
 import { Button } from '@/components/ui/button';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { DigitalRain } from '@/components/ui/digital-rain';
-import { ParticleText } from '@/components/ui/particle-text';
+import { EnterpriseText } from '@/components/ui/enterprise-text';
 import { GlassCard } from '@/components/ui/glass-card';
 
 // Testimonial data
