@@ -165,12 +165,19 @@ export default function Hero() {
         </motion.div>
         
         {/* Stats Strip */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" ref={ref as any}>
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8" ref={ref as any}>
           <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={385} start={0} duration={2000} inView={inView} suffix="%" />
             </div>
             <div className="text-muted-foreground font-medium">Average Revenue Increase</div>
+            <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
+          </div>
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
+            <div className="text-3xl font-bold text-white mb-1">
+              <Counter value={312} start={0} duration={2000} inView={inView} suffix="%" />
+            </div>
+            <div className="text-muted-foreground font-medium">Average ROI in First Year</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
           <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
