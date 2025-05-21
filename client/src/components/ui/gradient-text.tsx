@@ -3,11 +3,15 @@ import React from 'react';
 interface GradientTextProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function GradientText({ children, className = '' }: GradientTextProps) {
+export function GradientText({ children, className = '', style }: GradientTextProps) {
   return (
-    <span className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-primary to-indigo-600 font-bold ${className}`}>
+    <span 
+      className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-primary to-indigo-600 font-bold ${className}`}
+      style={style}
+    >
       {children}
     </span>
   );

@@ -25,11 +25,11 @@ export function EnterpriseText({
         className="text-center"
       >
         {highlight ? (
-          <GradientText className="font-bold" style={{ fontSize: `${fontSize}px` }}>
+          <GradientText className="font-bold" style={{fontSize: `${fontSize}px`}}>
             {text}
           </GradientText>
         ) : (
-          <span className="font-bold" style={{ fontSize: `${fontSize}px` }}>
+          <span className="font-bold" style={{fontSize: `${fontSize}px`}}>
             {text}
           </span>
         )}

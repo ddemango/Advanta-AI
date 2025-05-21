@@ -92,7 +92,7 @@ export default function Testimonials() {
           className="text-center mb-16"
         >
           <motion.div variants={fadeInUp} className="inline-block h-16 md:h-20 mb-6">
-            <ParticleText text="What Our Clients Say" fontSize={40} color="#ffffff" className="h-full" />
+            <EnterpriseText text="What Our Clients Say" fontSize={40} className="h-full" />
           </motion.div>
           <motion.p variants={fadeInUp} className="text-xl text-muted-foreground max-w-3xl mx-auto">
             From startups to enterprise organizations, our clients experience measurable results with our AI solutions.
