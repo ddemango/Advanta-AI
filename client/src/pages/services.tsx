@@ -287,19 +287,31 @@ export default function ServicesPage() {
               variants={fadeIn}
               initial="hidden"
               animate="show"
-              className="flex flex-wrap justify-center gap-3 mb-16"
+              className="flex flex-col items-center gap-6 mb-20"
             >
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={activeCategory === category.id ? 'default' : 'outline'}
-                  className={`text-sm font-medium ${activeCategory === category.id ? 'bg-primary text-white' : ''}`}
-                  onClick={() => setActiveCategory(category.id as ServiceCategory)}
-                >
-                  <i className={`${category.icon} mr-2`}></i>
-                  {category.name}
-                </Button>
-              ))}
+              <h3 className="text-xl text-gray-200 mb-3">Select a service category to explore:</h3>
+              <div className="flex flex-wrap justify-center gap-4">
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={activeCategory === category.id ? 'default' : 'outline'}
+                    className={`text-sm font-medium py-6 px-6 rounded-lg transition-all duration-300 ${
+                      activeCategory === category.id 
+                        ? 'bg-primary text-white scale-105 shadow-lg shadow-primary/20' 
+                        : 'hover:border-primary/50 hover:bg-primary/5'
+                    }`}
+                    onClick={() => setActiveCategory(category.id as ServiceCategory)}
+                  >
+                    <i className={`${category.icon} text-lg mr-3`}></i>
+                    {category.name}
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-3 text-center text-muted-foreground text-sm">
+                {activeCategory !== 'all' && (
+                  <p>Showing {filteredServices.length} services in {categories.find(c => c.id === activeCategory)?.name}</p>
+                )}
+              </div>
             </motion.div>
           </div>
         </section>

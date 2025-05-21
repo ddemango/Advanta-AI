@@ -103,7 +103,28 @@ export default function Header() {
               </div>
             </div>
             
-            <a href="#client-portal" className="text-gray-300 hover:text-white font-medium transition-colors">Client Portal</a>
+            <div className="relative group">
+              <a className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer flex items-center">
+                Content
+                <i className="fas fa-chevron-down ml-1 text-xs"></i>
+              </a>
+              <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-background/95 backdrop-blur-md ring-1 ring-black ring-opacity-5 focus:outline-none border border-border/50 z-50 hidden group-hover:block">
+                <div className="py-1 divide-y divide-border/20">
+                  <a 
+                    onClick={() => setLocation('/blog')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Blog
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/resources')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Resources Hub
+                  </a>
+                </div>
+              </div>
+            </div>
             <a onClick={() => setLocation('/contact')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Contact</a>
           </nav>
           
@@ -214,16 +235,27 @@ export default function Header() {
                 >
                   Template Customization Assistant
                 </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/blog');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Blog
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/resources');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Resources Hub
+                </a>
               </div>
             </div>
             
-            <a 
-              href="#client-portal" 
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
-              onClick={closeMenu}
-            >
-              Client Portal
-            </a>
             <a 
               onClick={() => {
                 setLocation('/contact');
