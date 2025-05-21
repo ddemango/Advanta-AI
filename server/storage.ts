@@ -16,7 +16,7 @@ import {
   type InsertResource
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -110,7 +110,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (options?.published !== undefined) {
-      conditions.push(eq(blogPosts.is_published, options.published));
+      conditions.push(eq(blogPosts.published, options.published));
     }
     
     // Apply tag filter if provided
@@ -134,8 +134,8 @@ export class DatabaseStorage implements IStorage {
       selectQuery = selectQuery.offset(options.offset);
     }
     
-    // Sort by publish date descending (newest first)
-    selectQuery = selectQuery.orderBy(blogPosts.publish_date);
+    // Sort by created date descending (newest first)
+    selectQuery = selectQuery.orderBy(desc(blogPosts.created_at));
     
     return await selectQuery;
   }
