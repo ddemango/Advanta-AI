@@ -126,7 +126,7 @@ export const CaseStudy = ({
           {/* Metrics */}
           <motion.div variants={fadeInUp} className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {metrics.map((metric, index) => (
+              {metrics && metrics.map((metric, index) => (
                 <div key={index} className="bg-black/80 border border-gray-800 rounded-lg overflow-hidden">
                   <div className="flex flex-col items-center p-6">
                     <div className="mb-4 bg-indigo-500/20 p-3 rounded-full">
