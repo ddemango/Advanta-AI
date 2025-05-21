@@ -317,13 +317,12 @@ export default function ServicesPage() {
         </section>
         
         {/* Services Listing */}
-        <section className="py-16 bg-muted">
+        <section className="py-16 bg-muted relative">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               variants={staggerContainer}
               initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
+              animate="show"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
               {filteredServices.map((service, index) => (
