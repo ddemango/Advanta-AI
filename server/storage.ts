@@ -110,7 +110,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (options?.published !== undefined) {
-      conditions.push(eq(blogPosts.published, options.published));
+      conditions.push(sql`${blogPosts.published} = ${options.published}`);
     }
     
     // Apply tag filter if provided

@@ -139,6 +139,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         options.published = true; // Default to only published posts
       }
       
+      // For debugging
+      console.log('Fetching blog posts with options:', options);
+      
       const posts = await storage.getBlogPosts(options);
       return res.json(posts);
     } catch (error) {

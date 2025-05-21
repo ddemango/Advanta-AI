@@ -461,7 +461,9 @@ export default function OnboardingWizard() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {steps[currentStep - 1]}
+                  {steps && steps.length > 0 && currentStep <= steps.length 
+                    ? steps[currentStep - 1] 
+                    : <div>Loading...</div>}
                 </motion.div>
               </AnimatePresence>
             </div>
