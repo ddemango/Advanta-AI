@@ -216,6 +216,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-language',
       category: 'custom-ai',
+      caseStudyLink: '/case-studies/travel',
+      caseStudy: {
+        client: "WorldVoyage Tours",
+        industry: "Travel & Hospitality",
+        challenge: "WorldVoyage Tours was losing international bookings due to language barriers. Their customer service team could only support 3 languages, causing 42% of international inquiries to go unanswered or poorly handled. Customer satisfaction scores from non-English speaking regions were 30% lower than English-speaking markets.",
+        solution: "We deployed an AI-powered multilingual support system that handles customer inquiries in 24 languages. The system maintains context across languages, understands cultural nuances, and can seamlessly switch languages mid-conversation. It integrates with their booking system to provide personalized assistance for reservations, itinerary changes, and local recommendations.",
+        results: [
+          "Expanded service to 24 languages without adding staff",
+          "Increased international bookings by 58% year-over-year",
+          "Reduced response time for non-English inquiries from 12 hours to 2 minutes",
+          "Improved customer satisfaction scores in international markets by 47%"
+        ],
+        metrics: [
+          {
+            label: "Global Reach",
+            value: "680% increase",
+            icon: "fas fa-globe"
+          },
+          {
+            label: "Cost per Interaction",
+            value: "87% reduction",
+            icon: "fas fa-hand-holding-usd"
+          },
+          {
+            label: "Conversion Rate",
+            value: "+34% internationally",
+            icon: "fas fa-chart-line"
+          }
+        ],
+        testimonial: {
+          quote: "Advanta AI's multilingual support system has transformed our global business. We're now able to provide the same exceptional service to customers worldwide, regardless of language. The system even understands cultural contexts and local expressions that machine translation would miss. Our international growth has been remarkable.",
+          author: "Isabella Lopez",
+          position: "Global Customer Experience Director, WorldVoyage Tours"
+        }
+      },
       primaryColor: 'from-amber-500',
       secondaryColor: 'to-orange-600'
     },
@@ -233,6 +268,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-plug',
       category: 'integration',
+      caseStudyLink: '/case-studies/manufacturing',
+      caseStudy: {
+        client: "NextGen Manufacturing",
+        industry: "Manufacturing",
+        challenge: "NextGen had valuable customer data siloed across six different systems (Salesforce, HubSpot, custom ERP, inventory management, quality control, and service desk). Sales teams couldn't see production data, support teams had no visibility into customer history, and executives couldn't get unified reporting. This caused a 23% error rate in customer communications and delayed response times by 15+ hours.",
+        solution: "We developed a comprehensive integration solution that created bi-directional data flows between all systems. This included custom API development for their legacy ERP, real-time syncing of customer data across platforms, automated workflow triggers between systems, and a unified dashboard that pulled data from all sources into actionable insights.",
+        results: [
+          "Created a single source of truth for customer data across all departments",
+          "Reduced data entry errors by 94% through automated synchronization",
+          "Cut response times to customer inquiries from 15+ hours to under 30 minutes",
+          "Enabled cross-selling opportunities by giving sales teams visibility into service history"
+        ],
+        metrics: [
+          {
+            label: "Integration ROI",
+            value: "418%",
+            icon: "fas fa-chart-line"
+          },
+          {
+            label: "Productivity Gain",
+            value: "37 hours/week",
+            icon: "fas fa-clock"
+          },
+          {
+            label: "Customer Retention",
+            value: "+18% YoY",
+            icon: "fas fa-user-check"
+          }
+        ],
+        testimonial: {
+          quote: "The CRM integration solution from Advanta AI eliminated our data silos and created a seamless information flow across our entire organization. For the first time, we have a complete 360-degree view of our customers from initial contact through production, delivery, and ongoing service. This has transformed our ability to deliver exceptional customer experiences.",
+          author: "David Reeves",
+          position: "CIO, NextGen Manufacturing"
+        }
+      },
       primaryColor: 'from-sky-500',
       secondaryColor: 'to-blue-600'
     },
@@ -302,6 +372,41 @@ export default function ServicesPage() {
       ],
       icon: 'fas fa-copyright',
       category: 'integration',
+      caseStudyLink: '/case-studies/marketing',
+      caseStudy: {
+        client: "Horizon Marketing Group",
+        industry: "Marketing & Advertising",
+        challenge: "Horizon Marketing Group needed to offer AI-powered analytics to their 140+ agency clients without building their own platform. Each client required their own branded experience, custom data integrations, and varying service levels. Their previous white-labeled solution had poor customization options and only supported basic analytics, leading to a 27% client churn rate.",
+        solution: "We developed a multi-tenant white-label portal platform that allowed Horizon to provide each client with a fully branded AI analytics experience. The system included customizable dashboards, tiered feature access based on service level, automated reporting, and secure data partitioning to ensure each client only accessed their own data.",
+        results: [
+          "Reduced client churn from 27% to 8% in the first year",
+          "Enabled Horizon to upsell premium analytics packages to 42% of clients",
+          "Increased client acquisition by 34% with the new service offering",
+          "Reduced onboarding time for new clients from 3 weeks to 2 days"
+        ],
+        metrics: [
+          {
+            label: "Revenue Growth",
+            value: "$1.8M annual",
+            icon: "fas fa-dollar-sign"
+          },
+          {
+            label: "Client Satisfaction",
+            value: "94%",
+            icon: "fas fa-smile"
+          },
+          {
+            label: "Implementation ROI",
+            value: "387%",
+            icon: "fas fa-chart-line"
+          }
+        ],
+        testimonial: {
+          quote: "The white-label portal solution from Advanta AI has been a game-changer for our agency. Our clients love having their own branded analytics platform, and we love the flexibility to offer different feature sets based on service tier. The platform has become a major competitive advantage for us and opened up entirely new revenue streams.",
+          author: "Jennifer Martinez",
+          position: "CEO, Horizon Marketing Group"
+        }
+      },
       primaryColor: 'from-violet-500',
       secondaryColor: 'to-purple-600'
     },
