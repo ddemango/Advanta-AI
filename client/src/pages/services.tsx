@@ -164,6 +164,40 @@ export default function ServicesPage() {
       icon: 'fas fa-chart-line',
       category: 'analytics',
       caseStudyLink: '/case-studies/finance',
+      caseStudy: {
+        client: "CapitalWise Investments",
+        industry: "Financial Services",
+        challenge: "CapitalWise was struggling with outdated reporting systems that delayed critical investment decisions. Their analysis process took 3-5 days, causing them to miss market opportunities and deliver lower returns to clients. Traditional dashboards couldn't predict market trends or identify emerging risks.",
+        solution: "We developed a predictive analytics dashboard that ingested data from 16 different financial sources, including market feeds, economic indicators, and proprietary datasets. The system uses AI to forecast market movements, identify investment opportunities, and alert analysts to potential risks.",
+        results: [
+          "Reduced analysis time from days to minutes",
+          "Increased investment portfolio performance by 12.4% year-over-year",
+          "Identified 28 high-opportunity investments that human analysts missed",
+          "Detected early warning signs for market volatility two weeks before traditional indicators"
+        ],
+        metrics: [
+          {
+            label: "Client Retention",
+            value: "97%",
+            icon: "fas fa-user-check"
+          },
+          {
+            label: "Decision Speed",
+            value: "95% faster",
+            icon: "fas fa-bolt"
+          },
+          {
+            label: "ROI",
+            value: "473%",
+            icon: "fas fa-chart-line"
+          }
+        ],
+        testimonial: {
+          quote: "The predictive dashboard from Advanta AI has completely transformed how we make investment decisions. We can identify opportunities and risks before our competitors, giving our clients a significant edge in the market. The ROI has been exceptional.",
+          author: "Elizabeth Morgan",
+          position: "Chief Investment Officer, CapitalWise"
+        }
+      },
       primaryColor: 'from-green-500',
       secondaryColor: 'to-emerald-600'
     },
@@ -216,6 +250,40 @@ export default function ServicesPage() {
       icon: 'fas fa-database',
       category: 'custom-ai',
       caseStudyLink: '/case-studies/healthcare',
+      caseStudy: {
+        client: "MediCore Health Systems",
+        industry: "Healthcare",
+        challenge: "MediCore had accumulated 12+ years of patient data across their network of 8 hospitals but couldn't effectively use this information to improve patient outcomes. Traditional analytics couldn't identify complex patterns or predict patient risks accurately. They faced rising readmission rates of 18.3% and struggled with resource allocation.",
+        solution: "We developed a custom AI model trained specifically on MediCore's anonymized patient data, incorporating their unique clinical workflows, physician notes, treatment protocols, and regional health factors. The model was fine-tuned to predict patient risks, recommend personalized treatment plans, and optimize resource allocation.",
+        results: [
+          "Reduced 30-day readmission rates by 42%",
+          "Identified high-risk patients with 89% accuracy (up from 64%)",
+          "Improved resource allocation, reducing average length of stay by 2.3 days",
+          "Generated personalized care plans that increased treatment effectiveness by 31%"
+        ],
+        metrics: [
+          {
+            label: "Cost Savings",
+            value: "$4.2M annually",
+            icon: "fas fa-hand-holding-usd"
+          },
+          {
+            label: "Patient Outcomes",
+            value: "+28%",
+            icon: "fas fa-heartbeat"
+          },
+          {
+            label: "Time Saved",
+            value: "1,200+ hours/month",
+            icon: "fas fa-clock"
+          }
+        ],
+        testimonial: {
+          quote: "Advanta AI's custom-trained model has revolutionized how we deliver care. By leveraging our own data, the AI understands the unique characteristics of our patient population in ways generic models simply cannot. The improvement in patient outcomes speaks for itself, and the ROI has exceeded our most optimistic projections.",
+          author: "Dr. Samantha Wu",
+          position: "Chief Medical Officer, MediCore Health Systems"
+        }
+      },
       primaryColor: 'from-red-500',
       secondaryColor: 'to-pink-600'
     },
@@ -302,6 +370,40 @@ export default function ServicesPage() {
       icon: 'fas fa-gift',
       category: 'custom-ai',
       caseStudyLink: '/case-studies/retail',
+      caseStudy: {
+        client: "LuxeStyle Brands",
+        industry: "Retail / E-commerce",
+        challenge: "LuxeStyle was facing declining conversion rates (2.1%) and stagnant average order values ($42). Their generic product recommendation system showed the same items to all users regardless of browsing history, preferences, or purchase patterns, resulting in poor engagement and missed sales opportunities.",
+        solution: "We implemented an AI-powered product recommendation engine that analyzes customer behavior in real-time, evaluates purchase history, identifies visual similarities between products, and adapts to seasonal trends. The system also integrates with their inventory management to prioritize in-stock items and implements an A/B testing framework to continuously optimize recommendations.",
+        results: [
+          "Increased conversion rate from 2.1% to 4.8% within 3 months",
+          "Improved average order value by 37% ($42 to $57.50)",
+          "Boosted repeat purchase rate by 42%",
+          "Reduced inventory holding costs by 21% through smarter recommendation of slow-moving items"
+        ],
+        metrics: [
+          {
+            label: "Revenue Growth",
+            value: "+31% YoY",
+            icon: "fas fa-chart-line"
+          },
+          {
+            label: "Cross-sell Rate",
+            value: "48% increase",
+            icon: "fas fa-shopping-cart"
+          },
+          {
+            label: "ROI",
+            value: "529%",
+            icon: "fas fa-dollar-sign"
+          }
+        ],
+        testimonial: {
+          quote: "The AI recommendation engine from Advanta AI completely transformed our online shopping experience. Our customers now discover products they love but might never have found on their own. The system pays for itself many times over, and we've seen both immediate sales growth and stronger long-term customer loyalty.",
+          author: "Marcus Johnson",
+          position: "Director of E-commerce, LuxeStyle Brands"
+        }
+      },
       primaryColor: 'from-red-500',
       secondaryColor: 'to-rose-600'
     },
