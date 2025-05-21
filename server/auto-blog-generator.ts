@@ -240,13 +240,12 @@ async function generateBlogPost(category: keyof typeof blogTopics): Promise<Inse
       author_id: authorId,
       category: category,
       tags,
+      image_url: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
       featured_image: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
       reading_time: readingTime,
-      publish_date: now,
-      is_published: true,
-      view_count: 0,
-      created_at: now,
-      updated_at: now,
+      published: true,
+      featured: Math.random() > 0.7, // 30% chance of being featured
+      view_count: Math.floor(Math.random() * 100) // Random initial view count
     };
     
     return blogPost;

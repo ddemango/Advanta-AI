@@ -133,12 +133,14 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts).pick({
   summary: true,
   content: true,
   author_id: true,
+  image_url: true,
   featured_image: true,
   category: true,
   tags: true,
-  is_published: true,
-  publish_date: true,
-  reading_time: true
+  published: true,
+  featured: true,
+  reading_time: true,
+  view_count: true
 });
 
 export const resources = pgTable("resources", {
