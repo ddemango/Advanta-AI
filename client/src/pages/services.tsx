@@ -7,6 +7,7 @@ import { GradientText } from '@/components/ui/gradient-text';
 import { Button } from '@/components/ui/button';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { Helmet } from 'react-helmet';
+import { CaseStudy } from '@/components/ui/case-study';
 
 type ServiceCategory = 'all' | 'custom-ai' | 'analytics' | 'automation' | 'integration';
 
