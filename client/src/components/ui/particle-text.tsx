@@ -159,7 +159,7 @@ export function ParticleText({
       <canvas 
         ref={canvasRef} 
         className="absolute top-0 left-0 w-full h-full" 
-        style={{ zIndex: 10 }}
+        style={{ zIndex: 1 }}
       />
       <motion.div 
         className="opacity-0"
