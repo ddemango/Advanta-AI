@@ -33,6 +33,26 @@ export const CaseStudy = ({
   primaryColor = 'from-blue-500',
   secondaryColor = 'to-indigo-600'
 }: CaseStudyProps) => {
+  // Function to get appropriate industry icons
+  const getIndustryIcon = (industryName: string): string => {
+    const lowerIndustry = industryName.toLowerCase();
+    
+    if (lowerIndustry.includes('manufacturing')) return 'fas fa-industry';
+    if (lowerIndustry.includes('retail') || lowerIndustry.includes('e-commerce')) return 'fas fa-shopping-cart';
+    if (lowerIndustry.includes('tech') || lowerIndustry.includes('saas')) return 'fas fa-microchip';
+    if (lowerIndustry.includes('finance') || lowerIndustry.includes('banking')) return 'fas fa-chart-line';
+    if (lowerIndustry.includes('health') || lowerIndustry.includes('medical')) return 'fas fa-heartbeat';
+    if (lowerIndustry.includes('education')) return 'fas fa-graduation-cap';
+    if (lowerIndustry.includes('media') || lowerIndustry.includes('publishing')) return 'fas fa-newspaper';
+    if (lowerIndustry.includes('hospitality') || lowerIndustry.includes('hotel')) return 'fas fa-concierge-bell';
+    if (lowerIndustry.includes('marketing') || lowerIndustry.includes('advertising')) return 'fas fa-bullhorn';
+    if (lowerIndustry.includes('logistics') || lowerIndustry.includes('transportation')) return 'fas fa-truck';
+    if (lowerIndustry.includes('energy') || lowerIndustry.includes('utilities')) return 'fas fa-bolt';
+    
+    // Default icon if no match
+    return 'fas fa-building';
+  };
+
   return (
     <motion.div 
       variants={fadeIn}
@@ -40,13 +60,21 @@ export const CaseStudy = ({
       animate="show"
       className="my-10"
     >
-      <div className="bg-background/80 backdrop-blur-sm rounded-xl border border-gray-800">
+      <div className="bg-background/80 backdrop-blur-sm rounded-xl border border-gray-800 shadow-xl shadow-black/20">
         {/* Header */}
         <div className={`bg-gradient-to-r ${primaryColor} ${secondaryColor} p-6 rounded-t-xl relative overflow-hidden`}>
           <div className="absolute inset-0 bg-grid-white/5 bg-[length:20px_20px] opacity-20"></div>
-          <div className="relative z-10">
-            <h3 className="text-2xl font-bold text-white mb-1">{client}</h3>
-            <p className="text-white/80 text-sm">{industry}</p>
+          <div className="relative z-10 flex justify-between items-center">
+            <div>
+              <h3 className="text-2xl font-bold text-white mb-1">{client}</h3>
+              <p className="text-white/80 text-sm flex items-center">
+                <i className={`mr-2 ${getIndustryIcon(industry)}`}></i>
+                {industry}
+              </p>
+            </div>
+            <div className="hidden md:flex h-14 w-14 rounded-full bg-white/10 items-center justify-center">
+              <i className={`text-white text-2xl ${getIndustryIcon(industry)}`}></i>
+            </div>
           </div>
         </div>
         
