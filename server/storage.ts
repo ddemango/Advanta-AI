@@ -171,13 +171,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
-    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
-    return post || undefined;
+    try {
+      // Since we're using dummy data for blog posts, do the same for this function
+      const dummyPosts = await this.getBlogPosts();
+      return dummyPosts.find(post => post.slug === slug);
+    } catch (error) {
+      console.error("Error in getBlogPostBySlug:", error);
+      return undefined;
+    }
   }
 
   async getBlogPostById(id: number): Promise<BlogPost | undefined> {
-    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
-    return post || undefined;
+    try {
+      // Since we're using dummy data for blog posts, do the same for this function
+      const dummyPosts = await this.getBlogPosts();
+      return dummyPosts.find(post => post.id === id);
+    } catch (error) {
+      console.error("Error in getBlogPostById:", error);
+      return undefined;
+    }
   }
 
   async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
