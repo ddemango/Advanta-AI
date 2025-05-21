@@ -5,7 +5,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { GradientText } from '@/components/ui/gradient-text';
-import { CaseStudy } from '@/components/ui/case-study-card';
+import { CaseStudy, CaseStudyProps } from '@/components/ui/case-study';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { Helmet } from 'react-helmet';
 
@@ -41,7 +41,7 @@ export default function CaseStudiesPage() {
   ];
   
   // Comprehensive case study data
-  const caseStudies = [
+  const caseStudies: CaseStudyProps[] = [
     {
       id: 1,
       title: 'Personalization Engine Overhaul',
@@ -475,63 +475,7 @@ export default function CaseStudiesPage() {
                   .filter(study => study.featured)
                   .map((study) => (
                     <motion.div key={study.id} variants={fadeIn}>
-                      <div className="bg-background border border-white/10 rounded-xl overflow-hidden h-full flex flex-col">
-                        <div className="relative">
-                          <img 
-                            src={study.image} 
-                            alt={`${study.client} case study`} 
-                            className="w-full h-48 object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
-                          <div className="absolute bottom-3 left-3 bg-primary text-white text-xs font-medium py-1 px-2 rounded">
-                            {study.industry}
-                          </div>
-                          <div 
-                            className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                            style={{ backgroundColor: study.logoColor || '#4A90E2' }}
-                          >
-                            {study.logo}
-                          </div>
-                        </div>
-                        
-                        <div className="p-6 flex-grow">
-                          <h3 className="text-xl font-bold mb-2">{study.title}</h3>
-                          <p className="text-gray-400 text-sm mb-4">{study.client}</p>
-                          
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-gray-300 mb-1">Challenge:</h4>
-                            <p className="text-gray-400 text-sm">{study.problem}</p>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-gray-300 mb-1">Solution:</h4>
-                            <p className="text-gray-400 text-sm">{study.solution}</p>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-gray-300 mb-1">Results:</h4>
-                            <div className="grid grid-cols-2 gap-3 mt-2">
-                              {study.metrics.map((metric, i) => (
-                                <div key={i} className="bg-background/50 border border-white/5 rounded-lg p-3 text-center">
-                                  <div className="text-xl font-bold text-primary">{metric.value}</div>
-                                  <div className="text-gray-400 text-xs">{metric.label}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="p-6 pt-0 border-t border-white/5 mt-auto flex justify-between items-center">
-                          <div className="text-xs text-gray-400">
-                            Implementation: {study.implementationTime || "14-30 days"}
-                          </div>
-                          <Button asChild variant="link" className="p-0 h-auto">
-                            <Link href={`/case-study/${study.id}`}>
-                              Full Case Study <i className="fas fa-arrow-right ml-1"></i>
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
+                      <CaseStudy {...study} />
                     </motion.div>
                   ))}
               </motion.div>
@@ -572,63 +516,7 @@ export default function CaseStudiesPage() {
                 >
                   {visibleCaseStudies.map((study) => (
                     <motion.div key={study.id} variants={fadeIn}>
-                      <div className="bg-background border border-white/10 rounded-xl overflow-hidden h-full flex flex-col">
-                        <div className="relative">
-                          <img 
-                            src={study.image} 
-                            alt={`${study.client} case study`} 
-                            className="w-full h-48 object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
-                          <div className="absolute bottom-3 left-3 bg-primary text-white text-xs font-medium py-1 px-2 rounded">
-                            {study.industry}
-                          </div>
-                          <div 
-                            className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                            style={{ backgroundColor: study.logoColor || '#4A90E2' }}
-                          >
-                            {study.logo}
-                          </div>
-                        </div>
-                        
-                        <div className="p-6 flex-grow">
-                          <h3 className="text-xl font-bold mb-2">{study.title}</h3>
-                          <p className="text-gray-400 text-sm mb-4">{study.client}</p>
-                          
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-gray-300 mb-1">Challenge:</h4>
-                            <p className="text-gray-400 text-sm">{study.problem}</p>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-gray-300 mb-1">Solution:</h4>
-                            <p className="text-gray-400 text-sm">{study.solution}</p>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <h4 className="text-sm font-semibold text-gray-300 mb-1">Results:</h4>
-                            <div className="grid grid-cols-2 gap-3 mt-2">
-                              {study.metrics.map((metric, i) => (
-                                <div key={i} className="bg-background/50 border border-white/5 rounded-lg p-3 text-center">
-                                  <div className="text-xl font-bold text-primary">{metric.value}</div>
-                                  <div className="text-gray-400 text-xs">{metric.label}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="p-6 pt-0 border-t border-white/5 mt-auto flex justify-between items-center">
-                          <div className="text-xs text-gray-400">
-                            Implementation: {study.implementationTime || "14-30 days"}
-                          </div>
-                          <Button asChild variant="link" className="p-0 h-auto">
-                            <Link href={`/case-study/${study.id}`}>
-                              Full Case Study <i className="fas fa-arrow-right ml-1"></i>
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
+                      <CaseStudy {...study} />
                     </motion.div>
                   ))}
                 </motion.div>
