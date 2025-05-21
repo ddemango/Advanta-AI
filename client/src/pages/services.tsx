@@ -547,16 +547,32 @@ export default function ServicesPage() {
                     </div>
                     
                     <div className="p-6 pt-0 mt-auto">
-                      <Link href={`/service/${service.id}`}>
-                        <Button variant="outline" className="w-full">
-                          Learn More
-                          <i className="fas fa-arrow-right ml-2"></i>
+                      {service.caseStudy ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => {
+                            const element = document.getElementById(`case-study-${service.id}`);
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth' });
+                            }
+                          }}
+                        >
+                          View Success Story
+                          <i className="fas fa-arrow-down ml-2"></i>
                         </Button>
-                      </Link>
+                      ) : (
+                        <Link to={`/service/${service.id}`}>
+                          <Button variant="outline" className="w-full">
+                            Learn More
+                            <i className="fas fa-arrow-right ml-2"></i>
+                          </Button>
+                        </Link>
+                      )}
                       
-                      {service.caseStudyLink && (
+                      {service.caseStudyLink && !service.caseStudy && (
                         <div className="mt-3 text-center">
-                          <Link href={service.caseStudyLink} className="text-xs text-primary hover:underline">
+                          <Link to={service.caseStudyLink} className="text-xs text-primary hover:underline">
                             View Case Study
                           </Link>
                         </div>
@@ -644,6 +660,60 @@ export default function ServicesPage() {
                 </motion.div>
               ))}
             </motion.div>
+          </div>
+        </section>
+        
+        {/* Case Studies Showcase */}
+        <section className="py-20 bg-black/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="text-center mb-12"
+            >
+              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
+                Client <GradientText>Success Stories</GradientText>
+              </motion.h2>
+              <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
+                See how our AI solutions have delivered measurable results for industry-leading organizations
+              </motion.p>
+            </motion.div>
+
+            <div className="space-y-16 mt-12">
+              {services
+                .filter(service => service.caseStudy)
+                .map(service => (
+                  <div key={service.id} id={`case-study-${service.id}`} className="scroll-mt-24">
+                    <motion.div
+                      initial="hidden"
+                      whileInView="show"
+                      viewport={{ once: true, margin: "-100px" }}
+                      className="mb-4"
+                    >
+                      <h3 className="text-2xl font-bold mb-2 flex items-center">
+                        <span className={`w-2 h-8 mr-3 rounded bg-gradient-to-b ${service.primaryColor} ${service.secondaryColor}`}></span>
+                        {service.title}
+                      </h3>
+                      <p className="text-gray-400 pl-5">{service.description}</p>
+                    </motion.div>
+                    
+                    {service.caseStudy && (
+                      <CaseStudy
+                        client={service.caseStudy.client}
+                        industry={service.caseStudy.industry}
+                        challenge={service.caseStudy.challenge}
+                        solution={service.caseStudy.solution}
+                        results={service.caseStudy.results}
+                        metrics={service.caseStudy.metrics}
+                        testimonial={service.caseStudy.testimonial}
+                        primaryColor={service.primaryColor}
+                        secondaryColor={service.secondaryColor}
+                      />
+                    )}
+                  </div>
+                ))}
+            </div>
           </div>
         </section>
         
