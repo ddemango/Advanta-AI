@@ -1,98 +1,118 @@
-import { motion } from 'framer-motion';
+import { Link } from "wouter";
+import { Button } from "./button";
 
 interface Metric {
   label: string;
   value: string;
 }
 
+export interface CaseStudy {
+  id: number;
+  title: string;
+  client: string;
+  logo: string;
+  logoColor?: string;
+  industry: string;
+  image: string;
+  problem: string;
+  solution: string;
+  result: string;
+  metrics: Metric[];
+  quote?: string;
+  spokespersonName?: string;
+  spokespersonTitle?: string;
+  technologies?: string[];
+  implementationTime?: string;
+  color: string;
+  featured?: boolean;
+}
+
 interface CaseStudyCardProps {
-  caseStudy: {
-    id: number;
-    title: string;
-    client: string;
-    logo: string;
-    industry: string;
-    image: string;
-    metrics: Metric[];
-    quote: string;
-    color: string;
-  };
+  caseStudy: CaseStudy;
 }
 
 export function CaseStudyCard({ caseStudy }: CaseStudyCardProps) {
-  // Dynamic color classes based on the color prop
-  const getColorClasses = (color: string) => {
-    const colorMap = {
-      primary: {
-        border: 'border-primary',
-        text: 'text-primary',
-        hover: 'hover:text-primary/90'
-      },
-      secondary: {
-        border: 'border-secondary',
-        text: 'text-secondary',
-        hover: 'hover:text-secondary/90'
-      },
-      accent: {
-        border: 'border-accent',
-        text: 'text-accent',
-        hover: 'hover:text-accent/90'
-      }
-    };
-    
-    return colorMap[color as keyof typeof colorMap] || colorMap.primary;
-  };
-  
-  const colorClasses = getColorClasses(caseStudy.color);
-  
   return (
-    <motion.div 
-      className="bg-background rounded-xl overflow-hidden card-hover"
-      whileHover={{ y: -5 }}
-    >
-      {/* Case Study Image */}
-      <img 
-        src={caseStudy.image} 
-        alt={`${caseStudy.client} case study visualization`} 
-        className="w-full h-48 object-cover"
-      />
-      
-      <div className="p-6">
-        {/* Client Info */}
-        <div className="flex items-center mb-4">
-          <div className="bg-muted h-10 w-10 rounded-lg flex items-center justify-center mr-3">
-            <span className="text-white font-semibold">{caseStudy.logo}</span>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-white">{caseStudy.client}</h3>
-            <p className="text-xs text-muted-foreground">{caseStudy.industry} Platform</p>
-          </div>
+    <div className="bg-background border border-white/10 rounded-xl overflow-hidden h-full flex flex-col">
+      <div className="relative">
+        <img 
+          src={caseStudy.image} 
+          alt={`${caseStudy.client} case study`} 
+          className="w-full h-48 object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+        <div className="absolute bottom-3 left-3 bg-primary text-white text-xs font-medium py-1 px-2 rounded">
+          {caseStudy.industry}
         </div>
-        
-        {/* Case Study Title */}
-        <h4 className="text-xl font-bold text-white mb-3">{caseStudy.title}</h4>
-        
-        {/* Metrics */}
-        <div className="space-y-2 mb-4">
-          {caseStudy.metrics.map((metric, index) => (
-            <div key={index} className="flex justify-between text-sm">
-              <span className="text-muted-foreground">{metric.label}</span>
-              <span className="text-white font-medium">{metric.value}</span>
-            </div>
-          ))}
+        <div 
+          className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+          style={{ backgroundColor: caseStudy.logoColor || '#4A90E2' }}
+        >
+          {caseStudy.logo}
         </div>
-        
-        {/* Quote */}
-        <blockquote className={`italic text-muted-foreground text-sm border-l-2 ${colorClasses.border} pl-3 mb-4`}>
-          "{caseStudy.quote}"
-        </blockquote>
-        
-        {/* CTA Link */}
-        <a href="#" className={`${colorClasses.text} ${colorClasses.hover} font-medium flex items-center`}>
-          <span>Read case study</span>
-          <i className="fas fa-arrow-right ml-2 text-xs"></i>
-        </a>
       </div>
-    </motion.div>
+      
+      <div className="p-6 flex-grow">
+        <h3 className="text-xl font-bold mb-2">{caseStudy.title}</h3>
+        <p className="text-gray-400 text-sm mb-4">{caseStudy.client}</p>
+        
+        <div className="mb-4">
+          <h4 className="text-sm font-semibold text-gray-300 mb-1">Challenge:</h4>
+          <p className="text-gray-400 text-sm">{caseStudy.problem}</p>
+        </div>
+        
+        <div className="mb-4">
+          <h4 className="text-sm font-semibold text-gray-300 mb-1">Solution:</h4>
+          <p className="text-gray-400 text-sm">{caseStudy.solution}</p>
+        </div>
+        
+        <div className="mb-4">
+          <h4 className="text-sm font-semibold text-gray-300 mb-1">Results:</h4>
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            {caseStudy.metrics.map((metric, i) => (
+              <div key={i} className="bg-background/50 border border-white/5 rounded-lg p-3 text-center">
+                <div className="text-xl font-bold text-primary">{metric.value}</div>
+                <div className="text-gray-400 text-xs">{metric.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {caseStudy.quote && (
+          <div className="mb-4 border-l-2 border-primary pl-3 italic text-sm text-gray-300">
+            "{caseStudy.quote}"
+            {caseStudy.spokespersonName && (
+              <div className="text-xs text-gray-400 mt-1 not-italic">
+                — {caseStudy.spokespersonName}, {caseStudy.spokespersonTitle}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {caseStudy.technologies && (
+          <div className="mt-4">
+            <h4 className="text-xs font-semibold text-gray-400 mb-1">Technologies Used:</h4>
+            <div className="flex flex-wrap gap-1">
+              {caseStudy.technologies.map((tech, i) => (
+                <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="p-6 pt-0 border-t border-white/5 mt-auto flex justify-between items-center">
+        <div className="text-xs text-gray-400">
+          Implementation: {caseStudy.implementationTime || "14-30 days"}
+        </div>
+        <Button asChild variant="link" className="p-0 h-auto">
+          <Link href={`/case-study/${caseStudy.id}`}>
+            Full Case Study <i className="fas fa-arrow-right ml-1"></i>
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }

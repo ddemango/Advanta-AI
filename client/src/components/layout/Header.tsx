@@ -44,7 +44,7 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             <a onClick={() => setLocation('/services')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Services</a>
-            <a href="#case-studies" className="text-gray-300 hover:text-white font-medium transition-colors">Case Studies</a>
+            <a onClick={() => setLocation('/case-studies')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Case Studies</a>
             <a href="#testimonials" className="text-gray-300 hover:text-white font-medium transition-colors">Testimonials</a>
             
             {/* Resources Dropdown */}
@@ -141,9 +141,11 @@ export default function Header() {
               Services
             </a>
             <a 
-              href="#case-studies" 
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
-              onClick={closeMenu}
+              onClick={() => {
+                setLocation('/case-studies');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
             >
               Case Studies
             </a>
