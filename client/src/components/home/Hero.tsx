@@ -172,9 +172,9 @@ export default function Hero() {
                     loop
                     playsInline
                   >
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                    <source src="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4" type="video/mp4" />
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+                    <source src="https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69b27dbc4a5bcdeecde15e6b2&profile_id=139&oauth2_token_id=57447761" type="video/mp4" />
+                    <source src="https://static.videezy.com/system/resources/previews/000/005/529/original/Raining_Data.mp4" type="video/mp4" />
+                    <source src="https://videos.pexels.com/video-files/3130284/3130284-uhd_2560_1440_30fps.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                   
