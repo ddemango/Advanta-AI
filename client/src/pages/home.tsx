@@ -64,14 +64,24 @@ export default function Home() {
       const sections = ['hero', 'why-advanta', 'roi-calculator', 'services', 'case-studies', 'contact'];
       const scrollPosition = window.scrollY + 200;
 
+      let activeFound = false;
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = document.getElementById(sections[i]);
         if (section && section.offsetTop <= scrollPosition) {
           setActiveSection(sections[i]);
+          activeFound = true;
           break;
         }
       }
+      
+      // Fallback if no section is found active
+      if (!activeFound && sections.length > 0) {
+        setActiveSection(sections[0]);
+      }
     };
+
+    // Initial call to set the active section on mount
+    handleScroll();
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
