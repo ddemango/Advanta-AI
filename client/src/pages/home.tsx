@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
@@ -15,6 +16,7 @@ import PricingCta from '@/components/home/PricingCta';
 import Contact from '@/components/home/Contact';
 import AiProductSandbox from '@/components/sandbox/AiProductSandbox';
 import ClientPortal from '@/components/portal/ClientPortal';
+import RoiCalculatorPreview from '@/components/home/RoiCalculatorPreview';
 import { CookieConsent } from '@/components/ui/cookie-consent';
 import { Helmet } from 'react-helmet';
 
