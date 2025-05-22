@@ -107,7 +107,7 @@ export default function Home() {
         initial="hidden"
         animate="show"
         className={`fixed z-50 left-1/2 transform -translate-x-1/2 ${
-          window.scrollY > 300 
+          activeSection !== 'hero'
             ? 'top-4 bg-background/80 backdrop-blur-md shadow-lg border border-primary/20 rounded-full px-4 py-2' 
             : 'top-[calc(100vh-120px)] bg-transparent'
         } transition-all duration-300 ease-in-out`}
