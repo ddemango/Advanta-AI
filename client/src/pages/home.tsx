@@ -101,43 +101,41 @@ export default function Home() {
       
       <Header />
       
-      {/* Quick Navigation Bar */}
+      {/* Mobile-friendly Bottom Navigation Bar - Minimalistic Version */}
       <motion.div 
         variants={fadeIn}
         initial="hidden"
         animate="show"
-        className={`fixed z-50 left-1/2 transform -translate-x-1/2 ${
-          activeSection !== 'hero'
-            ? 'top-4 bg-background/80 backdrop-blur-md shadow-lg border border-primary/20 rounded-full px-4 py-2' 
-            : 'top-[calc(100vh-120px)] bg-transparent'
-        } transition-all duration-300 ease-in-out`}
+        className="fixed bottom-0 left-0 right-0 md:bottom-4 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 z-50 bg-background/70 backdrop-blur-md md:shadow-lg md:border md:border-primary/20 md:rounded-full"
       >
-        <div className="flex space-x-1 md:space-x-2">
+        <div className="flex justify-around md:justify-center md:space-x-4 p-2">
           {[
-            { id: 'hero', label: 'Home' },
-            { id: 'why-advanta', label: 'Benefits' },
-            { id: 'services', label: 'Solutions' },
-            { id: 'roi-calculator', label: 'ROI' },
-            { id: 'case-studies', label: 'Results' },
-            { id: 'contact', label: 'Contact' }
+            { id: 'hero', label: 'Home', icon: '🏠' },
+            { id: 'why-advanta', label: 'Benefits', icon: '✨' },
+            { id: 'services', label: 'Solutions', icon: '🔧' },
+            { id: 'roi-calculator', label: 'ROI', icon: '📈' },
+            { id: 'case-studies', label: 'Results', icon: '🏆' },
+            { id: 'contact', label: 'Contact', icon: '✉️' }
           ].map(item => (
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
-              className={`relative px-3 py-2 text-sm md:text-base rounded-full transition-all duration-300 ${
+              className={`relative p-2 md:px-3 md:py-1.5 rounded-full transition-all duration-300 hover:scale-110 focus:outline-none ${
                 activeSection === item.id 
-                  ? 'text-white font-medium' 
+                  ? 'text-primary' 
                   : 'text-gray-400 hover:text-white'
               }`}
             >
+              <span className="relative z-10 hidden md:inline text-xs md:text-sm">{item.label}</span>
+              <span className="relative z-10 md:hidden text-sm">{item.icon}</span>
+              
               {activeSection === item.id && (
                 <motion.div
-                  layoutId="activeSection"
-                  className="absolute inset-0 bg-primary rounded-full"
+                  layoutId="activeNavIndicator"
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 md:w-full md:h-0.5 bg-primary rounded-full"
                   transition={{ duration: 0.3 }}
                 />
               )}
-              <span className="relative z-10">{item.label}</span>
             </button>
           ))}
         </div>
