@@ -5,10 +5,11 @@ import { Card } from '@/components/ui/card';
 interface CaseStudyProps {
   client: string;
   industry: string;
-  challenge: string;
+  challenge?: string;
+  problem?: string;
   solution: string;
-  results: string[];
-  metrics: {
+  results?: string[];
+  metrics?: {
     label: string;
     value: string;
     icon?: string;
@@ -20,19 +21,26 @@ interface CaseStudyProps {
   };
   primaryColor?: string;
   secondaryColor?: string;
+  id?: number;
+  title?: string;
 }
 
 export const CaseStudy = ({
   client,
   industry,
   challenge,
+  problem,
   solution,
   results,
   metrics,
   testimonial,
   primaryColor = 'from-blue-500',
-  secondaryColor = 'to-indigo-600'
-}: CaseStudyProps) => {
+  secondaryColor = 'to-indigo-600',
+  id,
+  title
+}: CaseStudyProps & { problem?: string }) => {
+  // Use challenge if provided, otherwise use problem (for backward compatibility)
+  const challengeText = challenge || problem;
   // Function to get appropriate industry icons
   const getIndustryIcon = (industryName: string): string => {
     const lowerIndustry = industryName.toLowerCase();
@@ -88,7 +96,7 @@ export const CaseStudy = ({
                 </span>
                 Challenge
               </h4>
-              <p className="text-gray-300 text-sm">{challenge}</p>
+              <p className="text-gray-300 text-sm">{challengeText}</p>
             </Card>
             
             <Card className="p-5 bg-black/30 border-gray-800">
