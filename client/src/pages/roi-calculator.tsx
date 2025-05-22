@@ -43,26 +43,74 @@ export default function ROICalculator() {
 
   // Calculate ROI based on input changes
   useEffect(() => {
-    // These are example calculations - in a real app, you'd have more complex formulas
+    // Industry factors - different industries have different AI impact multipliers
+    const industryFactors: Record<string, { eff: number, cost: number, rev: number }> = {
+      "eCommerce": { eff: 1.2, cost: 1.1, rev: 1.3 },
+      "Financial Services": { eff: 1.4, cost: 1.3, rev: 1.1 },
+      "Healthcare": { eff: 1.1, cost: 1.5, rev: 0.9 },
+      "Manufacturing": { eff: 1.3, cost: 1.4, rev: 1.0 },
+      "Real Estate": { eff: 0.9, cost: 1.0, rev: 1.2 },
+      "Technology": { eff: 1.5, cost: 1.2, rev: 1.5 },
+      "Education": { eff: 1.1, cost: 1.0, rev: 0.8 },
+      "Retail": { eff: 1.2, cost: 1.2, rev: 1.2 },
+      "Hospitality": { eff: 1.0, cost: 1.3, rev: 1.1 },
+      "Media & Entertainment": { eff: 1.2, cost: 0.9, rev: 1.4 }
+    };
     
+    // Company size factor (larger companies see different benefits from AI)
+    const sizeFactors = {
+      small: { eff: 1.1, cost: 0.9, rev: 1.2 }, // Small companies see bigger revenue boosts
+      medium: { eff: 1.2, cost: 1.1, rev: 1.1 },
+      large: { eff: 1.3, cost: 1.2, rev: 1.0 },
+      enterprise: { eff: 1.4, cost: 1.3, rev: 0.9 } // Enterprise sees bigger efficiency gains
+    };
+    
+    // Determine size category
+    let sizeCat = 'small';
+    if (companySize < 25) sizeCat = 'small';
+    else if (companySize < 50) sizeCat = 'medium';
+    else if (companySize < 75) sizeCat = 'large';
+    else sizeCat = 'enterprise';
+    
+    // Current efficiency factor (lower efficiency means more room for improvement)
+    const efficiencyFactor = Math.max(0.5, (100 - currentEfficiency) / 60);
+    
+    // Get industry multipliers (default to eCommerce if not found)
+    const indFactors = industryFactors[industry] || industryFactors["eCommerce"];
+    const szFactors = sizeFactors[sizeCat as keyof typeof sizeFactors];
+    
+    // Calculate final result ranges with all factors applied
     // Efficiency improvement calculation
-    let effMin = 35;
-    let effMax = 45;
+    let effBase = 30 + (Math.random() * 5);
+    let effFactor = indFactors.eff * szFactors.eff * efficiencyFactor;
+    let effMin = Math.round(effBase * effFactor * 0.9);
+    let effMax = Math.round(effBase * effFactor * 1.1);
     setEfficiencyImprovement(`${effMin}-${effMax}%`);
     
     // Cost reduction calculation
-    let costMin = 20;
-    let costMax = 30;
+    let costBase = 20 + (Math.random() * 5);
+    let costFactor = indFactors.cost * szFactors.cost;
+    let costMin = Math.round(costBase * costFactor * 0.9);
+    let costMax = Math.round(costBase * costFactor * 1.1);
     setCostReduction(`${costMin}-${costMax}%`);
     
     // Revenue growth calculation
-    let revMin = 15;
-    let revMax = 25;
+    let revBase = 15 + (Math.random() * 5);
+    let revFactor = indFactors.rev * szFactors.rev;
+    let revMin = Math.round(revBase * revFactor * 0.9);
+    let revMax = Math.round(revBase * revFactor * 1.1);
     setRevenueGrowth(`${revMin}-${revMax}%`);
     
-    // Estimated ROI calculation
-    let roiMin = 210;
-    let roiMax = 280;
+    // Estimated ROI calculation - more heavily weighted by cost reduction and revenue growth
+    let roiBase = ((costMin + costMax) / 2) + ((revMin + revMax) / 2) * 2.5;
+    let roiMin = Math.round(roiBase * 2.8);
+    let roiMax = Math.round(roiBase * 3.5);
+    
+    // Ensure ROI ranges make sense (roiMin < roiMax, reasonable numbers)
+    roiMin = Math.min(roiMin, 800);
+    roiMax = Math.min(roiMax, 1000);
+    if (roiMin > roiMax) [roiMin, roiMax] = [roiMax, roiMin];
+    
     setEstimatedROI(`${roiMin}-${roiMax}%`);
   }, [industry, companySize, currentEfficiency]);
 
@@ -166,7 +214,10 @@ export default function ROICalculator() {
                       <span className="font-medium">{efficiencyImprovement}</span>
                     </div>
                     <div className="w-full bg-purple-900/30 h-2 rounded-full overflow-hidden">
-                      <div className="bg-purple-500 h-full rounded-full" style={{ width: '40%' }}></div>
+                      <div 
+                        className="bg-purple-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${parseInt(efficiencyImprovement.split('-')[0]) || 40}%` }}
+                      ></div>
                     </div>
                   </div>
                   
@@ -176,7 +227,10 @@ export default function ROICalculator() {
                       <span className="font-medium">{costReduction}</span>
                     </div>
                     <div className="w-full bg-emerald-900/30 h-2 rounded-full overflow-hidden">
-                      <div className="bg-emerald-500 h-full rounded-full" style={{ width: '25%' }}></div>
+                      <div 
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${parseInt(costReduction.split('-')[0]) || 25}%` }}
+                      ></div>
                     </div>
                   </div>
                   
@@ -186,7 +240,10 @@ export default function ROICalculator() {
                       <span className="font-medium">{revenueGrowth}</span>
                     </div>
                     <div className="w-full bg-blue-900/30 h-2 rounded-full overflow-hidden">
-                      <div className="bg-blue-500 h-full rounded-full" style={{ width: '20%' }}></div>
+                      <div 
+                        className="bg-blue-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${parseInt(revenueGrowth.split('-')[0]) || 20}%` }}
+                      ></div>
                     </div>
                   </div>
                   
