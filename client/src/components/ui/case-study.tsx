@@ -112,14 +112,21 @@ export const CaseStudy = ({
             </h4>
             
             <ul className="grid md:grid-cols-2 gap-x-4 gap-y-2 mb-6">
-              {results.map((result, index) => (
+              {results && results.length > 0 ? results.map((result, index) => (
                 <li key={index} className="flex items-start">
                   <span className="text-green-500 mr-2 mt-1">
                     <i className="fas fa-check-circle"></i>
                   </span>
                   <span className="text-gray-300 text-sm">{result}</span>
                 </li>
-              ))}
+              )) : (
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2 mt-1">
+                    <i className="fas fa-check-circle"></i>
+                  </span>
+                  <span className="text-gray-300 text-sm">Significant improvements in business metrics and operational efficiency</span>
+                </li>
+              )}
             </ul>
           </motion.div>
           
