@@ -17,10 +17,41 @@ import Contact from '@/components/home/Contact';
 import AiProductSandbox from '@/components/sandbox/AiProductSandbox';
 import ClientPortal from '@/components/portal/ClientPortal';
 import RoiCalculatorPreview from '@/components/home/RoiCalculatorPreview';
+import EmailCapture from '@/components/home/EmailCapture';
+import AiUseCases from '@/components/home/AiUseCases';
 import { CookieConsent } from '@/components/ui/cookie-consent';
 import { Helmet } from 'react-helmet';
 
 export default function Home() {
+  // Handle smooth scrolling
+  useEffect(() => {
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+
+      if (anchor && anchor.hash && anchor.hash.startsWith('#') && anchor.pathname === window.location.pathname) {
+        e.preventDefault();
+        const targetElement = document.querySelector(anchor.hash);
+        
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.getBoundingClientRect().top + window.pageYOffset - 100,
+            behavior: 'smooth'
+          });
+          
+          // Update URL without scrolling
+          window.history.pushState(null, '', anchor.hash);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleAnchorClick);
+    
+    return () => {
+      document.removeEventListener('click', handleAnchorClick);
+    };
+  }, []);
+
   return (
     <>
       <Helmet>
@@ -42,13 +73,26 @@ export default function Home() {
         <WhyAdvantaAI />
         <HowItWorks />
         
+        {/* ROI Calculator Preview */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10" id="roi-preview">
+          <RoiCalculatorPreview />
+        </div>
+        
         {/* Solutions Section */}
         <ServicesPreview />
         <Services />
         
+        {/* AI Use Cases with Visual Representations */}
+        <AiUseCases />
+        
         {/* Proof of Value Section */}
         <CaseStudies />
         <Testimonials />
+        
+        {/* Email Capture Section */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8" id="stay-informed">
+          <EmailCapture />
+        </div>
         
         {/* Interactive Tools Section */}
         <AiDemo />
