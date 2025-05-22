@@ -164,19 +164,43 @@ export default function Hero() {
                 <div className="relative w-full h-full rounded-xl overflow-hidden border border-white/10 shadow-2xl">
                   <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-transparent z-10"></div>
                   
-                  {/* Video Element */}
-                  <video 
-                    className="w-full h-full object-cover"
-                    autoPlay 
-                    muted 
-                    loop
-                    playsInline
-                  >
-                    <source src="https://videos.pexels.com/video-files/6153354/6153354-uhd_2560_1440_25fps.mp4" type="video/mp4" />
-                    <source src="https://videos.pexels.com/video-files/7688336/7688336-uhd_2560_1440_25fps.mp4" type="video/mp4" />
-                    <source src="https://videos.pexels.com/video-files/3196284/3196284-uhd_2560_1440_30fps.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+                  {/* Business AI Demo Visualization */}
+                  <div className="w-full h-full relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                    <div className="absolute inset-4 grid grid-cols-3 gap-2">
+                      <div className="bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-purple-500/30">
+                        <h3 className="text-xs text-purple-300 mb-2">Sales AI Agent</h3>
+                        <div className="text-lg font-bold text-white">+342%</div>
+                        <div className="text-xs text-green-400">Lead Generation</div>
+                        <div className="mt-2 h-6 bg-gradient-to-r from-purple-500/30 to-transparent rounded animate-pulse"></div>
+                      </div>
+                      
+                      <div className="bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-blue-500/30">
+                        <h3 className="text-xs text-blue-300 mb-2">Support AI Agent</h3>
+                        <div className="text-lg font-bold text-white">24/7</div>
+                        <div className="text-xs text-green-400">Response Time</div>
+                        <div className="mt-2 h-6 bg-gradient-to-r from-blue-500/30 to-transparent rounded animate-pulse"></div>
+                      </div>
+                      
+                      <div className="bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-green-500/30">
+                        <h3 className="text-xs text-green-300 mb-2">Analytics AI</h3>
+                        <div className="text-lg font-bold text-white">94%</div>
+                        <div className="text-xs text-green-400">Accuracy</div>
+                        <div className="mt-2 h-6 bg-gradient-to-r from-green-500/30 to-transparent rounded animate-pulse"></div>
+                      </div>
+                      
+                      <div className="col-span-3 bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-indigo-500/30 mt-2">
+                        <h3 className="text-xs text-indigo-300 mb-2">Office Workflow Automation</h3>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-purple-500/50 rounded-full flex items-center justify-center text-xs">📊</div>
+                          <div className="flex-1 h-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded animate-pulse"></div>
+                          <div className="w-6 h-6 bg-blue-500/50 rounded-full flex items-center justify-center text-xs">🤖</div>
+                          <div className="flex-1 h-1 bg-gradient-to-r from-blue-500 to-green-500 rounded animate-pulse"></div>
+                          <div className="w-6 h-6 bg-green-500/50 rounded-full flex items-center justify-center text-xs">✅</div>
+                        </div>
+                        <div className="text-xs text-gray-300 mt-2">AI agents processing business tasks automatically</div>
+                      </div>
+                    </div>
+                  </div>
                   
                   {/* Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center z-20">
