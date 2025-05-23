@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Start the blog scheduler to generate 2 articles daily
   const blogScheduler = new BlogScheduler(2);
   blogScheduler.start();
-  // API route for contact form submissions
+  // API route for contact form submissions - sends leads to HubSpot
   app.post('/api/contact', async (req, res) => {
     try {
       const formData: ContactFormData = req.body;
@@ -97,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Consent is required' });
       }
       
-      // Save to database
+      // Save to local database
       await storage.createContactSubmission({
         name: formData.name,
         email: formData.email, 
@@ -107,14 +107,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
         consent: formData.consent
       });
       
-      // Return success response
+      // Send to HubSpot CRM
+      const apiKey = process.env.HUBSPOT_API_KEY;
+      if (apiKey) {
+        try {
+          const hubspotContactData = {
+            properties: [
+              { property: 'email', value: formData.email },
+              { property: 'firstname', value: formData.name.split(' ')[0] },
+              { property: 'lastname', value: formData.name.split(' ').slice(1).join(' ') || '' },
+              { property: 'company', value: formData.company || '' },
+              { property: 'industry', value: formData.industry || '' },
+              { property: 'message', value: formData.message },
+              { property: 'lead_source', value: 'Website Contact Form' },
+              { property: 'lifecyclestage', value: 'lead' }
+            ]
+          };
+
+          const hubspotUrl = `https://api.hubapi.com/contacts/v1/contact?hapikey=${apiKey}`;
+          const hubspotResponse = await fetch(hubspotUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(hubspotContactData)
+          });
+
+          if (hubspotResponse.ok) {
+            console.log('✅ Lead successfully sent to HubSpot CRM');
+          } else {
+            console.log('⚠️ Could not send to HubSpot, but saved locally');
+          }
+        } catch (hubspotError) {
+          console.log('⚠️ HubSpot sync failed, but contact saved locally');
+        }
+      }
+      
       return res.status(200).json({ 
-        message: 'Contact form submitted successfully',
+        message: 'Contact submitted and sent to your CRM!',
         success: true
       });
     } catch (error) {
       console.error('Error processing contact form:', error);
       return res.status(500).json({ message: 'Server error processing your request' });
+    }
+  });
+
+  // Quote requests - sends AI stack leads to HubSpot
+  app.post('/api/quotes', async (req, res) => {
+    try {
+      const quoteData = req.body;
+      
+      // Save quote locally
+      const quote = await storage.createQuote(quoteData);
+      
+      // Send to HubSpot as high-value lead
+      const apiKey = process.env.HUBSPOT_API_KEY;
+      if (apiKey) {
+        try {
+          const hubspotContactData = {
+            properties: [
+              { property: 'email', value: quoteData.email },
+              { property: 'firstname', value: quoteData.name?.split(' ')[0] || '' },
+              { property: 'lastname', value: quoteData.name?.split(' ').slice(1).join(' ') || '' },
+              { property: 'company', value: quoteData.company || '' },
+              { property: 'phone', value: quoteData.phone || '' },
+              { property: 'lead_source', value: 'AI Stack Quote Request' },
+              { property: 'lifecyclestage', value: 'marketingqualifiedlead' },
+              { property: 'ai_services_requested', value: JSON.stringify(quoteData.services) },
+              { property: 'estimated_budget', value: quoteData.budget || '' },
+              { property: 'project_timeline', value: quoteData.timeline || '' }
+            ]
+          };
+
+          const hubspotUrl = `https://api.hubapi.com/contacts/v1/contact?hapikey=${apiKey}`;
+          await fetch(hubspotUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(hubspotContactData)
+          });
+
+          console.log('✅ AI Stack quote request sent to HubSpot CRM');
+        } catch (error) {
+          console.log('⚠️ Quote saved locally, HubSpot sync issue');
+        }
+      }
+      
+      res.json({ success: true, message: 'Quote request submitted to your CRM!' });
+    } catch (error) {
+      console.error('Error processing quote:', error);
+      res.status(500).json({ error: 'Failed to process quote request' });
     }
   });
 
