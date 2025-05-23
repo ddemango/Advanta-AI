@@ -45,7 +45,6 @@ export default function Header() {
           <nav className="hidden md:flex space-x-8">
             <a onClick={() => setLocation('/services')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Services</a>
             <a onClick={() => setLocation('/case-studies')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Case Studies</a>
-            <a href="#testimonials" className="text-gray-300 hover:text-white font-medium transition-colors">Testimonials</a>
             
             {/* Resources Dropdown */}
             <div className="relative group">
