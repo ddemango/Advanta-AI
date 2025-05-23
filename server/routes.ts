@@ -97,17 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Consent is required' });
       }
       
-      // Save to local database
-      await storage.createContactSubmission({
-        name: formData.name,
-        email: formData.email, 
-        company: formData.company,
-        industry: formData.industry,
-        message: formData.message,
-        consent: formData.consent
-      });
-      
-      // Send to HubSpot CRM
+      // Send directly to HubSpot CRM (bypass local storage for now)
       const apiKey = process.env.HUBSPOT_API_KEY;
       if (apiKey) {
         try {
@@ -158,10 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const quoteData = req.body;
       
-      // Save quote locally
-      const quote = await storage.createQuote(quoteData);
-      
-      // Send to HubSpot as high-value lead
+      // Send directly to HubSpot as high-value lead
       const apiKey = process.env.HUBSPOT_API_KEY;
       if (apiKey) {
         try {
