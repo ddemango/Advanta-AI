@@ -24,6 +24,7 @@ import ResourceDetail from "@/pages/resource-detail";
 import EnterpriseGovernance from "@/pages/enterprise-governance";
 import EnterpriseSecurity from "@/pages/enterprise-security";
 import ExecutiveIntelligence from "@/pages/executive-intelligence";
+import HubSpotIntegration from "@/pages/hubspot-integration";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/enterprise-governance" component={EnterpriseGovernance} />
       <Route path="/enterprise-security" component={EnterpriseSecurity} />
       <Route path="/executive-intelligence" component={ExecutiveIntelligence} />
+      <Route path="/hubspot-integration" component={HubSpotIntegration} />
       <Route component={NotFound} />
     </Switch>
   );
