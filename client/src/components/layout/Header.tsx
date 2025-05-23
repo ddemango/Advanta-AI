@@ -98,6 +98,28 @@ export default function Header() {
                   >
                     Template Customization Assistant
                   </a>
+                  <div className="border-t border-border/20 my-2"></div>
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">Enterprise Suite</p>
+                  </div>
+                  <a 
+                    onClick={() => setLocation('/enterprise-governance')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    AI Governance & Compliance Hub
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/enterprise-security')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Enterprise Security Hub
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/executive-intelligence')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    Executive Intelligence Dashboard
+                  </a>
                 </div>
               </div>
             </div>
