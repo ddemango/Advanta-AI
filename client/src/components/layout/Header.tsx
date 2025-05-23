@@ -120,6 +120,16 @@ export default function Header() {
                   >
                     Executive Intelligence Dashboard
                   </a>
+                  <div className="border-t border-border/20 my-2"></div>
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-semibold text-orange-500 uppercase tracking-wide">CRM Integration</p>
+                  </div>
+                  <a 
+                    onClick={() => setLocation('/hubspot-integration')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🧡 HubSpot CRM Integration
+                  </a>
                 </div>
               </div>
             </div>
