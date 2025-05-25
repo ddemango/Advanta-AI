@@ -207,7 +207,7 @@ export default function Header() {
               <a href="/login">Client AI Suite</a>
             </Button>
             <Button asChild className="bg-primary hover:bg-primary/90">
-              <a href="/calculator">Build My AI Stack</a>
+              <a href="/build-my-ai-stack">Build My AI Stack</a>
             </Button>
           </div>
           
@@ -282,12 +282,12 @@ export default function Header() {
                 </a>
                 <a 
                   onClick={() => {
-                    setLocation('/calculator');
+                    setLocation('/build-my-ai-stack');
                     closeMenu();
                   }} 
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
-                  AI ROI Calculator
+                  Build My AI Stack
                 </a>
                 <a 
                   onClick={() => {
@@ -351,7 +351,7 @@ export default function Header() {
                 <a href="/login" onClick={closeMenu}>Client AI Suite</a>
               </Button>
               <Button asChild size="sm" className="bg-primary hover:bg-primary/90 w-full text-sm">
-                <a href="/calculator" onClick={closeMenu}>Get Your Custom AI Solution</a>
+                <a href="/build-my-ai-stack" onClick={closeMenu}>Build My AI Stack</a>
               </Button>
             </div>
           </div>
