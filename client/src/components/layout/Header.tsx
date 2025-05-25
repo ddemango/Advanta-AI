@@ -90,6 +90,30 @@ export default function Header() {
                   >
                     ⚖️ AI Tools Comparison Chart
                   </a>
+                  <a 
+                    onClick={() => setLocation('/competitor-intelligence')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🔍 AI Competitor Intelligence Analyzer
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/voiceover-script-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🎤 AI Voiceover Script Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/slide-deck-maker')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📊 AI-Powered Slide Deck Maker
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/cold-email-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📧 Cold Email Generator
+                  </a>
                   <div className="border-t border-border/20 my-2"></div>
                   <div className="px-4 py-2">
                     <p className="text-xs font-semibold text-purple-500 uppercase tracking-wide">Demos & Sandbox</p>

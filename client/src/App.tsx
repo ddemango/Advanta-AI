@@ -15,6 +15,10 @@ import AIToolQuiz from "@/pages/ai-tool-quiz";
 import BusinessNameGenerator from "@/pages/business-name-generator";
 import ResumeOptimizer from "@/pages/resume-optimizer";
 import AIToolsComparison from "@/pages/ai-tools-comparison";
+import CompetitorIntelligence from "@/pages/competitor-intelligence";
+import VoiceoverScriptGenerator from "@/pages/voiceover-script-generator";
+import SlideDeckMaker from "@/pages/slide-deck-maker";
+import ColdEmailGenerator from "@/pages/cold-email-generator";
 import Sandbox from "@/pages/sandbox";
 import ServicesPage from "@/pages/services";
 import ContactPage from "@/pages/contact";
@@ -98,6 +102,10 @@ function Router() {
       <Route path="/business-name-generator" component={BusinessNameGenerator} />
       <Route path="/resume-optimizer" component={ResumeOptimizer} />
       <Route path="/ai-tools-comparison" component={AIToolsComparison} />
+      <Route path="/competitor-intelligence" component={CompetitorIntelligence} />
+      <Route path="/voiceover-script-generator" component={VoiceoverScriptGenerator} />
+      <Route path="/slide-deck-maker" component={SlideDeckMaker} />
+      <Route path="/cold-email-generator" component={ColdEmailGenerator} />
       <Route path="/enterprise-governance" component={EnterpriseGovernance} />
       <Route path="/enterprise-security" component={EnterpriseSecurity} />
       <Route path="/executive-intelligence" component={ExecutiveIntelligence} />
