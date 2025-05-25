@@ -258,9 +258,9 @@ export default function Header() {
             >
               Testimonials
             </a>
-            {/* Resources Section */}
-            <div className="mb-1 px-2">
-              <div className="text-gray-300 font-medium mb-1">Resources</div>
+            {/* AI Platform Section */}
+            <div className="mb-3 px-2">
+              <div className="text-purple-300 font-medium mb-2">AI Platform</div>
               <div className="pl-3 flex flex-col space-y-2 mt-1">
                 <a 
                   onClick={() => {
@@ -282,21 +282,12 @@ export default function Header() {
                 </a>
                 <a 
                   onClick={() => {
-                    setLocation('/build-my-ai-stack');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Build My AI Stack
-                </a>
-                <a 
-                  onClick={() => {
                     setLocation('/marketplace');
                     closeMenu();
                   }} 
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
-                  AI Plugin Marketplace
+                  AI Marketplace
                 </a>
                 <a 
                   onClick={() => {
@@ -307,23 +298,21 @@ export default function Header() {
                 >
                   Industry AI Solutions
                 </a>
+              </div>
+            </div>
+
+            {/* Free AI Tools Section */}
+            <div className="mb-3 px-2">
+              <div className="text-green-300 font-medium mb-2">Free AI Tools</div>
+              <div className="pl-3 flex flex-col space-y-2 mt-1">
                 <a 
                   onClick={() => {
-                    setLocation('/template-assistant');
+                    setLocation('/build-my-ai-stack');
                     closeMenu();
                   }} 
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
-                  Template Customization Assistant
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/blog');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Blog
+                  Build My AI Stack
                 </a>
                 <a 
                   onClick={() => {
@@ -368,7 +357,7 @@ export default function Header() {
                   }} 
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
-                  Competitor Intelligence Analyzer
+                  Competitor Intelligence
                 </a>
                 <a 
                   onClick={() => {
@@ -377,7 +366,7 @@ export default function Header() {
                   }} 
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
-                  AI Voiceover Script Generator
+                  Voiceover Script Generator
                 </a>
                 <a 
                   onClick={() => {
@@ -386,7 +375,7 @@ export default function Header() {
                   }} 
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
-                  AI-Powered Slide Deck Maker
+                  Slide Deck Maker
                 </a>
                 <a 
                   onClick={() => {
@@ -396,6 +385,22 @@ export default function Header() {
                   className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
                 >
                   Cold Email Generator
+                </a>
+              </div>
+            </div>
+
+            {/* Resources Section */}
+            <div className="mb-3 px-2">
+              <div className="text-blue-300 font-medium mb-2">Resources</div>
+              <div className="pl-3 flex flex-col space-y-2 mt-1">
+                <a 
+                  onClick={() => {
+                    setLocation('/blog');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Blog
                 </a>
                 <a 
                   onClick={() => {
