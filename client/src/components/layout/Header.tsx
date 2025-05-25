@@ -327,6 +327,78 @@ export default function Header() {
                 </a>
                 <a 
                   onClick={() => {
+                    setLocation('/marketing-copy-generator');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Marketing Copy Generator
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/ai-tool-quiz');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  AI Tool Quiz
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/business-name-generator');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Business Name Generator
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/ai-tools-comparison');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  AI Tools Comparison
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/competitor-intelligence');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Competitor Intelligence Analyzer
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/voiceover-script-generator');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  AI Voiceover Script Generator
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/slide-deck-maker');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  AI-Powered Slide Deck Maker
+                </a>
+                <a 
+                  onClick={() => {
+                    setLocation('/cold-email-generator');
+                    closeMenu();
+                  }} 
+                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
+                >
+                  Cold Email Generator
+                </a>
+                <a 
+                  onClick={() => {
                     setLocation('/resources');
                     closeMenu();
                   }} 
