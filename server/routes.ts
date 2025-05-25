@@ -577,6 +577,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Real Competitor Analysis API
+  app.post("/api/analyze-competitor", async (req: Request, res: Response) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
+
+      // Validate URL format
+      let websiteUrl: URL;
+      try {
+        websiteUrl = new URL(url);
+      } catch {
+        return res.status(400).json({ error: "Invalid URL format" });
+      }
+
+      console.log(`[competitor-analysis] Analyzing: ${websiteUrl.toString()}`);
+
+      // Fetch website content
+      const response = await fetch(websiteUrl.toString(), {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(400).json({ error: "Unable to fetch website content" });
+      }
+
+      const html = await response.text();
+      
+      // Extract website information
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      const descriptionMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]*)"[^>]*>/i);
+      const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+      const h2Matches = html.match(/<h2[^>]*>([^<]+)<\/h2>/gi);
+      
+      // Extract text content
+      const textContent = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 5000);
+
+      const websiteData = {
+        url: websiteUrl.toString(),
+        title: titleMatch ? titleMatch[1].trim() : '',
+        description: descriptionMatch ? descriptionMatch[1].trim() : '',
+        mainHeading: h1Match ? h1Match[1].trim() : '',
+        subHeadings: h2Matches ? h2Matches.slice(0, 5).map(h => h.replace(/<[^>]*>/g, '').trim()) : [],
+        textContent: textContent,
+        domain: websiteUrl.hostname
+      };
+
+      console.log(`[competitor-analysis] Extracted data from: ${websiteData.domain}`);
+
+      // Check if OpenAI API key is available
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({ 
+          error: "OpenAI API key required for competitor analysis",
+          websiteData: websiteData
+        });
+      }
+
+      // Use OpenAI to analyze the content
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const analysisPrompt = `Analyze this competitor website and provide detailed business intelligence:
+
+Website: ${websiteData.title}
+URL: ${websiteData.url}
+Description: ${websiteData.description}
+Main Heading: ${websiteData.mainHeading}
+Content Sample: ${websiteData.textContent.substring(0, 1500)}
+
+Please provide analysis in this exact JSON format (no additional text):
+{
+  "brandPositioning": {
+    "mainMessage": "Core brand message from content",
+    "valueProposition": "Value they offer customers", 
+    "tone": "Communication tone"
+  },
+  "targetAudience": {
+    "persona": "Primary customer type",
+    "demographics": "Target demographics",
+    "painPoints": ["pain 1", "pain 2", "pain 3"]
+  },
+  "products": {
+    "topServices": ["service 1", "service 2", "service 3"],
+    "pricing": "Pricing approach",
+    "features": ["feature 1", "feature 2", "feature 3"]
+  },
+  "marketing": {
+    "adCopyTone": "Marketing style",
+    "socialStrategy": "Social approach",
+    "contentFrequency": "Content strategy"
+  },
+  "swotAnalysis": {
+    "strengths": ["strength 1", "strength 2", "strength 3"],
+    "weaknesses": ["weakness 1", "weakness 2", "weakness 3"], 
+    "opportunities": ["opportunity 1", "opportunity 2", "opportunity 3"],
+    "threats": ["threat 1", "threat 2", "threat 3"]
+  },
+  "seoMetrics": {
+    "contentScore": 85,
+    "keywordFocus": ["keyword1", "keyword2", "keyword3"],
+    "updateFrequency": "Content update pattern"
+  }
+}`;
+
+      console.log(`[competitor-analysis] Sending to OpenAI for analysis...`);
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a business intelligence analyst. Respond only with valid JSON, no additional text or explanation."
+          },
+          {
+            role: "user", 
+            content: analysisPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2
+      });
+
+      const analysisText = completion.choices[0].message.content;
+      if (!analysisText) {
+        throw new Error("No analysis content received from OpenAI");
+      }
+
+      let analysis;
+      try {
+        analysis = JSON.parse(analysisText);
+      } catch (parseError) {
+        console.error("JSON parsing error:", parseError);
+        console.error("OpenAI response:", analysisText);
+        throw new Error("Failed to parse AI analysis response");
+      }
+      
+      console.log(`[competitor-analysis] Analysis complete for ${websiteData.domain}`);
+      
+      res.json({
+        success: true,
+        analysis: analysis,
+        websiteData: {
+          url: websiteData.url,
+          title: websiteData.title,
+          domain: websiteData.domain
+        }
+      });
+
+    } catch (error: any) {
+      console.error("Competitor analysis error:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze competitor: " + error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
