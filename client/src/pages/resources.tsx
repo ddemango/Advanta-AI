@@ -14,14 +14,63 @@ import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { Resource } from '@shared/schema';
 import { useLocation } from 'wouter';
 
+// Featured AI Tools
+const featuredTools = [
+  {
+    id: 'marketing-copy-generator',
+    title: 'Marketing Copy Generator',
+    description: 'Generate professional marketing copy, social media captions, and ad copy instantly with AI.',
+    icon: '✍️',
+    category: 'Content Creation',
+    path: '/marketing-copy-generator',
+    featured: true
+  },
+  {
+    id: 'ai-tool-quiz',
+    title: 'AI Tool Recommendation Quiz',
+    description: 'Take our interactive quiz to discover the perfect AI tools for your role and budget.',
+    icon: '🎯',
+    category: 'Assessment',
+    path: '/ai-tool-quiz',
+    featured: true
+  },
+  {
+    id: 'business-name-generator',
+    title: 'Business Name & Domain Generator',
+    description: 'Create unique business names, check domain availability, and get branding ideas.',
+    icon: '💡',
+    category: 'Business Tools',
+    path: '/business-name-generator',
+    featured: true
+  },
+  {
+    id: 'resume-optimizer',
+    title: 'Resume & LinkedIn Optimizer',
+    description: 'Optimize your resume and LinkedIn profile for tech and AI jobs with our AI-powered tool.',
+    icon: '📄',
+    category: 'Career Tools',
+    path: '/resume-optimizer',
+    featured: true
+  },
+  {
+    id: 'ai-tools-comparison',
+    title: 'AI Tools Comparison Chart',
+    description: 'Compare ChatGPT, Claude, Gemini and more AI tools side by side with detailed features.',
+    icon: '⚖️',
+    category: 'Research',
+    path: '/ai-tools-comparison',
+    featured: true
+  }
+];
+
 // Resource types
 const resourceTypes = [
   { id: 'all', name: 'All Resources' },
+  { id: 'tool', name: 'Interactive Tools' },
   { id: 'whitepaper', name: 'Whitepapers' },
   { id: 'ebook', name: 'E-Books' },
   { id: 'template', name: 'Templates' },
-  { id: 'guide', name: 'Guides' },
-  { id: 'tool', name: 'Tools' }
+  { id: 'guide', name: 'Guides' }
 ];
 
 // Resource categories (same as blog categories for consistency)
@@ -185,6 +234,47 @@ export default function Resources() {
               <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"></i>
             </motion.div>
           </motion.div>
+
+          {/* Featured AI Tools Section */}
+          <motion.section 
+            variants={fadeInUp}
+            initial="hidden"
+            animate="show"
+            className="mb-16"
+          >
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">🚀 Free AI-Powered Tools</h2>
+              <p className="text-lg text-muted-foreground">
+                Powerful interactive tools to supercharge your business with AI
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredTools.map((tool) => (
+                <Card key={tool.id} className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
+                  <CardHeader className="text-center pb-4">
+                    <div className="text-4xl mb-3">{tool.icon}</div>
+                    <CardTitle className="text-xl">{tool.title}</CardTitle>
+                    <Badge variant="outline" className="w-fit mx-auto">{tool.category}</Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground text-sm text-center mb-4">
+                      {tool.description}
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90 group-hover:scale-105 transition-transform"
+                      onClick={() => navigate(tool.path)}
+                    >
+                      <i className="fas fa-rocket mr-2"></i>
+                      Try Tool Now
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </motion.section>
           
           {/* Featured Resources Section */}
           {featuredResources.length > 0 && (
