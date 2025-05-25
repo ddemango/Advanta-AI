@@ -179,15 +179,83 @@ export default function TemplateDemo() {
   const [formData, setFormData] = useState<{[key: string]: string}>({});
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [demoStep, setDemoStep] = useState(0);
-  const [customerData, setCustomerData] = useState({
-    intentScore: 92,
-    confidence: 89,
-    originalPrice: 1899,
-    optimizedPrice: 1649,
-    recommendations: 1247,
-    conversionRate: 23.7,
-    revenue: 47892
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [walkthrough, setWalkthrough] = useState({
+    currentScene: 0,
+    customerData: {
+      name: 'Sarah Johnson',
+      membership: 'Premium',
+      intentScore: 15,
+      confidence: 45,
+      originalPrice: 1899,
+      optimizedPrice: 1899,
+      discount: 0,
+      currentAction: 'Landing on site...'
+    }
   });
+
+  const walkthroughScenes = [
+    {
+      title: 'Customer Visits Store',
+      description: 'Sarah Johnson, a premium member, visits TechMart looking for a gaming laptop',
+      action: 'Landing on site...',
+      intentScore: 15,
+      confidence: 45,
+      price: 1899,
+      discount: 0,
+      duration: 3000
+    },
+    {
+      title: 'AI Analyzes Behavior',
+      description: 'Our AI engine analyzes her browsing patterns, purchase history, and real-time behavior',
+      action: 'AI analyzing browsing patterns...',
+      intentScore: 67,
+      confidence: 72,
+      price: 1899,
+      discount: 0,
+      duration: 4000
+    },
+    {
+      title: 'Intent Recognition',
+      description: 'AI detects high purchase intent based on time spent on product pages and comparison behavior',
+      action: 'High purchase intent detected',
+      intentScore: 89,
+      confidence: 84,
+      price: 1899,
+      discount: 0,
+      duration: 3500
+    },
+    {
+      title: 'Personalized Recommendations',
+      description: 'Engine generates tailored product suggestions based on her gaming preferences and past purchases',
+      action: 'Generating personalized recommendations...',
+      intentScore: 92,
+      confidence: 91,
+      price: 1899,
+      discount: 0,
+      duration: 4500
+    },
+    {
+      title: 'Dynamic Pricing Optimization',
+      description: 'AI calculates optimal price point to maximize conversion while maintaining profitability',
+      action: 'Optimizing price for conversion...',
+      intentScore: 94,
+      confidence: 96,
+      price: 1649,
+      discount: 13,
+      duration: 4000
+    },
+    {
+      title: 'Conversion Success',
+      description: 'Personalized experience leads to successful purchase with 23.7% higher conversion rate',
+      action: 'Purchase completed successfully!',
+      intentScore: 98,
+      confidence: 98,
+      price: 1649,
+      discount: 13,
+      duration: 3000
+    }
+  ];
 
   useEffect(() => {
     // Get template ID from URL params
@@ -205,27 +273,59 @@ export default function TemplateDemo() {
     }
   }, []);
 
-  // Animated demo for retail personalization
+  // AI Retail Personalization Walkthrough
   useEffect(() => {
-    if (templateId === 'retail-personalization-ai') {
-      const interval = setInterval(() => {
-        setDemoStep((prev) => (prev + 1) % 4);
-        
-        // Simulate dynamic data changes
-        setCustomerData(prev => ({
-          ...prev,
-          intentScore: Math.floor(Math.random() * 20) + 80,
-          confidence: Math.floor(Math.random() * 15) + 85,
-          optimizedPrice: Math.floor(Math.random() * 200) + 1550,
-          recommendations: Math.floor(Math.random() * 500) + 1000,
-          conversionRate: (Math.random() * 10 + 20).toFixed(1),
-          revenue: Math.floor(Math.random() * 20000) + 40000
-        }));
-      }, 3000);
+    if (templateId === 'retail-personalization-ai' && isPlaying) {
+      const currentScene = walkthroughScenes[walkthrough.currentScene];
+      
+      const timer = setTimeout(() => {
+        if (walkthrough.currentScene < walkthroughScenes.length - 1) {
+          const nextScene = walkthroughScenes[walkthrough.currentScene + 1];
+          setWalkthrough(prev => ({
+            currentScene: prev.currentScene + 1,
+            customerData: {
+              ...prev.customerData,
+              currentAction: nextScene.action,
+              intentScore: nextScene.intentScore,
+              confidence: nextScene.confidence,
+              optimizedPrice: nextScene.price,
+              discount: nextScene.discount
+            }
+          }));
+        } else {
+          // Restart the demo
+          setWalkthrough(prev => ({
+            currentScene: 0,
+            customerData: {
+              ...prev.customerData,
+              currentAction: walkthroughScenes[0].action,
+              intentScore: walkthroughScenes[0].intentScore,
+              confidence: walkthroughScenes[0].confidence,
+              optimizedPrice: walkthroughScenes[0].price,
+              discount: walkthroughScenes[0].discount
+            }
+          }));
+        }
+      }, currentScene.duration);
 
-      return () => clearInterval(interval);
+      return () => clearTimeout(timer);
     }
-  }, [templateId]);
+  }, [templateId, isPlaying, walkthrough.currentScene]);
+
+  const startWalkthrough = () => {
+    setIsPlaying(true);
+    setWalkthrough(prev => ({
+      currentScene: 0,
+      customerData: {
+        ...prev.customerData,
+        currentAction: walkthroughScenes[0].action,
+        intentScore: walkthroughScenes[0].intentScore,
+        confidence: walkthroughScenes[0].confidence,
+        optimizedPrice: walkthroughScenes[0].price,
+        discount: walkthroughScenes[0].discount
+      }
+    }));
+  };
 
   const initializeDemo = (template: string) => {
     const demo = templateDemos[template];
@@ -503,143 +603,134 @@ export default function TemplateDemo() {
       case 'video':
         return (
           <div className="space-y-6">
-            {/* AI Retail Personalization Demo Interface */}
+            {/* AI Retail Personalization Walkthrough Video */}
             <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg overflow-hidden h-80">
-              {/* Simulated E-commerce Interface */}
-              <div className="h-full p-6 text-white">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center">
-                    <Store className="w-6 h-6 text-blue-400 mr-2" />
-                    <span className="text-lg font-semibold">TechMart AI Store</span>
-                  </div>
-                  <motion.div 
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="text-sm bg-green-500/20 text-green-400 px-3 py-1 rounded-full"
+              {/* Video Controls */}
+              <div className="absolute top-4 right-4 z-10">
+                {!isPlaying ? (
+                  <button
+                    onClick={startWalkthrough}
+                    className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm"
                   >
-                    AI Engine: Active
-                  </motion.div>
-                </div>
+                    <Play className="w-4 h-4" />
+                    Start Demo
+                  </button>
+                ) : (
+                  <div className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm">
+                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                    Recording
+                  </div>
+                )}
+              </div>
 
-                {/* Customer Profile & AI Analysis */}
+              {/* Progress Bar */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-slate-700">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                  initial={{ width: "0%" }}
+                  animate={{ 
+                    width: `${((walkthrough.currentScene + 1) / walkthroughScenes.length) * 100}%` 
+                  }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+
+              {/* Main Demo Interface */}
+              <div className="h-full p-6 text-white pt-12">
+                {/* Scene Title */}
+                <motion.div
+                  key={walkthrough.currentScene}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4"
+                >
+                  <h3 className="text-lg font-semibold text-blue-400">
+                    Step {walkthrough.currentScene + 1}: {walkthroughScenes[walkthrough.currentScene]?.title}
+                  </h3>
+                  <p className="text-sm text-gray-300">
+                    {walkthroughScenes[walkthrough.currentScene]?.description}
+                  </p>
+                </motion.div>
+
+                {/* Live AI Engine Interface */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <motion.div 
-                    key={`profile-${demoStep}`}
-                    initial={{ opacity: 0.7 }}
-                    animate={{ opacity: 1 }}
+                    key={`profile-${walkthrough.currentScene}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     className="bg-slate-800/50 rounded-lg p-4"
                   >
                     <h4 className="text-sm font-semibold text-blue-400 mb-2">Customer Profile</h4>
                     <div className="space-y-1 text-xs">
-                      <div>Sarah Johnson • Premium Member</div>
+                      <div>{walkthrough.customerData.name} • {walkthrough.customerData.membership} Member</div>
                       <div>Previous: 3 laptops, 5 accessories</div>
-                      <div>Browsing: {demoStep === 0 ? 'Gaming laptops' : demoStep === 1 ? 'Adding to cart' : demoStep === 2 ? 'Checkout process' : 'Purchase complete'}</div>
+                      <div className="text-orange-400">{walkthrough.customerData.currentAction}</div>
                       <motion.div 
-                        key={customerData.intentScore}
+                        key={walkthrough.customerData.intentScore}
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         className="text-green-400"
                       >
-                        Intent Score: {customerData.intentScore}%
+                        Intent Score: {walkthrough.customerData.intentScore}%
                       </motion.div>
                     </div>
                   </motion.div>
                   
                   <motion.div 
-                    key={`recommendations-${demoStep}`}
-                    initial={{ opacity: 0.7 }}
-                    animate={{ opacity: 1 }}
+                    key={`analysis-${walkthrough.currentScene}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     className="bg-slate-800/50 rounded-lg p-4"
                   >
-                    <h4 className="text-sm font-semibold text-purple-400 mb-2">AI Recommendations</h4>
+                    <h4 className="text-sm font-semibold text-purple-400 mb-2">AI Analysis</h4>
                     <div className="space-y-1 text-xs">
                       <div>• Gaming Laptop RTX 4080</div>
                       <div>• Wireless Gaming Mouse</div>
                       <div>• Extended Warranty (+$199)</div>
                       <motion.div 
-                        key={customerData.confidence}
+                        key={walkthrough.customerData.confidence}
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         className="text-purple-400"
                       >
-                        Confidence: {customerData.confidence}%
+                        Confidence: {walkthrough.customerData.confidence}%
                       </motion.div>
                     </div>
                   </motion.div>
                 </div>
 
-                {/* Dynamic Pricing Display */}
+                {/* Dynamic Pricing */}
                 <motion.div 
-                  key={`pricing-${customerData.optimizedPrice}`}
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
-                  className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg p-4 mb-4"
+                  key={`pricing-${walkthrough.customerData.optimizedPrice}`}
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg p-4"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-semibold text-orange-400">
-                        {demoStep === 0 ? 'Analyzing customer...' : 
-                         demoStep === 1 ? 'Optimizing price...' : 
-                         demoStep === 2 ? 'Applying discount...' : 
-                         'Purchase optimized!'}
-                      </div>
-                      <div className="text-xs text-gray-300">AI processing in real-time</div>
+                      <div className="text-sm font-semibold text-orange-400">Dynamic Pricing Engine</div>
+                      <div className="text-xs text-gray-300">Real-time optimization</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-white line-through opacity-50">${customerData.originalPrice}</div>
+                      <div className="text-lg font-bold text-white line-through opacity-50">
+                        ${walkthrough.customerData.originalPrice}
+                      </div>
                       <motion.div 
-                        key={customerData.optimizedPrice}
-                        initial={{ scale: 0.8, color: '#22c55e' }}
+                        key={walkthrough.customerData.optimizedPrice}
+                        initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         className="text-xl font-bold text-green-400"
                       >
-                        ${customerData.optimizedPrice}
+                        ${walkthrough.customerData.optimizedPrice}
                       </motion.div>
-                      <div className="text-xs text-green-400">
-                        {Math.round(((customerData.originalPrice - customerData.optimizedPrice) / customerData.originalPrice) * 100)}% personalized discount
-                      </div>
+                      {walkthrough.customerData.discount > 0 && (
+                        <div className="text-xs text-green-400">
+                          {walkthrough.customerData.discount}% AI discount
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
-
-                {/* Real-time AI Processing */}
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center">
-                      <motion.div 
-                        animate={{ scale: [1, 1.5, 1] }}
-                        transition={{ duration: 1, repeat: Infinity }}
-                        className="w-2 h-2 bg-green-400 rounded-full mr-2"
-                      ></motion.div>
-                      <span>Behavioral Analysis</span>
-                    </div>
-                    <div className="flex items-center">
-                      <motion.div 
-                        animate={{ scale: [1, 1.5, 1] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                        className="w-2 h-2 bg-blue-400 rounded-full mr-2"
-                      ></motion.div>
-                      <span>Price Optimization</span>
-                    </div>
-                    <div className="flex items-center">
-                      <motion.div 
-                        animate={{ scale: [1, 1.5, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity }}
-                        className="w-2 h-2 bg-purple-400 rounded-full mr-2"
-                      ></motion.div>
-                      <span>Journey Mapping</span>
-                    </div>
-                  </div>
-                  <motion.div 
-                    key={demoStep}
-                    initial={{ opacity: 0.5 }}
-                    animate={{ opacity: 1 }}
-                    className="text-gray-400"
-                  >
-                    Processing time: {Math.floor(Math.random() * 50) + 100}ms
-                  </motion.div>
-                </div>
               </div>
               
               {/* Video Overlay with Demo Controls */}
@@ -916,6 +1007,14 @@ export default function TemplateDemo() {
                         <p>• Monitor live risk assessments</p>
                         <p>• View compliance status updates</p>
                         <p>• Track real-time notifications</p>
+                      </>
+                    )}
+                    {currentTemplate.demoType === 'video' && (
+                      <>
+                        <p>• Click "Start Demo" to begin walkthrough</p>
+                        <p>• Watch AI engine analyze customer behavior</p>
+                        <p>• See real-time pricing optimization</p>
+                        <p>• View complete customer journey</p>
                       </>
                     )}
                   </div>
