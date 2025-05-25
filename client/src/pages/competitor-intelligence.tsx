@@ -83,67 +83,56 @@ export default function CompetitorIntelligence() {
     setIsAnalyzing(true);
     setProgress(0);
     
-    // Simulate AI analysis progress
-    const steps = [
-      { message: "Crawling competitor website...", progress: 20 },
-      { message: "Analyzing brand messaging...", progress: 40 },
-      { message: "Extracting target audience data...", progress: 60 },
-      { message: "Evaluating marketing strategy...", progress: 80 },
-      { message: "Generating SWOT analysis...", progress: 100 }
-    ];
+    try {
+      // Update progress as we work
+      setProgress(20);
+      toast({
+        title: "Analysis Started",
+        description: "Fetching competitor website content...",
+      });
 
-    for (const step of steps) {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setProgress(step.progress);
+      // Call backend API to analyze competitor
+      const response = await fetch('/api/analyze-competitor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: competitorUrl }),
+      });
+
+      setProgress(60);
+      toast({
+        title: "AI Analysis",
+        description: "Analyzing competitor data with AI...",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze competitor');
+      }
+
+      setProgress(100);
+      
+      // Use the real analysis data from the API
+      setAnalysis(data.analysis);
       
       toast({
-        title: "Analysis Progress",
-        description: step.message,
+        title: "Analysis Complete!",
+        description: `Successfully analyzed ${data.websiteData.domain}`,
       });
+
+    } catch (error: any) {
+      console.error('Competitor analysis error:', error);
+      
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze competitor website. Please check the URL and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
     }
-
-    // Generate comprehensive analysis
-    const mockAnalysis: CompetitorAnalysis = {
-      brandPositioning: {
-        mainMessage: "Innovative solutions for modern businesses",
-        valueProposition: "Streamlined efficiency with cutting-edge technology",
-        tone: "Professional, confident, tech-forward"
-      },
-      targetAudience: {
-        persona: "Tech-savvy business owners and decision makers",
-        demographics: "Ages 30-50, mid to large enterprise companies",
-        painPoints: ["Manual processes", "Scalability issues", "Integration challenges"]
-      },
-      products: {
-        topServices: ["Enterprise Software", "Cloud Solutions", "Consulting Services"],
-        pricing: "Premium tier ($5,000 - $50,000+)",
-        features: ["AI-powered automation", "Real-time analytics", "24/7 support"]
-      },
-      marketing: {
-        adCopyTone: "Results-driven with social proof emphasis",
-        socialStrategy: "LinkedIn-focused B2B content, case studies",
-        contentFrequency: "3-4 posts per week, monthly whitepapers"
-      },
-      swotAnalysis: {
-        strengths: ["Strong brand recognition", "Proven track record", "Comprehensive feature set"],
-        weaknesses: ["Higher price point", "Complex onboarding", "Limited customization"],
-        opportunities: ["SMB market expansion", "International growth", "AI integration"],
-        threats: ["New market entrants", "Economic downturn", "Changing regulations"]
-      },
-      seoMetrics: {
-        contentScore: 87,
-        keywordFocus: ["enterprise software", "business automation", "cloud solutions"],
-        updateFrequency: "Weekly blog posts, monthly product updates"
-      }
-    };
-
-    setAnalysis(mockAnalysis);
-    setIsAnalyzing(false);
-    
-    toast({
-      title: "Analysis Complete!",
-      description: "Your competitor intelligence report is ready.",
-    });
   };
 
   const downloadReport = () => {
