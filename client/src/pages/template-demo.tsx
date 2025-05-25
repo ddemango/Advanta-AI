@@ -178,6 +178,16 @@ export default function TemplateDemo() {
   const [isTyping, setIsTyping] = useState(false);
   const [formData, setFormData] = useState<{[key: string]: string}>({});
   const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [demoStep, setDemoStep] = useState(0);
+  const [customerData, setCustomerData] = useState({
+    intentScore: 92,
+    confidence: 89,
+    originalPrice: 1899,
+    optimizedPrice: 1649,
+    recommendations: 1247,
+    conversionRate: 23.7,
+    revenue: 47892
+  });
 
   useEffect(() => {
     // Get template ID from URL params
@@ -194,6 +204,28 @@ export default function TemplateDemo() {
       initializeDemo('enterprise-customer-ai');
     }
   }, []);
+
+  // Animated demo for retail personalization
+  useEffect(() => {
+    if (templateId === 'retail-personalization-ai') {
+      const interval = setInterval(() => {
+        setDemoStep((prev) => (prev + 1) % 4);
+        
+        // Simulate dynamic data changes
+        setCustomerData(prev => ({
+          ...prev,
+          intentScore: Math.floor(Math.random() * 20) + 80,
+          confidence: Math.floor(Math.random() * 15) + 85,
+          optimizedPrice: Math.floor(Math.random() * 200) + 1550,
+          recommendations: Math.floor(Math.random() * 500) + 1000,
+          conversionRate: (Math.random() * 10 + 20).toFixed(1),
+          revenue: Math.floor(Math.random() * 20000) + 40000
+        }));
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [templateId]);
 
   const initializeDemo = (template: string) => {
     const demo = templateDemos[template];
@@ -481,66 +513,132 @@ export default function TemplateDemo() {
                     <Store className="w-6 h-6 text-blue-400 mr-2" />
                     <span className="text-lg font-semibold">TechMart AI Store</span>
                   </div>
-                  <div className="text-sm bg-green-500/20 text-green-400 px-3 py-1 rounded-full">
+                  <motion.div 
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-sm bg-green-500/20 text-green-400 px-3 py-1 rounded-full"
+                  >
                     AI Engine: Active
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Customer Profile & AI Analysis */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-slate-800/50 rounded-lg p-4">
+                  <motion.div 
+                    key={`profile-${demoStep}`}
+                    initial={{ opacity: 0.7 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-slate-800/50 rounded-lg p-4"
+                  >
                     <h4 className="text-sm font-semibold text-blue-400 mb-2">Customer Profile</h4>
                     <div className="space-y-1 text-xs">
                       <div>Sarah Johnson • Premium Member</div>
                       <div>Previous: 3 laptops, 5 accessories</div>
-                      <div>Browsing: Gaming laptops</div>
-                      <div className="text-green-400">Intent Score: 92%</div>
+                      <div>Browsing: {demoStep === 0 ? 'Gaming laptops' : demoStep === 1 ? 'Adding to cart' : demoStep === 2 ? 'Checkout process' : 'Purchase complete'}</div>
+                      <motion.div 
+                        key={customerData.intentScore}
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        className="text-green-400"
+                      >
+                        Intent Score: {customerData.intentScore}%
+                      </motion.div>
                     </div>
-                  </div>
+                  </motion.div>
                   
-                  <div className="bg-slate-800/50 rounded-lg p-4">
+                  <motion.div 
+                    key={`recommendations-${demoStep}`}
+                    initial={{ opacity: 0.7 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-slate-800/50 rounded-lg p-4"
+                  >
                     <h4 className="text-sm font-semibold text-purple-400 mb-2">AI Recommendations</h4>
                     <div className="space-y-1 text-xs">
                       <div>• Gaming Laptop RTX 4080</div>
                       <div>• Wireless Gaming Mouse</div>
                       <div>• Extended Warranty (+$199)</div>
-                      <div className="text-purple-400">Confidence: 89%</div>
+                      <motion.div 
+                        key={customerData.confidence}
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        className="text-purple-400"
+                      >
+                        Confidence: {customerData.confidence}%
+                      </motion.div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Dynamic Pricing Display */}
-                <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg p-4 mb-4">
+                <motion.div 
+                  key={`pricing-${customerData.optimizedPrice}`}
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg p-4 mb-4"
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-semibold text-orange-400">Dynamic Pricing Active</div>
-                      <div className="text-xs text-gray-300">Optimizing for this customer...</div>
+                      <div className="text-sm font-semibold text-orange-400">
+                        {demoStep === 0 ? 'Analyzing customer...' : 
+                         demoStep === 1 ? 'Optimizing price...' : 
+                         demoStep === 2 ? 'Applying discount...' : 
+                         'Purchase optimized!'}
+                      </div>
+                      <div className="text-xs text-gray-300">AI processing in real-time</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-white line-through opacity-50">$1,899</div>
-                      <div className="text-xl font-bold text-green-400">$1,649</div>
-                      <div className="text-xs text-green-400">13% personalized discount</div>
+                      <div className="text-lg font-bold text-white line-through opacity-50">${customerData.originalPrice}</div>
+                      <motion.div 
+                        key={customerData.optimizedPrice}
+                        initial={{ scale: 0.8, color: '#22c55e' }}
+                        animate={{ scale: 1 }}
+                        className="text-xl font-bold text-green-400"
+                      >
+                        ${customerData.optimizedPrice}
+                      </motion.div>
+                      <div className="text-xs text-green-400">
+                        {Math.round(((customerData.originalPrice - customerData.optimizedPrice) / customerData.originalPrice) * 100)}% personalized discount
+                      </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Real-time AI Processing */}
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                      <motion.div 
+                        animate={{ scale: [1, 1.5, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="w-2 h-2 bg-green-400 rounded-full mr-2"
+                      ></motion.div>
                       <span>Behavioral Analysis</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-2"></div>
+                      <motion.div 
+                        animate={{ scale: [1, 1.5, 1] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                        className="w-2 h-2 bg-blue-400 rounded-full mr-2"
+                      ></motion.div>
                       <span>Price Optimization</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse mr-2"></div>
+                      <motion.div 
+                        animate={{ scale: [1, 1.5, 1] }}
+                        transition={{ duration: 0.8, repeat: Infinity }}
+                        className="w-2 h-2 bg-purple-400 rounded-full mr-2"
+                      ></motion.div>
                       <span>Journey Mapping</span>
                     </div>
                   </div>
-                  <div className="text-gray-400">Processing time: 127ms</div>
+                  <motion.div 
+                    key={demoStep}
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    className="text-gray-400"
+                  >
+                    Processing time: {Math.floor(Math.random() * 50) + 100}ms
+                  </motion.div>
                 </div>
               </div>
               
