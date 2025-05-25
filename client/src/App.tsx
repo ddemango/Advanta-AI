@@ -9,6 +9,7 @@ import Marketplace from "@/pages/marketplace";
 import Dashboard from "@/pages/dashboard";
 import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
+import TemplateDemo from "@/pages/template-demo";
 import Sandbox from "@/pages/sandbox";
 import ServicesPage from "@/pages/services";
 import ContactPage from "@/pages/contact";
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/demo" component={Demo} />
+      <Route path="/template-demo" component={TemplateDemo} />
       <Route path="/sandbox" component={Sandbox} />
       <Route path="/services" component={ServicesPage} />
       <Route path="/contact" component={ContactPage} />
