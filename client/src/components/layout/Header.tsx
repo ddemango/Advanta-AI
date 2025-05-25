@@ -56,6 +56,43 @@ export default function Header() {
               </button>
               <div className="absolute z-50 left-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left">
                 <div className="bg-background/95 backdrop-blur-md shadow-lg rounded-md border border-border py-1">
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">Free AI Tools</p>
+                  </div>
+                  <a 
+                    onClick={() => setLocation('/marketing-copy-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    ✍️ Marketing Copy Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/ai-tool-quiz')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🎯 AI Tool Recommendation Quiz
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/business-name-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    💡 Business Name Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/resume-optimizer')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📄 Resume & LinkedIn Optimizer
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/ai-tools-comparison')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    ⚖️ AI Tools Comparison Chart
+                  </a>
+                  <div className="border-t border-border/20 my-2"></div>
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-semibold text-purple-500 uppercase tracking-wide">Demos & Sandbox</p>
+                  </div>
                   <a 
                     onClick={() => setLocation('/demo')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
