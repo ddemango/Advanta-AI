@@ -39,7 +39,7 @@ interface TemplateDemo {
   monthlyPrice?: number;
   category: string;
   icon: React.ReactNode;
-  demoType: 'chat' | 'analytics' | 'form' | 'dashboard';
+  demoType: 'chat' | 'analytics' | 'form' | 'dashboard' | 'video';
   features: string[];
   roiIncrease: string;
 }
@@ -138,8 +138,8 @@ const templateDemos: { [key: string]: TemplateDemo } = {
     monthlyPrice: 999,
     category: 'Retail & E-commerce',
     icon: <Store className="w-6 h-6" />,
-    demoType: 'dashboard',
-    features: ['Product Recommendations', 'Dynamic Pricing', 'Customer Journey AI'],
+    demoType: 'video',
+    features: ['Real-time Product Recommendations', 'Dynamic Pricing AI', 'Customer Journey Mapping', 'Behavioral Analytics', 'Inventory Optimization'],
     roiIncrease: '380% increase in customer lifetime value'
   },
   'education-learning-ai': {
@@ -462,6 +462,133 @@ export default function TemplateDemo() {
                 <div className="flex justify-between">
                   <span>Risk threshold updated</span>
                   <Badge variant="outline">8 min ago</Badge>
+                </div>
+              </div>
+            </Card>
+          </div>
+        );
+
+      case 'video':
+        return (
+          <div className="space-y-6">
+            {/* Main Demo Video */}
+            <div className="relative bg-black rounded-lg overflow-hidden">
+              <video 
+                className="w-full h-80 object-cover"
+                autoPlay 
+                muted 
+                loop
+                poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjMGYxNzI5Ii8+CjxjaXJjbGUgY3g9IjQwMCIgY3k9IjIyNSIgcj0iNDAiIGZpbGw9IiM2MzY2ZjEiLz4KPHN2ZyB4PSIzODAiIHk9IjIwNSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IndoaXRlIj4KPHA+UGxheSBidXR0b24gaWNvbjwvcD4KPC9zdmc+Cjx0ZXh0IHg9IjQwMCIgeT0iMjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZTJlOGYwIiBmb250LXNpemU9IjE4IiBmb250LWZhbWlseT0iQXJpYWwiPkFJIFJldGFpbCBQZXJzb25hbGl6YXRpb24gRGVtbzwvdGV4dD4KPC9zdmc+"
+              >
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              
+              {/* Video Overlay with Demo Controls */}
+              <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg p-3">
+                <div className="flex items-center space-x-2 text-white text-sm">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span>Live AI Engine Demo</span>
+                </div>
+              </div>
+              
+              {/* Live Metrics Overlay */}
+              <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm rounded-lg p-3 text-white">
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span>Recommendations Generated:</span>
+                    <span className="text-green-400 font-mono">1,247</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Conversion Rate:</span>
+                    <span className="text-blue-400 font-mono">+23.7%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Revenue Impact:</span>
+                    <span className="text-purple-400 font-mono">$47,892</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Demo Features Showcase */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="p-4 border-l-4 border-l-blue-500">
+                <div className="flex items-center mb-2">
+                  <Brain className="w-5 h-5 text-blue-500 mr-2" />
+                  <span className="font-semibold text-sm">Smart Recommendations</span>
+                </div>
+                <p className="text-xs text-muted-foreground">AI analyzes customer behavior to suggest personalized products in real-time</p>
+                <div className="mt-2 text-xs">
+                  <span className="text-green-600">+380% engagement</span>
+                </div>
+              </Card>
+
+              <Card className="p-4 border-l-4 border-l-purple-500">
+                <div className="flex items-center mb-2">
+                  <TrendingUp className="w-5 h-5 text-purple-500 mr-2" />
+                  <span className="font-semibold text-sm">Dynamic Pricing</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Automatically adjusts prices based on demand, inventory, and customer segments</p>
+                <div className="mt-2 text-xs">
+                  <span className="text-green-600">+42% profit margin</span>
+                </div>
+              </Card>
+
+              <Card className="p-4 border-l-4 border-l-green-500">
+                <div className="flex items-center mb-2">
+                  <Users className="w-5 h-5 text-green-500 mr-2" />
+                  <span className="font-semibold text-sm">Journey Mapping</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Tracks customer paths and optimizes touchpoints for maximum conversion</p>
+                <div className="mt-2 text-xs">
+                  <span className="text-green-600">+67% retention</span>
+                </div>
+              </Card>
+            </div>
+
+            {/* Interactive Demo Scenarios */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Watch AI in Action</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-xs font-bold">1</span>
+                    </div>
+                    <span className="text-sm">Customer browses electronics</span>
+                  </div>
+                  <Badge className="bg-blue-500">AI Analyzing</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-xs font-bold">2</span>
+                    </div>
+                    <span className="text-sm">AI generates personalized recommendations</span>
+                  </div>
+                  <Badge className="bg-purple-500">Processing</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-xs font-bold">3</span>
+                    </div>
+                    <span className="text-sm">Dynamic pricing optimizes offer</span>
+                  </div>
+                  <Badge className="bg-green-500">Optimized</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-white text-xs font-bold">4</span>
+                    </div>
+                    <span className="text-sm">Conversion rate increases by 23.7%</span>
+                  </div>
+                  <Badge className="bg-orange-500">Success!</Badge>
                 </div>
               </div>
             </Card>
