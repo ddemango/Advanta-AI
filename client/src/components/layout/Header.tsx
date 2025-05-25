@@ -44,6 +44,7 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
             <a onClick={() => setLocation('/services')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Services</a>
+            <a onClick={() => setLocation('/marketplace')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">AI Marketplace</a>
             <a onClick={() => setLocation('/case-studies')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Case Studies</a>
             
             {/* Resources Dropdown */}
@@ -207,6 +208,15 @@ export default function Header() {
               className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
             >
               Services
+            </a>
+            <a 
+              onClick={() => {
+                setLocation('/marketplace');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
+            >
+              AI Marketplace
             </a>
             <a 
               onClick={() => {
