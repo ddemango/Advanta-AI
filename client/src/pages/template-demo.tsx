@@ -471,18 +471,78 @@ export default function TemplateDemo() {
       case 'video':
         return (
           <div className="space-y-6">
-            {/* Main Demo Video */}
-            <div className="relative bg-black rounded-lg overflow-hidden">
-              <video 
-                className="w-full h-80 object-cover"
-                autoPlay 
-                muted 
-                loop
-                poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjMGYxNzI5Ii8+CjxjaXJjbGUgY3g9IjQwMCIgY3k9IjIyNSIgcj0iNDAiIGZpbGw9IiM2MzY2ZjEiLz4KPHN2ZyB4PSIzODAiIHk9IjIwNSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IndoaXRlIj4KPHA+UGxheSBidXR0b24gaWNvbjwvcD4KPC9zdmc+Cjx0ZXh0IHg9IjQwMCIgeT0iMjkwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZTJlOGYwIiBmb250LXNpemU9IjE4IiBmb250LWZhbWlseT0iQXJpYWwiPkFJIFJldGFpbCBQZXJzb25hbGl6YXRpb24gRGVtbzwvdGV4dD4KPC9zdmc+"
-              >
-                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+            {/* AI Retail Personalization Demo Interface */}
+            <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg overflow-hidden h-80">
+              {/* Simulated E-commerce Interface */}
+              <div className="h-full p-6 text-white">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <Store className="w-6 h-6 text-blue-400 mr-2" />
+                    <span className="text-lg font-semibold">TechMart AI Store</span>
+                  </div>
+                  <div className="text-sm bg-green-500/20 text-green-400 px-3 py-1 rounded-full">
+                    AI Engine: Active
+                  </div>
+                </div>
+
+                {/* Customer Profile & AI Analysis */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-slate-800/50 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-blue-400 mb-2">Customer Profile</h4>
+                    <div className="space-y-1 text-xs">
+                      <div>Sarah Johnson • Premium Member</div>
+                      <div>Previous: 3 laptops, 5 accessories</div>
+                      <div>Browsing: Gaming laptops</div>
+                      <div className="text-green-400">Intent Score: 92%</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800/50 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-purple-400 mb-2">AI Recommendations</h4>
+                    <div className="space-y-1 text-xs">
+                      <div>• Gaming Laptop RTX 4080</div>
+                      <div>• Wireless Gaming Mouse</div>
+                      <div>• Extended Warranty (+$199)</div>
+                      <div className="text-purple-400">Confidence: 89%</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dynamic Pricing Display */}
+                <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-orange-400">Dynamic Pricing Active</div>
+                      <div className="text-xs text-gray-300">Optimizing for this customer...</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-white line-through opacity-50">$1,899</div>
+                      <div className="text-xl font-bold text-green-400">$1,649</div>
+                      <div className="text-xs text-green-400">13% personalized discount</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Real-time AI Processing */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                      <span>Behavioral Analysis</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-2"></div>
+                      <span>Price Optimization</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse mr-2"></div>
+                      <span>Journey Mapping</span>
+                    </div>
+                  </div>
+                  <div className="text-gray-400">Processing time: 127ms</div>
+                </div>
+              </div>
               
               {/* Video Overlay with Demo Controls */}
               <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm rounded-lg p-3">
