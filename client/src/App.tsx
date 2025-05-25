@@ -78,7 +78,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/calculator" component={Calculator} />
+      <Route path="/build-my-ai-stack" component={Calculator} />
       <Route path="/login" component={Login} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/dashboard" component={Dashboard} />

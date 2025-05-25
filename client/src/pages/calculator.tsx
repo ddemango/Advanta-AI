@@ -1,414 +1,488 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import { Helmet } from 'react-helmet';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { motion } from "framer-motion";
+import { Wrench, ArrowRight, ArrowLeft, Sparkles, Mail } from "lucide-react";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { useToast } from "@/hooks/use-toast";
 
-// Service type options
-const serviceTypes = [
-  {
-    id: 'chatbot',
-    name: 'Chatbot Development',
-    description: 'Automate customer conversations on your website, social media, or app using smart AI chatbots.',
-    basePrice: 1500,
-    icon: 'robot'
-  },
-  {
-    id: 'consulting',
-    name: 'AI Consulting',
-    description: 'Get expert guidance on how to use AI to grow your business, improve efficiency, or explore new technology.',
-    basePrice: 2000,
-    icon: 'lightbulb'
-  },
-  {
-    id: 'integration',
-    name: 'Custom AI Integration',
-    description: 'Connect AI tools to your existing systems like CRMs, apps, or databases.',
-    basePrice: 2500,
-    icon: 'plug'
-  }
+interface FormData {
+  industry: string;
+  otherIndustry: string;
+  teamSize: string;
+  priorities: string[];
+  otherPriority: string;
+  currentTools: string[];
+  techLevel: string;
+  wantHelp: string;
+  name: string;
+  email: string;
+  optIn: boolean;
+}
+
+const industries = [
+  { category: "Professional Services", options: ["Real Estate", "Legal / Law Firm", "Finance / Accounting", "Recruiting / Staffing"] },
+  { category: "Health & Wellness", options: ["Healthcare / Medical", "Fitness / Personal Training", "Medical Aesthetics / Beauty"] },
+  { category: "Digital & Creative", options: ["Marketing / Creative Agency", "Influencer / Podcast / Media", "Course Creator / Coach / Educator"] },
+  { category: "Commerce & Local Business", options: ["E-commerce / Retail", "Automotive / Dealership", "Construction / Contracting", "Hospitality / Restaurant / Hotel", "Home Services (Cleaning, HVAC, Landscaping)"] },
+  { category: "Tech & Innovation", options: ["SaaS / Software", "AI Builder / Startup", "Manufacturing / Logistics", "Gaming / Esports", "Travel / Tourism"] },
+  { category: "Other", options: ["Nonprofit / Social Impact", "Freelancers / Solopreneurs"] }
 ];
 
-// Plan options
-const planOptions = [
-  {
-    id: 'basic',
-    name: 'Basic Plan',
-    description: 'For startups and small projects. Includes essential features to get you started.',
-    multiplier: 1,
-    icon: 'layer-group'
-  },
-  {
-    id: 'standard',
-    name: 'Standard Plan',
-    description: 'For growing businesses. Offers more customization, integrations, and performance tuning.',
-    multiplier: 1.75,
-    icon: 'cubes'
-  },
-  {
-    id: 'premium',
-    name: 'Premium Plan',
-    description: 'For enterprise or high-demand solutions. Full-featured setup with custom AI, integrations, and long-term support.',
-    multiplier: 2.5,
-    icon: 'gem'
-  }
+const priorities = [
+  "Generate more leads",
+  "Automate my workflows", 
+  "Respond to customers faster",
+  "Create social content with AI",
+  "Automate emails or follow-ups",
+  "Analyze data and reporting",
+  "Improve team productivity",
+  "Write blogs / SEO content",
+  "Set up a chatbot or knowledge base",
+  "Qualify or onboard new clients",
+  "Train staff with AI tools"
 ];
 
-// Additional features
-const additionalFeatures = [
-  {
-    id: 'multi-language',
-    name: 'Multi-language Support',
-    description: 'Reach customers in multiple languages using smart, real-time translation.',
-    price: 500
-  },
-  {
-    id: 'custom-integrations',
-    name: 'Custom Integrations',
-    description: 'Connect AI to platforms like Shopify, Salesforce, Slack, or your CRM.',
-    price: 750
-  },
-  {
-    id: 'analytics',
-    name: 'Analytics Dashboard',
-    description: 'Monitor AI performance through a personalized dashboard with actionable insights.',
-    price: 600
-  },
-  {
-    id: 'voice',
-    name: 'Voice Interface Support',
-    description: 'Enable your chatbot or AI system to interact via voice for smart assistants or phone bots.',
-    price: 800
-  },
-  {
-    id: 'custom-data',
-    name: 'AI Training on Custom Data',
-    description: 'Upload your business documents, FAQs, or past data to train the AI for better performance.',
-    price: 900
-  },
-  {
-    id: 'escalation',
-    name: 'Live Chat Escalation',
-    description: 'Automatically pass conversations from AI to a human agent when needed.',
-    price: 450
-  },
-  {
-    id: 'ab-testing',
-    name: 'A/B Testing for Responses',
-    description: 'Test different chatbot messages or AI responses to see what performs best.',
-    price: 350
-  },
-  {
-    id: 'compliance',
-    name: 'Compliance Mode (HIPAA, GDPR, etc.)',
-    description: 'Ensure your AI system adheres to privacy and security standards.',
-    price: 700
-  },
-  {
-    id: 'branding',
-    name: 'Brand Customization',
-    description: 'White-labeled interfaces and AI tone customized to match your brand.',
-    price: 400
-  },
-  {
-    id: 'content',
-    name: 'Content Automation Add-on',
-    description: 'Automatically generate blog posts, product descriptions, or help articles using AI.',
-    price: 600
-  }
-];
-
-// Timeline options
-const timelineOptions = [
-  {
-    id: 'standard',
-    name: 'Standard (4–6 weeks)',
-    description: 'Best value',
-    multiplier: 1
-  },
-  {
-    id: 'expedited',
-    name: 'Expedited (2–3 weeks)',
-    description: 'Faster delivery at a premium',
-    multiplier: 1.5
-  }
+const tools = [
+  "Google Workspace",
+  "Zapier",
+  "Make.com", 
+  "Notion",
+  "Slack",
+  "Shopify",
+  "HubSpot",
+  "Salesforce",
+  "WordPress",
+  "None yet"
 ];
 
 export default function Calculator() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>({
+    industry: "",
+    otherIndustry: "",
+    teamSize: "",
+    priorities: [],
+    otherPriority: "",
+    currentTools: [],
+    techLevel: "",
+    wantHelp: "",
+    name: "",
+    email: "",
+    optIn: false
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const [selectedServiceType, setSelectedServiceType] = useState('chatbot');
-  const [selectedPlan, setSelectedPlan] = useState('standard');
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const [selectedTimeline, setSelectedTimeline] = useState('standard');
-  const [projectScope, setProjectScope] = useState(50); // 0-100 slider value
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 0 });
 
-  // Calculate price whenever selections change
-  useEffect(() => {
-    const serviceType = serviceTypes.find(s => s.id === selectedServiceType);
-    const plan = planOptions.find(p => p.id === selectedPlan);
-    const timeline = timelineOptions.find(t => t.id === selectedTimeline);
-    
-    if (!serviceType || !plan || !timeline) return;
-    
-    // Base price calculation
-    const basePrice = serviceType.basePrice * plan.multiplier;
-    
-    // Additional features
-    const featuresPrice = selectedFeatures.reduce((total, featureId) => {
-      const feature = additionalFeatures.find(f => f.id === featureId);
-      return total + (feature?.price || 0);
-    }, 0);
-    
-    // Timeline multiplier
-    const timelinePrice = (basePrice + featuresPrice) * timeline.multiplier;
-    
-    // Project scope adjustment (±20%)
-    const scopeAdjustment = ((projectScope - 50) / 50) * 0.2;
-    const adjustedPrice = timelinePrice * (1 + scopeAdjustment);
-    
-    // Set calculated price
-    const calculatedPrice = Math.round(adjustedPrice / 100) * 100; // Round to nearest 100
-    setTotalPrice(calculatedPrice);
-    
-    // Set a price range (±15%)
-    const min = Math.round((calculatedPrice * 0.85) / 100) * 100;
-    const max = Math.round((calculatedPrice * 1.15) / 100) * 100;
-    setPriceRange({ min, max });
-    
-  }, [selectedServiceType, selectedPlan, selectedFeatures, selectedTimeline, projectScope]);
+  const updateFormData = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
-  const handleRequestQuote = () => {
-    toast({
-      title: "Quote Request Submitted",
-      description: "Thank you for your interest! Our team will contact you shortly with a detailed proposal.",
-    });
+  const toggleArrayItem = (field: string, item: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field as keyof FormData].includes(item) 
+        ? (prev[field as keyof FormData] as string[]).filter(i => i !== item)
+        : [...(prev[field as keyof FormData] as string[]), item]
+    }));
+  };
+
+  const nextStep = () => {
+    if (currentStep < 7) setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
+
+  const submitForm = async () => {
+    setIsSubmitting(true);
+    try {
+      // Here you would submit to your backend
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+      
+      toast({
+        title: "AI Stack Created! 🎉",
+        description: "Your custom AI recommendations have been sent to your email.",
+      });
+      
+      // Reset form or redirect
+      setCurrentStep(1);
+      setFormData({
+        industry: "",
+        otherIndustry: "",
+        teamSize: "",
+        priorities: [],
+        otherPriority: "",
+        currentTools: [],
+        techLevel: "",
+        wantHelp: "",
+        name: "",
+        email: "",
+        optIn: false
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create your AI stack. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">What industry are you in?</h2>
+              <p className="text-gray-300">Select the one that best describes your business</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {industries.map((category) => (
+                <div key={category.category} className="space-y-3">
+                  <h3 className="text-lg font-semibold text-purple-300">{category.category}</h3>
+                  <RadioGroup value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
+                    {category.options.map((option) => (
+                      <div key={option} className="flex items-center space-x-2">
+                        <RadioGroupItem value={option} id={option} className="border-gray-500" />
+                        <Label htmlFor={option} className="text-gray-300 cursor-pointer">{option}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-purple-300 mb-3">Other</h3>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroup value={formData.industry} onValueChange={(value) => updateFormData("industry", value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="Other" id="other-option" className="border-gray-500" />
+                      <Label htmlFor="other-option" className="text-gray-300 cursor-pointer">Other:</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                {formData.industry === "Other" && (
+                  <Input
+                    value={formData.otherIndustry}
+                    onChange={(e) => updateFormData("otherIndustry", e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white ml-6"
+                    placeholder="Your industry..."
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">What's the size of your team?</h2>
+              <p className="text-gray-300">This helps us recommend the right solutions</p>
+            </div>
+            
+            <RadioGroup value={formData.teamSize} onValueChange={(value) => updateFormData("teamSize", value)}>
+              {["Just me", "2–10 people", "11–50 people", "51–200 people", "Enterprise (200+)"].map((size) => (
+                <div key={size} className="flex items-center space-x-2 p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors">
+                  <RadioGroupItem value={size} id={size} className="border-gray-500" />
+                  <Label htmlFor={size} className="text-gray-300 cursor-pointer text-lg">{size}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">What are your top priorities right now?</h2>
+              <p className="text-gray-300">Select up to 3 goals or pain points</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-3">
+              {priorities.map((priority) => (
+                <div key={priority} className="flex items-center space-x-2 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors">
+                  <Checkbox
+                    id={priority}
+                    checked={formData.priorities.includes(priority)}
+                    onCheckedChange={() => toggleArrayItem("priorities", priority)}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor={priority} className="text-gray-300 cursor-pointer">{priority}</Label>
+                </div>
+              ))}
+            </div>
+            
+            <div>
+              <Label htmlFor="otherPriority" className="text-white">Something else:</Label>
+              <Input
+                id="otherPriority"
+                value={formData.otherPriority}
+                onChange={(e) => updateFormData("otherPriority", e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white mt-2"
+                placeholder="Describe your custom priority..."
+              />
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">What tools do you currently use?</h2>
+              <p className="text-gray-300">Check all that apply (optional)</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-3">
+              {tools.map((tool) => (
+                <div key={tool} className="flex items-center space-x-2 p-3 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors">
+                  <Checkbox
+                    id={tool}
+                    checked={formData.currentTools.includes(tool)}
+                    onCheckedChange={() => toggleArrayItem("currentTools", tool)}
+                    className="border-gray-500"
+                  />
+                  <Label htmlFor={tool} className="text-gray-300 cursor-pointer">{tool}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">How tech-savvy are you?</h2>
+              <p className="text-gray-300">How comfortable are you with automation, tools, or AI?</p>
+            </div>
+            
+            <RadioGroup value={formData.techLevel} onValueChange={(value) => updateFormData("techLevel", value)}>
+              {[
+                { value: "beginner", label: "Beginner", desc: "I need it to be simple" },
+                { value: "intermediate", label: "Intermediate", desc: "I can handle a bit of setup" },
+                { value: "advanced", label: "Advanced", desc: "I want deep integrations" },
+                { value: "hire", label: "\"Just build it for me\"", desc: "I'd rather hire help" }
+              ].map((level) => (
+                <div key={level.value} className="flex items-center space-x-3 p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors">
+                  <RadioGroupItem value={level.value} id={level.value} className="border-gray-500" />
+                  <div>
+                    <Label htmlFor={level.value} className="text-white cursor-pointer font-medium">{level.label}</Label>
+                    <p className="text-gray-400 text-sm">{level.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Would you like help implementing your AI stack?</h2>
+              <p className="text-gray-300">Choose what works best for you</p>
+            </div>
+            
+            <RadioGroup value={formData.wantHelp} onValueChange={(value) => updateFormData("wantHelp", value)}>
+              {[
+                { value: "yes", label: "Yes – I'd like to talk to an expert", icon: "👨‍💻" },
+                { value: "maybe", label: "Maybe later – just show me the tools", icon: "🔧" },
+                { value: "no", label: "No thanks – I'll DIY for now", icon: "🚀" }
+              ].map((option) => (
+                <div key={option.value} className="flex items-center space-x-3 p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors">
+                  <RadioGroupItem value={option.value} id={option.value} className="border-gray-500" />
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{option.icon}</span>
+                    <Label htmlFor={option.value} className="text-white cursor-pointer text-lg">{option.label}</Label>
+                  </div>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Want your AI stack emailed to you?</h2>
+              <p className="text-gray-300">Get your custom recommendations plus weekly AI tips</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-white">Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => updateFormData("name", e.target.value)}
+                  className="bg-gray-700 border-gray-600 text-white mt-2"
+                  placeholder="Your name"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="email" className="text-white">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateFormData("email", e.target.value)}
+                  className="bg-gray-700 border-gray-600 text-white mt-2"
+                  placeholder="your@email.com"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2 p-4 bg-gray-700/30 rounded-lg">
+                <Checkbox
+                  id="optIn"
+                  checked={formData.optIn}
+                  onCheckedChange={(checked) => updateFormData("optIn", checked)}
+                  className="border-gray-500"
+                />
+                <Label htmlFor="optIn" className="text-gray-300 cursor-pointer">
+                  Send me my custom AI stack + weekly AI tips
+                </Label>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30">
+                <Button 
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                  size="lg"
+                >
+                  📅 Book a free strategy call
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
-    <>
-      <Helmet>
-        <title>AI Cost Calculator | Advanta AI</title>
-        <meta name="description" content="Calculate the cost of your custom AI solution, including chatbot development, AI consulting, and integrations." />
-        <meta name="keywords" content="AI cost calculator, chatbot pricing, AI integration cost, custom AI development" />
-      </Helmet>
-      
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
       <Header />
       
-      <main className="py-28 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="text-center mb-16"
-          >
-            <motion.h1 variants={fadeInUp} className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight">
-              AI Project Cost <span className="gradient-text">Calculator</span>
-            </motion.h1>
-            <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Get an instant estimate for your custom AI solution. Adjust the options below to see how different features and requirements affect pricing.
-            </motion.p>
-          </motion.div>
-          
-          <motion.div 
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            className="max-w-5xl mx-auto bg-muted rounded-2xl p-8 border border-border shadow-xl"
-          >
-            <div className="grid gap-12">
-              {/* 1. Service Type */}
-              <div>
-                <h2 className="text-2xl font-bold mb-6">1. Service Type</h2>
-                <p className="text-muted-foreground mb-6">Choose what you need help with</p>
-                
-                <RadioGroup 
-                  value={selectedServiceType} 
-                  onValueChange={setSelectedServiceType}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                >
-                  {serviceTypes.map((service) => (
-                    <div key={service.id} className="relative">
-                      <RadioGroupItem
-                        value={service.id}
-                        id={service.id}
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor={service.id}
-                        className="flex flex-col h-full p-6 bg-background hover:bg-background/70 border border-border rounded-xl cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
-                      >
-                        <div className="mb-4 h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <i className={`fas fa-${service.icon} text-primary text-xl`}></i>
-                        </div>
-                        <span className="text-lg font-bold text-white">{service.name}</span>
-                        <span className="text-sm text-muted-foreground mt-2">{service.description}</span>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              
-              {/* 2. Plan Selection */}
-              <div>
-                <h2 className="text-2xl font-bold mb-6">2. Plan Selection</h2>
-                <p className="text-muted-foreground mb-6">Select the package that fits your needs</p>
-                
-                <RadioGroup 
-                  value={selectedPlan} 
-                  onValueChange={setSelectedPlan}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                >
-                  {planOptions.map((plan) => (
-                    <div key={plan.id} className="relative">
-                      <RadioGroupItem
-                        value={plan.id}
-                        id={plan.id}
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor={plan.id}
-                        className="flex flex-col h-full p-6 bg-background hover:bg-background/70 border border-border rounded-xl cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
-                      >
-                        <div className="mb-4 h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <i className={`fas fa-${plan.icon} text-primary text-xl`}></i>
-                        </div>
-                        <span className="text-lg font-bold text-white">{plan.name}</span>
-                        <span className="text-sm text-muted-foreground mt-2">{plan.description}</span>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              
-              {/* 3. Additional Features */}
-              <div>
-                <h2 className="text-2xl font-bold mb-6">3. Additional Features</h2>
-                <p className="text-muted-foreground mb-6">Optional upgrades to enhance your solution</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {additionalFeatures.map((feature) => (
-                    <div 
-                      key={feature.id}
-                      className="p-4 bg-background border border-border rounded-lg flex items-start space-x-4"
-                    >
-                      <Checkbox 
-                        id={`feature-${feature.id}`}
-                        checked={selectedFeatures.includes(feature.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedFeatures([...selectedFeatures, feature.id]);
-                          } else {
-                            setSelectedFeatures(selectedFeatures.filter(id => id !== feature.id));
-                          }
-                        }}
-                        className="mt-1"
-                      />
-                      <div>
-                        <Label 
-                          htmlFor={`feature-${feature.id}`}
-                          className="text-white font-medium cursor-pointer"
-                        >
-                          {feature.name}
-                        </Label>
-                        <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* 4. Project Scope */}
-              <div>
-                <h2 className="text-2xl font-bold mb-6">4. Project Scope</h2>
-                <p className="text-muted-foreground mb-6">Adjust the slider based on your project complexity and scale</p>
-                
-                <div className="space-y-6">
-                  <Slider
-                    value={[projectScope]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={(value) => setProjectScope(value[0])}
-                    className="w-full"
+      <div className="container mx-auto px-4 py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto"
+        >
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full mb-6"
+            >
+              <Wrench className="w-8 h-8 text-white" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              🔧 Build My AI Stack
+            </h1>
+            
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Get personalized AI tool recommendations tailored to your business needs
+            </p>
+            
+            <div className="flex justify-center mt-8">
+              <div className="flex space-x-2">
+                {[1, 2, 3, 4, 5, 6, 7].map((step) => (
+                  <div
+                    key={step}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      step === currentStep
+                        ? "bg-purple-500"
+                        : step < currentStep
+                        ? "bg-green-500"
+                        : "bg-gray-600"
+                    }`}
                   />
-                  <div className="flex justify-between text-sm">
-                    <span>Minimal Scope</span>
-                    <span>Standard Scope</span>
-                    <span>Maximum Scope</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* 5. Project Timeline */}
-              <div>
-                <h2 className="text-2xl font-bold mb-6">5. Project Timeline</h2>
-                <p className="text-muted-foreground mb-6">Choose your preferred timeline</p>
-                
-                <RadioGroup 
-                  value={selectedTimeline} 
-                  onValueChange={setSelectedTimeline}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                >
-                  {timelineOptions.map((timeline) => (
-                    <div key={timeline.id} className="relative">
-                      <RadioGroupItem
-                        value={timeline.id}
-                        id={timeline.id}
-                        className="peer sr-only"
-                      />
-                      <Label
-                        htmlFor={timeline.id}
-                        className="flex flex-col h-full p-6 bg-background hover:bg-background/70 border border-border rounded-xl cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:ring-1 peer-data-[state=checked]:ring-primary"
-                      >
-                        <span className="text-lg font-bold text-white">{timeline.name}</span>
-                        <span className="text-sm text-muted-foreground mt-2">{timeline.description}</span>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              
-              {/* 6. Estimated Cost */}
-              <div>
-                <h2 className="text-2xl font-bold mb-8">6. Estimated Cost</h2>
-                
-                <Card className="bg-background border-primary">
-                  <div className="p-8 text-center">
-                    <h3 className="text-white text-xl font-bold mb-4">Your Estimated Project Cost</h3>
-                    <p className="text-4xl font-black text-primary mb-4">
-                      ${priceRange.min.toLocaleString()} - ${priceRange.max.toLocaleString()}
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      This is an estimate based on your selections. The final price may vary depending on specific requirements and customizations.
-                    </p>
-                    
-                    <Button 
-                      className="bg-primary hover:bg-primary/90 mt-8"
-                      size="lg"
-                      onClick={handleRequestQuote}
-                    >
-                      Get Your Custom Quote
-                    </Button>
-                  </div>
-                </Card>
+                ))}
               </div>
             </div>
-          </motion.div>
-        </div>
-      </main>
+          </div>
+
+          <Card className="bg-gray-800/50 border-gray-700 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Step {currentStep} of 7
+              </CardTitle>
+              <CardDescription className="text-gray-300">
+                Building your custom AI recommendations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderStep()}
+              
+              <div className="flex justify-between mt-8">
+                <Button
+                  onClick={prevStep}
+                  disabled={currentStep === 1}
+                  variant="outline"
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Previous
+                </Button>
+                
+                {currentStep === 7 ? (
+                  <Button
+                    onClick={submitForm}
+                    disabled={!formData.email || isSubmitting}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                        Creating Stack...
+                      </div>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Get My AI Stack
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={nextStep}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
       
       <Footer />
-    </>
+    </div>
   );
 }

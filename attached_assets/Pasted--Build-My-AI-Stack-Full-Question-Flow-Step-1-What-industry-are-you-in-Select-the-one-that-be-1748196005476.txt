@@ -1,0 +1,151 @@
+🔧 Build My AI Stack: Full Question Flow
+🔹 Step 1: What industry are you in?
+Select the one that best describes your business:
+
+Grouped dropdown or multi-column layout:
+
+🔸 Professional Services
+Real Estate
+
+Legal / Law Firm
+
+Finance / Accounting
+
+Recruiting / Staffing
+
+🔸 Health & Wellness
+Healthcare / Medical
+
+Fitness / Personal Training
+
+Medical Aesthetics / Beauty
+
+🔸 Digital & Creative
+Marketing / Creative Agency
+
+Influencer / Podcast / Media
+
+Course Creator / Coach / Educator
+
+🔸 Commerce & Local Business
+E-commerce / Retail
+
+Automotive / Dealership
+
+Construction / Contracting
+
+Hospitality / Restaurant / Hotel
+
+Home Services (Cleaning, HVAC, Landscaping)
+
+🔸 Tech & Innovation
+SaaS / Software
+
+AI Builder / Startup
+
+Manufacturing / Logistics
+
+Gaming / Esports
+
+Travel / Tourism
+
+🔸 Other
+Nonprofit / Social Impact
+
+Freelancers / Solopreneurs
+
+Other: [Free Text Input]
+
+🔹 Step 2: What’s the size of your team?
+Select one:
+
+Just me
+
+2–10 people
+
+11–50 people
+
+51–200+
+
+Enterprise (200+)
+
+🔹 Step 3: What are your top priorities right now?
+Select up to 3 goals or pain points:
+
+✅ (Checkboxes, multi-select)
+
+Generate more leads
+
+Automate my workflows
+
+Respond to customers faster
+
+Create social content with AI
+
+Automate emails or follow-ups
+
+Analyze data and reporting
+
+Improve team productivity
+
+Write blogs / SEO content
+
+Set up a chatbot or knowledge base
+
+Qualify or onboard new clients
+
+Train staff with AI tools
+
+Something else: [Free text input]
+
+🔹 Step 4: What tools do you currently use? (optional)
+Check all that apply:
+
+Google Workspace
+
+Zapier
+
+Make.com
+
+Notion
+
+Slack
+
+Shopify
+
+HubSpot
+
+Salesforce
+
+WordPress
+
+None yet
+
+🔹 Step 5: How tech-savvy are you?
+How comfortable are you with automation, tools, or AI?
+
+Beginner – I need it to be simple
+
+Intermediate – I can handle a bit of setup
+
+Advanced – I want deep integrations
+
+“Just build it for me” – I’d rather hire help
+
+🔹 Step 6: Would you like help implementing your AI stack?
+Yes – I’d like to talk to an expert
+
+Maybe later – just show me the tools
+
+No thanks – I’ll DIY for now
+
+🔹 Step 7: Want your AI stack emailed to you?
+(Lead gen / opt-in section)
+
+Name: [ ]
+
+Email: [ ]
+
+[✅] Send me my custom AI stack + weekly AI tips
+
+ Book a free strategy call (links to Calendly or intake form)
