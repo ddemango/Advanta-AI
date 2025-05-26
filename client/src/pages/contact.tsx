@@ -119,8 +119,108 @@ export default function ContactPage() {
       <Header />
       
       <main>
+        {/* AI Agents Business Benefits Hero Section */}
+        <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
+          
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="max-w-6xl mx-auto"
+            >
+              <motion.div variants={fadeInUp} className="text-center mb-12">
+                <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                  Why <GradientText>AI Agents</GradientText> Are Transforming Business
+                </motion.h1>
+                <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-10">
+                  Our intelligent AI agents deliver tangible business outcomes across every department
+                </motion.p>
+              </motion.div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <motion.div variants={fadeInUp} className="bg-gradient-to-br from-gray-900 to-black/90 border border-white/10 rounded-xl p-6 shadow-xl">
+                  <div className="bg-primary/20 w-14 h-14 rounded-full flex items-center justify-center mb-5">
+                    <i className="fas fa-chart-line text-primary text-2xl"></i>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Revenue Acceleration</h3>
+                  <p className="text-gray-300 mb-4">AI agents increase sales conversion rates by 28% through personalized customer interactions and predictive analytics.</p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">24/7 lead qualification and nurturing</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">67% faster sales cycle completion</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">42% increase in upsell opportunities</span>
+                    </li>
+                  </ul>
+                </motion.div>
+                
+                <motion.div variants={fadeInUp} className="bg-gradient-to-br from-gray-900 to-black/90 border border-white/10 rounded-xl p-6 shadow-xl">
+                  <div className="bg-blue-500/20 w-14 h-14 rounded-full flex items-center justify-center mb-5">
+                    <i className="fas fa-coins text-blue-500 text-2xl"></i>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Cost Reduction</h3>
+                  <p className="text-gray-300 mb-4">Our enterprise clients achieve an average 35% reduction in operational costs through AI-powered process automation.</p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">78% reduction in manual data processing</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">$1.4M average annual labor savings</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">62% decrease in error-related costs</span>
+                    </li>
+                  </ul>
+                </motion.div>
+                
+                <motion.div variants={fadeInUp} className="bg-gradient-to-br from-gray-900 to-black/90 border border-white/10 rounded-xl p-6 shadow-xl">
+                  <div className="bg-purple-500/20 w-14 h-14 rounded-full flex items-center justify-center mb-5">
+                    <i className="fas fa-bolt text-purple-500 text-2xl"></i>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Competitive Advantage</h3>
+                  <p className="text-gray-300 mb-4">Enterprises deploying our AI agents report gaining significant market advantages within just 90 days of implementation.</p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">85% faster market intelligence analysis</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">3.2x increase in innovation pipeline</span>
+                    </li>
+                    <li className="flex items-start">
+                      <i className="fas fa-check text-green-500 mt-1 mr-2"></i>
+                      <span className="text-gray-300">41% improvement in business agility</span>
+                    </li>
+                  </ul>
+                </motion.div>
+              </div>
+              
+              <motion.div variants={fadeInUp} className="mt-12 text-center">
+                <div className="inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-px rounded-xl mb-8">
+                  <div className="bg-black/80 rounded-xl px-6 py-4">
+                    <p className="text-lg font-medium">
+                      "Our custom-built AI agents delivered a 312% ROI within the first year, fundamentally transforming how we operate."
+                    </p>
+                    <div className="mt-2 text-sm text-gray-400">— CTO, Fortune 500 Financial Services Company</div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
 
-        
         {/* Contact Form & Info Section */}
         <section className="py-16 bg-muted">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
