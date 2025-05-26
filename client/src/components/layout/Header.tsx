@@ -53,38 +53,31 @@ export default function Header() {
             <div className="relative group">
               <button className="text-gray-300 hover:text-white font-medium transition-colors flex items-center">
                 Resources
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 transform group-hover:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <i className="fas fa-chevron-down ml-1 text-xs"></i>
               </button>
-              <div className="absolute z-50 left-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left">
-                <div className="bg-background/95 backdrop-blur-md shadow-lg rounded-md border border-border py-1">
+              
+              <div className="absolute top-full left-0 mt-2 w-80 bg-background/95 backdrop-blur-md border border-border/20 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="p-2">
                   <div className="px-4 py-2">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">Free AI Tools</p>
+                    <p className="text-xs font-semibold text-green-500 uppercase tracking-wide">Free AI Tools</p>
                   </div>
                   <a 
-                    onClick={() => setLocation('/marketing-copy-generator')}
+                    onClick={() => setLocation('/build-my-ai-stack')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
-                    ✍️ Marketing Copy Generator
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/ai-tool-quiz')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    🎯 AI Tool Recommendation Quiz
+                    ⚡ Build My AI Stack
                   </a>
                   <a 
                     onClick={() => setLocation('/business-name-generator')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
-                    💡 Business Name Generator
+                    🏢 Marketing Copy Generator
                   </a>
                   <a 
-                    onClick={() => setLocation('/resume-optimizer')}
+                    onClick={() => setLocation('/ai-tool-quiz')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
-                    📄 Resume & LinkedIn Optimizer
+                    🧠 AI Tool Quiz
                   </a>
                   <a 
                     onClick={() => setLocation('/ai-tools-comparison')}
@@ -115,84 +108,6 @@ export default function Header() {
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
                     📧 Cold Email Generator
-                  </a>
-                  <div className="border-t border-border/20 my-2"></div>
-                  <div className="px-4 py-2">
-                    <p className="text-xs font-semibold text-purple-500 uppercase tracking-wide">Demos & Sandbox</p>
-                  </div>
-                  <a 
-                    onClick={() => setLocation('/demo')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    AI Demo
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/sandbox')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    AI Product Sandbox
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/roi-calculator')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    AI ROI Calculator
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/marketplace')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    AI Plugin Marketplace
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/industry-templates')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    Industry AI Solutions
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/quick-start-templates')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    Quick Start Templates
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/template-assistant')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    Template Customization Assistant
-                  </a>
-                  <div className="border-t border-border/20 my-2"></div>
-                  <div className="px-4 py-2">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide">Enterprise Suite</p>
-                  </div>
-                  <a 
-                    onClick={() => setLocation('/enterprise-governance')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    AI Governance & Compliance Hub
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/enterprise-security')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    Enterprise Security Hub
-                  </a>
-                  <a 
-                    onClick={() => setLocation('/executive-intelligence')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    Executive Intelligence Dashboard
-                  </a>
-                  <div className="border-t border-border/20 my-2"></div>
-                  <div className="px-4 py-2">
-                    <p className="text-xs font-semibold text-orange-500 uppercase tracking-wide">CRM Integration</p>
-                  </div>
-                  <a 
-                    onClick={() => setLocation('/hubspot-integration')}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    🧡 HubSpot CRM Integration
                   </a>
                 </div>
               </div>
@@ -438,64 +353,6 @@ export default function Header() {
               </Button>
               <Button asChild className="bg-primary hover:bg-primary/90 w-full">
                 <a href="/build-my-ai-stack">Build My AI Stack</a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-a 
-                  onClick={() => {
-                    setLocation('/cold-email-generator');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Cold Email Generator
-                </a>
-              </div>
-            </div>
-
-            {/* Resources Section */}
-            <div className="mb-3 px-2">
-              <div className="text-blue-300 font-medium mb-2">Resources</div>
-              <div className="pl-3 flex flex-col space-y-2 mt-1">
-                <a 
-                  onClick={() => {
-                    setLocation('/blog');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Blog
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/resources');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Resources Hub
-                </a>
-              </div>
-            </div>
-            
-            <a 
-              onClick={() => {
-                setLocation('/contact');
-                closeMenu();
-              }}
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
-            >
-              Contact
-            </a>
-            <div className="pt-2 flex flex-col space-y-2 px-2">
-              <Button asChild variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full">
-                <a href="/login" onClick={closeMenu}>Client AI Suite</a>
-              </Button>
-              <Button asChild size="sm" className="bg-primary hover:bg-primary/90 w-full text-sm">
-                <a href="/build-my-ai-stack" onClick={closeMenu}>Build My AI Stack</a>
               </Button>
             </div>
           </div>
