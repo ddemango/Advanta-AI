@@ -44,9 +44,9 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 leading-tight">
-              <span className="block mb-1 sm:mb-2">Transformative AI</span>
-              <span className="block mb-1 sm:mb-2">Solutions</span>
-              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">That Outperform Competitors</GradientText>
+              <span className="block mb-1 sm:mb-2">We Build Custom</span>
+              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">AI Solutions</GradientText>
+              <span className="block mb-1 sm:mb-2">For Your Business</span>
             </h1>
             <motion.p 
               className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 leading-relaxed"
@@ -54,7 +54,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Harness breakthrough AI technology that delivers measurable ROI within 30 days. Our proprietary algorithms drive revenue growth, automate workflows, and provide actionable intelligence.
+              Stop doing repetitive tasks manually. We create AI assistants that handle your customer support, lead generation, content creation, and data analysis - so you can focus on growing your business.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
@@ -63,10 +63,10 @@ export default function Hero() {
               transition={{ delay: 1.2, duration: 0.5 }}
             >
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-sm sm:text-base">
-                <a href="/calculator">⚡ Get Your Custom AI Solution</a>
+                <a href="/build-my-ai-stack">⚡ Build My AI Stack</a>
               </Button>
               <Button asChild size="lg" variant="outline" className="text-sm sm:text-base">
-                <a href="/template-assistant">🚀 Generate Code Now</a>
+                <a href="/contact">💬 Talk to an Expert</a>
               </Button>
             </motion.div>
           </motion.div>

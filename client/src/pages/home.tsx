@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { fadeIn, fadeInUp } from '@/lib/animations';
 import { CookieConsent } from '@/components/ui/cookie-consent';
+import { GradientText } from '@/components/ui/gradient-text';
 import { Helmet } from 'react-helmet';
 
 export default function Home() {
@@ -155,6 +156,84 @@ export default function Home() {
         {/* Main Hero Section */}
         <section id="hero">
           <Hero />
+        </section>
+        
+        {/* What We Do Section - Simple Explanation */}
+        <section className="py-20 bg-gray-900/30" id="what-we-do">
+          <div className="container mx-auto px-4">
+            <motion.div 
+              className="text-center max-w-4xl mx-auto mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+                What <GradientText>Advanta AI</GradientText> Does
+              </h2>
+              <p className="text-xl text-gray-300 leading-relaxed mb-12">
+                We're like having a team of AI experts build custom software for your business - without the complexity or cost.
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              <motion.div 
+                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700/50"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+              >
+                <div className="text-4xl mb-4">🤖</div>
+                <h3 className="text-xl font-bold text-white mb-4">Custom AI Assistants</h3>
+                <p className="text-gray-300">
+                  We build AI chatbots and assistants that handle your customer support, sales conversations, and routine tasks - available 24/7.
+                </p>
+              </motion.div>
+
+              <motion.div 
+                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700/50"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="text-4xl mb-4">⚡</div>
+                <h3 className="text-xl font-bold text-white mb-4">Workflow Automation</h3>
+                <p className="text-gray-300">
+                  Stop doing repetitive tasks. We create AI systems that automatically handle data entry, email responses, scheduling, and more.
+                </p>
+              </motion.div>
+
+              <motion.div 
+                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-8 border border-gray-700/50"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="text-xl font-bold text-white mb-4">Smart Analytics</h3>
+                <p className="text-gray-300">
+                  Get insights from your data instantly. Our AI analyzes your business metrics and tells you exactly what actions to take.
+                </p>
+              </motion.div>
+            </div>
+
+            <motion.div 
+              className="text-center mt-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              <p className="text-lg text-gray-400 mb-6">
+                <strong className="text-white">The Result:</strong> You save 10-20 hours per week and increase revenue by focusing on what matters most.
+              </p>
+              <Button asChild size="lg" className="bg-green-600 hover:bg-green-700">
+                <a href="/build-my-ai-stack">See What AI Tools You Need →</a>
+              </Button>
+            </motion.div>
+          </div>
         </section>
         
         {/* Value Proposition Section - Consolidated */}
