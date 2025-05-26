@@ -6,6 +6,8 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [aiPlatformOpen, setAiPlatformOpen] = useState(false);
+  const [freeToolsOpen, setFreeToolsOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -223,13 +225,13 @@ export default function Header() {
         
         {/* Mobile Navigation */}
         <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} pb-4 bg-background/95 backdrop-blur-md border-t border-border/20 mt-4`}>
-          <div className="flex flex-col space-y-3 py-3">
+          <div className="flex flex-col space-y-1 py-3">
             <a 
               onClick={() => {
                 setLocation('/services');
                 closeMenu();
               }}
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 cursor-pointer"
             >
               Services
             </a>
@@ -238,7 +240,7 @@ export default function Header() {
                 setLocation('/marketplace');
                 closeMenu();
               }}
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 cursor-pointer"
             >
               AI Marketplace
             </a>
@@ -247,137 +249,202 @@ export default function Header() {
                 setLocation('/case-studies');
                 closeMenu();
               }}
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1 cursor-pointer"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 cursor-pointer"
             >
               Case Studies
             </a>
             <a 
               href="#testimonials" 
-              className="text-gray-300 hover:text-white font-medium transition-colors px-2 py-1"
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2"
               onClick={closeMenu}
             >
               Testimonials
             </a>
-            {/* AI Platform Section */}
-            <div className="mb-3 px-2">
-              <div className="text-purple-300 font-medium mb-2">AI Platform</div>
-              <div className="pl-3 flex flex-col space-y-2 mt-1">
-                <a 
-                  onClick={() => {
-                    setLocation('/demo');
-                    closeMenu();
-                  }}
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  AI Demo
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/sandbox');
-                    closeMenu();
-                  }}
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  AI Product Sandbox
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/marketplace');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  AI Marketplace
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/industry-templates');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Industry AI Solutions
-                </a>
-              </div>
+            
+            {/* AI Platform Dropdown */}
+            <div>
+              <button
+                onClick={() => setAiPlatformOpen(!aiPlatformOpen)}
+                className="w-full flex items-center justify-between text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 text-left"
+              >
+                <span>AI Platform</span>
+                <i className={`fas ${aiPlatformOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-sm`}></i>
+              </button>
+              {aiPlatformOpen && (
+                <div className="bg-gray-800/50 ml-4 mr-2 rounded-lg mt-1 mb-2">
+                  <div className="flex flex-col space-y-1 py-2">
+                    <a 
+                      onClick={() => {
+                        setLocation('/demo');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      AI Demo
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/sandbox');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      AI Product Sandbox
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/marketplace');
+                        closeMenu();
+                      }} 
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      AI Marketplace
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/industry-templates');
+                        closeMenu();
+                      }} 
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Industry AI Solutions
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Free AI Tools Section */}
-            <div className="mb-3 px-2">
-              <div className="text-green-300 font-medium mb-2">Free AI Tools</div>
-              <div className="pl-3 flex flex-col space-y-2 mt-1">
-                <a 
-                  onClick={() => {
-                    setLocation('/build-my-ai-stack');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Build My AI Stack
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/marketing-copy-generator');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Marketing Copy Generator
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/ai-tool-quiz');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  AI Tool Quiz
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/business-name-generator');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Business Name Generator
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/ai-tools-comparison');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  AI Tools Comparison
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/competitor-intelligence');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Competitor Intelligence
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/voiceover-script-generator');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Voiceover Script Generator
-                </a>
-                <a 
-                  onClick={() => {
-                    setLocation('/slide-deck-maker');
-                    closeMenu();
-                  }} 
-                  className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm"
-                >
-                  Slide Deck Maker
-                </a>
-                <a 
+            {/* Free AI Tools Dropdown */}
+            <div>
+              <button
+                onClick={() => setFreeToolsOpen(!freeToolsOpen)}
+                className="w-full flex items-center justify-between text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 text-left"
+              >
+                <span>Free AI Tools</span>
+                <i className={`fas ${freeToolsOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-sm`}></i>
+              </button>
+              {freeToolsOpen && (
+                <div className="bg-gray-800/50 ml-4 mr-2 rounded-lg mt-1 mb-2">
+                  <div className="flex flex-col space-y-1 py-2">
+                    <a 
+                      onClick={() => {
+                        setLocation('/build-my-ai-stack');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Build My AI Stack
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/business-name-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Marketing Copy Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/ai-tool-quiz');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      AI Tool Quiz
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/business-name-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Business Name Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/ai-tools-comparison');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      AI Tools Comparison
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/competitor-intelligence');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Competitor Intelligence
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/voiceover-script-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Voiceover Script Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/slide-deck-maker');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Slide Deck Maker
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/cold-email-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Cold Email Generator
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <a 
+              onClick={() => {
+                setLocation('/blog');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 cursor-pointer"
+            >
+              Blog
+            </a>
+            <a 
+              onClick={() => {
+                setLocation('/contact');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 cursor-pointer"
+            >
+              Contact
+            </a>
+
+            {/* Mobile Action Buttons */}
+            <div className="flex flex-col space-y-2 px-4 pt-4 border-t border-gray-700/30 mt-4">
+              <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary w-full">
+                <a href="/login">Client AI Suite</a>
+              </Button>
+              <Button asChild className="bg-primary hover:bg-primary/90 w-full">
+                <a href="/build-my-ai-stack">Build My AI Stack</a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+a 
                   onClick={() => {
                     setLocation('/cold-email-generator');
                     closeMenu();
