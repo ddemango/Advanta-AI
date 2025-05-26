@@ -745,6 +745,179 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
+  // Build My AI Stack - Email sending endpoint
+  app.post("/api/build-ai-stack", async (req: Request, res: Response) => {
+    try {
+      const { formData } = req.body;
+      
+      if (!formData.email || !formData.name) {
+        return res.status(400).json({ error: "Name and email are required" });
+      }
+
+      // Generate AI recommendations based on form data
+      const recommendations = generateAIRecommendations(formData);
+      
+      // Send email using Resend
+      const { Resend } = await import('resend');
+      const resend = new Resend('re_4kb7H47i_FUdAM8fL4kxyusFUxgkFgByQ');
+
+      const emailHtml = `
+        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 28px;">🔧 Your Custom AI Stack</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Personalized recommendations for ${formData.industry}</p>
+          </div>
+          
+          <div style="padding: 30px; background: white;">
+            <h2 style="color: #667eea; margin-top: 0;">Hi ${formData.name}! 👋</h2>
+            
+            <p>Based on your responses, we've curated the perfect AI tools for your ${formData.industry} business with ${formData.teamSize}.</p>
+            
+            <div style="background: #f8f9ff; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #667eea;">🎯 Your Priorities</h3>
+              <ul style="margin: 0; padding-left: 20px;">
+                ${formData.priorities.map(priority => `<li>${priority}</li>`).join('')}
+                ${formData.otherPriority ? `<li>${formData.otherPriority}</li>` : ''}
+              </ul>
+            </div>
+
+            <h3 style="color: #667eea;">🚀 Recommended AI Tools</h3>
+            ${recommendations.map(tool => `
+              <div style="border: 1px solid #e1e5e9; border-radius: 8px; padding: 20px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #333;">${tool.name}</h4>
+                <p style="margin: 10px 0; color: #666;">${tool.description}</p>
+                <div style="margin-top: 15px;">
+                  <span style="background: #667eea; color: white; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: bold;">${tool.category}</span>
+                  <span style="margin-left: 10px; color: #28a745; font-weight: bold;">${tool.pricing}</span>
+                </div>
+              </div>
+            `).join('')}
+
+            <div style="background: #e8f5e8; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+              <h3 style="margin-top: 0; color: #28a745;">🎁 Next Steps</h3>
+              <p style="margin: 15px 0;">Ready to implement your AI stack? Our experts can help you get started!</p>
+              <a href="https://calendly.com/advanta-ai/strategy-call" style="display: inline-block; background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Book Free Strategy Call</a>
+            </div>
+
+            <div style="border-top: 1px solid #e1e5e9; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
+              <p><strong>Advanta AI</strong> - Transformative AI Solutions for Modern Businesses</p>
+              <p>This email was sent because you requested your custom AI stack recommendations.</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      await resend.emails.send({
+        from: 'Advanta AI <ai-stack@advantaai.com>',
+        to: [formData.email],
+        subject: `🔧 Your Custom AI Stack for ${formData.industry}`,
+        html: emailHtml
+      });
+
+      // Save lead to storage
+      await storage.createContactSubmission({
+        name: formData.name,
+        email: formData.email,
+        company: formData.industry,
+        industry: formData.industry,
+        message: `AI Stack Request - Team: ${formData.teamSize}, Priorities: ${formData.priorities.join(', ')}, Tech Level: ${formData.techLevel}`,
+        consent: formData.optIn
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Your custom AI stack has been sent to your email!"
+      });
+
+    } catch (error: any) {
+      console.error("AI Stack email error:", error);
+      res.status(500).json({ 
+        error: "Failed to send AI stack recommendations: " + error.message 
+      });
+    }
+  });
+
+  // Helper function to generate AI recommendations
+  function generateAIRecommendations(formData: any) {
+    const recommendations = [];
+    
+    // Base recommendations for all businesses
+    recommendations.push({
+      name: "ChatGPT Plus",
+      description: "Advanced AI assistant for writing, analysis, and automation tasks",
+      category: "AI Assistant",
+      pricing: "$20/month"
+    });
+
+    // Industry-specific recommendations
+    if (formData.industry.includes("E-commerce") || formData.industry.includes("Retail")) {
+      recommendations.push({
+        name: "Klaviyo",
+        description: "AI-powered email marketing with customer segmentation",
+        category: "Marketing",
+        pricing: "Free - $150/month"
+      });
+    }
+
+    if (formData.industry.includes("Marketing") || formData.industry.includes("Creative")) {
+      recommendations.push({
+        name: "Canva Pro",
+        description: "AI-powered design tool with Magic Design features",
+        category: "Design",
+        pricing: "$12.99/month"
+      });
+    }
+
+    // Priority-based recommendations
+    if (formData.priorities.includes("Generate more leads")) {
+      recommendations.push({
+        name: "HubSpot",
+        description: "AI-powered CRM with lead scoring and automation",
+        category: "CRM",
+        pricing: "Free - $45/month"
+      });
+    }
+
+    if (formData.priorities.includes("Automate my workflows")) {
+      recommendations.push({
+        name: "Zapier",
+        description: "Connect 5000+ apps with AI-powered automation",
+        category: "Automation",
+        pricing: "Free - $29/month"
+      });
+    }
+
+    if (formData.priorities.includes("Create social content with AI")) {
+      recommendations.push({
+        name: "Buffer",
+        description: "AI content assistant for social media scheduling",
+        category: "Social Media",
+        pricing: "$6 - $120/month"
+      });
+    }
+
+    // Team size recommendations
+    if (formData.teamSize === "Just me") {
+      recommendations.push({
+        name: "Notion AI",
+        description: "All-in-one workspace with AI writing assistant",
+        category: "Productivity",
+        pricing: "$10/month"
+      });
+    }
+
+    if (formData.teamSize.includes("Enterprise")) {
+      recommendations.push({
+        name: "Microsoft 365 Copilot",
+        description: "Enterprise AI assistant across Office applications",
+        category: "Enterprise",
+        pricing: "$30/user/month"
+      });
+    }
+
+    return recommendations.slice(0, 5); // Return top 5 recommendations
+  }
+
   const httpServer = createServer(app);
 
   return httpServer;

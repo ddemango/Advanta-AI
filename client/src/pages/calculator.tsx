@@ -103,15 +103,26 @@ export default function Calculator() {
   const submitForm = async () => {
     setIsSubmitting(true);
     try {
-      // Here you would submit to your backend
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+      const response = await fetch('/api/build-ai-stack', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ formData }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create AI stack');
+      }
       
       toast({
         title: "AI Stack Created! 🎉",
         description: "Your custom AI recommendations have been sent to your email.",
       });
       
-      // Reset form or redirect
+      // Reset form
       setCurrentStep(1);
       setFormData({
         industry: "",
@@ -126,10 +137,10 @@ export default function Calculator() {
         email: "",
         optIn: false
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create your AI stack. Please try again.",
+        description: error.message || "Failed to create your AI stack. Please try again.",
         variant: "destructive"
       });
     } finally {
