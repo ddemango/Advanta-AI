@@ -814,14 +814,15 @@ Please provide analysis in this exact JSON format (no additional text):
         html: emailHtml
       });
 
-      // Save lead to storage
-      await storage.createContactSubmission({
+      // Log the lead data for now (database setup can be done later)
+      console.log('✅ AI Stack Lead Generated:', {
         name: formData.name,
         email: formData.email,
-        company: formData.industry,
         industry: formData.industry,
-        message: `AI Stack Request - Team: ${formData.teamSize}, Priorities: ${formData.priorities.join(', ')}, Tech Level: ${formData.techLevel}`,
-        consent: formData.optIn
+        teamSize: formData.teamSize,
+        priorities: formData.priorities,
+        techLevel: formData.techLevel,
+        timestamp: new Date().toISOString()
       });
 
       res.json({ 
