@@ -807,12 +807,14 @@ Please provide analysis in this exact JSON format (no additional text):
         </div>
       `;
 
-      await resend.emails.send({
-        from: 'Advanta AI <ai-stack@advantaai.com>',
+      const emailResult = await resend.emails.send({
+        from: 'Advanta AI <onboarding@resend.dev>',
         to: [formData.email],
         subject: `🔧 Your Custom AI Stack for ${formData.industry}`,
         html: emailHtml
       });
+      
+      console.log('📧 Email sent successfully:', emailResult);
 
       // Log the lead data for now (database setup can be done later)
       console.log('✅ AI Stack Lead Generated:', {
