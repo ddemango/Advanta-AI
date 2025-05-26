@@ -139,7 +139,7 @@ export default function Header() {
         </div>
         
         {/* Mobile Navigation */}
-        <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} pb-4 bg-background/95 backdrop-blur-md border-t border-border/20 mt-4`}>
+        <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} pb-4 bg-background/95 backdrop-blur-md border-t border-border/20 mt-4 max-h-[80vh] overflow-y-auto`}>
           <div className="flex flex-col space-y-1 py-3">
             <a 
               onClick={() => {
