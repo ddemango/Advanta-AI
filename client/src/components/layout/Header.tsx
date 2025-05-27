@@ -340,6 +340,105 @@ export default function Header() {
                     >
                       LinkedIn Generator
                     </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/headline-split-test-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Headline Split-Test Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/business-idea-validator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Business Idea Validator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/crm-use-case-finder');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      CRM Use Case Finder
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/custom-gpt-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Custom GPT Bot Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/prompt-library');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Time-Saving Prompt Library
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/landing-page-builder');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Landing Page Builder
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/workflow-explainer');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      AI Workflow Explainer
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/content-calendar-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Content Calendar Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/pricing-strategy-assistant');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Pricing Strategy Assistant
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/brand-kit-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Brand Kit Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/lead-magnet-builder');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Lead Magnet Builder
+                    </a>
                   </div>
                 </div>
               )}

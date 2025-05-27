@@ -1,0 +1,107 @@
+Headline Split-Test Generator
+
+Paste a landing page or product
+→ GPT generates 3–5 high-converting headlines (with emotional triggers, FOMO, or curiosity angles)
+Bonus: A/B test simulator with expected CTR % based on tone
+
+GPT-Powered Business Idea Validator
+
+Input: your startup or product idea
+→ Output:
+
+	•	Target audience
+	•	Monetization model
+	•	Go-to-market summary
+	•	AI integration suggestions
+Bonus: Score system or “Investor Pitch-Ready?” rating
+
+Mini CRM Use Case Finder
+
+Select CRM tool → Select pain point
+→ GPT returns how to use AI with it (e.g., “AI follow-up email sequence using Pipedrive + GPT”)
+Bonus: Zapier/Make workflows included
+
+Custom GPT Bot Generator (Prompt-as-a-Service)
+
+Input: Topic + who it’s for
+→ GPT outputs a reusable custom prompt + instructions
+Use cases: “Sales coach bot”, “real estate negotiator”, “email rewriter”, etc.
+
+Time-Saving Prompt Library
+
+Curated, pre-loaded GPT prompts for:
+
+	•	Marketing
+	•	Sales
+	•	Product development
+	•	Internal ops
+	•	Design & copywriting
+Bonus: Let users search, favorite, or copy with 1 click
+
+
+ Page Builder (Lite)
+
+Input: Product name + target audience
+→ Output:
+
+	•	Headline + subhead
+	•	Feature list
+	•	CTA options
+	•	Value props
+	•	Hero section copy
+
+Bonus: Export to Notion or HTML snippet
+
+AI Workflow Explainer
+
+Select a task (e.g., onboarding, lead follow-up)
+→ GPT returns:
+
+	•	Step-by-step automation flow
+	•	Tools needed (Zapier, Make, GPT, etc.)
+	•	Prompt templates
+
+Bonus: Include embedded Make.com workflows.
+
+Content Calendar Generator
+
+Input: content goal + platform + frequency
+→ Get 30-day AI-generated plan with:
+
+	•	Post ideas
+	•	Suggested prompts
+	•	Call-to-actions
+	•	Hashtags or titles
+
+Pricing Strategy Assistant
+
+Input your product, audience, cost → get:
+
+	•	Suggested pricing tiers
+	•	Psychological pricing tactics
+	•	Value stack breakdown
+	•	Comparison to market average
+
+
+Mini Brand Kit Generator
+
+Input your business name and niche → get:
+
+	•	Brand personality
+	•	Color palette suggestions
+	•	Fonts
+	•	3 tagline options
+	•	1-liner brand intro
+
+Great for solopreneurs or startup founders.
+
+AI-Powered Lead Magnet Builder
+
+Upload your ebook, checklist, or Notion doc → get:
+
+	•	Landing page copy
+	•	Email sequence
+	•	CTA variations
+	•	Prompt to create a VSL script
+
+Bonus: Let users export or publish to Notion.
