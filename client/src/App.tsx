@@ -35,6 +35,9 @@ import EnterpriseGovernance from "@/pages/enterprise-governance";
 import EnterpriseSecurity from "@/pages/enterprise-security";
 import ExecutiveIntelligence from "@/pages/executive-intelligence";
 import HubSpotIntegration from "@/pages/hubspot-integration";
+import HeadlineSplitTestGenerator from "@/pages/headline-split-test-generator";
+import BusinessIdeaValidator from "@/pages/business-idea-validator";
+import LandingPageBuilder from "@/pages/landing-page-builder";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -110,6 +113,9 @@ function Router() {
       <Route path="/enterprise-security" component={EnterpriseSecurity} />
       <Route path="/executive-intelligence" component={ExecutiveIntelligence} />
       <Route path="/hubspot-integration" component={HubSpotIntegration} />
+      <Route path="/headline-split-test-generator" component={HeadlineSplitTestGenerator} />
+      <Route path="/business-idea-validator" component={BusinessIdeaValidator} />
+      <Route path="/landing-page-builder" component={LandingPageBuilder} />
       <Route component={NotFound} />
     </Switch>
   );
