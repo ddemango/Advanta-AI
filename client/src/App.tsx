@@ -38,6 +38,9 @@ import HubSpotIntegration from "@/pages/hubspot-integration";
 import HeadlineSplitTestGenerator from "@/pages/headline-split-test-generator";
 import BusinessIdeaValidator from "@/pages/business-idea-validator";
 import LandingPageBuilder from "@/pages/landing-page-builder";
+import ContentCalendarGenerator from "@/pages/content-calendar-generator";
+import PricingStrategyAssistant from "@/pages/pricing-strategy-assistant";
+import BrandKitGenerator from "@/pages/brand-kit-generator";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -116,6 +119,9 @@ function Router() {
       <Route path="/headline-split-test-generator" component={HeadlineSplitTestGenerator} />
       <Route path="/business-idea-validator" component={BusinessIdeaValidator} />
       <Route path="/landing-page-builder" component={LandingPageBuilder} />
+      <Route path="/content-calendar-generator" component={ContentCalendarGenerator} />
+      <Route path="/pricing-strategy-assistant" component={PricingStrategyAssistant} />
+      <Route path="/brand-kit-generator" component={BrandKitGenerator} />
       <Route component={NotFound} />
     </Switch>
   );
