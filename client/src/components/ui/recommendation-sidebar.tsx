@@ -26,6 +26,7 @@ export function RecommendationSidebar({ isVisible = true }: RecommendationProps)
   const [isExpanded, setIsExpanded] = useState(false);
   const [dismissedTools, setDismissedTools] = useState<string[]>([]);
   const [recommendedTools, setRecommendedTools] = useState<AITool[]>([]);
+  const { trackToolUsage, getUserBehavior, getPersonalizedPreferences } = useUserTracking();
 
   const allTools: AITool[] = [
     {
@@ -140,54 +141,80 @@ export function RecommendationSidebar({ isVisible = true }: RecommendationProps)
     }
   ];
 
-  // Intelligent recommendation algorithm based on current page context
+  // Intelligent personalized recommendation algorithm
   useEffect(() => {
     const getRecommendations = () => {
       const currentPath = location;
+      const userBehavior = getUserBehavior();
+      const preferences = getPersonalizedPreferences();
       let recommendations: AITool[] = [];
 
-      // Context-based recommendations
+      // Personalized recommendations based on user behavior
+      if (userBehavior.isNewUser) {
+        // New users get beginner-friendly tools
+        recommendations = allTools.filter(tool => tool.difficulty === 'beginner');
+      } else {
+        // Experienced users get tools based on their favorite categories
+        if (userBehavior.favoriteCategories.length > 0) {
+          recommendations = allTools.filter(tool => 
+            userBehavior.favoriteCategories.includes(tool.category)
+          );
+        }
+        
+        // If user is advanced, include advanced tools
+        if (userBehavior.experienceLevel === 'advanced') {
+          recommendations.push(...allTools.filter(tool => tool.difficulty === 'advanced'));
+        }
+      }
+
+      // Context-based recommendations (current page)
+      let contextRecommendations: AITool[] = [];
       if (currentPath.includes('marketing') || currentPath.includes('content') || currentPath.includes('headline') || currentPath.includes('landing')) {
-        recommendations = allTools.filter(tool => 
+        contextRecommendations = allTools.filter(tool => 
           ['marketing', 'content', 'branding'].includes(tool.category)
         );
       } else if (currentPath.includes('business') || currentPath.includes('strategy') || currentPath.includes('pricing')) {
-        recommendations = allTools.filter(tool => 
+        contextRecommendations = allTools.filter(tool => 
           ['strategy', 'research', 'ai'].includes(tool.category)
         );
       } else if (currentPath.includes('sales') || currentPath.includes('email') || currentPath.includes('cold')) {
-        recommendations = allTools.filter(tool => 
+        contextRecommendations = allTools.filter(tool => 
           ['sales', 'marketing', 'content'].includes(tool.category)
         );
       } else if (currentPath.includes('brand') || currentPath.includes('design')) {
-        recommendations = allTools.filter(tool => 
+        contextRecommendations = allTools.filter(tool => 
           ['branding', 'marketing', 'content'].includes(tool.category)
         );
-      } else if (currentPath === '/' || currentPath === '') {
-        // Homepage - show most popular beginner-friendly tools
-        recommendations = [
+      }
+
+      // Combine personalized and context recommendations
+      const combinedRecommendations = [...recommendations, ...contextRecommendations];
+      
+      // If no personalized recommendations, fall back to popular tools
+      if (combinedRecommendations.length === 0) {
+        combinedRecommendations.push(
           allTools.find(t => t.id === 'headline-split-test')!,
           allTools.find(t => t.id === 'business-idea-validator')!,
           allTools.find(t => t.id === 'content-calendar')!,
           allTools.find(t => t.id === 'brand-kit')!
-        ].filter(Boolean);
-      } else {
-        // Default recommendations - mix of popular tools
-        recommendations = [
-          allTools.find(t => t.id === 'headline-split-test')!,
-          allTools.find(t => t.id === 'landing-page-builder')!,
-          allTools.find(t => t.id === 'prompt-library')!,
-        ].filter(Boolean);
+        );
       }
 
-      // Filter out dismissed tools and current page, prioritize beginner tools
-      const filtered = recommendations
-        .filter(tool => !dismissedTools.includes(tool.id))
+      // Remove duplicates and filter
+      const uniqueTools = combinedRecommendations.filter((tool, index, self) => 
+        tool && self.findIndex(t => t && t.id === tool.id) === index
+      );
+
+      // Filter out dismissed tools, used tools, and current page
+      const filtered = uniqueTools
+        .filter(tool => tool && !dismissedTools.includes(tool.id))
         .filter(tool => !currentPath.includes(tool.route.slice(1)))
         .sort((a, b) => {
-          // Prioritize beginner tools
-          if (a.difficulty === 'beginner' && b.difficulty !== 'beginner') return -1;
-          if (b.difficulty === 'beginner' && a.difficulty !== 'beginner') return 1;
+          // Prioritize based on user experience level
+          if (userBehavior.experienceLevel === 'beginner') {
+            if (a.difficulty === 'beginner' && b.difficulty !== 'beginner') return -1;
+            if (b.difficulty === 'beginner' && a.difficulty !== 'beginner') return 1;
+          }
           return 0;
         })
         .slice(0, 3);
@@ -202,7 +229,8 @@ export function RecommendationSidebar({ isVisible = true }: RecommendationProps)
     setDismissedTools(prev => [...prev, toolId]);
   };
 
-  const handleToolClick = (route: string) => {
+  const handleToolClick = (route: string, toolId: string) => {
+    trackToolUsage(toolId);
     setLocation(route);
     setIsExpanded(false);
   };
@@ -285,7 +313,7 @@ export function RecommendationSidebar({ isVisible = true }: RecommendationProps)
                           <div className="flex space-x-1">
                             <Button
                               size="sm"
-                              onClick={() => handleToolClick(tool.route)}
+                              onClick={() => handleToolClick(tool.route, tool.id)}
                               className="h-7 px-3 text-xs"
                             >
                               Try It

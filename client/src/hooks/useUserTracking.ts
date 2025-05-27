@@ -81,7 +81,7 @@ export function useUserTracking() {
     setUserActivity(prev => {
       const updated = {
         ...prev,
-        toolsUsed: [...new Set([...prev.toolsUsed, toolId])]
+        toolsUsed: prev.toolsUsed.includes(toolId) ? prev.toolsUsed : [...prev.toolsUsed, toolId]
       };
       localStorage.setItem('advanta-user-activity', JSON.stringify(updated));
       return updated;
