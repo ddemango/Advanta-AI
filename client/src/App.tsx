@@ -47,6 +47,7 @@ import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
+import { RecommendationSidebar } from "@/components/ui/recommendation-sidebar";
 
 function Router() {
   // Implement smooth scrolling for anchor links
@@ -155,6 +156,7 @@ function App() {
       <Toaster />
       <Router />
       {!isLoading && <ChatButton />}
+      {!isLoading && <RecommendationSidebar />}
     </TooltipProvider>
   );
 }
