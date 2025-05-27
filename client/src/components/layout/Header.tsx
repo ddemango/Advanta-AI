@@ -322,6 +322,24 @@ export default function Header() {
                     >
                       Cold Email Generator
                     </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/resume-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Resume Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/linkedin-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      LinkedIn Generator
+                    </a>
                   </div>
                 </div>
               )}
