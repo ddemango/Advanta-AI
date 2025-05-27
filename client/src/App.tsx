@@ -41,6 +41,8 @@ import LandingPageBuilder from "@/pages/landing-page-builder";
 import ContentCalendarGenerator from "@/pages/content-calendar-generator";
 import PricingStrategyAssistant from "@/pages/pricing-strategy-assistant";
 import BrandKitGenerator from "@/pages/brand-kit-generator";
+import PromptLibrary from "@/pages/prompt-library";
+import CustomGPTGenerator from "@/pages/custom-gpt-generator";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -122,6 +124,8 @@ function Router() {
       <Route path="/content-calendar-generator" component={ContentCalendarGenerator} />
       <Route path="/pricing-strategy-assistant" component={PricingStrategyAssistant} />
       <Route path="/brand-kit-generator" component={BrandKitGenerator} />
+      <Route path="/prompt-library" component={PromptLibrary} />
+      <Route path="/custom-gpt-generator" component={CustomGPTGenerator} />
       <Route component={NotFound} />
     </Switch>
   );
