@@ -8,7 +8,7 @@ export default function RoiCalculatorPreview() {
   const [, setLocation] = useLocation();
   const [industry, setIndustry] = useState('Technology');
   const [efficiency, setEfficiency] = useState(25);
-  const [roi, setRoi] = useState('385-412%');
+  const [roi, setRoi] = useState('382-425%');
   
   // Cycle through industries for demo effect
   useEffect(() => {
@@ -20,8 +20,8 @@ export default function RoiCalculatorPreview() {
       const newEfficiency = Math.floor(Math.random() * 40) + 20;
       setEfficiency(newEfficiency);
       
-      // Calculate new ROI range
-      const baseRoi = 340 + Math.floor(Math.random() * 100);
+      // Calculate new ROI range starting from 382
+      const baseRoi = 382 + Math.floor(Math.random() * 60);
       const roiRange = `${baseRoi}-${baseRoi + Math.floor(Math.random() * 50)}%`;
       setRoi(roiRange);
     }, 3000);
@@ -70,7 +70,7 @@ export default function RoiCalculatorPreview() {
         
         <motion.div variants={fadeInUp} className="w-full md:w-5/12 text-center">
           <div className="flex flex-col justify-center items-center">
-            <div className="relative bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-sm border border-primary/30 rounded-full px-8 py-6 mb-2 shadow-lg">
+            <div className="relative bg-gradient-to-br from-primary/20 to-purple-500/20 backdrop-blur-sm border border-primary/30 rounded-full px-8 py-6 shadow-lg pl-[30px] pr-[30px] pt-[0px] pb-[0px] ml-[0px] mr-[0px] mt-[5px] mb-[5px]">
               <div className="text-center">
                 <div className="text-4xl font-bold mb-1">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300">
