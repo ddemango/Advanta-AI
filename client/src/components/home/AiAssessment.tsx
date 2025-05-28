@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import aiWorkspaceImage from '@assets/image_1748399978739.png';
 import { 
   Card,
   CardContent,
@@ -197,7 +198,7 @@ export default function AiAssessment() {
             >
               {/* A digital transformation visualization */}
               <img 
-                src="/attached_assets/image_1748399978739.png" 
+                src={aiWorkspaceImage} 
                 alt="Professional AI workspace with holographic AI interface and data visualizations" 
                 className="rounded-xl lg:rounded-l-none w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-300"
               />
