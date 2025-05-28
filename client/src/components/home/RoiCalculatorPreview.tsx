@@ -71,7 +71,7 @@ export default function RoiCalculatorPreview() {
         <motion.div variants={fadeInUp} className="w-full md:w-5/12 text-center">
           <div className="flex flex-col justify-center items-center">
             <div className="text-center mb-2">
-              <div className="text-4xl font-bold mb-1">
+              <div className="text-4xl font-bold mb-3">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300">
                   {roi.split('-')[0]}
                 </span>
