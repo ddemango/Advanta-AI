@@ -75,7 +75,7 @@ export default function RoiCalculatorPreview() {
                 <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300">
                   {roi.split('-')[0]}
                 </span>
-                <span className="text-xs font-medium text-primary ml-2">
+                <span className="text-sm font-medium text-primary ml-2">
                   avg ROI
                 </span>
               </div>
