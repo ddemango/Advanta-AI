@@ -70,11 +70,13 @@ export default function RoiCalculatorPreview() {
         
         <motion.div variants={fadeInUp} className="w-full md:w-5/12 text-center">
           <div className="flex flex-col justify-center items-center">
-            <div className="text-4xl font-bold mb-2 relative">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300">
-                {roi.split('-')[0]}
-              </span>
-              <span className="absolute -top-4 right-0 text-sm font-normal bg-primary/20 px-2 py-1 rounded-full">
+            <div className="text-center mb-2">
+              <div className="text-4xl font-bold mb-1">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300">
+                  {roi.split('-')[0]}
+                </span>
+              </div>
+              <span className="text-xs font-medium bg-primary/20 text-primary px-2 py-1 rounded-full">
                 avg ROI
               </span>
             </div>
