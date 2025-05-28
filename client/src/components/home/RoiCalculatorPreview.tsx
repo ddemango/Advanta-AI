@@ -70,15 +70,15 @@ export default function RoiCalculatorPreview() {
         
         <motion.div variants={fadeInUp} className="w-full md:w-5/12 text-center">
           <div className="flex flex-col justify-center items-center">
-            <div className="text-center mb-2">
-              <div className="text-4xl font-bold mb-3">
+            <div className="text-center mb-2 relative">
+              <div className="text-4xl font-bold">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-300">
                   {roi.split('-')[0]}
                 </span>
+                <span className="text-xs font-medium bg-primary/20 text-primary px-2 py-1 rounded-full ml-2 align-top">
+                  avg ROI
+                </span>
               </div>
-              <span className="text-xs font-medium bg-primary/20 text-primary px-2 py-1 rounded-full">
-                avg ROI
-              </span>
             </div>
             <p className="text-sm text-gray-300 mb-5">
               Our clients see significant ROI within just 90 days
