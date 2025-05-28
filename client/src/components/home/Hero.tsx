@@ -31,7 +31,7 @@ export default function Hero() {
         <div className="absolute top-1/2 right-1/3 w-48 h-48 rounded-full bg-secondary/20 blur-[80px] animate-pulse-slow z-0" style={{ animationDelay: '2s' }}></div>
       </div>
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 bg-background/95 backdrop-blur-sm border border-muted/20 rounded-xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           variants={staggerContainer}
           initial="hidden"
@@ -221,35 +221,35 @@ export default function Hero() {
         
         {/* Stats Strip */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8" ref={ref as any}>
-          <div className="bg-background/95 backdrop-blur-sm p-6 rounded-xl border border-muted/20 shadow-glow-sm">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={385} start={0} duration={2000} inView={inView} suffix="%" />
             </div>
             <div className="text-muted-foreground font-medium">Average Revenue Increase</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-background/95 backdrop-blur-sm p-6 rounded-xl border border-muted/20 shadow-glow-sm">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={312} start={0} duration={2000} inView={inView} suffix="%" />
             </div>
             <div className="text-muted-foreground font-medium">Average ROI in First Year</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-background/95 backdrop-blur-sm p-6 rounded-xl border border-muted/20 shadow-glow-sm">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={94} start={0} duration={2000} inView={inView} suffix="%" />
             </div>
             <div className="text-muted-foreground font-medium">Workflow Automation Rate</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-background/95 backdrop-blur-sm p-6 rounded-xl border border-muted/20 shadow-glow-sm">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={60} start={0} duration={2000} inView={inView} suffix="+" />
             </div>
             <div className="text-muted-foreground font-medium">Fortune 500 Clients</div>
             <div className={`mt-2 stats-bar ${inView ? 'animate' : ''}`}></div>
           </div>
-          <div className="bg-background/95 backdrop-blur-sm p-6 rounded-xl border border-muted/20 shadow-glow-sm">
+          <div className="bg-muted/40 backdrop-blur-sm p-6 rounded-xl border border-primary/20 shadow-glow-sm">
             <div className="text-3xl font-bold text-white mb-1">
               <Counter value={28} start={0} duration={2000} inView={inView} suffix="M+" />
             </div>
