@@ -35,7 +35,7 @@ export default function RoiCalculatorPreview() {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.2 }}
-      className="bg-black/30 backdrop-blur-sm rounded-xl border border-primary/20 shadow-lg p-6 mt-10"
+      className="bg-background/95 backdrop-blur-sm rounded-xl border border-muted/20 shadow-lg p-6 mt-10"
     >
       <div className="flex flex-col md:flex-row items-center justify-between gap-8">
         <motion.div variants={fadeInUp} className="w-full md:w-7/12">
