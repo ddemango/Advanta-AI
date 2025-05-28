@@ -343,9 +343,9 @@ export default function Home() {
 
             <Tabs value={toolsTab} onValueChange={setToolsTab}>
               <TabsList className="grid grid-cols-3 gap-2 mb-8">
-                <TabsTrigger value="demo">Live Demo</TabsTrigger>
-                <TabsTrigger value="sandbox">AI Sandbox</TabsTrigger>
                 <TabsTrigger value="assessment">AI Readiness</TabsTrigger>
+                <TabsTrigger value="sandbox">AI Sandbox</TabsTrigger>
+                <TabsTrigger value="demo">Live Demo</TabsTrigger>
               </TabsList>
               
               <TabsContent value="demo">
