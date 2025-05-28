@@ -28,7 +28,7 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState('hero');
   const [servicesTab, setServicesTab] = useState('ai-agents');
   const [resultsTab, setResultsTab] = useState('case-studies');
-  const [toolsTab, setToolsTab] = useState('demo');
+  const [toolsTab, setToolsTab] = useState('assessment');
   
   // Handle smooth scrolling
   useEffect(() => {
