@@ -105,7 +105,7 @@ export default function Services() {
           className="relative h-48 md:h-64 mb-16 rounded-lg overflow-hidden"
         >
           <NeuralNetwork className="absolute inset-0" nodeCount={50} activeNodes={15} />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/95 backdrop-blur-sm border border-muted/20">
             <div className="text-center">
               <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Advanced AI Technology</h3>
               <p className="text-white/70 max-w-md mx-auto">Interactive neural networks that adapt to your business needs</p>
