@@ -197,9 +197,9 @@ export default function AiAssessment() {
             >
               {/* A digital transformation visualization */}
               <img 
-                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=600" 
-                alt="Digital transformation assessment visualization with data points and AI analysis" 
-                className="rounded-xl lg:rounded-l-none w-full h-full object-cover"
+                src="/attached_assets/image_1748399978739.png" 
+                alt="Professional AI workspace with holographic AI interface and data visualizations" 
+                className="rounded-xl lg:rounded-l-none w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-300"
               />
             </motion.div>
           </motion.div>
