@@ -216,5 +216,398 @@ export const automationTemplates: AutomationTemplate[] = [
         required: true
       }
     ]
+  },
+  {
+    id: "linkedin_to_crm",
+    name: "LinkedIn Leads → CRM",
+    description: "Automatically import LinkedIn Sales Navigator leads into your CRM system.",
+    category: "Lead Generation",
+    make_scenario_id: "pqr678",
+    icon: "fab fa-linkedin",
+    estimatedTime: "12 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "LinkedIn Sales Navigator Cookie", 
+        name: "linkedin_cookie", 
+        type: "password",
+        placeholder: "li_at cookie value",
+        required: true
+      },
+      { 
+        label: "CRM API Endpoint", 
+        name: "crm_endpoint", 
+        type: "url",
+        placeholder: "https://api.yourcrm.com/contacts",
+        required: true
+      },
+      { 
+        label: "CRM API Key", 
+        name: "crm_api_key", 
+        type: "password",
+        placeholder: "your-crm-api-key",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "youtube_to_social",
+    name: "YouTube Upload → Social Media",
+    description: "Auto-post to Twitter, LinkedIn, and Facebook when you upload a new YouTube video.",
+    category: "Marketing",
+    make_scenario_id: "stu901",
+    icon: "fab fa-youtube",
+    estimatedTime: "15 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "YouTube Channel ID", 
+        name: "youtube_channel", 
+        type: "text",
+        placeholder: "UCxxxxxxxxxxxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "YouTube API Key", 
+        name: "youtube_api", 
+        type: "password",
+        placeholder: "AIzaSyxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Twitter Bearer Token", 
+        name: "twitter_token", 
+        type: "password",
+        placeholder: "AAAAAAAAAAAAAAAAAAAAAxxxxx",
+        required: true
+      },
+      { 
+        label: "LinkedIn Access Token", 
+        name: "linkedin_token", 
+        type: "password",
+        placeholder: "AQVxxxxxxxxxxxxxx",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "website_monitor",
+    name: "Website Monitor → Alerts",
+    description: "Monitor website uptime and performance, send alerts when issues are detected.",
+    category: "Operations",
+    make_scenario_id: "vwx234",
+    icon: "fas fa-monitor-waveform",
+    estimatedTime: "8 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Website URL to Monitor", 
+        name: "website_url", 
+        type: "url",
+        placeholder: "https://your-website.com",
+        required: true
+      },
+      { 
+        label: "Check Interval (minutes)", 
+        name: "check_interval", 
+        type: "number",
+        placeholder: "5",
+        required: true
+      },
+      { 
+        label: "Alert Email", 
+        name: "alert_email", 
+        type: "email",
+        placeholder: "alerts@yourcompany.com",
+        required: true
+      },
+      { 
+        label: "Slack Alert Webhook (Optional)", 
+        name: "slack_alert", 
+        type: "url",
+        placeholder: "https://hooks.slack.com/services/...",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "inventory_sync",
+    name: "Inventory Sync → Multiple Platforms",
+    description: "Sync inventory levels across Shopify, Amazon, eBay, and other sales channels.",
+    category: "E-commerce",
+    make_scenario_id: "yza567",
+    icon: "fas fa-boxes",
+    estimatedTime: "20 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Shopify Store URL", 
+        name: "shopify_store", 
+        type: "url",
+        placeholder: "your-store.myshopify.com",
+        required: true
+      },
+      { 
+        label: "Shopify Admin API Key", 
+        name: "shopify_api", 
+        type: "password",
+        placeholder: "shpat_xxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Amazon MWS Access Key", 
+        name: "amazon_key", 
+        type: "password",
+        placeholder: "AKIAI...",
+        required: false
+      },
+      { 
+        label: "eBay Production App ID", 
+        name: "ebay_app_id", 
+        type: "text",
+        placeholder: "YourAppI-xxxxx",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "expense_tracker",
+    name: "Receipt Scanner → Expense Tracking",
+    description: "Scan receipts from email attachments and automatically categorize expenses.",
+    category: "Finance",
+    make_scenario_id: "bcd890",
+    icon: "fas fa-receipt",
+    estimatedTime: "10 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Email Account (Gmail)", 
+        name: "gmail_account", 
+        type: "email",
+        placeholder: "your-email@gmail.com",
+        required: true
+      },
+      { 
+        label: "Gmail App Password", 
+        name: "gmail_password", 
+        type: "password",
+        placeholder: "16-character app password",
+        required: true
+      },
+      { 
+        label: "QuickBooks API Key", 
+        name: "quickbooks_key", 
+        type: "password",
+        placeholder: "qb-api-key",
+        required: false
+      },
+      { 
+        label: "Expense Categories", 
+        name: "categories", 
+        type: "text",
+        placeholder: "Travel,Meals,Office Supplies",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "customer_feedback",
+    name: "Customer Feedback → Analysis",
+    description: "Collect feedback from multiple sources and generate sentiment analysis reports.",
+    category: "Customer Service",
+    make_scenario_id: "efg123",
+    icon: "fas fa-comments",
+    estimatedTime: "12 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Survey Platform API Key", 
+        name: "survey_api", 
+        type: "password",
+        placeholder: "survey-platform-api-key",
+        required: true
+      },
+      { 
+        label: "Review Source (Google/Yelp)", 
+        name: "review_source", 
+        type: "text",
+        placeholder: "google_my_business",
+        required: true
+      },
+      { 
+        label: "Report Email Recipients", 
+        name: "report_emails", 
+        type: "text",
+        placeholder: "manager@company.com,team@company.com",
+        required: true
+      },
+      { 
+        label: "Analysis API Key", 
+        name: "analysis_api", 
+        type: "password",
+        placeholder: "sentiment-analysis-key",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "lead_scoring",
+    name: "Lead Scoring → Sales Pipeline",
+    description: "Automatically score leads based on behavior and route them to appropriate sales reps.",
+    category: "Lead Generation",
+    make_scenario_id: "hij456",
+    icon: "fas fa-chart-line",
+    estimatedTime: "18 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "CRM System URL", 
+        name: "crm_url", 
+        type: "url",
+        placeholder: "https://yourcompany.salesforce.com",
+        required: true
+      },
+      { 
+        label: "CRM API Token", 
+        name: "crm_token", 
+        type: "password",
+        placeholder: "crm-api-token",
+        required: true
+      },
+      { 
+        label: "Scoring Rules", 
+        name: "scoring_rules", 
+        type: "text",
+        placeholder: "email_open:5,page_visit:10,demo_request:50",
+        required: true
+      },
+      { 
+        label: "High Score Threshold", 
+        name: "score_threshold", 
+        type: "number",
+        placeholder: "75",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "social_listening",
+    name: "Social Media Monitoring → Alerts",
+    description: "Monitor brand mentions across social platforms and respond to urgent issues.",
+    category: "Marketing",
+    make_scenario_id: "klm789",
+    icon: "fas fa-hashtag",
+    estimatedTime: "14 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Brand Keywords", 
+        name: "brand_keywords", 
+        type: "text",
+        placeholder: "YourBrand,@yourbrand,#yourbrand",
+        required: true
+      },
+      { 
+        label: "Twitter API Bearer Token", 
+        name: "twitter_bearer", 
+        type: "password",
+        placeholder: "AAAAAAAAAAAAAAAAAAA...",
+        required: true
+      },
+      { 
+        label: "Alert Threshold (mentions/hour)", 
+        name: "alert_threshold", 
+        type: "number",
+        placeholder: "10",
+        required: true
+      },
+      { 
+        label: "Crisis Management Email", 
+        name: "crisis_email", 
+        type: "email",
+        placeholder: "crisis@yourcompany.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "backup_automation",
+    name: "Database Backup → Cloud Storage",
+    description: "Automatically backup databases and critical files to multiple cloud storage providers.",
+    category: "Operations",
+    make_scenario_id: "nop012",
+    icon: "fas fa-cloud-upload",
+    estimatedTime: "16 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Database Connection String", 
+        name: "db_connection", 
+        type: "password",
+        placeholder: "postgresql://user:pass@host:port/db",
+        required: true
+      },
+      { 
+        label: "Backup Schedule", 
+        name: "backup_schedule", 
+        type: "text",
+        placeholder: "daily, weekly, monthly",
+        required: true
+      },
+      { 
+        label: "AWS S3 Bucket", 
+        name: "s3_bucket", 
+        type: "text",
+        placeholder: "your-backup-bucket",
+        required: false
+      },
+      { 
+        label: "Google Drive Folder ID", 
+        name: "gdrive_folder", 
+        type: "text",
+        placeholder: "1BxiMVs0XRA5nFMdKv...",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "invoice_automation",
+    name: "Invoice Generation → Payment Tracking",
+    description: "Generate invoices from project completion and track payment status automatically.",
+    category: "Finance",
+    make_scenario_id: "qrs345",
+    icon: "fas fa-file-invoice-dollar",
+    estimatedTime: "13 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Project Management Tool API", 
+        name: "project_api", 
+        type: "password",
+        placeholder: "project-tool-api-key",
+        required: true
+      },
+      { 
+        label: "Invoice Template ID", 
+        name: "invoice_template", 
+        type: "text",
+        placeholder: "template-12345",
+        required: true
+      },
+      { 
+        label: "Payment Gateway API", 
+        name: "payment_api", 
+        type: "password",
+        placeholder: "payment-gateway-key",
+        required: true
+      },
+      { 
+        label: "Default Payment Terms (days)", 
+        name: "payment_terms", 
+        type: "number",
+        placeholder: "30",
+        required: true
+      }
+    ]
   }
 ];
