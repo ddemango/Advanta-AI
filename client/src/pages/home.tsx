@@ -143,7 +143,7 @@ export default function Home() {
               {activeSection === item.id && (
                 <motion.div
                   layoutId="activeNavIndicator"
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 md:w-full md:h-0.5 bg-primary rounded-full"
+                  className="absolute inset-0 bg-primary/20 rounded-full md:bottom-0 md:top-auto md:left-1/2 md:transform md:-translate-x-1/2 md:w-full md:h-0.5 md:bg-primary md:inset-auto"
                   transition={{ duration: 0.3 }}
                 />
               )}
