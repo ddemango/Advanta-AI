@@ -1169,5 +1169,728 @@ export const automationTemplates: AutomationTemplate[] = [
         required: true
       }
     ]
+  },
+  {
+    id: "google_sheets_crm",
+    name: "Google Sheets → CRM Sync",
+    description: "Sync lead data from Google Sheets to your CRM system automatically.",
+    category: "Lead Generation",
+    make_scenario_id: "gsh001",
+    icon: "fab fa-google",
+    estimatedTime: "8 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Google Sheets ID", 
+        name: "sheet_id", 
+        type: "text",
+        placeholder: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        required: true
+      },
+      { 
+        label: "Worksheet Name", 
+        name: "worksheet", 
+        type: "text",
+        placeholder: "Leads",
+        required: true
+      },
+      { 
+        label: "CRM Webhook URL", 
+        name: "crm_webhook", 
+        type: "url",
+        placeholder: "https://api.yourcrm.com/webhooks/leads",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "salesforce_integration",
+    name: "Salesforce → Multi-Channel Sync",
+    description: "Sync Salesforce opportunities with email marketing and project management tools.",
+    category: "Sales",
+    make_scenario_id: "sf001",
+    icon: "fab fa-salesforce",
+    estimatedTime: "18 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Salesforce Instance URL", 
+        name: "sf_instance", 
+        type: "url",
+        placeholder: "https://yourcompany.salesforce.com",
+        required: true
+      },
+      { 
+        label: "Salesforce API Token", 
+        name: "sf_token", 
+        type: "password",
+        placeholder: "your-salesforce-token",
+        required: true
+      },
+      { 
+        label: "Email Platform Integration", 
+        name: "email_platform", 
+        type: "text",
+        placeholder: "mailchimp,hubspot,marketo",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "hubspot_workflows",
+    name: "HubSpot → Automated Workflows",
+    description: "Create automated workflows in HubSpot based on contact behavior and properties.",
+    category: "Marketing",
+    make_scenario_id: "hs001",
+    icon: "fas fa-hubspot",
+    estimatedTime: "15 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "HubSpot API Key", 
+        name: "hubspot_key", 
+        type: "password",
+        placeholder: "pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Workflow Trigger", 
+        name: "trigger", 
+        type: "text",
+        placeholder: "form_submit,email_open,page_view",
+        required: true
+      },
+      { 
+        label: "Contact Properties", 
+        name: "properties", 
+        type: "text",
+        placeholder: "firstname,email,company",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "mailchimp_campaigns",
+    name: "Mailchimp → Campaign Automation",
+    description: "Automatically create and send Mailchimp campaigns based on triggers.",
+    category: "Email Marketing",
+    make_scenario_id: "mc001",
+    icon: "fab fa-mailchimp",
+    estimatedTime: "12 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Mailchimp API Key", 
+        name: "mailchimp_key", 
+        type: "password",
+        placeholder: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-us1",
+        required: true
+      },
+      { 
+        label: "Audience ID", 
+        name: "audience_id", 
+        type: "text",
+        placeholder: "xxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Campaign Template ID", 
+        name: "template_id", 
+        type: "text",
+        placeholder: "123456",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "zoom_meetings",
+    name: "Zoom → Meeting Automation",
+    description: "Automatically schedule Zoom meetings and send calendar invites.",
+    category: "Communication",
+    make_scenario_id: "zm001",
+    icon: "fas fa-video",
+    estimatedTime: "10 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Zoom API Key", 
+        name: "zoom_key", 
+        type: "password",
+        placeholder: "zoom-api-key",
+        required: true
+      },
+      { 
+        label: "Meeting Duration (minutes)", 
+        name: "duration", 
+        type: "number",
+        placeholder: "60",
+        required: true
+      },
+      { 
+        label: "Default Host Email", 
+        name: "host_email", 
+        type: "email",
+        placeholder: "host@company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "microsoft_teams",
+    name: "Microsoft Teams → Notification Hub",
+    description: "Send automated notifications to Teams channels based on business events.",
+    category: "Communication",
+    make_scenario_id: "mt001",
+    icon: "fab fa-microsoft",
+    estimatedTime: "9 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Teams Webhook URL", 
+        name: "teams_webhook", 
+        type: "url",
+        placeholder: "https://outlook.office.com/webhook/...",
+        required: true
+      },
+      { 
+        label: "Channel Name", 
+        name: "channel", 
+        type: "text",
+        placeholder: "General",
+        required: true
+      },
+      { 
+        label: "Message Template", 
+        name: "template", 
+        type: "text",
+        placeholder: "New lead: {name} from {company}",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "jira_automation",
+    name: "Jira → Project Automation",
+    description: "Automatically create and assign Jira tickets based on external triggers.",
+    category: "Development",
+    make_scenario_id: "jr001",
+    icon: "fab fa-atlassian",
+    estimatedTime: "16 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Jira Instance URL", 
+        name: "jira_url", 
+        type: "url",
+        placeholder: "https://yourcompany.atlassian.net",
+        required: true
+      },
+      { 
+        label: "Jira API Token", 
+        name: "jira_token", 
+        type: "password",
+        placeholder: "your-jira-api-token",
+        required: true
+      },
+      { 
+        label: "Project Key", 
+        name: "project_key", 
+        type: "text",
+        placeholder: "PROJ",
+        required: true
+      },
+      { 
+        label: "Default Assignee", 
+        name: "assignee", 
+        type: "email",
+        placeholder: "developer@company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "trello_boards",
+    name: "Trello → Board Management",
+    description: "Automatically create Trello cards and move them through workflow stages.",
+    category: "Project Management",
+    make_scenario_id: "tr001",
+    icon: "fab fa-trello",
+    estimatedTime: "11 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Trello API Key", 
+        name: "trello_key", 
+        type: "password",
+        placeholder: "your-trello-api-key",
+        required: true
+      },
+      { 
+        label: "Trello Token", 
+        name: "trello_token", 
+        type: "password",
+        placeholder: "your-trello-token",
+        required: true
+      },
+      { 
+        label: "Board ID", 
+        name: "board_id", 
+        type: "text",
+        placeholder: "5e6b8b5c1d4e8a0c9b1f2e3d",
+        required: true
+      },
+      { 
+        label: "Default List", 
+        name: "list_name", 
+        type: "text",
+        placeholder: "To Do",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "asana_tasks",
+    name: "Asana → Task Automation",
+    description: "Create and manage Asana tasks automatically from various data sources.",
+    category: "Project Management",
+    make_scenario_id: "as001",
+    icon: "fas fa-tasks",
+    estimatedTime: "13 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Asana Personal Access Token", 
+        name: "asana_token", 
+        type: "password",
+        placeholder: "1/xxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Project GID", 
+        name: "project_gid", 
+        type: "text",
+        placeholder: "1234567890123456",
+        required: true
+      },
+      { 
+        label: "Default Assignee Email", 
+        name: "assignee_email", 
+        type: "email",
+        placeholder: "assignee@company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "monday_workflows",
+    name: "Monday.com → Workflow Automation",
+    description: "Automate Monday.com board updates and notifications based on project milestones.",
+    category: "Project Management",
+    make_scenario_id: "mn001",
+    icon: "fas fa-calendar-week",
+    estimatedTime: "14 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Monday.com API Token", 
+        name: "monday_token", 
+        type: "password",
+        placeholder: "your-monday-api-token",
+        required: true
+      },
+      { 
+        label: "Board ID", 
+        name: "board_id", 
+        type: "number",
+        placeholder: "123456789",
+        required: true
+      },
+      { 
+        label: "Workspace ID", 
+        name: "workspace_id", 
+        type: "number",
+        placeholder: "987654321",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "aws_s3_backup",
+    name: "AWS S3 → Automated Backup",
+    description: "Automatically backup files and databases to AWS S3 with versioning.",
+    category: "Cloud Storage",
+    make_scenario_id: "s3001",
+    icon: "fab fa-aws",
+    estimatedTime: "19 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "AWS Access Key ID", 
+        name: "aws_key", 
+        type: "password",
+        placeholder: "AKIAIOSFODNN7EXAMPLE",
+        required: true
+      },
+      { 
+        label: "AWS Secret Access Key", 
+        name: "aws_secret", 
+        type: "password",
+        placeholder: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        required: true
+      },
+      { 
+        label: "S3 Bucket Name", 
+        name: "bucket_name", 
+        type: "text",
+        placeholder: "my-backup-bucket",
+        required: true
+      },
+      { 
+        label: "AWS Region", 
+        name: "region", 
+        type: "text",
+        placeholder: "us-east-1",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "dropbox_sync",
+    name: "Dropbox → File Sync",
+    description: "Automatically sync files between Dropbox and other cloud storage services.",
+    category: "Cloud Storage",
+    make_scenario_id: "db001",
+    icon: "fab fa-dropbox",
+    estimatedTime: "10 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Dropbox Access Token", 
+        name: "dropbox_token", 
+        type: "password",
+        placeholder: "sl.xxxxxxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Source Folder Path", 
+        name: "source_path", 
+        type: "text",
+        placeholder: "/Business/Documents",
+        required: true
+      },
+      { 
+        label: "Sync Frequency", 
+        name: "frequency", 
+        type: "text",
+        placeholder: "hourly,daily,weekly",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "facebook_ads",
+    name: "Facebook Ads → Performance Reports",
+    description: "Generate automated Facebook Ads performance reports and send to stakeholders.",
+    category: "Advertising",
+    make_scenario_id: "fb001",
+    icon: "fab fa-facebook",
+    estimatedTime: "17 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Facebook Access Token", 
+        name: "fb_token", 
+        type: "password",
+        placeholder: "EAAxxxxxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Ad Account ID", 
+        name: "ad_account", 
+        type: "text",
+        placeholder: "act_123456789",
+        required: true
+      },
+      { 
+        label: "Report Email Recipients", 
+        name: "recipients", 
+        type: "text",
+        placeholder: "marketing@company.com,cmo@company.com",
+        required: true
+      },
+      { 
+        label: "Report Frequency", 
+        name: "frequency", 
+        type: "text",
+        placeholder: "daily,weekly,monthly",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "google_ads_reporting",
+    name: "Google Ads → ROI Analytics",
+    description: "Track Google Ads performance and automatically optimize bidding strategies.",
+    category: "Advertising",
+    make_scenario_id: "ga001",
+    icon: "fab fa-google",
+    estimatedTime: "20 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Google Ads Customer ID", 
+        name: "customer_id", 
+        type: "text",
+        placeholder: "123-456-7890",
+        required: true
+      },
+      { 
+        label: "Google Ads API Token", 
+        name: "ads_token", 
+        type: "password",
+        placeholder: "your-google-ads-token",
+        required: true
+      },
+      { 
+        label: "Target ROAS", 
+        name: "target_roas", 
+        type: "number",
+        placeholder: "4.0",
+        required: true
+      },
+      { 
+        label: "Campaign ID", 
+        name: "campaign_id", 
+        type: "text",
+        placeholder: "123456789",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "instagram_content",
+    name: "Instagram → Content Scheduler",
+    description: "Automatically schedule and post Instagram content from your content library.",
+    category: "Social Media",
+    make_scenario_id: "ig001",
+    icon: "fab fa-instagram",
+    estimatedTime: "13 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Instagram Business Account ID", 
+        name: "ig_account", 
+        type: "text",
+        placeholder: "17841400455970028",
+        required: true
+      },
+      { 
+        label: "Facebook Page Access Token", 
+        name: "page_token", 
+        type: "password",
+        placeholder: "EAAxxxxxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Content Folder Path", 
+        name: "content_path", 
+        type: "text",
+        placeholder: "/Content/Instagram",
+        required: true
+      },
+      { 
+        label: "Posting Schedule", 
+        name: "schedule", 
+        type: "text",
+        placeholder: "9:00,13:00,17:00",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "tiktok_analytics",
+    name: "TikTok → Analytics Dashboard",
+    description: "Track TikTok content performance and generate engagement reports.",
+    category: "Social Media",
+    make_scenario_id: "tt001",
+    icon: "fab fa-tiktok",
+    estimatedTime: "15 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "TikTok Business Account ID", 
+        name: "tiktok_account", 
+        type: "text",
+        placeholder: "123456789012345678",
+        required: true
+      },
+      { 
+        label: "TikTok Access Token", 
+        name: "tiktok_token", 
+        type: "password",
+        placeholder: "act.xxxxxxxxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Analytics Dashboard URL", 
+        name: "dashboard_url", 
+        type: "url",
+        placeholder: "https://analytics.company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "quickbooks_invoicing",
+    name: "QuickBooks → Invoice Automation",
+    description: "Automatically create and send QuickBooks invoices based on project completion.",
+    category: "Accounting",
+    make_scenario_id: "qb001",
+    icon: "fas fa-calculator",
+    estimatedTime: "18 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "QuickBooks Company ID", 
+        name: "qb_company", 
+        type: "text",
+        placeholder: "123456789012345",
+        required: true
+      },
+      { 
+        label: "QuickBooks Access Token", 
+        name: "qb_token", 
+        type: "password",
+        placeholder: "your-quickbooks-token",
+        required: true
+      },
+      { 
+        label: "Default Payment Terms", 
+        name: "payment_terms", 
+        type: "text",
+        placeholder: "Net 30",
+        required: true
+      },
+      { 
+        label: "Tax Rate (%)", 
+        name: "tax_rate", 
+        type: "number",
+        placeholder: "8.5",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "xero_accounting",
+    name: "Xero → Financial Reporting",
+    description: "Generate automated financial reports from Xero and distribute to stakeholders.",
+    category: "Accounting",
+    make_scenario_id: "xe001",
+    icon: "fas fa-chart-pie",
+    estimatedTime: "16 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Xero Tenant ID", 
+        name: "xero_tenant", 
+        type: "text",
+        placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Xero Access Token", 
+        name: "xero_token", 
+        type: "password",
+        placeholder: "your-xero-access-token",
+        required: true
+      },
+      { 
+        label: "Report Types", 
+        name: "report_types", 
+        type: "text",
+        placeholder: "BalanceSheet,ProfitAndLoss,CashFlow",
+        required: true
+      },
+      { 
+        label: "Report Recipients", 
+        name: "recipients", 
+        type: "text",
+        placeholder: "cfo@company.com,accounting@company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "intercom_support",
+    name: "Intercom → Customer Support",
+    description: "Automatically route and prioritize Intercom conversations based on customer data.",
+    category: "Customer Support",
+    make_scenario_id: "ic001",
+    icon: "fas fa-comments",
+    estimatedTime: "14 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Intercom Access Token", 
+        name: "intercom_token", 
+        type: "password",
+        placeholder: "dG9rOmxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        required: true
+      },
+      { 
+        label: "Priority Customer Tags", 
+        name: "priority_tags", 
+        type: "text",
+        placeholder: "enterprise,vip,premium",
+        required: true
+      },
+      { 
+        label: "Assignment Rules", 
+        name: "assignment_rules", 
+        type: "text",
+        placeholder: "billing:team-a,technical:team-b",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "zendesk_tickets",
+    name: "Zendesk → Ticket Management",
+    description: "Automatically create and route Zendesk tickets from multiple channels.",
+    category: "Customer Support",
+    make_scenario_id: "zd001",
+    icon: "fas fa-ticket-alt",
+    estimatedTime: "12 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Zendesk Subdomain", 
+        name: "zendesk_subdomain", 
+        type: "text",
+        placeholder: "yourcompany",
+        required: true
+      },
+      { 
+        label: "Zendesk API Token", 
+        name: "zendesk_token", 
+        type: "password",
+        placeholder: "your-zendesk-api-token",
+        required: true
+      },
+      { 
+        label: "Admin Email", 
+        name: "admin_email", 
+        type: "email",
+        placeholder: "admin@company.com",
+        required: true
+      },
+      { 
+        label: "Default Priority", 
+        name: "priority", 
+        type: "text",
+        placeholder: "normal,high,urgent",
+        required: true
+      }
+    ]
   }
 ];
