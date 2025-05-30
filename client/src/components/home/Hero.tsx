@@ -54,7 +54,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Join businesses experiencing 385% revenue growth with AI solutions that deliver immediate results and scale seamlessly as your business grows.
+              Stop doing repetitive tasks manually. We create AI assistants that handle your customer support, lead generation, content creation, and data analysis - so you can focus on growing your business.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
