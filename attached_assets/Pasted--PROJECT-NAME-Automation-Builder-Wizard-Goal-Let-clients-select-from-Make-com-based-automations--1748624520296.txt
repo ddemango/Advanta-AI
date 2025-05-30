@@ -1,0 +1,131 @@
+📄 PROJECT NAME: Automation Builder Wizard
+Goal: Let clients select from Make.com-based automations, dynamically fill required fields, and activate the automation — all inside our Replit web app.
+
+✅ KEY COMPONENTS
+1. Template Config (JSON-based or Firestore)
+Each automation template is defined like this:
+
+json
+Copy
+Edit
+{
+  "id": "email_to_notion",
+  "name": "Email → Notion",
+  "description": "Send emails with a specific label to your Notion database.",
+  "make_scenario_id": "abc12345",
+  "fields": [
+    { "label": "Notion Token", "name": "notion_token", "type": "text" },
+    { "label": "Notion Page ID", "name": "page_id", "type": "text" },
+    { "label": "Sender Email Filter", "name": "sender_email", "type": "email" }
+  ]
+}
+Storage Options:
+
+Local JSON file (/data/templates.json)
+
+Firebase/Firestore (templates collection)
+
+Flat DB table (PostgreSQL, etc.)
+
+2. Frontend (React or Vanilla HTML/JS)
+Build a UI with:
+
+Dropdown to select template
+
+Form that auto-generates based on selected template's fields
+
+Submit button to call backend /activate-automation route
+
+Flow:
+
+User selects template (e.g., “Email to Notion”)
+
+App loads fields[] from config
+
+Form fields render dynamically
+
+User submits form → payload includes template_id + field data
+
+3. Backend (Flask or Node.js)
+POST /activate-automation
+
+Handles:
+
+Looks up template config using template_id
+
+Clones the base scenario using Make API
+
+Injects field values as variables
+
+Enables the scenario
+
+Responds with scenario ID
+
+Example Python Logic:
+
+python
+Copy
+Edit
+def activate_automation(template_id, user_data):
+    config = get_template_config(template_id)
+    scenario_id = clone_scenario(config["make_scenario_id"])
+    set_variables(scenario_id, user_data)
+    enable_scenario(scenario_id)
+    return scenario_id
+4. Make.com Setup
+For each automation:
+
+Build a scenario using variables (e.g., {{notion_token}}, {{page_id}})
+
+Keep that base scenario saved under your Make account
+
+Use the scenario ID in the template config
+
+Optional: Use the Make Partner API to automate cloning and management
+
+📦 EXAMPLE TEMPLATES TO ADD
+1. Email → Notion
+json
+Copy
+Edit
+{
+  "id": "email_to_notion",
+  "name": "Email → Notion",
+  "make_scenario_id": "abc123",
+  "fields": [
+    { "label": "Notion Token", "name": "notion_token", "type": "text" },
+    { "label": "Page ID", "name": "page_id", "type": "text" },
+    { "label": "Sender Filter", "name": "sender_email", "type": "email" }
+  ]
+}
+2. New Order → Google Sheet
+json
+Copy
+Edit
+{
+  "id": "shopify_to_sheets",
+  "name": "New Order → Google Sheet",
+  "make_scenario_id": "xyz789",
+  "fields": [
+    { "label": "Shopify API Key", "name": "shopify_key", "type": "text" },
+    { "label": "Sheet ID", "name": "sheet_id", "type": "text" }
+  ]
+}
+✅ DELIVERABLE CHECKLIST FOR DEV
+Phase 1:
+ Create dynamic form UI from template config
+
+ Set up backend route to handle /activate-automation
+
+ Connect to Make.com API (use dummy tokens for now)
+
+ Load templates from config file or DB
+
+ Log scenario_id responses
+
+Phase 2 (Optional):
+ Store which automations each client activates
+
+ Show status or test automation button
+
+ Add ability to disable scenarios

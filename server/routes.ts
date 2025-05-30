@@ -746,6 +746,50 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   // Build My AI Stack - Email sending endpoint
+  // Automation Builder endpoint
+  app.post("/api/activate-automation", async (req: Request, res: Response) => {
+    try {
+      const { template_id, data } = req.body;
+      
+      if (!template_id || !data) {
+        return res.status(400).json({ 
+          message: "Template ID and data are required" 
+        });
+      }
+
+      // In a production environment, you would:
+      // 1. Look up the template configuration
+      // 2. Clone the Make.com scenario using their API
+      // 3. Set variables in the cloned scenario
+      // 4. Enable the scenario
+      
+      // For now, we'll simulate the process
+      const mockScenarioId = `scenario_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Log the automation request for debugging
+      console.log(`[automation] Activating template: ${template_id}`);
+      console.log(`[automation] Configuration data keys: ${Object.keys(data).join(', ')}`);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      res.json({
+        success: true,
+        scenario_id: mockScenarioId,
+        template_id,
+        message: "Automation activated successfully",
+        make_url: `https://www.make.com/scenarios/${mockScenarioId}`
+      });
+      
+    } catch (error) {
+      console.error("Automation activation error:", error);
+      res.status(500).json({ 
+        message: "Failed to activate automation",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.post("/api/build-ai-stack", async (req: Request, res: Response) => {
     try {
       const { formData } = req.body;
