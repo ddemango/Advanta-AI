@@ -161,11 +161,33 @@ export default function Hero() {
                 transition={{ delay: 1.2, duration: 1 }}
                 className="absolute inset-0 flex items-center justify-center z-30"
               >
-                <div className="relative w-full h-full rounded-xl overflow-hidden border border-white/10 shadow-2xl">
+                <motion.div 
+                  className="relative w-full h-full rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+                  animate={{ 
+                    y: [0, -10, 0],
+                    rotateX: [0, 2, 0],
+                    rotateY: [0, 1, 0]
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
                   <div className="absolute inset-0 bg-gradient-to-br from-black/80 to-transparent z-10"></div>
                   
                   {/* Business AI Demo Visualization */}
-                  <div className="w-full h-full relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+                  <motion.div 
+                    className="w-full h-full relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
+                    animate={{ 
+                      backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"]
+                    }}
+                    transition={{
+                      duration: 8,
+                      repeat: Infinity,
+                      ease: "linear"
+                    }}
+                  >
                     <div className="absolute inset-4 grid grid-cols-3 gap-2">
                       <div className="bg-black/40 backdrop-blur-sm rounded-lg p-3 border border-purple-500/30">
                         <h3 className="text-xs text-purple-300 mb-2">Sales AI Agent</h3>
@@ -200,7 +222,7 @@ export default function Hero() {
                         <div className="text-xs text-gray-300 mt-2">AI agents processing business tasks automatically</div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                   
 
                   
@@ -210,7 +232,7 @@ export default function Hero() {
                       Watch how our AI transforms business data into actionable insights
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             </motion.div>
             
