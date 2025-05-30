@@ -378,6 +378,15 @@ export default function Header() {
                     </a>
                     <a 
                       onClick={() => {
+                        setLocation('/automation-builder');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Automation Builder Wizard
+                    </a>
+                    <a 
+                      onClick={() => {
                         setLocation('/prompt-library');
                         closeMenu();
                       }}
