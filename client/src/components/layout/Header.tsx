@@ -56,7 +56,7 @@ export default function Header() {
                 <i className="fas fa-chevron-down ml-1 text-xs"></i>
               </button>
               
-              <div className="absolute top-full left-0 mt-2 w-80 bg-background/95 backdrop-blur-md border border-border/20 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute top-full left-0 mt-2 w-96 max-h-96 overflow-y-auto bg-background/95 backdrop-blur-md border border-border/20 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <div className="p-2">
                   <div className="px-4 py-2">
                     <p className="text-xs font-semibold text-green-500 uppercase tracking-wide">Free AI Tools</p>
