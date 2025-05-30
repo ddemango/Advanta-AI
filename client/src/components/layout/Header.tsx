@@ -109,6 +109,12 @@ export default function Header() {
                   >
                     📧 Cold Email Generator
                   </a>
+                  <a 
+                    onClick={() => setLocation('/automation-builder')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🔧 Automation Builder Wizard
+                  </a>
                 </div>
               </div>
             </div>
