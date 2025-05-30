@@ -609,5 +609,565 @@ export const automationTemplates: AutomationTemplate[] = [
         required: true
       }
     ]
+  },
+  {
+    id: "content_approval",
+    name: "Content Creation → Approval Workflow",
+    description: "Route content through approval process before publishing to multiple channels.",
+    category: "Marketing",
+    make_scenario_id: "tuv678",
+    icon: "fas fa-file-check",
+    estimatedTime: "11 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Content Management System URL", 
+        name: "cms_url", 
+        type: "url",
+        placeholder: "https://your-cms.com",
+        required: true
+      },
+      { 
+        label: "CMS API Key", 
+        name: "cms_api", 
+        type: "password",
+        placeholder: "cms-api-key",
+        required: true
+      },
+      { 
+        label: "Approver Email", 
+        name: "approver_email", 
+        type: "email",
+        placeholder: "editor@company.com",
+        required: true
+      },
+      { 
+        label: "Publishing Channels", 
+        name: "channels", 
+        type: "text",
+        placeholder: "wordpress,linkedin,twitter",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "meeting_automation",
+    name: "Calendar → Meeting Automation",
+    description: "Auto-schedule meetings, send reminders, and create follow-up tasks.",
+    category: "Productivity",
+    make_scenario_id: "wxy901",
+    icon: "fas fa-calendar-check",
+    estimatedTime: "9 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Calendar API (Google/Outlook)", 
+        name: "calendar_api", 
+        type: "password",
+        placeholder: "calendar-api-token",
+        required: true
+      },
+      { 
+        label: "Meeting Room Resource ID", 
+        name: "room_id", 
+        type: "text",
+        placeholder: "conference-room-01",
+        required: false
+      },
+      { 
+        label: "Default Meeting Duration", 
+        name: "duration", 
+        type: "number",
+        placeholder: "30",
+        required: true
+      },
+      { 
+        label: "Follow-up Task System", 
+        name: "task_system", 
+        type: "text",
+        placeholder: "asana,trello,notion",
+        required: false
+      }
+    ]
+  },
+  {
+    id: "hr_onboarding",
+    name: "HR Onboarding → Account Setup",
+    description: "Automatically provision accounts and send welcome materials for new employees.",
+    category: "Human Resources",
+    make_scenario_id: "zab234",
+    icon: "fas fa-user-plus",
+    estimatedTime: "25 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "HR Information System API", 
+        name: "hris_api", 
+        type: "password",
+        placeholder: "hris-api-key",
+        required: true
+      },
+      { 
+        label: "Active Directory Endpoint", 
+        name: "ad_endpoint", 
+        type: "url",
+        placeholder: "https://company.activeadmin.com",
+        required: true
+      },
+      { 
+        label: "Welcome Email Template", 
+        name: "email_template", 
+        type: "text",
+        placeholder: "welcome-template-id",
+        required: true
+      },
+      { 
+        label: "IT Ticket System API", 
+        name: "ticket_api", 
+        type: "password",
+        placeholder: "ticket-system-key",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "quality_assurance",
+    name: "Bug Reports → QA Assignment",
+    description: "Automatically assign bug reports to QA teams based on severity and module.",
+    category: "Development",
+    make_scenario_id: "cde567",
+    icon: "fas fa-bug",
+    estimatedTime: "14 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Bug Tracking System API", 
+        name: "bug_api", 
+        type: "password",
+        placeholder: "jira-api-token",
+        required: true
+      },
+      { 
+        label: "QA Team Assignment Rules", 
+        name: "assignment_rules", 
+        type: "text",
+        placeholder: "frontend:team-a,backend:team-b",
+        required: true
+      },
+      { 
+        label: "Severity Threshold", 
+        name: "severity", 
+        type: "text",
+        placeholder: "high,critical",
+        required: true
+      },
+      { 
+        label: "Notification Channel", 
+        name: "notification", 
+        type: "text",
+        placeholder: "slack,email,teams",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "contract_management",
+    name: "Contract Expiry → Renewal Process",
+    description: "Monitor contract expiration dates and trigger renewal processes automatically.",
+    category: "Legal",
+    make_scenario_id: "fgh890",
+    icon: "fas fa-file-contract",
+    estimatedTime: "18 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Contract Database API", 
+        name: "contract_api", 
+        type: "password",
+        placeholder: "contract-db-key",
+        required: true
+      },
+      { 
+        label: "Renewal Notice Period (days)", 
+        name: "notice_period", 
+        type: "number",
+        placeholder: "90",
+        required: true
+      },
+      { 
+        label: "Legal Team Email", 
+        name: "legal_email", 
+        type: "email",
+        placeholder: "legal@company.com",
+        required: true
+      },
+      { 
+        label: "Document Management System", 
+        name: "doc_system", 
+        type: "url",
+        placeholder: "https://docs.company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "security_monitoring",
+    name: "Security Alerts → Incident Response",
+    description: "Detect security threats and automatically initiate incident response procedures.",
+    category: "Security",
+    make_scenario_id: "hij123",
+    icon: "fas fa-shield-alt",
+    estimatedTime: "22 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "SIEM System API", 
+        name: "siem_api", 
+        type: "password",
+        placeholder: "siem-api-key",
+        required: true
+      },
+      { 
+        label: "Threat Intelligence Feed", 
+        name: "threat_feed", 
+        type: "url",
+        placeholder: "https://threatfeed.com/api",
+        required: true
+      },
+      { 
+        label: "Incident Response Team", 
+        name: "response_team", 
+        type: "email",
+        placeholder: "security@company.com",
+        required: true
+      },
+      { 
+        label: "Escalation Threshold", 
+        name: "escalation", 
+        type: "text",
+        placeholder: "medium,high,critical",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "training_completion",
+    name: "Training Completion → Certification",
+    description: "Track training completion and automatically issue certificates and update records.",
+    category: "Education",
+    make_scenario_id: "klm456",
+    icon: "fas fa-graduation-cap",
+    estimatedTime: "16 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Learning Management System API", 
+        name: "lms_api", 
+        type: "password",
+        placeholder: "lms-api-key",
+        required: true
+      },
+      { 
+        label: "Certificate Template ID", 
+        name: "cert_template", 
+        type: "text",
+        placeholder: "cert-template-123",
+        required: true
+      },
+      { 
+        label: "HR System Integration", 
+        name: "hr_integration", 
+        type: "password",
+        placeholder: "hr-api-token",
+        required: false
+      },
+      { 
+        label: "Completion Threshold (%)", 
+        name: "threshold", 
+        type: "number",
+        placeholder: "80",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "supplier_management",
+    name: "Supplier Performance → Vendor Rating",
+    description: "Monitor supplier performance metrics and update vendor ratings automatically.",
+    category: "Procurement",
+    make_scenario_id: "nop789",
+    icon: "fas fa-truck",
+    estimatedTime: "20 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "ERP System API", 
+        name: "erp_api", 
+        type: "password",
+        placeholder: "erp-api-key",
+        required: true
+      },
+      { 
+        label: "Supplier Database URL", 
+        name: "supplier_db", 
+        type: "url",
+        placeholder: "https://suppliers.company.com",
+        required: true
+      },
+      { 
+        label: "Performance Metrics", 
+        name: "metrics", 
+        type: "text",
+        placeholder: "delivery_time,quality,cost",
+        required: true
+      },
+      { 
+        label: "Rating Update Frequency", 
+        name: "frequency", 
+        type: "text",
+        placeholder: "weekly,monthly,quarterly",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "asset_tracking",
+    name: "Asset Lifecycle → Maintenance Alerts",
+    description: "Track asset usage and automatically schedule maintenance based on usage patterns.",
+    category: "Operations",
+    make_scenario_id: "qrs012",
+    icon: "fas fa-tools",
+    estimatedTime: "17 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Asset Management System API", 
+        name: "asset_api", 
+        type: "password",
+        placeholder: "asset-mgmt-key",
+        required: true
+      },
+      { 
+        label: "IoT Sensor Integration", 
+        name: "iot_endpoint", 
+        type: "url",
+        placeholder: "https://iot.company.com/api",
+        required: false
+      },
+      { 
+        label: "Maintenance Team Email", 
+        name: "maintenance_email", 
+        type: "email",
+        placeholder: "maintenance@company.com",
+        required: true
+      },
+      { 
+        label: "Alert Threshold (usage hours)", 
+        name: "usage_threshold", 
+        type: "number",
+        placeholder: "1000",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "compliance_reporting",
+    name: "Data Changes → Compliance Reports",
+    description: "Monitor data changes and generate compliance reports for regulatory requirements.",
+    category: "Compliance",
+    make_scenario_id: "tuv345",
+    icon: "fas fa-clipboard-check",
+    estimatedTime: "24 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Database Audit Log API", 
+        name: "audit_api", 
+        type: "password",
+        placeholder: "audit-log-key",
+        required: true
+      },
+      { 
+        label: "Compliance Framework", 
+        name: "framework", 
+        type: "text",
+        placeholder: "GDPR,HIPAA,SOX",
+        required: true
+      },
+      { 
+        label: "Report Recipients", 
+        name: "recipients", 
+        type: "text",
+        placeholder: "compliance@company.com,legal@company.com",
+        required: true
+      },
+      { 
+        label: "Report Generation Schedule", 
+        name: "schedule", 
+        type: "text",
+        placeholder: "daily,weekly,monthly",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "customer_churn",
+    name: "Usage Analytics → Churn Prevention",
+    description: "Analyze customer usage patterns and trigger retention campaigns for at-risk customers.",
+    category: "Customer Success",
+    make_scenario_id: "wxy678",
+    icon: "fas fa-chart-line-down",
+    estimatedTime: "19 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Analytics Platform API", 
+        name: "analytics_api", 
+        type: "password",
+        placeholder: "analytics-key",
+        required: true
+      },
+      { 
+        label: "Customer Success Platform", 
+        name: "cs_platform", 
+        type: "password",
+        placeholder: "cs-platform-key",
+        required: true
+      },
+      { 
+        label: "Churn Risk Threshold", 
+        name: "risk_threshold", 
+        type: "number",
+        placeholder: "70",
+        required: true
+      },
+      { 
+        label: "Retention Campaign System", 
+        name: "campaign_system", 
+        type: "password",
+        placeholder: "marketing-automation-key",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "deployment_pipeline",
+    name: "Code Commit → Deployment Pipeline",
+    description: "Automatically trigger testing and deployment pipeline when code is committed.",
+    category: "Development",
+    make_scenario_id: "zab901",
+    icon: "fab fa-git-alt",
+    estimatedTime: "15 minutes",
+    difficulty: "intermediate",
+    fields: [
+      { 
+        label: "Git Repository Webhook", 
+        name: "git_webhook", 
+        type: "url",
+        placeholder: "https://github.com/user/repo/webhooks",
+        required: true
+      },
+      { 
+        label: "CI/CD Platform API", 
+        name: "cicd_api", 
+        type: "password",
+        placeholder: "jenkins-api-token",
+        required: true
+      },
+      { 
+        label: "Test Environment URL", 
+        name: "test_env", 
+        type: "url",
+        placeholder: "https://test.company.com",
+        required: true
+      },
+      { 
+        label: "Deployment Approval Team", 
+        name: "approval_team", 
+        type: "email",
+        placeholder: "devops@company.com",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "event_registration",
+    name: "Event Registration → Welcome Sequence",
+    description: "Process event registrations and trigger personalized welcome email sequences.",
+    category: "Events",
+    make_scenario_id: "cde234",
+    icon: "fas fa-calendar-plus",
+    estimatedTime: "12 minutes",
+    difficulty: "beginner",
+    fields: [
+      { 
+        label: "Event Platform API", 
+        name: "event_api", 
+        type: "password",
+        placeholder: "eventbrite-api-key",
+        required: true
+      },
+      { 
+        label: "Email Marketing Platform", 
+        name: "email_platform", 
+        type: "password",
+        placeholder: "mailchimp-api-key",
+        required: true
+      },
+      { 
+        label: "Welcome Sequence ID", 
+        name: "sequence_id", 
+        type: "text",
+        placeholder: "welcome-sequence-123",
+        required: true
+      },
+      { 
+        label: "Event Reminder Days", 
+        name: "reminder_days", 
+        type: "text",
+        placeholder: "7,3,1",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "performance_review",
+    name: "Performance Data → Review Scheduling",
+    description: "Analyze performance metrics and automatically schedule review meetings.",
+    category: "Human Resources",
+    make_scenario_id: "fgh567",
+    icon: "fas fa-chart-bar",
+    estimatedTime: "21 minutes",
+    difficulty: "advanced",
+    fields: [
+      { 
+        label: "Performance Management System", 
+        name: "perf_system", 
+        type: "password",
+        placeholder: "performance-api-key",
+        required: true
+      },
+      { 
+        label: "Calendar Integration API", 
+        name: "calendar_integration", 
+        type: "password",
+        placeholder: "calendar-api-token",
+        required: true
+      },
+      { 
+        label: "Review Cycle Frequency", 
+        name: "cycle_frequency", 
+        type: "text",
+        placeholder: "quarterly,biannual,annual",
+        required: true
+      },
+      { 
+        label: "Manager Notification Email", 
+        name: "manager_email", 
+        type: "email",
+        placeholder: "managers@company.com",
+        required: true
+      }
+    ]
   }
 ];
