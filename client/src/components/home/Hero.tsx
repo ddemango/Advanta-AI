@@ -54,7 +54,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Join businesses seeing 385% revenue growth. We build custom AI solutions that work immediately and scale with your success.
+              Join businesses experiencing 385% revenue growth with AI solutions that deliver immediate results and scale seamlessly as your business grows.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
