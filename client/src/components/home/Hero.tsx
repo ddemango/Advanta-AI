@@ -45,7 +45,7 @@ export default function Hero() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 leading-tight">
               <span className="block mb-1 sm:mb-2 text-[55px]">Turn Your Business Into an</span>
               <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">AI-Powered</GradientText>
-              <span className="block mb-1 sm:mb-2">Revenue Machine</span>
+              <span className="block mb-1 sm:mb-2 text-[52px]">Revenue Machine</span>
             </h1>
             <motion.p 
               className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 leading-relaxed"
