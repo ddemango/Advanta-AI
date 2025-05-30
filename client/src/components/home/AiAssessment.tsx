@@ -141,7 +141,7 @@ export default function AiAssessment() {
   const currentQuestion = questions[currentQuestionIndex];
   
   return (
-    <section id="ai-assessment" className="py-20 bg-background neural-bg">
+    <section id="ai-assessment" className="py-12 sm:py-16 lg:py-20 bg-background neural-bg">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Introduction State */}
         {currentStep === 'intro' && (
@@ -154,15 +154,15 @@ export default function AiAssessment() {
           >
             <motion.div 
               variants={fadeInUp}
-              className="lg:w-1/2 p-8 lg:p-12"
+              className="lg:w-1/2 p-6 sm:p-8 lg:p-12"
             >
-              <h2 className="text-3xl font-bold mb-4">Is Your Business AI-Ready?</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4">Is Your Business AI-Ready?</h2>
               <p className="text-muted-foreground mb-6">
                 Our AI Readiness Assessment tool analyzes your current operations and identifies the highest-value AI opportunities specific to your business.
               </p>
               
-              <div className="bg-background rounded-xl p-6 mb-6">
-                <h3 className="text-xl font-bold mb-4">Answer 5 Questions to Get:</h3>
+              <div className="bg-background rounded-xl p-4 sm:p-6 mb-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-4">Answer 5 Questions to Get:</h3>
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <i className="fas fa-check-circle text-secondary mt-1 mr-3"></i>

@@ -162,15 +162,15 @@ export default function Home() {
         <section className="py-12 sm:py-16 lg:py-20 bg-gray-900/30" id="what-we-do">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
-              className="text-center max-w-4xl mx-auto mb-16"
+              className="text-center max-w-4xl mx-auto mb-8 sm:mb-12 lg:mb-16"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-white">
                 What <GradientText>Advanta AI</GradientText> Does
               </h2>
-              <p className="text-xl text-gray-300 leading-relaxed mb-12">
+              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-8 sm:mb-12">
                 We're like having a team of AI experts build custom software for your business - without the complexity or cost.
               </p>
             </motion.div>
