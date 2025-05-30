@@ -30,7 +30,6 @@ export default function Hero() {
         <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-accent/30 blur-[100px] animate-pulse-slow z-0" style={{ animationDelay: '1s' }}></div>
         <div className="absolute top-1/2 right-1/3 w-48 h-48 rounded-full bg-secondary/20 blur-[80px] animate-pulse-slow z-0" style={{ animationDelay: '2s' }}></div>
       </div>
-      
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div 
           variants={staggerContainer}
@@ -44,7 +43,7 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 leading-tight">
-              <span className="block mb-1 sm:mb-2">Turn Your Business Into an</span>
+              <span className="block mb-1 sm:mb-2 text-[55px]">Turn Your Business Into an</span>
               <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">AI-Powered</GradientText>
               <span className="block mb-1 sm:mb-2">Revenue Machine</span>
             </h1>
