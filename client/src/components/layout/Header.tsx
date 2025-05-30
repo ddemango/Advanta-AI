@@ -115,6 +115,84 @@ export default function Header() {
                   >
                     🔧 Automation Builder Wizard
                   </a>
+                  <a 
+                    onClick={() => setLocation('/resume-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📄 Resume Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/linkedin-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    💼 LinkedIn Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/headline-split-test-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📊 Headline Split-Test Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/business-idea-validator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    💡 Business Idea Validator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/crm-use-case-finder')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🔍 CRM Use Case Finder
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/custom-gpt-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🤖 Custom GPT Bot Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/prompt-library')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📚 Time-Saving Prompt Library
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/landing-page-builder')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🎨 Landing Page Builder
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/workflow-explainer')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    ⚙️ AI Workflow Explainer
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/content-calendar-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📅 Content Calendar Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/pricing-strategy-assistant')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    💰 Pricing Strategy Assistant
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/brand-kit-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🎯 Brand Kit Generator
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/lead-magnet-builder')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🧲 Lead Magnet Builder
+                  </a>
                 </div>
               </div>
             </div>
