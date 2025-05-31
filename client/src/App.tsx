@@ -47,12 +47,20 @@ import AutomationBuilder from "@/pages/automation-builder";
 import Checkout from "@/pages/checkout";
 import Partnerships from "@/pages/partnerships";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
 import { RecommendationSidebar } from "@/components/ui/recommendation-sidebar";
 
 function Router() {
+  const [location] = useLocation();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
   // Implement smooth scrolling for anchor links
   useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
