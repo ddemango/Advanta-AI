@@ -691,20 +691,36 @@ export default function Marketplace() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-3">
+                      <div className="space-y-3">
+                        {/* One-time Purchase */}
                         <Button 
-                          className="flex-1 bg-primary hover:bg-primary/90"
-                          onClick={() => handlePurchaseClick(template)}
+                          className="w-full bg-primary hover:bg-primary/90"
+                          onClick={() => handlePurchaseClick(template, 'one-time')}
                         >
                           <ShoppingCart className="w-4 h-4 mr-2" />
-                          Purchase
+                          Buy Now - ${template.price.toLocaleString()}
                         </Button>
+                        
+                        {/* Monthly Subscription Option */}
+                        {template.monthlyPrice && (
+                          <Button 
+                            variant="outline"
+                            className="w-full border-primary/20 hover:bg-primary/10"
+                            onClick={() => handlePurchaseClick(template, 'monthly')}
+                          >
+                            Subscribe - ${template.monthlyPrice}/month
+                          </Button>
+                        )}
+                        
+                        {/* Demo Button */}
                         <Button 
-                          variant="outline" 
+                          variant="ghost" 
                           size="sm"
+                          className="w-full"
                           onClick={() => handleDemoClick(template)}
                         >
-                          <Play className="w-4 h-4" />
+                          <Play className="w-4 h-4 mr-2" />
+                          Live Demo
                         </Button>
                       </div>
                     </div>

@@ -44,6 +44,7 @@ import BrandKitGenerator from "@/pages/brand-kit-generator";
 import PromptLibrary from "@/pages/prompt-library";
 import CustomGPTGenerator from "@/pages/custom-gpt-generator";
 import AutomationBuilder from "@/pages/automation-builder";
+import Checkout from "@/pages/checkout";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
@@ -129,6 +130,7 @@ function Router() {
       <Route path="/prompt-library" component={PromptLibrary} />
       <Route path="/custom-gpt-generator" component={CustomGPTGenerator} />
       <Route path="/automation-builder" component={AutomationBuilder} />
+      <Route path="/checkout" component={Checkout} />
       <Route component={NotFound} />
     </Switch>
   );

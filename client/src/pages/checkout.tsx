@@ -272,16 +272,17 @@ export default function Checkout() {
     setTemplateData(mockTemplate);
 
     // Create PaymentIntent
-    apiRequest("POST", "/api/create-payment-intent", { 
-      templateId,
-      priceType: type,
-      customerEmail: "customer@example.com" // Would get from form
-    })
-      .then((data) => {
+    const setupPayment = async () => {
+      try {
+        const response = await apiRequest("POST", "/api/create-payment-intent", { 
+          templateId,
+          priceType: type,
+          customerEmail: "customer@example.com" // Would get from form
+        });
+        const data = await response.json();
         setClientSecret(data.clientSecret);
         setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Payment setup error:', error);
         toast({
           title: "Payment Setup Error",
@@ -289,7 +290,10 @@ export default function Checkout() {
           variant: "destructive",
         });
         setLoading(false);
-      });
+      }
+    };
+
+    setupPayment();
   }, [toast]);
 
   if (loading) {
