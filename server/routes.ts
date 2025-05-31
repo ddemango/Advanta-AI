@@ -4,6 +4,12 @@ import { storage } from "./storage";
 import { insertBlogPostSchema, insertResourceSchema } from "@shared/schema";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { log } from "./vite";
+import Stripe from "stripe";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 interface ContactFormData {
   name: string;
@@ -431,6 +437,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error(`Error deleting resource ${req.params.id}:`, error);
       return res.status(500).json({ message: 'Error deleting resource' });
     }
+  });
+
+  // Stripe Payment Routes for Marketplace
+  app.post("/api/create-payment-intent", async (req, res) => {
+    try {
+      const { templateId, priceType = 'one-time', customerEmail, customerName } = req.body;
+      
+      if (!templateId) {
+        return res.status(400).json({ message: "Template ID is required" });
+      }
+
+      // Template pricing (you can expand this to fetch from database)
+      const templatePricing: Record<string, { oneTime: number; monthly: number; name: string }> = {
+        'enterprise-customer-ai': { oneTime: 12999, monthly: 1299, name: 'Enterprise Customer AI Assistant' },
+        'sales-intelligence-pro': { oneTime: 8999, monthly: 899, name: 'AI Sales Intelligence Engine' },
+        'financial-risk-analyzer': { oneTime: 24999, monthly: 2499, name: 'AI Financial Risk Analyzer' },
+        'hr-recruitment-ai': { oneTime: 6999, monthly: 699, name: 'AI-Powered Recruitment Assistant' },
+        'supply-chain-optimizer': { oneTime: 15999, monthly: 1599, name: 'AI Supply Chain Optimizer' },
+        'content-marketing-ai': { oneTime: 4999, monthly: 499, name: 'AI Content Marketing Suite' },
+        'cybersecurity-ai': { oneTime: 18999, monthly: 1899, name: 'AI Cybersecurity Defense System' },
+        'healthcare-diagnostic-ai': { oneTime: 29999, monthly: 2999, name: 'AI Medical Diagnostic Assistant' },
+        'manufacturing-optimization-ai': { oneTime: 22999, monthly: 2299, name: 'Smart Manufacturing AI Optimizer' },
+        'legal-contract-ai': { oneTime: 16999, monthly: 1699, name: 'AI Legal Contract Analyzer' },
+        'retail-personalization-ai': { oneTime: 9999, monthly: 999, name: 'AI Retail Personalization Engine' }
+      };
+
+      const template = templatePricing[templateId];
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const amount = priceType === 'monthly' ? template.monthly : template.oneTime;
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: "usd",
+        metadata: {
+          templateId,
+          priceType,
+          templateName: template.name
+        },
+        receipt_email: customerEmail,
+        description: `${template.name} - ${priceType === 'monthly' ? 'Monthly Subscription' : 'One-time Purchase'}`
+      });
+
+      res.json({ 
+        clientSecret: paymentIntent.client_secret,
+        amount: amount,
+        templateName: template.name
+      });
+    } catch (error: any) {
+      console.error("Stripe payment intent error:", error);
+      res.status(500).json({ 
+        message: "Error creating payment intent: " + error.message 
+      });
+    }
+  });
+
+  // Create subscription for monthly plans
+  app.post('/api/create-subscription', async (req, res) => {
+    try {
+      const { templateId, customerEmail, customerName } = req.body;
+      
+      if (!templateId || !customerEmail) {
+        return res.status(400).json({ message: "Template ID and customer email are required" });
+      }
+
+      // Create or retrieve customer
+      let customer;
+      try {
+        const existingCustomers = await stripe.customers.list({
+          email: customerEmail,
+          limit: 1
+        });
+        
+        if (existingCustomers.data.length > 0) {
+          customer = existingCustomers.data[0];
+        } else {
+          customer = await stripe.customers.create({
+            email: customerEmail,
+            name: customerName || '',
+            metadata: {
+              source: 'marketplace'
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error creating/retrieving customer:", error);
+        return res.status(500).json({ message: "Error processing customer information" });
+      }
+
+      // Create subscription with setup intent for payment method
+      const subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `AI Template: ${templateId}`,
+              description: 'Monthly access to AI template and updates'
+            },
+            unit_amount: 99900, // $999 default, adjust per template
+            recurring: {
+              interval: 'month'
+            }
+          }
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          templateId,
+          source: 'marketplace'
+        }
+      });
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+        customerId: customer.id
+      });
+    } catch (error: any) {
+      console.error("Stripe subscription error:", error);
+      res.status(500).json({ 
+        message: "Error creating subscription: " + error.message 
+      });
+    }
+  });
+
+  // Webhook endpoint for Stripe events
+  app.post('/api/stripe-webhook', async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET || '');
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        console.log('Payment succeeded:', event.data.object);
+        // Handle successful payment - could trigger template delivery
+        break;
+      case 'invoice.payment_succeeded':
+        console.log('Subscription payment succeeded:', event.data.object);
+        // Handle successful subscription payment
+        break;
+      case 'customer.subscription.deleted':
+        console.log('Subscription cancelled:', event.data.object);
+        // Handle subscription cancellation
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    res.json({ received: true });
   });
 
   // HubSpot CRM Integration Routes

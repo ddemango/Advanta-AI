@@ -421,13 +421,9 @@ export default function Marketplace() {
     setLocation(template.demoLink);
   };
 
-  const handlePurchaseClick = (template: AiTemplate) => {
-    toast({
-      title: "Purchase Initiated",
-      description: `Starting purchase process for ${template.name}. Our sales team will contact you within 24 hours.`,
-    });
-    // In a real app, this would integrate with payment processing
-    console.log('Purchase initiated for:', template.name);
+  const handlePurchaseClick = (template: AiTemplate, priceType: 'one-time' | 'monthly' = 'one-time') => {
+    // Redirect to checkout page with template and pricing info
+    setLocation(`/checkout?template=${template.id}&type=${priceType}`);
   };
 
   const categories = [
