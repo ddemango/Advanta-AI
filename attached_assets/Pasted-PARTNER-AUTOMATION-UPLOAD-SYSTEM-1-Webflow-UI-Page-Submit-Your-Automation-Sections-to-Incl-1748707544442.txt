@@ -1,0 +1,80 @@
+PARTNER AUTOMATION UPLOAD SYSTEM
+
+1. 🌐 Webflow UI Page – “Submit Your Automation”
+
+Sections to Include:
+	•	Hero Section: “Earn 90% Revenue. We Handle the Rest.”
+	•	Benefits Grid: “Why Publish on Advanta AI”
+	•	Form Upload Section:
+	•	Automation Name (text input)
+	•	Short Description (textarea)
+	•	Problem Solved (textarea)
+	•	Industry (dropdown)
+	•	Platform (multi-select)
+	•	Pricing Model (dropdown)
+	•	Tags/Keywords (text input)
+	•	Automation File or Link (file upload + link input)
+	•	Setup Guide (optional file or video link)
+	•	Checkbox: Agreement to 90/10 split & rights
+	•	Checkbox: White-label opt-in
+	•	Submit Button ➝ Connects to Make.com webhook
+
+💡 Webflow Setup Tips:
+	•	Use native form blocks
+	•	Add CMS collections for “Automation Listings”
+	•	Optional: Auto-publish submissions to marketplace CMS upon approval
+
+⸻
+
+2. 📄 Notion or Airtable Submission Tracker
+
+📘 Notion Database Fields:
+	•	Automation Name
+	•	Description
+	•	Problem Solved
+	•	Platform
+	•	Industry
+	•	Price Model
+	•	Link/File
+	•	Guide
+	•	Status (Pending, Approved, Live)
+	•	Date Submitted
+	•	White-Label (Yes/No)
+
+Or, use Airtable for easier API-based filtering and status automation.
+
+💡 Auto-approve or route to internal review using Make.com filters.
+
+⸻
+
+3. ⚙️ Make.com Backend Automation
+
+Scenario: “Handle Automation Submission”
+	1.	Trigger: Webhook from Webflow form submission
+	2.	Actions:
+	•	Formatter Module → Clean input data
+	•	Create record in Notion or Airtable
+	•	Upload files to cloud (e.g., Dropbox or Google Drive)
+	•	Send internal Slack/email notification for review
+	•	Optional: Auto-publish to Webflow CMS if “Auto-Approve” is enabled
+
+Bonus:
+	•	Tag submissions by platform (Make, Zapier, Replit)
+	•	Store all uploads in organized folders for versioning
+	•	Trigger thank-you email to contributor
+
+⸻
+
+🚀 Optional Add-Ons
+
+🔹 Dashboard for Partners
+Let users see performance (views, downloads, purchases) using Memberstack + Webflow + Make.com
+
+🔹 Stripe Connect Setup
+Enable payouts to contributors with Stripe Connect (90/10 split automation)
+
+🔹 Marketplace Filters
+Let users search by platform, industry, use case — build with Webflow CMS filters or Jetboost.io
+
+🔹 Auto-Featured
+Automatically promote top-performing automations via Make.com rules (views, downloads)

@@ -598,6 +598,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ received: true });
   });
 
+  // Partner automation submission endpoint
+  app.post('/api/partner-automation-submit', async (req, res) => {
+    try {
+      const {
+        automationName,
+        shortDescription,
+        problemSolved,
+        industry,
+        platform,
+        pricingModel,
+        tags,
+        automationLink,
+        setupGuideLink,
+        agreementAccepted,
+        whiteLabelOptIn
+      } = req.body;
+
+      // Validate required fields
+      if (!automationName || !shortDescription || !problemSolved) {
+        return res.status(400).json({ 
+          message: 'Missing required fields: automation name, description, and problem solved are required' 
+        });
+      }
+
+      if (!agreementAccepted) {
+        return res.status(400).json({ 
+          message: 'Partnership agreement must be accepted' 
+        });
+      }
+
+      // Parse platform array if it's a string
+      let platformList;
+      try {
+        platformList = typeof platform === 'string' ? JSON.parse(platform) : platform;
+      } catch (error) {
+        platformList = [];
+      }
+
+      // Prepare submission data for Make.com webhook
+      const submissionData = {
+        automationName,
+        shortDescription,
+        problemSolved,
+        industry,
+        platform: platformList,
+        pricingModel,
+        tags,
+        automationLink,
+        setupGuideLink,
+        agreementAccepted: agreementAccepted === 'true',
+        whiteLabelOptIn: whiteLabelOptIn === 'true',
+        submissionDate: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      // Send to Make.com webhook for processing
+      const makeWebhookUrl = `https://hook.eu2.make.com/c466d8f4-a383-4632-874e-2853ef0f8b2b`;
+      
+      try {
+        const makeResponse = await fetch(makeWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'partner_automation_submission',
+            data: submissionData
+          })
+        });
+
+        if (!makeResponse.ok) {
+          console.error('Make.com webhook failed:', makeResponse.statusText);
+        } else {
+          console.log('Successfully sent submission to Make.com');
+        }
+      } catch (makeError) {
+        console.error('Error sending to Make.com webhook:', makeError);
+        // Continue processing even if Make.com fails
+      }
+
+      // Store in local database for backup/tracking
+      try {
+        // You would implement storage here if you have a partnerships table
+        console.log('Partner submission received:', submissionData);
+      } catch (storageError) {
+        console.error('Error storing submission locally:', storageError);
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Automation submission received successfully. Our team will review it within 24-48 hours.',
+        submissionId: `SUB_${Date.now()}`
+      });
+
+    } catch (error: any) {
+      console.error('Partner submission error:', error);
+      res.status(500).json({ 
+        message: 'Error processing submission. Please try again or contact support.',
+        error: error.message 
+      });
+    }
+  });
+
   // HubSpot CRM Integration Routes
   app.get("/api/hubspot/status", async (req: Request, res: Response) => {
     const hasApiKey = !!process.env.HUBSPOT_API_KEY;

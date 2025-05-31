@@ -197,6 +197,7 @@ export default function Header() {
               </div>
             </div>
             
+            <a onClick={() => setLocation('/partnerships')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Partners</a>
             <a onClick={() => setLocation('/blog')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Blog</a>
             <a onClick={() => setLocation('/contact')} className="text-gray-300 hover:text-white font-medium transition-colors cursor-pointer">Contact</a>
           </nav>
@@ -537,6 +538,15 @@ export default function Header() {
               )}
             </div>
 
+            <a 
+              onClick={() => {
+                setLocation('/partnerships');
+                closeMenu();
+              }}
+              className="text-gray-300 hover:text-white font-medium transition-colors px-4 py-2 cursor-pointer"
+            >
+              Partners
+            </a>
             <a 
               onClick={() => {
                 setLocation('/blog');
