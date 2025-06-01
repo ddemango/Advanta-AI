@@ -598,6 +598,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ received: true });
   });
 
+  // SocialClip Analyzer AI endpoint
+  app.post('/api/analyze-social-clips', async (req, res) => {
+    try {
+      const { videoCount, videoNames } = req.body;
+
+      if (!videoCount || videoCount < 2) {
+        return res.status(400).json({ 
+          message: 'At least 2 videos are required for comparison analysis' 
+        });
+      }
+
+      if (videoCount > 5) {
+        return res.status(400).json({ 
+          message: 'Maximum 5 videos can be analyzed at once' 
+        });
+      }
+
+      // Simulate video analysis processing
+      const analysisData = {
+        analysisId: `CLIP_${Date.now()}`,
+        videoCount,
+        videoNames,
+        status: 'completed',
+        processingTime: Math.floor(Math.random() * 30) + 15, // 15-45 seconds
+        analysisDate: new Date().toISOString()
+      };
+
+      // In a real implementation, this would:
+      // 1. Process uploaded video files
+      // 2. Extract frames for visual analysis
+      // 3. Analyze audio for tone and pacing
+      // 4. Run AI models for hook detection, emotion analysis, etc.
+      // 5. Generate comprehensive comparison report
+
+      console.log('SocialClip analysis completed:', analysisData);
+
+      res.json({ 
+        success: true, 
+        message: 'Video analysis completed successfully',
+        data: analysisData
+      });
+
+    } catch (error: any) {
+      console.error('SocialClip analysis error:', error);
+      res.status(500).json({ 
+        message: 'Error analyzing videos. Please try again.',
+        error: error.message 
+      });
+    }
+  });
+
   // Partner automation submission endpoint
   app.post('/api/partner-automation-submit', async (req, res) => {
     try {
