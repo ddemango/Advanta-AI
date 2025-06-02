@@ -36,8 +36,7 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
         
         if (youtubeResponse.ok) {
           const youtubeData = await youtubeResponse.json();
-          console.log('YouTube Primary Search Query:', searchQuery);
-          console.log('YouTube Primary API Response:', JSON.stringify(youtubeData, null, 2));
+
           const youtubeTrends = youtubeData.items?.map((video: any, index: number) => {
             // Extract meaningful related terms from video data
             const title = video.snippet.title || '';
@@ -165,8 +164,7 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
         
         if (searchResponse.ok) {
           const searchData = await searchResponse.json();
-          console.log('YouTube Search Query:', searchQuery);
-          console.log('YouTube API Response:', JSON.stringify(searchData, null, 2));
+
           const searchTrends = searchData.items?.map((video: any, index: number) => {
             // Extract relevant terms from video search results
             const title = video.snippet.title || '';
