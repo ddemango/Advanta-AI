@@ -30,8 +30,23 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
       try {
         // Use search API instead of trending to get relevant content
         const searchQuery = keywords ? `${keywords} ${industry}` : industry;
+        
+        // Calculate time filters based on timeFrame
+        let timeFilter = '';
+        const now = new Date();
+        if (timeFrame === 'Today') {
+          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          timeFilter = `&publishedAfter=${yesterday.toISOString()}`;
+        } else if (timeFrame === 'This Week') {
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          timeFilter = `&publishedAfter=${weekAgo.toISOString()}`;
+        } else if (timeFrame === 'This Month') {
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          timeFilter = `&publishedAfter=${monthAgo.toISOString()}`;
+        }
+        
         const youtubeResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=viewCount&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=viewCount&maxResults=10${timeFilter}&key=${process.env.YOUTUBE_API_KEY}`
         );
         
         if (youtubeResponse.ok) {
@@ -153,10 +168,19 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
           searchQuery = `${keywords} ${industry}`;
         }
         
-        // Add time-based relevance for trending content
-        const timeFilter = timeFrame === 'Today' ? '&publishedAfter=' + new Date(Date.now() - 24*60*60*1000).toISOString() :
-                          timeFrame === 'This Week' ? '&publishedAfter=' + new Date(Date.now() - 7*24*60*60*1000).toISOString() :
-                          '';
+        // Apply the same time filtering as the primary search
+        let timeFilter = '';
+        const now = new Date();
+        if (timeFrame === 'Today') {
+          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          timeFilter = `&publishedAfter=${yesterday.toISOString()}`;
+        } else if (timeFrame === 'This Week') {
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          timeFilter = `&publishedAfter=${weekAgo.toISOString()}`;
+        } else if (timeFrame === 'This Month') {
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          timeFilter = `&publishedAfter=${monthAgo.toISOString()}`;
+        }
         
         const searchResponse = await fetch(
           `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=viewCount&maxResults=10${timeFilter}&key=${process.env.YOUTUBE_API_KEY}`
