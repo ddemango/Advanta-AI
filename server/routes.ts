@@ -129,40 +129,54 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
     // Add more YouTube data by searching for industry-specific content with keywords
     if (process.env.YOUTUBE_API_KEY && trends.length < 15) {
       try {
-        const searchQuery = keywords ? `${industry} ${keywords}` : industry;
+        // Create a more specific search query combining industry and keywords
+        let searchQuery = industry;
+        if (keywords) {
+          searchQuery = `${keywords} ${industry}`;
+        }
+        
+        // Add time-based relevance for trending content
+        const timeFilter = timeFrame === 'Today' ? '&publishedAfter=' + new Date(Date.now() - 24*60*60*1000).toISOString() :
+                          timeFrame === 'This Week' ? '&publishedAfter=' + new Date(Date.now() - 7*24*60*60*1000).toISOString() :
+                          '';
+        
         const searchResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=relevance&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=viewCount&maxResults=10${timeFilter}&key=${process.env.YOUTUBE_API_KEY}`
         );
         
         if (searchResponse.ok) {
           const searchData = await searchResponse.json();
           const searchTrends = searchData.items?.map((video: any, index: number) => {
             // Extract relevant terms from video search results
-            const videoTags = video.snippet.tags || [];
-            const channelTitle = video.snippet.channelTitle || '';
             const title = video.snippet.title || '';
+            const channelTitle = video.snippet.channelTitle || '';
+            const description = video.snippet.description || '';
             
             const relatedTerms = [];
             
-            // Extract keywords from title
-            const titleWords = title.split(' ')
-              .filter((word: string) => word.length > 3 && !['with', 'this', 'that', 'what', 'when', 'where'].includes(word.toLowerCase()))
-              .slice(0, 2);
-            relatedTerms.push(...titleWords);
-            
-            // Add user-provided keywords
+            // Prioritize user keywords first
             if (keywords) {
               relatedTerms.push(keywords);
             }
             
-            // Add channel name if relevant
-            if (channelTitle && relatedTerms.length < 3) {
-              relatedTerms.push(channelTitle.split(' ')[0]);
-            }
+            // Extract meaningful keywords from title - focus on nouns and key terms
+            const titleWords = title.toLowerCase().split(/[\s,.-]+/)
+              .filter((word: string) => 
+                word.length > 2 && 
+                !['the', 'and', 'for', 'with', 'this', 'that', 'what', 'when', 'where', 'how', 'why', 'can', 'will', 'are', 'you', 'get', 'new', 'top'].includes(word)
+              )
+              .slice(0, 2);
             
-            // Ensure we have the industry
-            if (relatedTerms.length < 3) {
-              relatedTerms.push(industry);
+            // Add relevant title words
+            titleWords.forEach(word => {
+              if (relatedTerms.length < 3 && !relatedTerms.includes(word)) {
+                relatedTerms.push(word);
+              }
+            });
+            
+            // Add industry if space available
+            if (relatedTerms.length < 3 && !relatedTerms.includes(industry.toLowerCase())) {
+              relatedTerms.push(industry.toLowerCase());
             }
             
             return {
