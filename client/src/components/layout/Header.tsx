@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
+import customLogo from '@assets/ChatGPT Image Jun 2, 2025, 12_02_20 PM.png';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function Header() {
@@ -36,8 +37,12 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <a href="#" className="text-white font-bold text-lg sm:text-xl flex items-center" onClick={() => setLocation('/')}>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center mr-2">
-                <i className="fas fa-brain text-white text-sm sm:text-base"></i>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg mr-2">
+                <img 
+                  src={customLogo} 
+                  alt="Advanta AI Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span>Advanta<span className="text-primary">AI</span></span>
             </a>
