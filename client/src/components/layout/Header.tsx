@@ -37,7 +37,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <a href="#" className="text-white font-bold text-lg sm:text-xl flex items-center" onClick={() => setLocation('/')}>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg mr-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-r from-primary to-accent flex items-center justify-center mr-2 p-1">
                 <img 
                   src={customLogo} 
                   alt="Advanta AI Logo" 
