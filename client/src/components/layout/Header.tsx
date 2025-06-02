@@ -122,6 +122,12 @@ export default function Header() {
                     🎬 SocialClip Analyzer AI
                   </a>
                   <a 
+                    onClick={() => setLocation('/trending-content-generator')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    📈 Trending Content Generator
+                  </a>
+                  <a 
                     onClick={() => setLocation('/resume-generator')}
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
@@ -484,6 +490,15 @@ export default function Header() {
                       className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
                     >
                       SocialClip Analyzer AI
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/trending-content-generator');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Trending Content Generator
                     </a>
                     <a 
                       onClick={() => {

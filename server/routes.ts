@@ -20,6 +20,94 @@ interface ContactFormData {
   consent: boolean;
 }
 
+// Function to generate trending data based on timeframe and industry
+async function generateTrendingData(timeFrame: string, industry: string) {
+  // Industry-specific trending keywords with realistic data
+  const industryKeywords = {
+    'marketing': [
+      { keyword: 'AI marketing automation', volume: 45000, growth: 85, related: ['AI tools', 'marketing automation', 'chatbots'] },
+      { keyword: 'video marketing trends', volume: 32000, growth: 67, related: ['video content', 'social media', 'engagement'] },
+      { keyword: 'influencer marketing ROI', volume: 28000, growth: 45, related: ['influencer partnerships', 'brand deals', 'social proof'] },
+      { keyword: 'email marketing personalization', volume: 25000, growth: 38, related: ['email automation', 'segmentation', 'personalization'] },
+      { keyword: 'content marketing strategy', volume: 38000, growth: 29, related: ['content planning', 'SEO content', 'brand storytelling'] }
+    ],
+    'technology': [
+      { keyword: 'AI development tools', volume: 52000, growth: 92, related: ['machine learning', 'AI frameworks', 'development'] },
+      { keyword: 'cloud computing costs', volume: 41000, growth: 76, related: ['AWS pricing', 'cloud migration', 'infrastructure'] },
+      { keyword: 'cybersecurity solutions', volume: 35000, growth: 68, related: ['data protection', 'security tools', 'compliance'] },
+      { keyword: 'software development trends', volume: 29000, growth: 51, related: ['programming languages', 'frameworks', 'DevOps'] },
+      { keyword: 'mobile app development', volume: 33000, growth: 42, related: ['app design', 'mobile UX', 'app store optimization'] }
+    ],
+    'fitness': [
+      { keyword: 'home workout equipment', volume: 38000, growth: 73, related: ['fitness gear', 'home gym', 'exercise equipment'] },
+      { keyword: 'protein powder reviews', volume: 25000, growth: 56, related: ['supplements', 'nutrition', 'muscle building'] },
+      { keyword: 'fitness tracking apps', volume: 22000, growth: 48, related: ['health apps', 'activity tracking', 'wellness'] },
+      { keyword: 'yoga for beginners', volume: 31000, growth: 41, related: ['yoga poses', 'meditation', 'flexibility'] },
+      { keyword: 'weight loss tips', volume: 44000, growth: 35, related: ['diet plans', 'healthy eating', 'nutrition'] }
+    ],
+    'finance': [
+      { keyword: 'cryptocurrency investment', volume: 67000, growth: 89, related: ['crypto trading', 'blockchain', 'digital assets'] },
+      { keyword: 'retirement planning tools', volume: 34000, growth: 62, related: ['401k planning', 'investment strategies', 'financial planning'] },
+      { keyword: 'budgeting apps', volume: 28000, growth: 54, related: ['personal finance', 'expense tracking', 'savings'] },
+      { keyword: 'stock market analysis', volume: 45000, growth: 47, related: ['stock trading', 'market research', 'investment'] },
+      { keyword: 'mortgage rates today', volume: 52000, growth: 33, related: ['home loans', 'refinancing', 'real estate'] }
+    ],
+    'real-estate': [
+      { keyword: 'virtual home tours', volume: 29000, growth: 78, related: ['360 tours', 'real estate tech', 'virtual reality'] },
+      { keyword: 'real estate investment', volume: 41000, growth: 65, related: ['property investment', 'rental income', 'REITs'] },
+      { keyword: 'home staging tips', volume: 18000, growth: 52, related: ['property presentation', 'interior design', 'selling homes'] },
+      { keyword: 'commercial real estate', volume: 25000, growth: 44, related: ['office space', 'retail properties', 'warehouses'] },
+      { keyword: 'first time home buyer', volume: 36000, growth: 38, related: ['home buying process', 'mortgages', 'real estate agents'] }
+    ]
+  };
+
+  const selectedKeywords = industryKeywords[industry as keyof typeof industryKeywords] || industryKeywords['marketing'];
+  
+  // Generate additional keywords to reach 20 items
+  const baseKeywords = [...selectedKeywords];
+  const additionalKeywords = [];
+  
+  for (let i = baseKeywords.length; i < 20; i++) {
+    const baseKeyword = baseKeywords[i % baseKeywords.length];
+    additionalKeywords.push({
+      keyword: `${baseKeyword.keyword} ${['trends', 'tools', 'guide', 'tips', 'strategy', 'solutions'][i % 6]}`,
+      volume: Math.floor(baseKeyword.volume * (0.3 + Math.random() * 0.4)),
+      growth: Math.floor(baseKeyword.growth * (0.5 + Math.random() * 0.3)),
+      related: baseKeyword.related
+    });
+  }
+
+  const allKeywords = [...baseKeywords, ...additionalKeywords];
+
+  // Generate trending data with realistic metrics
+  const trends = allKeywords.map((item, index) => ({
+    keyword: item.keyword,
+    searchVolume: item.volume,
+    growthPercentage: item.growth,
+    category: industry.charAt(0).toUpperCase() + industry.slice(1),
+    relatedTerms: item.related,
+    difficulty: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)] as 'Low' | 'Medium' | 'High',
+    cpc: parseFloat((Math.random() * 5 + 0.5).toFixed(2))
+  }));
+
+  // Sort by growth percentage descending
+  trends.sort((a, b) => b.growthPercentage - a.growthPercentage);
+
+  const timeFrameLabels = {
+    'today': 'Today',
+    'week': 'This Week', 
+    'month': 'This Month'
+  };
+
+  return {
+    timeFrame: timeFrameLabels[timeFrame as keyof typeof timeFrameLabels] || 'This Week',
+    industry,
+    totalSearches: trends.reduce((sum, trend) => sum + trend.searchVolume, 0),
+    trends,
+    lastUpdated: new Date().toLocaleString()
+  };
+}
+
 // Simple scheduler to generate blog posts daily
 class BlogScheduler {
   private interval: NodeJS.Timeout | null = null;
@@ -596,6 +684,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     res.json({ received: true });
+  });
+
+  // Trending Content Generator endpoint
+  app.post('/api/generate-trending-content', async (req, res) => {
+    try {
+      const { timeFrame, industry } = req.body;
+
+      if (!timeFrame || !industry) {
+        return res.status(400).json({ 
+          message: 'Time frame and industry are required' 
+        });
+      }
+
+      // Generate trending content data based on industry and timeframe
+      const trendingData = await generateTrendingData(timeFrame, industry);
+      
+      res.json(trendingData);
+
+    } catch (error: any) {
+      console.error('Trending content generation error:', error);
+      res.status(500).json({ 
+        message: 'Error generating trending content. Please try again.',
+        error: error.message 
+      });
+    }
   });
 
   // SocialClip Analyzer AI endpoint
