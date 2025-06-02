@@ -34,16 +34,36 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
         
         if (youtubeResponse.ok) {
           const youtubeData = await youtubeResponse.json();
-          const youtubeTrends = youtubeData.items?.map((video: any, index: number) => ({
-            keyword: video.snippet.title,
-            searchVolume: parseInt(video.statistics.viewCount) || Math.floor(Math.random() * 100000),
-            growthPercentage: Math.floor(Math.random() * 80 + 10),
-            category: 'YouTube',
-            relatedTerms: video.snippet.tags?.slice(0, 3) || ['video', 'trending', 'viral'],
-            difficulty: 'Medium' as const,
-            cpc: parseFloat((Math.random() * 3 + 0.5).toFixed(2)),
-            source: 'YouTube'
-          })) || [];
+          const youtubeTrends = youtubeData.items?.map((video: any, index: number) => {
+            // Extract meaningful related terms from video data
+            const videoTags = video.snippet.tags || [];
+            const channelTitle = video.snippet.channelTitle || '';
+            const description = video.snippet.description || '';
+            
+            // Create industry-relevant related terms
+            const relatedTerms = [];
+            if (videoTags.length > 0) {
+              relatedTerms.push(...videoTags.slice(0, 2));
+            }
+            if (channelTitle) {
+              relatedTerms.push(channelTitle.split(' ')[0]);
+            }
+            if (keywords) {
+              relatedTerms.push(keywords);
+            }
+            relatedTerms.push(industry);
+            
+            return {
+              keyword: video.snippet.title,
+              searchVolume: parseInt(video.statistics.viewCount) || Math.floor(Math.random() * 100000),
+              growthPercentage: Math.floor(Math.random() * 80 + 10),
+              category: 'YouTube',
+              relatedTerms: relatedTerms.slice(0, 3),
+              difficulty: 'Medium' as const,
+              cpc: parseFloat((Math.random() * 3 + 0.5).toFixed(2)),
+              source: 'YouTube'
+            };
+          }) || [];
           
           trends.push(...youtubeTrends.slice(0, 5));
         }
@@ -62,16 +82,42 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
         
         if (facebookResponse.ok) {
           const facebookData = await facebookResponse.json();
-          const facebookTrends = facebookData.data?.map((post: any, index: number) => ({
-            keyword: post.message?.substring(0, 50) + '...' || `${industry} trending topic ${index + 1}`,
-            searchVolume: Math.floor(Math.random() * 50000 + 10000),
-            growthPercentage: Math.floor(Math.random() * 70 + 15),
-            category: 'Facebook',
-            relatedTerms: [industry, 'social media', 'engagement'],
-            difficulty: 'Low' as const,
-            cpc: parseFloat((Math.random() * 2 + 0.3).toFixed(2)),
-            source: 'Facebook'
-          })) || [];
+          const facebookTrends = facebookData.data?.map((post: any, index: number) => {
+            // Extract meaningful terms from Facebook post data
+            const postMessage = post.message || '';
+            const relatedTerms = [];
+            
+            // Extract hashtags from the post
+            const hashtags = postMessage.match(/#\w+/g) || [];
+            if (hashtags.length > 0) {
+              relatedTerms.push(...hashtags.slice(0, 2).map((tag: string) => tag.replace('#', '')));
+            }
+            
+            // Add keywords if provided
+            if (keywords) {
+              relatedTerms.push(keywords);
+            }
+            
+            // Add industry
+            relatedTerms.push(industry);
+            
+            // Extract key words from post content
+            const words = postMessage.split(' ').filter((word: string) => word.length > 3);
+            if (words.length > 0 && relatedTerms.length < 3) {
+              relatedTerms.push(words[0]);
+            }
+            
+            return {
+              keyword: post.message?.substring(0, 50) + '...' || `${industry} trending topic ${index + 1}`,
+              searchVolume: Math.floor(Math.random() * 50000 + 10000),
+              growthPercentage: Math.floor(Math.random() * 70 + 15),
+              category: 'Facebook',
+              relatedTerms: relatedTerms.slice(0, 3),
+              difficulty: 'Low' as const,
+              cpc: parseFloat((Math.random() * 2 + 0.3).toFixed(2)),
+              source: 'Facebook'
+            };
+          }) || [];
           
           trends.push(...facebookTrends.slice(0, 5));
         }
@@ -90,16 +136,46 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
         
         if (searchResponse.ok) {
           const searchData = await searchResponse.json();
-          const searchTrends = searchData.items?.map((video: any, index: number) => ({
-            keyword: video.snippet.title,
-            searchVolume: Math.floor(Math.random() * 75000 + 5000),
-            growthPercentage: Math.floor(Math.random() * 60 + 20),
-            category: `${industry.charAt(0).toUpperCase() + industry.slice(1)} Video`,
-            relatedTerms: [industry, 'video content', 'trending'],
-            difficulty: 'Medium' as const,
-            cpc: parseFloat((Math.random() * 2.5 + 0.8).toFixed(2)),
-            source: 'YouTube Search'
-          })) || [];
+          const searchTrends = searchData.items?.map((video: any, index: number) => {
+            // Extract relevant terms from video search results
+            const videoTags = video.snippet.tags || [];
+            const channelTitle = video.snippet.channelTitle || '';
+            const title = video.snippet.title || '';
+            
+            const relatedTerms = [];
+            
+            // Extract keywords from title
+            const titleWords = title.split(' ')
+              .filter((word: string) => word.length > 3 && !['with', 'this', 'that', 'what', 'when', 'where'].includes(word.toLowerCase()))
+              .slice(0, 2);
+            relatedTerms.push(...titleWords);
+            
+            // Add user-provided keywords
+            if (keywords) {
+              relatedTerms.push(keywords);
+            }
+            
+            // Add channel name if relevant
+            if (channelTitle && relatedTerms.length < 3) {
+              relatedTerms.push(channelTitle.split(' ')[0]);
+            }
+            
+            // Ensure we have the industry
+            if (relatedTerms.length < 3) {
+              relatedTerms.push(industry);
+            }
+            
+            return {
+              keyword: video.snippet.title,
+              searchVolume: Math.floor(Math.random() * 75000 + 5000),
+              growthPercentage: Math.floor(Math.random() * 60 + 20),
+              category: `${industry.charAt(0).toUpperCase() + industry.slice(1)} Video`,
+              relatedTerms: relatedTerms.slice(0, 3),
+              difficulty: 'Medium' as const,
+              cpc: parseFloat((Math.random() * 2.5 + 0.8).toFixed(2)),
+              source: 'YouTube Search'
+            };
+          }) || [];
           
           trends.push(...searchTrends.slice(0, 10));
         }
