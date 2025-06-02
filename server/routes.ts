@@ -58,6 +58,13 @@ async function generateTrendingData(timeFrame: string, industry: string) {
       { keyword: 'home staging tips', volume: 18000, growth: 52, related: ['property presentation', 'interior design', 'selling homes'] },
       { keyword: 'commercial real estate', volume: 25000, growth: 44, related: ['office space', 'retail properties', 'warehouses'] },
       { keyword: 'first time home buyer', volume: 36000, growth: 38, related: ['home buying process', 'mortgages', 'real estate agents'] }
+    ],
+    'sports': [
+      { keyword: 'fantasy sports analytics', volume: 48000, growth: 82, related: ['fantasy football', 'sports betting', 'player stats'] },
+      { keyword: 'sports streaming platforms', volume: 35000, growth: 74, related: ['live sports', 'streaming services', 'cord cutting'] },
+      { keyword: 'sports nutrition supplements', volume: 31000, growth: 61, related: ['protein powder', 'pre-workout', 'recovery drinks'] },
+      { keyword: 'youth sports training', volume: 27000, growth: 55, related: ['kids sports', 'athletic development', 'coaching'] },
+      { keyword: 'sports injury prevention', volume: 24000, growth: 47, related: ['athletic training', 'physical therapy', 'injury recovery'] }
     ]
   };
 
