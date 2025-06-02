@@ -21,7 +21,7 @@ interface ContactFormData {
 }
 
 // Function to generate trending data from real APIs
-async function generateTrendingData(timeFrame: string, industry: string) {
+async function generateTrendingData(timeFrame: string, industry: string, keywords?: string) {
   try {
     const trends = [];
     
@@ -55,8 +55,9 @@ async function generateTrendingData(timeFrame: string, industry: string) {
     // Fetch Facebook trending data using Graph API
     if (process.env.FACEBOOK_ACCESS_TOKEN) {
       try {
+        const searchQuery = keywords ? `${industry} ${keywords}` : industry;
         const facebookResponse = await fetch(
-          `https://graph.facebook.com/v18.0/search?q=${encodeURIComponent(industry)}&type=post&access_token=${process.env.FACEBOOK_ACCESS_TOKEN}&limit=10`
+          `https://graph.facebook.com/v18.0/search?q=${encodeURIComponent(searchQuery)}&type=post&access_token=${process.env.FACEBOOK_ACCESS_TOKEN}&limit=10`
         );
         
         if (facebookResponse.ok) {
@@ -79,11 +80,12 @@ async function generateTrendingData(timeFrame: string, industry: string) {
       }
     }
 
-    // Add more YouTube data by searching for industry-specific content
+    // Add more YouTube data by searching for industry-specific content with keywords
     if (process.env.YOUTUBE_API_KEY && trends.length < 15) {
       try {
+        const searchQuery = keywords ? `${industry} ${keywords}` : industry;
         const searchResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(industry)}&type=video&order=relevance&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=relevance&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
         );
         
         if (searchResponse.ok) {
@@ -713,7 +715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Trending Content Generator endpoint
   app.post('/api/generate-trending-content', async (req, res) => {
     try {
-      const { timeFrame, industry } = req.body;
+      const { timeFrame, industry, keywords } = req.body;
 
       if (!timeFrame || !industry) {
         return res.status(400).json({ 
@@ -721,8 +723,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate trending content data based on industry and timeframe
-      const trendingData = await generateTrendingData(timeFrame, industry);
+      // Generate trending content data based on industry, timeframe, and keywords
+      const trendingData = await generateTrendingData(timeFrame, industry, keywords);
       
       res.json(trendingData);
 

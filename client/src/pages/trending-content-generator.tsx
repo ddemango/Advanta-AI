@@ -48,6 +48,7 @@ export default function TrendingContentGenerator() {
   const { toast } = useToast();
   const [timeFrame, setTimeFrame] = useState<string>('');
   const [industry, setIndustry] = useState<string>('');
+  const [keywords, setKeywords] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [trendingData, setTrendingData] = useState<TrendingData | null>(null);
 
@@ -88,7 +89,8 @@ export default function TrendingContentGenerator() {
     try {
       const response = await apiRequest('POST', '/api/generate-trending-content', {
         timeFrame,
-        industry
+        industry,
+        keywords
       });
 
       const data = await response.json();
@@ -225,6 +227,20 @@ export default function TrendingContentGenerator() {
                           </SelectContent>
                         </Select>
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Keywords (Optional)</label>
+                      <input
+                        type="text"
+                        value={keywords}
+                        onChange={(e) => setKeywords(e.target.value)}
+                        placeholder="Enter specific keywords to narrow search (e.g., AI, automation, trends)"
+                        className="w-full px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add keywords to focus your trending search on specific topics within your industry
+                      </p>
                     </div>
 
                     <Button 
