@@ -21,12 +21,15 @@ interface ContactFormData {
 }
 
 // Function to generate trending data from real APIs
-async function generateTrendingData(timeFrame: string, industry: string, keywords?: string) {
+async function generateTrendingData(timeFrame: string, industry: string, keywords?: string, platforms?: any) {
   try {
     const trends = [];
     
+    // Default to all platforms if none specified
+    const selectedPlatforms = platforms || { youtube: true, facebook: true, tiktok: true };
+    
     // Fetch YouTube trending data with keyword filtering
-    if (process.env.YOUTUBE_API_KEY) {
+    if (process.env.YOUTUBE_API_KEY && selectedPlatforms.youtube) {
       try {
         // Use search API instead of trending to get relevant content
         const searchQuery = keywords ? `${keywords} ${industry}` : industry;
@@ -106,7 +109,7 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
     }
 
     // Fetch Facebook trending data using Graph API
-    if (process.env.FACEBOOK_ACCESS_TOKEN) {
+    if (process.env.FACEBOOK_ACCESS_TOKEN && selectedPlatforms.facebook) {
       try {
         const searchQuery = keywords ? `${industry} ${keywords}` : industry;
         const facebookResponse = await fetch(
@@ -922,7 +925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Trending Content Generator endpoint
   app.post('/api/generate-trending-content', async (req, res) => {
     try {
-      const { timeFrame, industry, keywords } = req.body;
+      const { timeFrame, industry, keywords, platforms } = req.body;
 
       if (!timeFrame || !industry) {
         return res.status(400).json({ 
@@ -930,8 +933,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate trending content data based on industry, timeframe, and keywords
-      const trendingData = await generateTrendingData(timeFrame, industry, keywords);
+      // Generate trending content data based on industry, timeframe, keywords, and selected platforms
+      const trendingData = await generateTrendingData(timeFrame, industry, keywords, platforms);
       
       res.json(trendingData);
 

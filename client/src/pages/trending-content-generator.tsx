@@ -51,6 +51,11 @@ export default function TrendingContentGenerator() {
   const [keywords, setKeywords] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [trendingData, setTrendingData] = useState<TrendingData | null>(null);
+  const [selectedPlatforms, setSelectedPlatforms] = useState({
+    youtube: true,
+    facebook: true,
+    tiktok: true
+  });
 
   const timeFrameOptions = [
     { value: 'today', label: 'Today' },
@@ -90,7 +95,8 @@ export default function TrendingContentGenerator() {
       const response = await apiRequest('POST', '/api/generate-trending-content', {
         timeFrame,
         industry,
-        keywords
+        keywords,
+        platforms: selectedPlatforms
       });
 
       const data = await response.json();
@@ -240,6 +246,42 @@ export default function TrendingContentGenerator() {
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         Add keywords to focus your trending search on specific topics within your industry
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Data Sources</label>
+                      <div className="grid grid-cols-3 gap-4">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlatforms.youtube}
+                            onChange={(e) => setSelectedPlatforms(prev => ({ ...prev, youtube: e.target.checked }))}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                          />
+                          <span className="text-sm">YouTube</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlatforms.facebook}
+                            onChange={(e) => setSelectedPlatforms(prev => ({ ...prev, facebook: e.target.checked }))}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                          />
+                          <span className="text-sm">Facebook</span>
+                        </label>
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedPlatforms.tiktok}
+                            onChange={(e) => setSelectedPlatforms(prev => ({ ...prev, tiktok: e.target.checked }))}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                          />
+                          <span className="text-sm">TikTok</span>
+                        </label>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Select which platforms to pull trending data from
                       </p>
                     </div>
 
