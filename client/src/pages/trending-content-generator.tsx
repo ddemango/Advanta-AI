@@ -64,6 +64,7 @@ export default function TrendingContentGenerator() {
     { value: 'technology', label: 'Technology & Software' },
     { value: 'real-estate', label: 'Real Estate' },
     { value: 'finance', label: 'Finance & Investing' },
+    { value: 'sports', label: 'Sports & Recreation' },
     { value: 'food', label: 'Food & Cooking' },
     { value: 'travel', label: 'Travel & Tourism' },
     { value: 'education', label: 'Education & Learning' },
