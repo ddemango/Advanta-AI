@@ -51,7 +51,10 @@ export default function Header() {
             
             {/* Resources Dropdown */}
             <div className="relative group">
-              <button className="text-gray-300 hover:text-white font-medium transition-colors flex items-center">
+              <button 
+                onClick={() => setLocation('/free-tools')}
+                className="text-gray-300 hover:text-white font-medium transition-colors flex items-center cursor-pointer"
+              >
                 Resources
                 <i className="fas fa-chevron-down ml-1 text-xs"></i>
               </button>

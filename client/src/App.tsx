@@ -48,6 +48,7 @@ import Checkout from "@/pages/checkout";
 import Partnerships from "@/pages/partnerships";
 import SocialClipAnalyzer from "@/pages/socialclip-analyzer";
 import TrendingContentGenerator from "@/pages/trending-content-generator";
+import FreeTools from "@/pages/free-tools";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -145,6 +146,7 @@ function Router() {
       <Route path="/partnerships" component={Partnerships} />
       <Route path="/socialclip-analyzer" component={SocialClipAnalyzer} />
       <Route path="/trending-content-generator" component={TrendingContentGenerator} />
+      <Route path="/free-tools" component={FreeTools} />
       <Route component={NotFound} />
     </Switch>
   );
