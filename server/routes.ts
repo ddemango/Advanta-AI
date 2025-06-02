@@ -167,69 +167,88 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
       try {
         const searchQuery = keywords ? `${keywords} ${industry}` : industry;
         
-        // TikTok Research API call
-        const tiktokResponse = await fetch(
-          `https://open.tiktokapis.com/v2/research/video/query/`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.TIKTOK_CLIENT_SECRET}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              query: {
-                and: [
-                  {
-                    operation: "IN",
-                    field_name: "keyword",
-                    field_values: [searchQuery]
-                  }
-                ]
+        // First get TikTok access token using client credentials
+        const tokenResponse = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            client_key: process.env.TIKTOK_CLIENT_KEY,
+            client_secret: process.env.TIKTOK_CLIENT_SECRET,
+            grant_type: 'client_credentials'
+          })
+        });
+
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+          const accessToken = tokenData.access_token;
+
+          // Now use the access token to get trending videos
+          const tiktokResponse = await fetch(
+            `https://open.tiktokapis.com/v2/video/query/?fields=id,title,video_description,duration,cover_image_url,create_time,view_count,like_count,comment_count,share_count`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
               },
-              max_count: 10,
-              start_date: timeFrame === 'Today' ? new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0] :
-                         timeFrame === 'This Week' ? new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0] :
-                         timeFrame === 'This Month' ? new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0] :
-                         new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0],
-              end_date: new Date().toISOString().split('T')[0]
-            })
-          }
-        );
-        
-        if (tiktokResponse.ok) {
-          const tiktokData = await tiktokResponse.json();
-          const tiktokTrends = tiktokData.data?.videos?.map((video: any, index: number) => {
-            const relatedTerms: string[] = [];
-            
-            // Add keywords first
-            if (keywords) {
-              relatedTerms.push(keywords);
+              body: JSON.stringify({
+                query: {
+                  and: [
+                    {
+                      operation: "IN",
+                      field_name: "region_code",
+                      field_values: ["US"]
+                    }
+                  ]
+                },
+                max_count: 10,
+                cursor: 0
+              })
             }
-            
-            // Extract hashtags from video
-            const hashtags = video.hashtag_names || [];
-            if (hashtags.length > 0) {
-              relatedTerms.push(...hashtags.slice(0, 2));
-            }
-            
-            // Add industry
-            if (relatedTerms.length < 3) {
-              relatedTerms.push(industry.toLowerCase());
-            }
-            
-            return {
-              keyword: video.video_description?.substring(0, 60) + '...' || `TikTok ${industry} trend ${index + 1}`,
-              searchVolume: video.view_count || Math.floor(Math.random() * 200000 + 50000),
-              growthPercentage: Math.floor(Math.random() * 90 + 10),
-              category: 'TikTok',
-              relatedTerms: relatedTerms.slice(0, 3),
-              difficulty: 'High' as const,
-              cpc: parseFloat((Math.random() * 1.5 + 0.2).toFixed(2)),
-              source: 'TikTok'
-            };
-          }) || [];
+          );
           
-          trends.push(...tiktokTrends.slice(0, 5));
+          if (tiktokResponse.ok) {
+            const tiktokData = await tiktokResponse.json();
+            const tiktokTrends = tiktokData.data?.videos?.map((video: any, index: number) => {
+              const relatedTerms: string[] = [];
+              
+              // Add keywords first
+              if (keywords) {
+                relatedTerms.push(keywords);
+              }
+              
+              // Extract hashtags from video description
+              const description = video.video_description || '';
+              const hashtags = description.match(/#\w+/g) || [];
+              if (hashtags.length > 0) {
+                relatedTerms.push(...hashtags.slice(0, 2).map((tag: string) => tag.replace('#', '')));
+              }
+              
+              // Add industry
+              if (relatedTerms.length < 3) {
+                relatedTerms.push(industry.toLowerCase());
+              }
+              
+              return {
+                keyword: video.title || video.video_description?.substring(0, 60) + '...' || `TikTok ${industry} trend ${index + 1}`,
+                searchVolume: video.view_count || Math.floor(Math.random() * 200000 + 50000),
+                growthPercentage: Math.floor(Math.random() * 90 + 10),
+                category: 'TikTok',
+                relatedTerms: relatedTerms.slice(0, 3),
+                difficulty: 'High' as const,
+                cpc: parseFloat((Math.random() * 1.5 + 0.2).toFixed(2)),
+                source: 'TikTok'
+              };
+            }) || [];
+            
+            trends.push(...tiktokTrends.slice(0, 5));
+          } else {
+            console.error('TikTok video query failed:', await tiktokResponse.text());
+          }
+        } else {
+          console.error('TikTok token request failed:', await tokenResponse.text());
         }
       } catch (error) {
         console.error('TikTok API error:', error);
