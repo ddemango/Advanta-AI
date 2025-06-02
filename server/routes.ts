@@ -163,7 +163,7 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
     }
 
     // Fetch TikTok trending data with keyword filtering
-    if (process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET) {
+    if (process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET && selectedPlatforms.tiktok) {
       try {
         const searchQuery = keywords ? `${keywords} ${industry}` : industry;
         
@@ -237,7 +237,7 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
     }
 
     // Add more YouTube data by searching for industry-specific content with keywords
-    if (process.env.YOUTUBE_API_KEY && trends.length < 15) {
+    if (process.env.YOUTUBE_API_KEY && selectedPlatforms.youtube && trends.length < 15) {
       try {
         // Create a more specific search query combining industry and keywords
         let searchQuery = industry;
