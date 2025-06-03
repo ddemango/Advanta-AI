@@ -1021,6 +1021,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/partner-automation-submit', async (req, res) => {
     try {
       const {
+        email,
         automationName,
         shortDescription,
         problemSolved,
@@ -1035,9 +1036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Validate required fields
-      if (!automationName || !shortDescription || !problemSolved) {
+      if (!email || !automationName || !shortDescription || !problemSolved) {
         return res.status(400).json({ 
-          message: 'Missing required fields: automation name, description, and problem solved are required' 
+          message: 'Missing required fields: email, automation name, description, and problem solved are required' 
         });
       }
 
@@ -1057,6 +1058,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Prepare submission data for Make.com webhook
       const submissionData = {
+        email,
         automationName,
         shortDescription,
         problemSolved,
