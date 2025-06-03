@@ -1,0 +1,99 @@
+🔒 Privacy Policy – Advanta AI
+Effective Date: [Insert Date]
+Website: https://www.advanta-ai.com
+
+1. Introduction
+Advanta AI ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our services, including when you authenticate via Google OAuth.
+
+2. Information We Collect
+When you use Google OAuth to access our services, we may collect:
+
+Personal Information: Your name, email address, and profile picture via Google.
+
+OAuth Permissions: Any scopes/permissions you grant during sign-in.
+
+3. How We Use Your Information
+We use your information to:
+
+Authenticate and provide access to your account.
+
+Personalize your experience.
+
+Communicate system or feature updates.
+
+Ensure legal compliance and system security.
+
+4. Sharing and Disclosure
+We never sell or rent your data. We may share it with:
+
+Vetted service providers (hosting, analytics).
+
+Legal authorities when required by law.
+
+5. Data Security
+We follow industry best practices to secure your data. No method is 100% secure, but we use encryption, access control, and secure servers to reduce risk.
+
+6. Retention
+We retain data only as long as necessary to fulfill service and legal requirements. You can request deletion at any time.
+
+7. Your Rights
+Depending on your location, you may:
+
+Access, correct, or delete your data.
+
+Object to or restrict processing.
+
+Request data portability.
+
+Contact us to exercise these rights.
+
+8. Changes
+We may update this policy. You’ll find changes posted on this page with a new effective date.
+
+9. Contact
+Advanta AI
+[Insert Business Address]
+[Insert Contact Email]
+
+📄 Terms of Service – Advanta AI
+Effective Date: [Insert Date]
+Website: https://www.advanta-ai.com
+
+1. Agreement
+By using our site or services, you agree to be bound by these Terms and our Privacy Policy. If not, please stop using our platform.
+
+2. User Account & Access
+You may use Google OAuth to create an account. You're responsible for maintaining the confidentiality and security of your credentials.
+
+3. Use of Services
+You agree to use our platform only for legal and authorized purposes and not to misuse or disrupt service functionality.
+
+4. IP Ownership
+All content (UI, code, text, media) is owned by Advanta AI or licensed to us. You may not reproduce or repurpose it without consent.
+
+5. Suspension or Termination
+We reserve the right to suspend or terminate your account if you violate these terms or act maliciously.
+
+6. Liability Disclaimer
+We provide our services "as is." We are not responsible for downtime, bugs, or data loss. Our liability is limited to the maximum extent permitted by law.
+
+7. Legal Jurisdiction
+These terms are governed by the laws of Tennessee, United States. Disputes shall be resolved in that jurisdiction.
+
+8. Updates
+We may update these Terms and will notify you by posting changes. Continued use after updates implies consent.
+
+9. Contact
+Advanta AI
+[Insert Business Address]
+[Insert Contact Email]
+
+✅ Hosting Instructions for Developer:
+
+Add /privacy and /terms pages to https://www.advanta-ai.com
+
+Make sure both are public and accessible without login
+
+Link them in the Google OAuth consent screen under “Privacy Policy URL” and “Terms of Service URL”
+
+Let me know if you want these as downloadable Word or PDF files too.
