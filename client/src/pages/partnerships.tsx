@@ -31,6 +31,7 @@ import {
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface PartnershipFormData {
+  email: string;
   automationName: string;
   shortDescription: string;
   problemSolved: string;
@@ -50,6 +51,7 @@ export default function Partnerships() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<PartnershipFormData>({
+    email: '',
     automationName: '',
     shortDescription: '',
     problemSolved: '',
@@ -128,10 +130,10 @@ export default function Partnerships() {
       return;
     }
 
-    if (!formData.automationName || !formData.shortDescription || !formData.problemSolved) {
+    if (!formData.email || !formData.automationName || !formData.shortDescription || !formData.problemSolved) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields including your email address.",
         variant: "destructive",
       });
       return;
@@ -170,6 +172,7 @@ export default function Partnerships() {
 
       // Reset form
       setFormData({
+        email: '',
         automationName: '',
         shortDescription: '',
         problemSolved: '',
@@ -388,6 +391,19 @@ export default function Partnerships() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
+                          <Label htmlFor="email">Email Address *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="your.email@company.com"
+                            className="mt-1"
+                            required
+                          />
+                        </div>
+                        
+                        <div>
                           <Label htmlFor="automationName">Automation Name *</Label>
                           <Input
                             id="automationName"
@@ -398,7 +414,9 @@ export default function Partnerships() {
                             required
                           />
                         </div>
-                        
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <Label htmlFor="industry">Industry *</Label>
                           <Select value={formData.industry} onValueChange={(value) => setFormData(prev => ({ ...prev, industry: value }))}>
