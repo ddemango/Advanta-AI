@@ -76,8 +76,8 @@ export default function Footer() {
             © {new Date().getFullYear()} AdvantaAI. All rights reserved. 
           </div>
           <div className="flex space-x-6">
-            <Link href="#" className="text-gray-500 hover:text-gray-400 text-sm">Privacy Policy</Link>
-            <Link href="#" className="text-gray-500 hover:text-gray-400 text-sm">Terms of Service</Link>
+            <Link href="/privacy" className="text-gray-500 hover:text-gray-400 text-sm">Privacy Policy</Link>
+            <Link href="/terms" className="text-gray-500 hover:text-gray-400 text-sm">Terms of Service</Link>
             <Link href="#" className="text-gray-500 hover:text-gray-400 text-sm">Cookie Policy</Link>
           </div>
         </div>
