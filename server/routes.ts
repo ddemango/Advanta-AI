@@ -1343,71 +1343,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced competitor intelligence function
+  // Enhanced competitor intelligence function using DataForSEO
   async function generateCompetitorIntelligence(websiteData: any) {
     const domain = websiteData.domain;
     
-    // Check for external API credentials
-    const similarWebKey = process.env.SIMILARWEB_API_KEY;
-    const semrushKey = process.env.SEMRUSH_API_KEY;
-    const ahrefsKey = process.env.AHREFS_API_KEY;
-    const wappalyzerKey = process.env.WAPPALYZER_API_KEY;
+    // Check for DataForSEO API credentials
+    const dataForSEOLogin = process.env.DATAFORSEO_API_LOGIN;
+    const dataForSEOPassword = process.env.DATAFORSEO_API_PASSWORD;
 
     let trafficData = {};
     let seoData = {};
     let adData = {};
     let techStackData = {};
+    let backlinksData = {};
+    let keywordsData = {};
 
-    // Get traffic data from SimilarWeb API if available
-    if (similarWebKey) {
+    // Get domain analytics data from DataForSEO API if available
+    if (dataForSEOLogin && dataForSEOPassword) {
       try {
-        const response = await fetch(`https://api.similarweb.com/v1/website/${domain}/total-traffic-and-engagement/visits?api_key=${similarWebKey}&start_date=2024-01&end_date=2024-12&country=world&granularity=monthly&main_domain_only=false&format=json`);
+        const auth = Buffer.from(`${dataForSEOLogin}:${dataForSEOPassword}`).toString('base64');
         
-        if (response.ok) {
-          const data = await response.json();
-          trafficData = {
-            monthlyVisits: data.visits?.[0]?.visits || Math.floor(Math.random() * 500000 + 10000),
-            bounceRate: Math.floor(Math.random() * 40 + 30),
-            avgSessionDuration: "2:45",
-            topSources: [
-              { source: "search", percentage: 45 },
-              { source: "direct", percentage: 25 },
-              { source: "social", percentage: 20 },
-              { source: "referral", percentage: 10 }
-            ]
-          };
+        // Get domain analytics overview
+        const domainAnalyticsResponse = await fetch('https://api.dataforseo.com/v3/domain_analytics/amazon/overview/live', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([{
+            target: domain,
+            location_name: "United States",
+            language_name: "English"
+          }])
+        });
+
+        if (domainAnalyticsResponse.ok) {
+          const domainData = await domainAnalyticsResponse.json();
+          if (domainData.tasks?.[0]?.result?.[0]) {
+            const result = domainData.tasks[0].result[0];
+            trafficData = {
+              monthlyVisits: result.metrics?.organic_etv || 0,
+              organicTraffic: result.metrics?.organic_count || 0,
+              paidTraffic: result.metrics?.paid_count || 0,
+              totalKeywords: result.metrics?.organic_keywords || 0
+            };
+          }
         }
       } catch (error) {
-        console.error('SimilarWeb API error:', error);
+        console.error('DataForSEO domain analytics error:', error);
       }
     }
 
-    // Get SEO data from SEMRush API if available
-    if (semrushKey) {
+    // Get SEO keywords data from DataForSEO API
+    if (dataForSEOLogin && dataForSEOPassword) {
       try {
-        const response = await fetch(`https://api.semrush.com/?type=domain_overview&key=${semrushKey}&display_limit=5&export_columns=Or,Ot,Oc,Ad,At,Ac&domain=${domain}&database=us`);
-        
-        if (response.ok) {
-          const data = await response.text();
-          const lines = data.split('\n');
-          const metrics = lines[1]?.split(';') || [];
-          
-          seoData = {
-            domainAuthority: Math.floor(Math.random() * 60 + 20),
-            backlinks: parseInt(metrics[5]) || Math.floor(Math.random() * 10000 + 500),
-            topKeywords: [
-              { keyword: "business automation", position: 3, volume: 12000 },
-              { keyword: "ai tools", position: 7, volume: 8500 },
-              { keyword: "productivity software", position: 12, volume: 6200 }
-            ],
-            metaTags: {
-              title: websiteData.title || `${domain} - Homepage`,
-              description: websiteData.description || "AI-powered business solutions"
-            }
-          };
+        // Get top keywords for the domain
+        const keywordsResponse = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/ranked_keywords/live', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([{
+            target: domain,
+            location_name: "United States",
+            language_name: "English",
+            limit: 10
+          }])
+        });
+
+        if (keywordsResponse.ok) {
+          const keywordsData = await keywordsResponse.json();
+          if (keywordsData.tasks?.[0]?.result?.[0]?.items) {
+            const keywords = keywordsData.tasks[0].result[0].items;
+            seoData = {
+              topKeywords: keywords.map((item: any) => ({
+                keyword: item.keyword_data?.keyword || '',
+                position: item.ranked_serp_element?.serp_item?.rank_absolute || 0,
+                volume: item.keyword_data?.keyword_info?.search_volume || 0,
+                cpc: item.keyword_data?.keyword_info?.cpc || 0
+              })),
+              totalKeywords: keywords.length,
+              metaTags: {
+                title: websiteData.title || `${domain} - Homepage`,
+                description: websiteData.description || "Business solutions and services"
+              }
+            };
+          }
         }
       } catch (error) {
-        console.error('SEMRush API error:', error);
+        console.error('DataForSEO keywords error:', error);
       }
     }
 
@@ -1451,12 +1476,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Use OpenAI to generate AI-powered insights
-    const { default: OpenAI } = await import('openai');
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    try {
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
 
-    const analysisPrompt = `Analyze this competitor website and provide detailed business intelligence:
+      const analysisPrompt = `Analyze this competitor website and provide detailed business intelligence:
 
 Website: ${websiteData.title}
 URL: ${websiteData.url}
@@ -1580,7 +1606,16 @@ Please provide analysis in this exact JSON format (no additional text):
       return competitorIntelligence;
     } catch (error: any) {
       console.error("Enhanced competitor analysis error:", error);
-      throw error;
+      // Return fallback data structure if OpenAI analysis fails
+      return {
+        url: websiteData.url,
+        traffic: { error: "Traffic data requires SimilarWeb API key" },
+        seo: { error: "SEO data requires SEMRush API key" },
+        ads: { error: "Ad intelligence requires SEMRush API key" },
+        content: { error: "Content analysis requires external API access" },
+        techStack: { error: "Tech stack detection requires Wappalyzer API key" },
+        insights: { error: "AI analysis failed" }
+      };
     }
   }
 
