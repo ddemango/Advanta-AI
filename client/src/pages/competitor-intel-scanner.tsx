@@ -282,9 +282,9 @@ export default function CompetitorIntelScanner() {
                           </div>
                           <div className="text-center p-4 bg-muted/50 rounded-lg">
                             <div className="text-2xl font-bold text-primary">
-                              {competitorData.traffic.bounceRate}%
+                              {formatNumber(competitorData.traffic.organicTraffic)}
                             </div>
-                            <div className="text-sm text-muted-foreground">Bounce Rate</div>
+                            <div className="text-sm text-muted-foreground">Organic Traffic</div>
                           </div>
                         </div>
                         <div>
@@ -315,13 +315,13 @@ export default function CompetitorIntelScanner() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="text-center p-4 bg-muted/50 rounded-lg">
                             <div className="text-2xl font-bold text-primary">
-                              {competitorData.seo.domainAuthority}
+                              {competitorData.seo.totalKeywords ? formatNumber(competitorData.seo.totalKeywords) : 'N/A'}
                             </div>
-                            <div className="text-sm text-muted-foreground">Domain Authority</div>
+                            <div className="text-sm text-muted-foreground">Total Keywords</div>
                           </div>
                           <div className="text-center p-4 bg-muted/50 rounded-lg">
                             <div className="text-2xl font-bold text-primary">
-                              {formatNumber(competitorData.seo.backlinks)}
+                              {competitorData.backlinks.totalBacklinks ? formatNumber(competitorData.backlinks.totalBacklinks) : 'N/A'}
                             </div>
                             <div className="text-sm text-muted-foreground">Backlinks</div>
                           </div>
@@ -378,11 +378,17 @@ export default function CompetitorIntelScanner() {
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-semibold mb-2">Target Keywords</h4>
+                          <h4 className="font-semibold mb-2">Domain Metrics</h4>
                           <div className="flex flex-wrap gap-2">
-                            {competitorData.ads.targetKeywords.slice(0, 5).map((keyword, index) => (
-                              <Badge key={index} variant="secondary">{keyword}</Badge>
-                            ))}
+                            {competitorData.domainMetrics?.organicKeywords ? (
+                              <>
+                                <Badge variant="secondary">Keywords: {formatNumber(competitorData.domainMetrics.organicKeywords)}</Badge>
+                                <Badge variant="secondary">Traffic: {formatNumber(competitorData.domainMetrics.organicTraffic)}</Badge>
+                                <Badge variant="secondary">Rank: {competitorData.domainMetrics.domainRank}</Badge>
+                              </>
+                            ) : (
+                              <p className="text-muted-foreground">DataForSEO domain metrics require API access</p>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -394,22 +400,22 @@ export default function CompetitorIntelScanner() {
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center">
-                          <Zap className="w-5 h-5 mr-2 text-orange-500" />
-                          Tech Stack & Tools
+                          <Globe className="w-5 h-5 mr-2 text-orange-500" />
+                          Website Data
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <h4 className="font-semibold mb-2">CMS & Platform</h4>
-                          <Badge variant="outline" className="mb-2">{competitorData.techStack.cms}</Badge>
+                          <h4 className="font-semibold mb-2">Site Title</h4>
+                          <p className="text-sm text-muted-foreground">{competitorData.websiteData.title}</p>
                         </div>
                         <div>
-                          <h4 className="font-semibold mb-2">Analytics & Marketing</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {[...competitorData.techStack.analytics, ...competitorData.techStack.marketing].map((tool, index) => (
-                              <Badge key={index} variant="secondary">{tool}</Badge>
-                            ))}
-                          </div>
+                          <h4 className="font-semibold mb-2">Meta Description</h4>
+                          <p className="text-sm text-muted-foreground">{competitorData.websiteData.description}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-2">Main Heading</h4>
+                          <p className="text-sm text-muted-foreground">{competitorData.websiteData.mainHeading}</p>
                         </div>
                       </CardContent>
                     </Card>
