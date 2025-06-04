@@ -281,12 +281,12 @@ export default function CompetitorIntelScanner() {
                         <div>
                           <h4 className="font-semibold mb-2">Top Traffic Sources</h4>
                           <div className="space-y-2">
-                            {competitorData.traffic.topSources.map((source, index) => (
+                            {competitorData.traffic.topSources?.map((source, index) => (
                               <div key={index} className="flex justify-between items-center">
                                 <span className="capitalize">{source.source}</span>
                                 <Badge variant="outline">{source.percentage}%</Badge>
                               </div>
-                            ))}
+                            )) || <p className="text-muted-foreground">No traffic source data available</p>}
                           </div>
                         </div>
                       </CardContent>
@@ -320,7 +320,7 @@ export default function CompetitorIntelScanner() {
                         <div>
                           <h4 className="font-semibold mb-2">Top Keywords</h4>
                           <div className="space-y-2">
-                            {competitorData.seo.topKeywords.slice(0, 3).map((keyword, index) => (
+                            {competitorData.seo.topKeywords?.slice(0, 3).map((keyword, index) => (
                               <div key={index} className="flex justify-between items-center">
                                 <span className="text-sm">{keyword.keyword}</span>
                                 <div className="flex items-center space-x-2">
@@ -328,7 +328,7 @@ export default function CompetitorIntelScanner() {
                                   <Badge variant="secondary">{formatNumber(keyword.volume)}</Badge>
                                 </div>
                               </div>
-                            ))}
+                            )) || <p className="text-muted-foreground">No keyword data available</p>}
                           </div>
                         </div>
                       </CardContent>
@@ -346,16 +346,26 @@ export default function CompetitorIntelScanner() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <h4 className="font-semibold mb-2">Active Ads</h4>
+                          <h4 className="font-semibold mb-2">Backlinks Analysis</h4>
                           <div className="space-y-3">
-                            {competitorData.ads.activeAds.slice(0, 2).map((ad, index) => (
-                              <div key={index} className="p-3 border rounded-lg">
-                                <div className="flex items-center justify-between mb-2">
-                                  <Badge variant="outline">{ad.platform}</Badge>
+                            {competitorData.backlinks?.totalBacklinks ? (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center p-4 bg-muted/50 rounded-lg">
+                                  <div className="text-2xl font-bold text-primary">
+                                    {formatNumber(competitorData.backlinks.totalBacklinks)}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">Total Backlinks</div>
                                 </div>
-                                <p className="text-sm text-muted-foreground">{ad.adText}</p>
+                                <div className="text-center p-4 bg-muted/50 rounded-lg">
+                                  <div className="text-2xl font-bold text-primary">
+                                    {formatNumber(competitorData.backlinks.referringDomains)}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">Referring Domains</div>
+                                </div>
                               </div>
-                            ))}
+                            ) : (
+                              <p className="text-muted-foreground">DataForSEO backlinks data requires API access</p>
+                            )}
                           </div>
                         </div>
                         <div>
