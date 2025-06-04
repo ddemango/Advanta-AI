@@ -132,7 +132,7 @@ export default function TermsOfService() {
                     </div>
                     <div className="flex items-center space-x-3">
                       <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">contact@advanta-ai.com</span>
+                      <span className="text-muted-foreground">info@advanta-ai.com</span>
                     </div>
                   </div>
                 </CardContent>
