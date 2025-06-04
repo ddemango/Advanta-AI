@@ -1608,6 +1608,13 @@ Please provide analysis in this exact JSON format (no additional text):
           mainHeading: websiteData.mainHeading,
           textContent: websiteData.textContent?.substring(0, 500)
         },
+        facebookAds: {
+          adsLibraryUrl: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=${encodeURIComponent(websiteData.domain)}&search_type=keyword_unordered`,
+          totalAds: null,
+          activeAds: null,
+          adExamples: [],
+          error: "Facebook Ads Library integration - visit the URL to explore competitor ads manually"
+        },
         insights: {
           strengths: analysis?.swotAnalysis?.strengths || [],
           opportunities: analysis?.swotAnalysis?.opportunities || [],

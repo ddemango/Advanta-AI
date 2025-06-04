@@ -68,6 +68,18 @@ interface CompetitorData {
     mainHeading: string;
     textContent: string;
   };
+  facebookAds: {
+    adsLibraryUrl: string;
+    totalAds?: number;
+    activeAds?: number;
+    adExamples?: {
+      headline: string;
+      description: string;
+      callToAction: string;
+      adType: string;
+    }[];
+    error?: string;
+  };
   insights: {
     strengths: string[];
     opportunities: string[];
@@ -417,6 +429,83 @@ export default function CompetitorIntelScanner() {
                           <h4 className="font-semibold mb-2">Main Heading</h4>
                           <p className="text-sm text-muted-foreground">{competitorData.websiteData.mainHeading}</p>
                         </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Facebook Ads Intelligence */}
+                  <motion.div variants={fadeIn} className="lg:col-span-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Target className="w-5 h-5 mr-2 text-blue-500" />
+                            Facebook Ads Intelligence
+                          </div>
+                          <a 
+                            href={competitorData.facebookAds.adsLibraryUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
+                          >
+                            View Full Library <LinkIcon className="w-3 h-3 ml-1" />
+                          </a>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {competitorData.facebookAds.totalAds ? (
+                          <>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                                <div className="text-2xl font-bold text-primary">
+                                  {competitorData.facebookAds.totalAds}
+                                </div>
+                                <div className="text-sm text-muted-foreground">Total Ads Found</div>
+                              </div>
+                              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                                <div className="text-2xl font-bold text-green-500">
+                                  {competitorData.facebookAds.activeAds}
+                                </div>
+                                <div className="text-sm text-muted-foreground">Currently Active</div>
+                              </div>
+                            </div>
+                            {competitorData.facebookAds.adExamples && competitorData.facebookAds.adExamples.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-3">Recent Ad Examples</h4>
+                                <div className="space-y-3">
+                                  {competitorData.facebookAds.adExamples.slice(0, 3).map((ad, index) => (
+                                    <div key={index} className="p-3 border rounded-lg bg-muted/30">
+                                      <div className="flex justify-between items-start mb-2">
+                                        <h5 className="font-medium text-sm">{ad.headline}</h5>
+                                        <Badge variant="outline" className="text-xs">{ad.adType}</Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground mb-2">{ad.description}</p>
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-xs text-muted-foreground">CTA: {ad.callToAction}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-center py-8">
+                            <Target className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                            <h4 className="font-semibold mb-2">Explore Facebook Ads</h4>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Click the link above to view this competitor's advertising strategy on Facebook.
+                            </p>
+                            <a 
+                              href={competitorData.facebookAds.adsLibraryUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                              Open Facebook Ads Library <LinkIcon className="w-4 h-4 ml-2" />
+                            </a>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </motion.div>
