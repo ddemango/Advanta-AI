@@ -55,6 +55,26 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
         if (youtubeResponse.ok) {
           const youtubeData = await youtubeResponse.json();
 
+          // Get video statistics for accurate view counts
+          const videoIds = youtubeData.items?.map((video: any) => video.id.videoId).join(',');
+          const statsResponse = await fetch(
+            `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${videoIds}&key=${process.env.YOUTUBE_API_KEY}`
+          );
+          
+          let videoStats = {};
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            videoStats = statsData.items?.reduce((acc: any, video: any) => {
+              acc[video.id] = {
+                viewCount: parseInt(video.statistics.viewCount || '0'),
+                likeCount: parseInt(video.statistics.likeCount || '0'),
+                commentCount: parseInt(video.statistics.commentCount || '0'),
+                duration: video.contentDetails.duration
+              };
+              return acc;
+            }, {}) || {};
+          }
+
           const youtubeTrends = youtubeData.items?.map((video: any, index: number) => {
             // Extract meaningful related terms from video data
             const title = video.snippet.title || '';
@@ -89,15 +109,27 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
               relatedTerms.push(industry.toLowerCase());
             }
             
+            const stats = videoStats[video.id.videoId] || {};
+            const viewCount = stats.viewCount || 0;
+            const likeCount = stats.likeCount || 0;
+            const commentCount = stats.commentCount || 0;
+            
             return {
               keyword: video.snippet.title,
-              searchVolume: Math.floor(Math.random() * 100000 + 10000),
-              growthPercentage: Math.floor(Math.random() * 80 + 10),
+              searchVolume: viewCount ? viewCount.toLocaleString() : 'N/A',
+              growthPercentage: likeCount > 0 ? `${Math.round((likeCount / viewCount) * 100 * 100)}% engagement` : 'N/A',
               category: 'YouTube',
               relatedTerms: relatedTerms.slice(0, 3),
-              difficulty: 'Medium' as const,
-              cpc: parseFloat((Math.random() * 3 + 0.5).toFixed(2)),
-              source: 'YouTube'
+              difficulty: viewCount > 1000000 ? 'High' : viewCount > 100000 ? 'Medium' : 'Low' as const,
+              cpc: 'YouTube organic',
+              source: 'YouTube',
+              videoId: video.id.videoId,
+              channelTitle: video.snippet.channelTitle,
+              publishedAt: video.snippet.publishedAt,
+              thumbnail: video.snippet.thumbnails?.default?.url,
+              viewCount: viewCount,
+              likeCount: likeCount,
+              commentCount: commentCount
             };
           }) || [];
           
