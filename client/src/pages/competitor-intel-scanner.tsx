@@ -33,31 +33,40 @@ import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface CompetitorData {
   url: string;
+  domain: string;
   traffic: {
-    monthlyVisits: number;
-    bounceRate: number;
-    avgSessionDuration: string;
-    topSources: { source: string; percentage: number }[];
+    monthlyVisits?: number;
+    organicTraffic?: number;
+    paidTraffic?: number;
+    totalKeywords?: number;
+    topSources?: { source: string; percentage: number }[];
+    error?: string;
   };
   seo: {
-    domainAuthority: number;
-    backlinks: number;
-    topKeywords: { keyword: string; position: number; volume: number }[];
+    topKeywords?: { keyword: string; position: number; volume: number; cpc: number }[];
+    totalKeywords?: number;
     metaTags: { title: string; description: string };
+    error?: string;
   };
-  ads: {
-    activeAds: { platform: string; adText: string; imageUrl?: string }[];
-    targetKeywords: string[];
+  backlinks: {
+    totalBacklinks?: number;
+    referringDomains?: number;
+    anchorTexts?: string[];
+    domainRank?: number;
+    error?: string;
   };
-  content: {
-    topPages: { url: string; title: string; traffic: number }[];
-    contentTypes: { type: string; count: number }[];
+  domainMetrics: {
+    domainRank?: number;
+    organicKeywords?: number;
+    organicTraffic?: number;
+    paidKeywords?: number;
+    error?: string;
   };
-  techStack: {
-    cms: string;
-    analytics: string[];
-    marketing: string[];
-    ecommerce?: string;
+  websiteData: {
+    title: string;
+    description: string;
+    mainHeading: string;
+    textContent: string;
   };
   insights: {
     strengths: string[];
