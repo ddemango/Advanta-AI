@@ -48,32 +48,13 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
           timeFilter = `&publishedAfter=${monthAgo.toISOString()}`;
         }
         
+        // Use YouTube's trending videos API for most viewed content
         const youtubeResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&order=viewCount&maxResults=10${timeFilter}&key=${process.env.YOUTUBE_API_KEY}`
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=US&maxResults=10&key=${process.env.YOUTUBE_API_KEY}`
         );
         
         if (youtubeResponse.ok) {
           const youtubeData = await youtubeResponse.json();
-
-          // Get video statistics for accurate view counts
-          const videoIds = youtubeData.items?.map((video: any) => video.id.videoId).join(',');
-          const statsResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/videos?part=statistics,contentDetails&id=${videoIds}&key=${process.env.YOUTUBE_API_KEY}`
-          );
-          
-          let videoStats = {};
-          if (statsResponse.ok) {
-            const statsData = await statsResponse.json();
-            videoStats = statsData.items?.reduce((acc: any, video: any) => {
-              acc[video.id] = {
-                viewCount: parseInt(video.statistics.viewCount || '0'),
-                likeCount: parseInt(video.statistics.likeCount || '0'),
-                commentCount: parseInt(video.statistics.commentCount || '0'),
-                duration: video.contentDetails.duration
-              };
-              return acc;
-            }, {}) || {};
-          }
 
           const youtubeTrends = youtubeData.items?.map((video: any, index: number) => {
             // Extract meaningful related terms from video data
@@ -109,10 +90,9 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
               relatedTerms.push(industry.toLowerCase());
             }
             
-            const stats = videoStats[video.id.videoId] || {};
-            const viewCount = stats.viewCount || 0;
-            const likeCount = stats.likeCount || 0;
-            const commentCount = stats.commentCount || 0;
+            const viewCount = parseInt(video.statistics?.viewCount || '0');
+            const likeCount = parseInt(video.statistics?.likeCount || '0');
+            const commentCount = parseInt(video.statistics?.commentCount || '0');
             
             return {
               keyword: video.snippet.title,
@@ -123,7 +103,7 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
               difficulty: viewCount > 1000000 ? 'High' : viewCount > 100000 ? 'Medium' : 'Low' as const,
               cpc: 'YouTube organic',
               source: 'YouTube',
-              videoId: video.id.videoId,
+              videoId: video.id,
               channelTitle: video.snippet.channelTitle,
               publishedAt: video.snippet.publishedAt,
               thumbnail: video.snippet.thumbnails?.default?.url,
