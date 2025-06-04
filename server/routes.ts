@@ -28,44 +28,56 @@ async function generateTrendingData(timeFrame: string, industry: string, keyword
     // Default to all platforms if none specified
     const selectedPlatforms = platforms || { youtube: true, google: true, serp: true };
 
-    // Fetch real Google Trends data using SERP API
-    if (process.env.SERP_API_KEY && selectedPlatforms.serp) {
+    // Fetch authentic trending keywords using DataForSEO API
+    if (process.env.DATAFORSEO_API_LOGIN && process.env.DATAFORSEO_API_PASSWORD) {
       try {
+        const auth = Buffer.from(`${process.env.DATAFORSEO_API_LOGIN}:${process.env.DATAFORSEO_API_PASSWORD}`).toString('base64');
         const searchQuery = keywords ? `${keywords} ${industry}` : industry;
         
-        // Get Google Trends data
-        const trendsResponse = await fetch(`https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(searchQuery)}&data_type=TIMESERIES&api_key=${process.env.SERP_API_KEY}`);
-        
-        if (trendsResponse.ok) {
-          const trendsData = await trendsResponse.json();
-          
-          // Get related queries from Google Trends
-          const relatedResponse = await fetch(`https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(searchQuery)}&data_type=RELATED_QUERIES&api_key=${process.env.SERP_API_KEY}`);
-          
-          let relatedQueries = [];
-          if (relatedResponse.ok) {
-            const relatedData = await relatedResponse.json();
-            relatedQueries = relatedData.related_queries?.rising || relatedData.related_queries?.top || [];
-          }
+        // Get trending keywords from DataForSEO
+        const keywordsResponse = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/trending_keywords/live', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([{
+            language_code: "en",
+            location_code: 2840, // United States
+            include_serp_info: true,
+            date_from: timeFrame === 'Today' ? new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0] :
+                      timeFrame === 'This Week' ? new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0] :
+                      new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0],
+            date_to: new Date().toISOString().split('T')[0],
+            limit: 15
+          }])
+        });
 
-          const serpTrends = relatedQueries.slice(0, 10).map((query: any, index: number) => {
-            const searchVolume = query.value || Math.floor(Math.random() * 100000 + 10000);
+        if (keywordsResponse.ok) {
+          const keywordsData = await keywordsResponse.json();
+          const trendingKeywords = keywordsData.tasks?.[0]?.result || [];
+
+          const dataForSEOTrends = trendingKeywords.map((item: any) => {
+            const keyword = item.keyword_info?.keyword || item.keyword || 'trending keyword';
+            const searchVolume = item.keyword_info?.search_volume || item.search_volume || 0;
+            const competition = item.keyword_info?.competition || 'unknown';
+            
             return {
-              keyword: query.query || `${searchQuery} trend ${index + 1}`,
+              keyword: keyword,
               searchVolume: searchVolume.toLocaleString(),
-              growthPercentage: query.extracted_value ? `+${query.extracted_value}%` : `+${Math.floor(Math.random() * 200 + 50)}%`,
-              category: 'Google Trends',
+              growthPercentage: item.growth ? `+${Math.round(item.growth)}%` : 'Trending',
+              category: 'Google Search',
               relatedTerms: [keywords || industry.toLowerCase(), 'trending', 'search'].slice(0, 3),
-              difficulty: searchVolume > 50000 ? 'High' : searchVolume > 20000 ? 'Medium' : 'Low' as const,
-              cpc: `$${(Math.random() * 4 + 0.5).toFixed(2)}`,
-              source: 'Google Trends'
+              difficulty: competition === 'HIGH' ? 'High' : competition === 'MEDIUM' ? 'Medium' : 'Low' as const,
+              cpc: item.keyword_info?.cpc ? `$${item.keyword_info.cpc.toFixed(2)}` : 'N/A',
+              source: 'DataForSEO Trends'
             };
           });
 
-          trends.push(...serpTrends);
+          trends.push(...dataForSEOTrends.slice(0, 10));
         }
       } catch (error) {
-        console.error('SERP API error:', error);
+        console.error('DataForSEO trending keywords error:', error);
       }
     }
     
