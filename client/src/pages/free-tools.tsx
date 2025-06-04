@@ -74,6 +74,15 @@ export default function FreeTools() {
       featured: true
     },
     {
+      id: 'competitor-intel-scanner',
+      name: 'Competitor Intel Scanner',
+      description: 'Drop in a URL. Steal the playbook. Get traffic, SEO, ads, and tech stack insights.',
+      icon: Target,
+      category: 'Market Research',
+      route: '/competitor-intel-scanner',
+      featured: true
+    },
+    {
       id: 'socialclip-analyzer',
       name: 'SocialClip Analyzer AI',
       description: 'Analyze and compare social media videos with 7-criteria scoring system.',

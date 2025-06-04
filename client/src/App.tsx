@@ -48,6 +48,7 @@ import Checkout from "@/pages/checkout";
 import Partnerships from "@/pages/partnerships";
 import SocialClipAnalyzer from "@/pages/socialclip-analyzer";
 import TrendingContentGenerator from "@/pages/trending-content-generator";
+import CompetitorIntelScanner from "@/pages/competitor-intel-scanner";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import FreeTools from "@/pages/free-tools";
@@ -148,6 +149,7 @@ function Router() {
       <Route path="/partnerships" component={Partnerships} />
       <Route path="/socialclip-analyzer" component={SocialClipAnalyzer} />
       <Route path="/trending-content-generator" component={TrendingContentGenerator} />
+      <Route path="/competitor-intel-scanner" component={CompetitorIntelScanner} />
       <Route path="/free-tools" component={FreeTools} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
