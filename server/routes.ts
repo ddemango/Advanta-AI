@@ -1401,7 +1401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const keywordsResponse = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/ranked_keywords/live', {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${auth}`,
+            'Authorization': `Basic ${Buffer.from(`${dataForSEOLogin}:${dataForSEOPassword}`).toString('base64')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify([{
@@ -1436,42 +1436,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Get ad intelligence from SEMRush advertising research
-    if (semrushKey) {
+    // Get backlinks data from DataForSEO API
+    if (dataForSEOLogin && dataForSEOPassword) {
       try {
-        const response = await fetch(`https://api.semrush.com/?type=domain_adwords&key=${semrushKey}&display_limit=10&export_columns=Dn,Ur,Tt,Ds,Vu&domain=${domain}&database=us`);
-        
-        if (response.ok) {
-          adData = {
-            activeAds: [
-              { platform: "Google Ads", adText: "Transform your business with AI automation tools" },
-              { platform: "Facebook", adText: "Discover powerful AI solutions for modern businesses" }
-            ],
-            targetKeywords: ["ai automation", "business tools", "productivity software"]
-          };
+        const backlinksResponse = await fetch('https://api.dataforseo.com/v3/backlinks/summary/live', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${dataForSEOLogin}:${dataForSEOPassword}`).toString('base64')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([{
+            target: domain,
+            internal_list_limit: 10,
+            backlinks_status_type: "all"
+          }])
+        });
+
+        if (backlinksResponse.ok) {
+          const backlinksData = await backlinksResponse.json();
+          if (backlinksData.tasks?.[0]?.result?.[0]) {
+            const result = backlinksData.tasks[0].result[0];
+            adData = {
+              totalBacklinks: result.backlinks || 0,
+              referringDomains: result.referring_domains || 0,
+              anchorTexts: result.anchors?.main_anchors?.slice(0, 5) || [],
+              domainRank: result.rank || 0
+            };
+          }
         }
       } catch (error) {
-        console.error('Ad intelligence error:', error);
+        console.error('DataForSEO backlinks error:', error);
       }
     }
 
-    // Get tech stack from Wappalyzer API if available
-    if (wappalyzerKey) {
+    // Get competitor pages analysis from DataForSEO
+    if (dataForSEOLogin && dataForSEOPassword) {
       try {
-        const response = await fetch(`https://api.wappalyzer.com/v2/lookup/?urls=https://${domain}&api_key=${wappalyzerKey}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          const technologies = data[0]?.technologies || [];
-          
-          techStackData = {
-            cms: technologies.find((t: any) => t.categories.includes("CMS"))?.name || "WordPress",
-            analytics: technologies.filter((t: any) => t.categories.includes("Analytics")).map((t: any) => t.name) || ["Google Analytics"],
-            marketing: technologies.filter((t: any) => t.categories.includes("Marketing")).map((t: any) => t.name) || ["Facebook Pixel"]
-          };
+        const pagesResponse = await fetch('https://api.dataforseo.com/v3/dataforseo_labs/google/domain_rank_overview/live', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${dataForSEOLogin}:${dataForSEOPassword}`).toString('base64')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([{
+            target: domain,
+            location_name: "United States",
+            language_name: "English"
+          }])
+        });
+
+        if (pagesResponse.ok) {
+          const pagesData = await pagesResponse.json();
+          if (pagesData.tasks?.[0]?.result?.[0]) {
+            const result = pagesData.tasks[0].result[0];
+            techStackData = {
+              domainRank: result.metrics?.domain_rank || 0,
+              organicKeywords: result.metrics?.organic_keywords || 0,
+              organicTraffic: result.metrics?.organic_traffic || 0,
+              paidKeywords: result.metrics?.paid_keywords || 0
+            };
+          }
         }
       } catch (error) {
-        console.error('Wappalyzer API error:', error);
+        console.error('DataForSEO pages error:', error);
       }
     }
 
@@ -1559,46 +1586,32 @@ Please provide analysis in this exact JSON format (no additional text):
       
       console.log(`[competitor-analysis] Analysis complete for ${websiteData.domain}`);
       
-      // Combine all data sources into comprehensive competitor intelligence report
+      // Combine all DataForSEO data sources into comprehensive competitor intelligence report
       const competitorIntelligence = {
         url: websiteData.url,
+        domain: websiteData.domain,
         traffic: Object.keys(trafficData).length > 0 ? trafficData : {
-          monthlyVisits: 0,
-          bounceRate: 0,
-          avgSessionDuration: "0:00",
-          topSources: [],
-          error: "Traffic data requires SimilarWeb API key"
+          error: "DataForSEO traffic data not available - check API credentials"
         },
         seo: Object.keys(seoData).length > 0 ? seoData : {
-          domainAuthority: 0,
-          backlinks: 0,
-          topKeywords: [],
-          metaTags: {
-            title: websiteData.title || `${websiteData.domain} - Homepage`,
-            description: websiteData.description || "Business solutions and services"
-          },
-          error: "SEO data requires SEMRush API key"
+          error: "DataForSEO SEO data not available - check API credentials"
         },
-        ads: Object.keys(adData).length > 0 ? adData : {
-          activeAds: [],
-          targetKeywords: [],
-          error: "Ad intelligence requires SEMRush API key"
+        backlinks: Object.keys(adData).length > 0 ? adData : {
+          error: "DataForSEO backlinks data not available - check API credentials"
         },
-        content: {
-          topPages: [],
-          contentTypes: [],
-          error: "Content analysis requires external API access"
+        domainMetrics: Object.keys(techStackData).length > 0 ? techStackData : {
+          error: "DataForSEO domain metrics not available - check API credentials"
         },
-        techStack: Object.keys(techStackData).length > 0 ? techStackData : {
-          cms: "Unknown",
-          analytics: [],
-          marketing: [],
-          error: "Tech stack detection requires Wappalyzer API key"
+        websiteData: {
+          title: websiteData.title,
+          description: websiteData.description,
+          mainHeading: websiteData.mainHeading,
+          textContent: websiteData.textContent?.substring(0, 500)
         },
         insights: {
           strengths: analysis?.swotAnalysis?.strengths || [],
           opportunities: analysis?.swotAnalysis?.opportunities || [],
-          recommendations: [],
+          recommendations: analysis?.swotAnalysis?.recommendations || [],
           aiAnalysis: analysis || null
         }
       };
