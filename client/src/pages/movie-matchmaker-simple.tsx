@@ -59,6 +59,7 @@ export default function MovieMatchmaker() {
   
   // Form state
   const [mood, setMood] = useState('');
+  const [contentTypes, setContentTypes] = useState<string[]>(['movies']); // movies, tv_shows, or both
   const [genres, setGenres] = useState<string[]>([]);
   const [timeAvailable, setTimeAvailable] = useState([120]); // minutes
   const [platforms, setPlatforms] = useState<string[]>([]);
@@ -88,6 +89,11 @@ export default function MovieMatchmaker() {
     'Paramount+', 'Peacock', 'Showtime', 'Starz', 'Any Platform'
   ];
 
+  const contentTypeOptions = [
+    { value: 'movies', label: 'Movies', icon: Film },
+    { value: 'tv_shows', label: 'TV Shows', icon: Tv },
+  ];
+
   const viewingContexts = [
     { value: 'solo', label: 'Solo Viewing' },
     { value: 'date', label: 'Date Night' },
@@ -95,6 +101,14 @@ export default function MovieMatchmaker() {
     { value: 'friends', label: 'With Friends' },
     { value: 'party', label: 'Party/Group' }
   ];
+
+  const handleContentTypeToggle = (contentType: string) => {
+    setContentTypes(prev => 
+      prev.includes(contentType) 
+        ? prev.filter(ct => ct !== contentType)
+        : [...prev, contentType]
+    );
+  };
 
   const handleGenreToggle = (genre: string) => {
     setGenres(prev => 
@@ -127,6 +141,7 @@ export default function MovieMatchmaker() {
     try {
       const response = await apiRequest('POST', '/api/generate-watchlist', {
         mood,
+        contentTypes,
         genres,
         timeAvailable: timeAvailable[0],
         platforms,
@@ -217,6 +232,27 @@ export default function MovieMatchmaker() {
                           {m.label}
                         </Button>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Content Type Selection */}
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">What would you like to watch?</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {contentTypeOptions.map((type) => {
+                        const IconComponent = type.icon;
+                        return (
+                          <Button
+                            key={type.value}
+                            variant={contentTypes.includes(type.value) ? "default" : "outline"}
+                            onClick={() => handleContentTypeToggle(type.value)}
+                            className="justify-start h-auto p-3"
+                          >
+                            <IconComponent className="mr-2 h-4 w-4" />
+                            {type.label}
+                          </Button>
+                        );
+                      })}
                     </div>
                   </div>
 

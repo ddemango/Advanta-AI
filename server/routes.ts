@@ -2118,7 +2118,7 @@ Please provide analysis in this exact JSON format (no additional text):
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
+    const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
     // Build genre constraint - STRICT requirement
     let genreConstraint = "";
