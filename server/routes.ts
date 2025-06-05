@@ -2143,7 +2143,7 @@ Please provide analysis in this exact JSON format (no additional text):
     const prompt = `You are a movie and TV show recommendation expert. Generate exactly 10 personalized recommendations based on these preferences:
 
 Mood: ${mood}
-Content Type: ${contentTypeConstraint}
+CONTENT TYPE REQUIREMENT: ${contentTypeConstraint}
 ${genreConstraint}
 Time Available: ${timeAvailable} minutes
 Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
@@ -2152,13 +2152,21 @@ Past Favorites: ${pastFavorites || 'Not specified'}
 Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '1980 - 2024'}
 Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
 
-IMPORTANT RULES:
+CRITICAL RULES - MUST FOLLOW EXACTLY:
 1. Provide exactly 10 recommendations
-2. ${contentTypeConstraint}
-3. If genres are specified, ONLY include content that matches those exact genres
-4. For TV shows, consider episode runtime when matching time constraints
-5. Focus on authentic, real titles available on major streaming platforms
-6. Match the specified mood accurately
+2. CONTENT TYPE ENFORCEMENT: ${contentTypeConstraint}
+3. ${genreConstraint ? genreConstraint : 'No genre restrictions'}
+4. For TV shows: Set contentType to "tv_show" and include seasons/episodes
+5. For movies: Set contentType to "movie" 
+6. For TV shows, consider episode runtime when matching time constraints
+7. Focus on authentic, real titles available on major streaming platforms
+8. Match the specified mood accurately
+
+${contentTypes.includes('tv_shows') && !contentTypes.includes('movies') ? 
+  'MANDATORY: ALL 10 recommendations MUST be TV shows with contentType: "tv_show"' : 
+  contentTypes.includes('movies') && !contentTypes.includes('tv_shows') ? 
+  'MANDATORY: ALL 10 recommendations MUST be movies with contentType: "movie"' : 
+  'Include a mix of movies and TV shows'}
 
 For each recommendation, provide:
 - Title and year
