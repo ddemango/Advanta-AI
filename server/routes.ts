@@ -2149,14 +2149,22 @@ Please provide analysis in this exact JSON format (no additional text):
       'movies' : 
       'movies and TV shows';
 
-    const prompt = `Generate 10 ${contentTypeText} for ${mood} mood. ${genreConstraint}
+    const prompt = `CRITICAL: Only recommend REAL, existing ${contentTypeText} that can be found on IMDb/streaming platforms. Do NOT create fictional titles.
+
+Generate 10 authentic ${contentTypeText} for ${mood} mood. ${genreConstraint}
+
+Examples of real titles:
+- Movies: Inception, The Dark Knight, Titanic, Pulp Fiction, The Matrix
+- TV Shows: Breaking Bad, Game of Thrones, The Office, Stranger Things, Friends
+
+MUST use only authentic titles that exist in real databases.
 
 JSON:
 {
   "recommendations": [
     {
-      "title": "Title",
-      "year": 2023,
+      "title": "Real Movie/Show Title",
+      "year": 2020,
       "contentType": "${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'}",
       "genre": ["${genres.length > 0 ? genres[0] : 'Drama'}"],
       "rating": 8.1,
