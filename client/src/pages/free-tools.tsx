@@ -197,8 +197,8 @@ export default function FreeTools() {
     },
     {
       id: 'movie-matchmaker',
-      name: 'Movie Matchmaker',
-      description: 'AI-powered watchlist generator that matches your mood and preferences to find perfect movies and TV shows.',
+      name: 'Movie and TV Show Matchmaker',
+      description: 'AI-powered watchlist generator that matches your mood, preferences and content type to find perfect movies and TV shows.',
       icon: Film,
       category: 'Entertainment',
       route: '/movie-matchmaker'
