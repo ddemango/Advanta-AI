@@ -2120,14 +2120,16 @@ Please provide analysis in this exact JSON format (no additional text):
 
     const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
-    // Build content type constraint
+    // Build content type constraint - ensure contentTypes is always an array
+    const safeContentTypes = contentTypes || ['movies'];
     let contentTypeConstraint = "";
-    if (contentTypes && contentTypes.length > 0) {
-      if (contentTypes.includes('movies') && contentTypes.includes('tv_shows')) {
+    
+    if (safeContentTypes.length > 0) {
+      if (safeContentTypes.includes('movies') && safeContentTypes.includes('tv_shows')) {
         contentTypeConstraint = "Include both movies and TV shows in your recommendations.";
-      } else if (contentTypes.includes('movies')) {
+      } else if (safeContentTypes.includes('movies')) {
         contentTypeConstraint = "ONLY recommend movies. Do not include TV shows.";
-      } else if (contentTypes.includes('tv_shows')) {
+      } else if (safeContentTypes.includes('tv_shows')) {
         contentTypeConstraint = "ONLY recommend TV shows. Do not include movies.";
       }
     } else {
@@ -2162,9 +2164,9 @@ CRITICAL RULES - MUST FOLLOW EXACTLY:
 7. Focus on authentic, real titles available on major streaming platforms
 8. Match the specified mood accurately
 
-${contentTypes.includes('tv_shows') && !contentTypes.includes('movies') ? 
+${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 
   'MANDATORY: ALL 10 recommendations MUST be TV shows with contentType: "tv_show"' : 
-  contentTypes.includes('movies') && !contentTypes.includes('tv_shows') ? 
+  safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows') ? 
   'MANDATORY: ALL 10 recommendations MUST be movies with contentType: "movie"' : 
   'Include a mix of movies and TV shows'}
 
