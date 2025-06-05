@@ -2107,7 +2107,17 @@ Respond with a JSON object in this exact format:
             }
           } catch (omdbError) {
             console.error(`Failed to fetch data for ${movie.title}:`, omdbError);
-            // Keep the existing data
+            // Use fallback poster service
+            movie.poster = `https://img.omdbapi.com/?apikey=placeholder&t=${encodeURIComponent(movie.title)}&y=${movie.year}`;
+          }
+        }
+      } else {
+        // Use alternative poster source when OMDb API is not available
+        if (recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
+          for (const movie of recommendation.recommendations) {
+            // Generate poster URL using movie title and year
+            const posterUrl = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+            movie.poster = posterUrl;
           }
         }
       }
