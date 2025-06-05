@@ -2120,8 +2120,12 @@ Please provide analysis in this exact JSON format (no additional text):
 
     const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
+    // Debug logging
+    console.log('Received contentTypes:', contentTypes);
+    
     // Build content type constraint - ensure contentTypes is always an array
     const safeContentTypes = contentTypes || ['movies'];
+    console.log('Safe contentTypes:', safeContentTypes);
     let contentTypeConstraint = "";
     
     if (safeContentTypes.length > 0) {
@@ -2154,6 +2158,17 @@ Past Favorites: ${pastFavorites || 'Not specified'}
 Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '1980 - 2024'}
 Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
 
+${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 
+  `ABSOLUTE REQUIREMENT: You MUST recommend ONLY TV SHOWS. DO NOT include any movies.
+   - Every recommendation must have contentType: "tv_show"
+   - Include seasons and episodes for each TV show
+   - Examples: Breaking Bad, Game of Thrones, The Office, Stranger Things, etc.` : 
+  safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows') ? 
+  `ABSOLUTE REQUIREMENT: You MUST recommend ONLY MOVIES. DO NOT include any TV shows.
+   - Every recommendation must have contentType: "movie"
+   - Examples: The Shawshank Redemption, Inception, Titanic, etc.` : 
+  'Include a mix of movies and TV shows'}
+
 CRITICAL RULES - MUST FOLLOW EXACTLY:
 1. Provide exactly 10 recommendations
 2. CONTENT TYPE ENFORCEMENT: ${contentTypeConstraint}
@@ -2163,12 +2178,6 @@ CRITICAL RULES - MUST FOLLOW EXACTLY:
 6. For TV shows, consider episode runtime when matching time constraints
 7. Focus on authentic, real titles available on major streaming platforms
 8. Match the specified mood accurately
-
-${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 
-  'MANDATORY: ALL 10 recommendations MUST be TV shows with contentType: "tv_show"' : 
-  safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows') ? 
-  'MANDATORY: ALL 10 recommendations MUST be movies with contentType: "movie"' : 
-  'Include a mix of movies and TV shows'}
 
 For each recommendation, provide:
 - Title and year
@@ -2213,7 +2222,13 @@ Respond with a JSON object in this exact format:
         messages: [
           {
             role: "system",
-            content: "You are an expert movie and TV show recommendation engine. Always respond with valid JSON format. Ensure all strings are properly escaped and the JSON is valid. When genres are specified, strictly adhere to those genres only."
+            content: `You are an expert movie and TV show recommendation engine. Always respond with valid JSON format. Ensure all strings are properly escaped and the JSON is valid. When genres are specified, strictly adhere to those genres only. 
+
+CRITICAL CONTENT TYPE RULES:
+- If user requests TV shows only, ALL recommendations must have contentType: "tv_show"
+- If user requests movies only, ALL recommendations must have contentType: "movie"
+- Never mix content types when user specifies only one type
+- TV shows must include seasons and episodes fields`
           },
           {
             role: "user",
