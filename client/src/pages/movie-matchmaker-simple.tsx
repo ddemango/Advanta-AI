@@ -184,8 +184,8 @@ export default function MovieMatchmaker() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Movie Matchmaker - AI-Powered Watchlist Generator | Advanta AI</title>
-        <meta name="description" content="Get personalized movie and TV recommendations based on your mood, preferences, and viewing context. AI-powered watchlist generator for Netflix, Hulu, and more." />
+        <title>Movie and TV Show Matchmaker - AI-Powered Watchlist Generator | Advanta AI</title>
+        <meta name="description" content="Get personalized movie and TV show recommendations based on your mood, preferences, and viewing context. AI-powered watchlist generator for Netflix, Hulu, and more." />
       </Helmet>
       
       <Header />
@@ -197,7 +197,7 @@ export default function MovieMatchmaker() {
             <div className="flex items-center justify-center gap-3 mb-4">
               <Film className="h-8 w-8 text-primary" />
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                Movie Matchmaker
+                Movie and TV Show Matchmaker
               </h1>
             </div>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
