@@ -2108,81 +2108,122 @@ Please provide analysis in this exact JSON format (no additional text):
     { title: "Parasite", year: 2019, genre: ["Comedy", "Drama", "Thriller"], rating: 8.6, runtime: 132, platform: ["Netflix", "Hulu"], description: "Act of greed in family relationships, devides a poor and a rich family in a web of deceit.", mood: "thoughtful" }
   ];
 
-  // Fast watchlist generation function
-  function generatePersonalizedWatchlist(preferences: any) {
-    const { mood, genres, timeAvailable, platforms, releaseYearRange, includeWildCard } = preferences;
-    
-    // Filter movies based on preferences
-    let filteredMovies = movieDatabase.filter(movie => {
-      // Mood matching
-      if (mood && movie.mood !== mood) return false;
-      
-      // Runtime filtering
-      if (timeAvailable && movie.runtime > timeAvailable) return false;
-      
-      // Release year filtering
-      if (releaseYearRange) {
-        if (movie.year < releaseYearRange[0] || movie.year > releaseYearRange[1]) return false;
-      }
-      
-      // Genre filtering
-      if (genres && genres.length > 0) {
-        const hasMatchingGenre = genres.some(genre => movie.genre.includes(genre));
-        if (!hasMatchingGenre) return false;
-      }
-      
-      // Platform filtering
-      if (platforms && platforms.length > 0 && !platforms.includes('Any Platform')) {
-        const hasMatchingPlatform = platforms.some(platform => movie.platform.includes(platform));
-        if (!hasMatchingPlatform) return false;
-      }
-      
-      return true;
+  // AI-powered watchlist generation function with strict genre filtering
+  async function generatePersonalizedWatchlist(preferences: any) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured");
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
-    
-    // If no matches, expand criteria to mood only
-    if (filteredMovies.length === 0) {
-      filteredMovies = movieDatabase.filter(movie => movie.mood === mood);
+
+    const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
+
+    // Build genre constraint - STRICT requirement
+    let genreConstraint = "";
+    if (genres && genres.length > 0) {
+      genreConstraint = `CRITICAL REQUIREMENT: Movies MUST include ONLY these exact genres: ${genres.join(', ')}. Do not include movies with genres outside this list.`;
     }
-    
-    // If still not enough movies, add from other moods
-    if (filteredMovies.length < 10) {
-      const additionalMovies = movieDatabase.filter(movie => !filteredMovies.includes(movie));
-      filteredMovies.push(...additionalMovies.slice(0, 10 - filteredMovies.length));
+
+    const prompt = `You are a movie and TV recommendation expert. Generate exactly 10 personalized recommendations based on these preferences:
+
+Mood: ${mood}
+${genreConstraint}
+Time Available: ${timeAvailable} minutes
+Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
+Viewing Context: ${viewingContext || 'Not specified'}
+Past Favorites: ${pastFavorites || 'Not specified'}
+Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '1980 - 2024'}
+Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
+
+IMPORTANT RULES:
+1. Provide exactly 10 recommendations
+2. If genres are specified, ONLY include movies that match those exact genres
+3. Include both movies and TV shows that fit the time constraint
+4. Focus on authentic, real titles available on major streaming platforms
+5. Match the specified mood accurately
+
+For each recommendation, provide:
+- Title and year
+- Runtime in minutes
+- Genre tags (MUST match user's selected genres if specified)
+- IMDB rating (realistic)
+- Available platforms
+- Brief description (2-3 sentences)
+- Match percentage (why it fits their preferences)
+- Reason for recommendation
+
+Respond with a JSON object in this exact format:
+{
+  "mood": "${mood}",
+  "preferences": {...},
+  "recommendations": [
+    {
+      "title": "Movie Title",
+      "year": 2023,
+      "genre": ["Drama", "Thriller"],
+      "rating": 8.1,
+      "runtime": 120,
+      "platform": ["Netflix", "Hulu"],
+      "description": "Brief description here...",
+      "poster": "https://placeholder.com/poster.jpg",
+      "matchScore": 95,
+      "reasonForRecommendation": "Perfect mood match because..."
     }
-    
-    // Add wild card if requested and space available
-    if (includeWildCard && filteredMovies.length < 10) {
-      const wildCards = movieDatabase.filter(movie => !filteredMovies.includes(movie));
-      if (wildCards.length > 0) {
-        filteredMovies.push(...wildCards.slice(0, 10 - filteredMovies.length));
+  ],
+  "totalMatches": 10,
+  "personalizedMessage": "Based on your ${mood} mood and preferences, here are 10 perfect matches..."
+}`;
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert movie and TV show recommendation engine. Always respond with valid JSON format. Ensure all strings are properly escaped and the JSON is valid. When genres are specified, strictly adhere to those genres only."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 3000,
+        temperature: 0.7,
+      });
+
+      const responseContent = response.choices[0].message.content || '{}';
+      
+      // Clean up any potential JSON formatting issues
+      const cleanedContent = responseContent
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+        .replace(/\n/g, " ") // Replace newlines with spaces
+        .replace(/\"/g, '"') // Fix smart quotes
+        .trim();
+      
+      let recommendation;
+      try {
+        recommendation = JSON.parse(cleanedContent);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        console.error("Raw content:", responseContent);
+        
+        // Fallback: Try to extract valid JSON portion
+        const jsonMatch = cleanedContent.match(/\{.*\}/s);
+        if (jsonMatch) {
+          recommendation = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("Unable to parse JSON response");
+        }
       }
+      
+      return recommendation;
+    } catch (error) {
+      console.error("OpenAI API error:", error);
+      throw new Error("Failed to generate personalized recommendations");
     }
-    
-    // Limit to 10 recommendations and add match scores
-    const recommendations = filteredMovies.slice(0, 10).map(movie => ({
-      ...movie,
-      matchScore: Math.floor(Math.random() * 20) + 80, // 80-100% match
-      reasonForRecommendation: `Perfect ${mood} mood match with ${movie.genre.join(', ')} elements`
-    }));
-    
-    const moodLabels = {
-      chill: 'Chill & Relaxed',
-      inspired: 'Inspired & Motivated',
-      romantic: 'Romantic & Sweet',
-      funny: 'Funny & Light',
-      adventurous: 'Adventurous & Bold',
-      scared: 'Thrilled & Scared',
-      thoughtful: 'Thoughtful & Deep'
-    };
-    
-    return {
-      mood,
-      preferences,
-      recommendations,
-      totalMatches: recommendations.length,
-      personalizedMessage: `Based on your ${moodLabels[mood] || mood} mood, here are ${recommendations.length} perfect matches curated just for you.`
-    };
   }
 
   // Movie Matchmaker API endpoint
@@ -2194,7 +2235,7 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(400).json({ error: "Mood is required" });
       }
 
-      const watchlistData = generatePersonalizedWatchlist({
+      const watchlistData = await generatePersonalizedWatchlist({
         mood,
         genres: genres || [],
         timeAvailable: timeAvailable || 120,
