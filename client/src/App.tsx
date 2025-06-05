@@ -49,7 +49,7 @@ import Partnerships from "@/pages/partnerships";
 import SocialClipAnalyzer from "@/pages/socialclip-analyzer";
 import TrendingContentGenerator from "@/pages/trending-content-generator";
 import CompetitorIntelScanner from "@/pages/competitor-intel-scanner";
-import MovieMatchmaker from "@/pages/movie-matchmaker";
+import MovieMatchmaker from "@/pages/movie-matchmaker-simple";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import FreeTools from "@/pages/free-tools";
