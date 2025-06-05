@@ -62,6 +62,7 @@ export default function MovieMatchmaker() {
   const [viewingContext, setViewingContext] = useState('');
   const [pastFavorites, setPastFavorites] = useState('');
   const [includeWildCard, setIncludeWildCard] = useState(false);
+  const [releaseYearRange, setReleaseYearRange] = useState([2000, 2024]);
 
   const moods = [
     { value: 'chill', label: 'Chill & Relaxed', icon: '😌' },
@@ -128,7 +129,8 @@ export default function MovieMatchmaker() {
         platforms,
         viewingContext,
         pastFavorites,
-        includeWildCard
+        includeWildCard,
+        releaseYearRange
       });
       
       const watchlistData = await response.json();
@@ -260,6 +262,26 @@ export default function MovieMatchmaker() {
                       value={pastFavorites}
                       onChange={(e) => setPastFavorites(e.target.value)}
                     />
+                  </div>
+
+                  {/* Release Year Range */}
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">
+                      Release Year Range: {releaseYearRange[0]} - {releaseYearRange[1]}
+                    </Label>
+                    <Slider
+                      value={releaseYearRange}
+                      onValueChange={setReleaseYearRange}
+                      max={2024}
+                      min={1980}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>1980</span>
+                      <span>2000</span>
+                      <span>2024</span>
+                    </div>
                   </div>
 
                   {/* Wild Card Option */}

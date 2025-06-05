@@ -1996,7 +1996,7 @@ Please provide analysis in this exact JSON format (no additional text):
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard } = preferences;
+    const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
     const prompt = `You are a movie and TV recommendation expert. Generate a personalized watchlist based on these preferences:
 
@@ -2006,6 +2006,7 @@ Time Available: ${timeAvailable} minutes
 Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
 Viewing Context: ${viewingContext || 'Not specified'}
 Past Favorites: ${pastFavorites || 'Not specified'}
+Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '2000 - 2024'}
 Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
 
 Please provide 6-8 diverse recommendations that fit these criteria. Include both movies and TV shows (episodes/seasons that fit the time constraint). For each recommendation, provide:
@@ -2083,6 +2084,31 @@ Respond with a JSON object in this exact format:
           recommendation = JSON.parse(jsonMatch[0]);
         } else {
           throw new Error("Unable to parse JSON response");
+        }
+      }
+      
+      // Fetch movie posters from OMDb API if available
+      if (process.env.OMDB_API_KEY && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
+        for (const movie of recommendation.recommendations) {
+          try {
+            const omdbResponse = await fetch(
+              `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=movie`
+            );
+            
+            if (omdbResponse.ok) {
+              const omdbData = await omdbResponse.json();
+              if (omdbData.Response === "True" && omdbData.Poster && omdbData.Poster !== "N/A") {
+                movie.poster = omdbData.Poster;
+                // Also update rating if available from OMDb
+                if (omdbData.imdbRating && omdbData.imdbRating !== "N/A") {
+                  movie.rating = parseFloat(omdbData.imdbRating);
+                }
+              }
+            }
+          } catch (omdbError) {
+            console.error(`Failed to fetch data for ${movie.title}:`, omdbError);
+            // Keep the existing data
+          }
         }
       }
       
