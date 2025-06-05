@@ -2277,7 +2277,7 @@ CRITICAL CONTENT TYPE RULES:
   // Movie Matchmaker API endpoint
   app.post("/api/generate-watchlist", async (req: Request, res: Response) => {
     try {
-      const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
+      const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
 
       if (!mood) {
         return res.status(400).json({ error: "Mood is required" });
