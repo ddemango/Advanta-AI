@@ -2222,6 +2222,8 @@ Respond with a JSON object in this exact format:
         .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
         .replace(/\n/g, " ") // Replace newlines with spaces
         .replace(/\"/g, '"') // Fix smart quotes
+        .replace(/,\s*}/g, "}") // Remove trailing commas before closing braces
+        .replace(/,\s*]/g, "]") // Remove trailing commas before closing brackets
         .trim();
       
       let recommendation;

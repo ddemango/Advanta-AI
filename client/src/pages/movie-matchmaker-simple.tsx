@@ -217,25 +217,7 @@ export default function MovieMatchmaker() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Mood Selection */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">What's your mood?</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {moods.map((m) => (
-                        <Button
-                          key={m.value}
-                          variant={mood === m.value ? "default" : "outline"}
-                          onClick={() => setMood(m.value)}
-                          className="justify-start h-auto p-3"
-                        >
-                          <span className="mr-2">{m.icon}</span>
-                          {m.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Content Type Selection */}
+                  {/* Content Type Selection - FIRST QUESTION */}
                   <div>
                     <Label className="text-base font-semibold mb-3 block">What would you like to watch?</Label>
                     <div className="grid grid-cols-2 gap-2">
@@ -253,6 +235,24 @@ export default function MovieMatchmaker() {
                           </Button>
                         );
                       })}
+                    </div>
+                  </div>
+
+                  {/* Mood Selection */}
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">What's your mood?</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {moods.map((m) => (
+                        <Button
+                          key={m.value}
+                          variant={mood === m.value ? "default" : "outline"}
+                          onClick={() => setMood(m.value)}
+                          className="justify-start h-auto p-3"
+                        >
+                          <span className="mr-2">{m.icon}</span>
+                          {m.label}
+                        </Button>
+                      ))}
                     </div>
                   </div>
 
