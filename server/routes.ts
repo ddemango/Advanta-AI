@@ -2120,12 +2120,8 @@ Please provide analysis in this exact JSON format (no additional text):
 
     const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
-    // Debug logging
-    console.log('Received contentTypes:', contentTypes);
-    
     // Build content type constraint - ensure contentTypes is always an array
     const safeContentTypes = contentTypes || ['movies'];
-    console.log('Safe contentTypes:', safeContentTypes);
     let contentTypeConstraint = "";
     
     if (safeContentTypes.length > 0) {
@@ -2277,14 +2273,7 @@ CRITICAL CONTENT TYPE RULES:
   // Movie Matchmaker API endpoint
   app.post("/api/generate-watchlist", async (req: Request, res: Response) => {
     try {
-      // Debug full request body
-      console.log('Full request body:', JSON.stringify(req.body, null, 2));
-      
       const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
-
-      // Debug individual extracted values
-      console.log('Extracted contentTypes:', contentTypes);
-      console.log('Type of contentTypes:', typeof contentTypes);
 
       if (!mood) {
         return res.status(400).json({ error: "Mood is required" });
@@ -2307,8 +2296,10 @@ CRITICAL CONTENT TYPE RULES:
         await Promise.allSettled(
           watchlistData.recommendations.map(async (movie: any) => {
             try {
+              // Use correct type parameter based on content type
+              const contentType = movie.contentType === 'tv_show' ? 'series' : 'movie';
               const response = await fetch(
-                `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=movie`
+                `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=${contentType}`
               );
               
               if (response.ok) {

@@ -138,20 +138,6 @@ export default function MovieMatchmaker() {
 
     setIsGenerating(true);
     
-    // Debug logging
-    console.log('Frontend contentTypes:', contentTypes);
-    console.log('Full request data:', {
-      mood,
-      contentTypes,
-      genres,
-      timeAvailable: timeAvailable[0],
-      platforms,
-      viewingContext,
-      pastFavorites,
-      includeWildCard,
-      releaseYearRange
-    });
-    
     try {
       const response = await apiRequest('POST', '/api/generate-watchlist', {
         mood,
