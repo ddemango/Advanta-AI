@@ -1986,42 +1986,56 @@ Please provide analysis in this exact JSON format (no additional text):
     return recommendations.slice(0, 5); // Return top 5 recommendations
   }
 
-  // Fast movie database for instant recommendations
+  // Expanded movie database for instant recommendations
   const movieDatabase = [
     // Chill & Relaxed
-    { title: "The Grand Budapest Hotel", year: 2014, genre: ["Comedy", "Drama"], rating: 8.1, runtime: 99, platform: ["Hulu", "Amazon Prime"], description: "A legendary concierge at a famous European hotel between the wars and his friendship with a young employee who becomes his trusted protégé.", mood: "chill", poster: "https://via.placeholder.com/300x450/4A90E2/ffffff?text=The+Grand+Budapest+Hotel" },
-    { title: "Lost in Translation", year: 2003, genre: ["Drama", "Romance"], rating: 7.7, runtime: 102, platform: ["Netflix", "HBO Max"], description: "A faded movie star and a neglected young woman form an unlikely bond after crossing paths in Tokyo.", mood: "chill", poster: "https://via.placeholder.com/300x450/4A90E2/ffffff?text=Lost+in+Translation" },
-    { title: "Chef", year: 2014, genre: ["Comedy", "Drama"], rating: 7.3, runtime: 114, platform: ["Netflix", "Amazon Prime"], description: "A head chef quits his restaurant job and buys a food truck in an effort to reclaim his creative promise.", mood: "chill", poster: "https://via.placeholder.com/300x450/4A90E2/ffffff?text=Chef" },
+    { title: "The Grand Budapest Hotel", year: 2014, genre: ["Comedy", "Drama"], rating: 8.1, runtime: 99, platform: ["Hulu", "Amazon Prime"], description: "A legendary concierge at a famous European hotel between the wars and his friendship with a young employee who becomes his trusted protégé.", mood: "chill" },
+    { title: "Lost in Translation", year: 2003, genre: ["Drama", "Romance"], rating: 7.7, runtime: 102, platform: ["Netflix", "HBO Max"], description: "A faded movie star and a neglected young woman form an unlikely bond after crossing paths in Tokyo.", mood: "chill" },
+    { title: "Chef", year: 2014, genre: ["Comedy", "Drama"], rating: 7.3, runtime: 114, platform: ["Netflix", "Amazon Prime"], description: "A head chef quits his restaurant job and buys a food truck in an effort to reclaim his creative promise.", mood: "chill" },
+    { title: "Midnight in Paris", year: 2011, genre: ["Comedy", "Fantasy"], rating: 7.7, runtime: 94, platform: ["Netflix", "Amazon Prime"], description: "While on a trip to Paris with his fiancée's family, a nostalgic screenwriter finds himself mysteriously going back to the 1920s every day at midnight.", mood: "chill" },
+    { title: "Frances Ha", year: 2012, genre: ["Comedy", "Drama"], rating: 7.4, runtime: 86, platform: ["Netflix", "Criterion"], description: "A New York woman who doesn't really have an apartment apprentices with a dance company.", mood: "chill" },
     
     // Inspired & Motivated
-    { title: "The Pursuit of Happyness", year: 2006, genre: ["Biography", "Drama"], rating: 8.0, runtime: 117, platform: ["Netflix", "Hulu"], description: "A struggling salesman takes custody of his son as he's poised to begin a life-changing professional career.", mood: "inspired", poster: "https://via.placeholder.com/300x450/50E3C2/ffffff?text=The+Pursuit+of+Happyness" },
-    { title: "Hidden Figures", year: 2016, genre: ["Biography", "Drama"], rating: 7.8, runtime: 127, platform: ["Disney+", "Hulu"], description: "The story of three African-American women mathematicians who served a vital role in NASA during the early years of the U.S. space program.", mood: "inspired", poster: "https://via.placeholder.com/300x450/50E3C2/ffffff?text=Hidden+Figures" },
-    { title: "The Social Dilemma", year: 2020, genre: ["Documentary"], rating: 7.6, runtime: 94, platform: ["Netflix"], description: "Explores the dangerous human impact of social networking, with tech experts sounding the alarm on their own creations.", mood: "inspired", poster: "https://via.placeholder.com/300x450/50E3C2/ffffff?text=The+Social+Dilemma" },
+    { title: "The Pursuit of Happyness", year: 2006, genre: ["Biography", "Drama"], rating: 8.0, runtime: 117, platform: ["Netflix", "Hulu"], description: "A struggling salesman takes custody of his son as he's poised to begin a life-changing professional career.", mood: "inspired" },
+    { title: "Hidden Figures", year: 2016, genre: ["Biography", "Drama"], rating: 7.8, runtime: 127, platform: ["Disney+", "Hulu"], description: "The story of three African-American women mathematicians who served a vital role in NASA during the early years of the U.S. space program.", mood: "inspired" },
+    { title: "The Social Dilemma", year: 2020, genre: ["Documentary"], rating: 7.6, runtime: 94, platform: ["Netflix"], description: "Explores the dangerous human impact of social networking, with tech experts sounding the alarm on their own creations.", mood: "inspired" },
+    { title: "Free Solo", year: 2018, genre: ["Documentary", "Sport"], rating: 8.2, runtime: 100, platform: ["Disney+", "Hulu"], description: "Follow Alex Honnold as he attempts to become the first person to ever free solo climb Yosemite's 3,000 foot high El Capitan wall.", mood: "inspired" },
+    { title: "Won't You Be My Neighbor?", year: 2018, genre: ["Documentary", "Biography"], rating: 8.4, runtime: 94, platform: ["Amazon Prime", "HBO Max"], description: "An exploration of the life, lessons, and legacy of iconic children's television host, Fred Rogers.", mood: "inspired" },
     
     // Romantic & Sweet
-    { title: "The Princess Bride", year: 1987, genre: ["Adventure", "Family", "Fantasy"], rating: 8.0, runtime: 98, platform: ["Disney+", "Hulu"], description: "A bedridden boy's grandfather reads him the story of a farmboy-turned-pirate who encounters numerous obstacles, enemies and allies in his quest to be reunited with his true love.", mood: "romantic", poster: "https://via.placeholder.com/300x450/F5A623/ffffff?text=The+Princess+Bride" },
-    { title: "Before Sunrise", year: 1995, genre: ["Drama", "Romance"], rating: 8.1, runtime: 101, platform: ["HBO Max", "Amazon Prime"], description: "A young man and woman meet on a train in Europe, and wind up spending one evening together in Vienna.", mood: "romantic", poster: "https://via.placeholder.com/300x450/F5A623/ffffff?text=Before+Sunrise" },
-    { title: "La La Land", year: 2016, genre: ["Comedy", "Drama", "Music"], rating: 8.0, runtime: 128, platform: ["Netflix", "Amazon Prime"], description: "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.", mood: "romantic", poster: "https://via.placeholder.com/300x450/F5A623/ffffff?text=La+La+Land" },
+    { title: "The Princess Bride", year: 1987, genre: ["Adventure", "Family", "Fantasy"], rating: 8.0, runtime: 98, platform: ["Disney+", "Hulu"], description: "A bedridden boy's grandfather reads him the story of a farmboy-turned-pirate who encounters numerous obstacles, enemies and allies in his quest to be reunited with his true love.", mood: "romantic" },
+    { title: "Before Sunrise", year: 1995, genre: ["Drama", "Romance"], rating: 8.1, runtime: 101, platform: ["HBO Max", "Amazon Prime"], description: "A young man and woman meet on a train in Europe, and wind up spending one evening together in Vienna.", mood: "romantic" },
+    { title: "La La Land", year: 2016, genre: ["Comedy", "Drama", "Music"], rating: 8.0, runtime: 128, platform: ["Netflix", "Amazon Prime"], description: "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.", mood: "romantic" },
+    { title: "About Time", year: 2013, genre: ["Comedy", "Drama", "Fantasy"], rating: 7.8, runtime: 123, platform: ["Netflix", "Amazon Prime"], description: "At the age of 21, Tim discovers he can travel in time and change what happens and has happened in his own life.", mood: "romantic" },
+    { title: "The Half of It", year: 2020, genre: ["Comedy", "Drama", "Romance"], rating: 6.9, runtime: 104, platform: ["Netflix"], description: "A shy student helps the sweet jock woo a girl whom she secretly loves.", mood: "romantic" },
     
     // Funny & Light
-    { title: "Paddington", year: 2014, genre: ["Adventure", "Comedy", "Family"], rating: 7.3, runtime: 95, platform: ["Netflix", "Amazon Prime"], description: "A young Peruvian bear travels to London in search of a home. Finding himself lost and alone at Paddington Station, he meets the kindly Brown family.", mood: "funny", poster: "https://via.placeholder.com/300x450/BD10E0/ffffff?text=Paddington" },
-    { title: "The Grand Budapest Hotel", year: 2014, genre: ["Adventure", "Comedy"], rating: 8.1, runtime: 99, platform: ["Hulu", "Amazon Prime"], description: "A legendary concierge at a famous European hotel between the wars and his friendship with a young employee.", mood: "funny", poster: "https://via.placeholder.com/300x450/BD10E0/ffffff?text=The+Grand+Budapest+Hotel" },
-    { title: "What We Do in the Shadows", year: 2014, genre: ["Comedy", "Horror"], rating: 7.7, runtime: 86, platform: ["Hulu", "HBO Max"], description: "Viago, Deacon and Vladislav are vampires who are finding that modern life has them struggling with the mundane.", mood: "funny", poster: "https://via.placeholder.com/300x450/BD10E0/ffffff?text=What+We+Do+in+the+Shadows" },
+    { title: "Paddington", year: 2014, genre: ["Adventure", "Comedy", "Family"], rating: 7.3, runtime: 95, platform: ["Netflix", "Amazon Prime"], description: "A young Peruvian bear travels to London in search of a home. Finding himself lost and alone at Paddington Station, he meets the kindly Brown family.", mood: "funny" },
+    { title: "What We Do in the Shadows", year: 2014, genre: ["Comedy", "Horror"], rating: 7.7, runtime: 86, platform: ["Hulu", "HBO Max"], description: "Viago, Deacon and Vladislav are vampires who are finding that modern life has them struggling with the mundane.", mood: "funny" },
+    { title: "Knives Out", year: 2019, genre: ["Comedy", "Crime", "Drama"], rating: 7.9, runtime: 130, platform: ["Amazon Prime", "Peacock"], description: "A detective investigates the death of a patriarch of an eccentric, combative family.", mood: "funny" },
+    { title: "Palm Springs", year: 2020, genre: ["Comedy", "Fantasy", "Romance"], rating: 7.4, runtime: 90, platform: ["Hulu"], description: "Nyles and Sarah find themselves stuck in a time loop and living the same day over and over again.", mood: "funny" },
+    { title: "Game Night", year: 2018, genre: ["Action", "Comedy", "Crime"], rating: 6.9, runtime: 100, platform: ["HBO Max", "Amazon Prime"], description: "A group of friends who meet regularly for game nights find themselves entangled in a real-life mystery.", mood: "funny" },
     
     // Adventurous & Bold
-    { title: "Mad Max: Fury Road", year: 2015, genre: ["Action", "Adventure"], rating: 8.1, runtime: 120, platform: ["HBO Max", "Amazon Prime"], description: "In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland with the aid of a group of female prisoners.", mood: "adventurous", poster: "https://via.placeholder.com/300x450/D0021B/ffffff?text=Mad+Max+Fury+Road" },
-    { title: "Spider-Man: Into the Spider-Verse", year: 2018, genre: ["Animation", "Action", "Adventure"], rating: 8.4, runtime: 117, platform: ["Netflix", "Sony Pictures"], description: "Teen Miles Morales becomes the Spider-Man of his universe, and must join with five spider-powered individuals from other dimensions.", mood: "adventurous", poster: "https://via.placeholder.com/300x450/D0021B/ffffff?text=Spider-Man+Into+the+Spider-Verse" },
-    { title: "The Lord of the Rings: Fellowship", year: 2001, genre: ["Adventure", "Drama", "Fantasy"], rating: 8.8, runtime: 178, platform: ["HBO Max", "Amazon Prime"], description: "A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring.", mood: "adventurous", poster: "https://via.placeholder.com/300x450/D0021B/ffffff?text=LOTR+Fellowship" },
+    { title: "Mad Max: Fury Road", year: 2015, genre: ["Action", "Adventure"], rating: 8.1, runtime: 120, platform: ["HBO Max", "Amazon Prime"], description: "In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland with the aid of a group of female prisoners.", mood: "adventurous" },
+    { title: "Spider-Man: Into the Spider-Verse", year: 2018, genre: ["Animation", "Action", "Adventure"], rating: 8.4, runtime: 117, platform: ["Netflix", "Sony Pictures"], description: "Teen Miles Morales becomes the Spider-Man of his universe, and must join with five spider-powered individuals from other dimensions.", mood: "adventurous" },
+    { title: "The Lord of the Rings: Fellowship", year: 2001, genre: ["Adventure", "Drama", "Fantasy"], rating: 8.8, runtime: 178, platform: ["HBO Max", "Amazon Prime"], description: "A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring.", mood: "adventurous" },
+    { title: "Indiana Jones: Raiders of the Lost Ark", year: 1981, genre: ["Action", "Adventure"], rating: 8.5, runtime: 115, platform: ["Disney+", "Paramount+"], description: "Archaeologist Indiana Jones races against time to retrieve a legendary artifact that can change the course of history.", mood: "adventurous" },
+    { title: "Mission: Impossible - Fallout", year: 2018, genre: ["Action", "Adventure", "Thriller"], rating: 7.7, runtime: 147, platform: ["Paramount+", "Amazon Prime"], description: "Ethan Hunt and his IMF team, along with some familiar allies, race against time after a mission gone wrong.", mood: "adventurous" },
     
     // Thrilled & Scared
-    { title: "A Quiet Place", year: 2018, genre: ["Drama", "Horror", "Sci-Fi"], rating: 7.5, runtime: 90, platform: ["Paramount+", "Amazon Prime"], description: "In a post-apocalyptic world, a family is forced to live in silence while hiding from monsters with ultra-sensitive hearing.", mood: "scared", poster: "https://via.placeholder.com/300x450/7ED321/ffffff?text=A+Quiet+Place" },
-    { title: "Get Out", year: 2017, genre: ["Horror", "Mystery", "Thriller"], rating: 7.7, runtime: 104, platform: ["Netflix", "Peacock"], description: "A young African-American visits his white girlfriend's parents for the weekend, where his simmering uneasiness about their reception of him eventually reaches a boiling point.", mood: "scared", poster: "https://via.placeholder.com/300x450/7ED321/ffffff?text=Get+Out" },
-    { title: "Hereditary", year: 2018, genre: ["Drama", "Horror", "Mystery"], rating: 7.3, runtime: 127, platform: ["Netflix", "Amazon Prime"], description: "A grieving family is haunted by tragedy and disturbing secrets.", mood: "scared", poster: "https://via.placeholder.com/300x450/7ED321/ffffff?text=Hereditary" },
+    { title: "A Quiet Place", year: 2018, genre: ["Drama", "Horror", "Sci-Fi"], rating: 7.5, runtime: 90, platform: ["Paramount+", "Amazon Prime"], description: "In a post-apocalyptic world, a family is forced to live in silence while hiding from monsters with ultra-sensitive hearing.", mood: "scared" },
+    { title: "Get Out", year: 2017, genre: ["Horror", "Mystery", "Thriller"], rating: 7.7, runtime: 104, platform: ["Netflix", "Peacock"], description: "A young African-American visits his white girlfriend's parents for the weekend, where his simmering uneasiness about their reception of him eventually reaches a boiling point.", mood: "scared" },
+    { title: "Hereditary", year: 2018, genre: ["Drama", "Horror", "Mystery"], rating: 7.3, runtime: 127, platform: ["Netflix", "Amazon Prime"], description: "A grieving family is haunted by tragedy and disturbing secrets.", mood: "scared" },
+    { title: "The Conjuring", year: 2013, genre: ["Horror", "Mystery", "Thriller"], rating: 7.5, runtime: 112, platform: ["HBO Max", "Amazon Prime"], description: "Paranormal investigators Ed and Lorraine Warren work to help a family terrorized by a dark presence in their farmhouse.", mood: "scared" },
+    { title: "Midsommar", year: 2019, genre: ["Drama", "Horror", "Mystery"], rating: 7.1, runtime: 148, platform: ["Amazon Prime", "Apple TV+"], description: "A couple travels to Sweden to visit their friend's rural hometown for its fabled mid-summer festival.", mood: "scared" },
     
     // Thoughtful & Deep
-    { title: "Arrival", year: 2016, genre: ["Drama", "Sci-Fi"], rating: 7.9, runtime: 116, platform: ["Netflix", "Hulu"], description: "A linguist works with the military to communicate with alien lifeforms after twelve mysterious spacecraft appear around the world.", mood: "thoughtful", poster: "https://via.placeholder.com/300x450/9013FE/ffffff?text=Arrival" },
-    { title: "Her", year: 2013, genre: ["Drama", "Romance", "Sci-Fi"], rating: 8.0, runtime: 126, platform: ["Netflix", "HBO Max"], description: "In a near future, a lonely writer develops an unlikely relationship with an operating system designed to meet his every need.", mood: "thoughtful", poster: "https://via.placeholder.com/300x450/9013FE/ffffff?text=Her" },
-    { title: "Eternal Sunshine of the Spotless Mind", year: 2004, genre: ["Drama", "Romance", "Sci-Fi"], rating: 8.3, runtime: 108, platform: ["Netflix", "Peacock"], description: "When their relationship turns sour, a couple undergoes a medical procedure to have each other erased from their memories.", mood: "thoughtful", poster: "https://via.placeholder.com/300x450/9013FE/ffffff?text=Eternal+Sunshine" }
+    { title: "Arrival", year: 2016, genre: ["Drama", "Sci-Fi"], rating: 7.9, runtime: 116, platform: ["Netflix", "Hulu"], description: "A linguist works with the military to communicate with alien lifeforms after twelve mysterious spacecraft appear around the world.", mood: "thoughtful" },
+    { title: "Her", year: 2013, genre: ["Drama", "Romance", "Sci-Fi"], rating: 8.0, runtime: 126, platform: ["Netflix", "HBO Max"], description: "In a near future, a lonely writer develops an unlikely relationship with an operating system designed to meet his every need.", mood: "thoughtful" },
+    { title: "Eternal Sunshine of the Spotless Mind", year: 2004, genre: ["Drama", "Romance", "Sci-Fi"], rating: 8.3, runtime: 108, platform: ["Netflix", "Peacock"], description: "When their relationship turns sour, a couple undergoes a medical procedure to have each other erased from their memories.", mood: "thoughtful" },
+    { title: "Ex Machina", year: 2014, genre: ["Drama", "Sci-Fi", "Thriller"], rating: 7.7, runtime: 108, platform: ["Netflix", "Amazon Prime"], description: "A young programmer is selected to participate in a ground-breaking experiment in synthetic intelligence.", mood: "thoughtful" },
+    { title: "Blade Runner 2049", year: 2017, genre: ["Action", "Drama", "Mystery"], rating: 8.0, runtime: 164, platform: ["Netflix", "Amazon Prime"], description: "Young Blade Runner K's discovery of a long-buried secret leads him to track down former Blade Runner Rick Deckard.", mood: "thoughtful" }
   ];
 
   // Fast watchlist generation function
@@ -2067,8 +2081,8 @@ Please provide analysis in this exact JSON format (no additional text):
       filteredMovies.push(...wildCards.slice(0, 1));
     }
     
-    // Limit to 5 recommendations and add match scores
-    const recommendations = filteredMovies.slice(0, 5).map(movie => ({
+    // Limit to 10 recommendations and add match scores
+    const recommendations = filteredMovies.slice(0, 10).map(movie => ({
       ...movie,
       matchScore: Math.floor(Math.random() * 20) + 80, // 80-100% match
       reasonForRecommendation: `Perfect ${mood} mood match with ${movie.genre.join(', ')} elements`
@@ -2096,7 +2110,7 @@ Please provide analysis in this exact JSON format (no additional text):
   // Movie Matchmaker API endpoint
   app.post("/api/generate-watchlist", async (req: Request, res: Response) => {
     try {
-      const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard } = req.body;
+      const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
 
       if (!mood) {
         return res.status(400).json({ error: "Mood is required" });
@@ -2109,8 +2123,45 @@ Please provide analysis in this exact JSON format (no additional text):
         platforms: platforms || [],
         viewingContext: viewingContext || '',
         pastFavorites: pastFavorites || '',
-        includeWildCard: includeWildCard || false
+        includeWildCard: includeWildCard || false,
+        releaseYearRange: releaseYearRange || [1980, 2024]
       });
+
+      // Add real movie posters using OMDb API if available
+      if (process.env.OMDB_API_KEY && watchlistData.recommendations) {
+        await Promise.allSettled(
+          watchlistData.recommendations.map(async (movie: any) => {
+            try {
+              const response = await fetch(
+                `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=movie`
+              );
+              
+              if (response.ok) {
+                const data = await response.json();
+                if (data.Response === "True" && data.Poster && data.Poster !== "N/A") {
+                  movie.poster = data.Poster;
+                  // Update rating if available from OMDb
+                  if (data.imdbRating && data.imdbRating !== "N/A") {
+                    movie.rating = parseFloat(data.imdbRating);
+                  }
+                } else {
+                  movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+                }
+              } else {
+                movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+              }
+            } catch (error) {
+              console.error(`Failed to fetch poster for ${movie.title}:`, error);
+              movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+            }
+          })
+        );
+      } else {
+        // Use placeholder posters when OMDb API is not available
+        watchlistData.recommendations.forEach((movie: any) => {
+          movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+        });
+      }
 
       res.json(watchlistData);
     } catch (error) {
