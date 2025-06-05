@@ -5,6 +5,7 @@ import { insertBlogPostSchema, insertResourceSchema } from "@shared/schema";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { log } from "./vite";
 import Stripe from "stripe";
+import OpenAI from "openai";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
