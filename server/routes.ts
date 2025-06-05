@@ -2142,74 +2142,27 @@ Please provide analysis in this exact JSON format (no additional text):
       genreConstraint = `CRITICAL REQUIREMENT: Content MUST include ONLY these exact genres: ${genres.join(', ')}. Do not include content with genres outside this list.`;
     }
 
-    const prompt = `You are a movie and TV show recommendation expert. Generate exactly 10 personalized recommendations based on these preferences:
+    const prompt = `Generate 10 ${contentTypeText} for ${mood} mood. ${genreConstraint}
 
-Mood: ${mood}
-CONTENT TYPE REQUIREMENT: ${contentTypeConstraint}
-${genreConstraint}
-Time Available: ${timeAvailable} minutes
-Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
-Viewing Context: ${viewingContext || 'Not specified'}
-Past Favorites: ${pastFavorites || 'Not specified'}
-Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '1980 - 2024'}
-Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
-
-${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 
-  `ABSOLUTE REQUIREMENT: You MUST recommend ONLY TV SHOWS. DO NOT include any movies.
-   - Every recommendation must have contentType: "tv_show"
-   - Include seasons and episodes for each TV show
-   - Examples: Breaking Bad, Game of Thrones, The Office, Stranger Things, etc.` : 
-  safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows') ? 
-  `ABSOLUTE REQUIREMENT: You MUST recommend ONLY MOVIES. DO NOT include any TV shows.
-   - Every recommendation must have contentType: "movie"
-   - Examples: The Shawshank Redemption, Inception, Titanic, etc.` : 
-  'Include a mix of movies and TV shows'}
-
-CRITICAL RULES - MUST FOLLOW EXACTLY:
-1. Provide exactly 10 recommendations
-2. CONTENT TYPE ENFORCEMENT: ${contentTypeConstraint}
-3. ${genreConstraint ? genreConstraint : 'No genre restrictions'}
-4. For TV shows: Set contentType to "tv_show" and include seasons/episodes
-5. For movies: Set contentType to "movie" 
-6. For TV shows, consider episode runtime when matching time constraints
-7. Focus on authentic, real titles available on major streaming platforms
-8. Match the specified mood accurately
-
-For each recommendation, provide:
-- Title and year
-- Content type ("movie" or "tv_show")
-- Runtime in minutes (for movies) or episode runtime (for TV shows)
-- Genre tags (MUST match user's selected genres if specified)
-- IMDB rating (realistic)
-- Available platforms
-- Brief description (2-3 sentences)
-- Match percentage (why it fits their preferences)
-- Reason for recommendation
-- For TV shows: number of seasons and episodes
-
-Respond with a JSON object in this exact format:
+JSON:
 {
-  "mood": "${mood}",
-  "preferences": {...},
   "recommendations": [
     {
-      "title": "Content Title",
+      "title": "Title",
       "year": 2023,
-      "contentType": "movie",
-      "genre": ["Drama", "Thriller"],
+      "contentType": "${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'}",
+      "genre": ["${genres.length > 0 ? genres[0] : 'Drama'}"],
       "rating": 8.1,
       "runtime": 120,
-      "platform": ["Netflix", "Hulu"],
-      "description": "Brief description here...",
-      "poster": "https://placeholder.com/poster.jpg",
+      "platform": ["Netflix"],
+      "description": "Brief description",
       "matchScore": 95,
-      "reasonForRecommendation": "Perfect mood match because...",
+      "reasonForRecommendation": "Matches ${mood} mood",
       "seasons": 3,
       "episodes": 30
     }
   ],
-  "totalMatches": 10,
-  "personalizedMessage": "Based on your ${mood} mood and preferences, here are 10 perfect matches..."
+  "personalizedMessage": "Your ${mood} watchlist"
 }`;
 
     try {
@@ -2232,8 +2185,8 @@ CRITICAL CONTENT TYPE RULES:
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 3000,
-        temperature: 0.7,
+        max_tokens: 1500,
+        temperature: 0.3,
       });
 
       const responseContent = response.choices[0].message.content || '{}';
