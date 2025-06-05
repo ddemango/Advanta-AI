@@ -27,7 +27,7 @@ import {
   Play
 } from 'lucide-react';
 
-interface MovieRecommendation {
+interface ContentRecommendation {
   title: string;
   year: number;
   genre: string[];
@@ -39,12 +39,15 @@ interface MovieRecommendation {
   trailerUrl?: string;
   matchScore: number;
   reasonForRecommendation: string;
+  contentType: 'movie' | 'tv_show';
+  seasons?: number; // For TV shows
+  episodes?: number; // For TV shows
 }
 
 interface WatchlistResponse {
   mood: string;
   preferences: any;
-  recommendations: MovieRecommendation[];
+  recommendations: ContentRecommendation[];
   totalMatches: number;
   personalizedMessage: string;
 }
