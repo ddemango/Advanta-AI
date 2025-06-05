@@ -2258,22 +2258,28 @@ CRITICAL CONTENT TYPE RULES:
             try {
               // Use correct type parameter based on content type
               const contentType = movie.contentType === 'tv_show' ? 'series' : 'movie';
-              const response = await fetch(
-                `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=${contentType}`
-              );
+              const omdbUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=${contentType}`;
+              console.log(`Fetching poster for ${movie.title} (${movie.year}) - ${contentType}`);
+              
+              const response = await fetch(omdbUrl);
               
               if (response.ok) {
                 const data = await response.json();
+                console.log(`OMDb response for ${movie.title}:`, data);
+                
                 if (data.Response === "True" && data.Poster && data.Poster !== "N/A") {
                   movie.poster = data.Poster;
+                  console.log(`✓ Found poster for ${movie.title}: ${data.Poster}`);
                   // Update rating if available from OMDb
                   if (data.imdbRating && data.imdbRating !== "N/A") {
                     movie.rating = parseFloat(data.imdbRating);
                   }
                 } else {
+                  console.log(`✗ No poster found for ${movie.title}:`, data.Error || 'Poster is N/A');
                   movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
                 }
               } else {
+                console.log(`✗ OMDb API request failed for ${movie.title}:`, response.status, response.statusText);
                 movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
               }
             } catch (error) {
