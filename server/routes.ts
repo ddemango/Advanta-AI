@@ -2142,6 +2142,13 @@ Please provide analysis in this exact JSON format (no additional text):
       genreConstraint = `CRITICAL REQUIREMENT: Content MUST include ONLY these exact genres: ${genres.join(', ')}. Do not include content with genres outside this list.`;
     }
 
+    // Determine content type text for prompt
+    const contentTypeText = safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 
+      'TV shows' : 
+      safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows') ? 
+      'movies' : 
+      'movies and TV shows';
+
     const prompt = `Generate 10 ${contentTypeText} for ${mood} mood. ${genreConstraint}
 
 JSON:
