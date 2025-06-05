@@ -2009,7 +2009,7 @@ Past Favorites: ${pastFavorites || 'Not specified'}
 Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '2000 - 2024'}
 Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
 
-Please provide 6-8 diverse recommendations that fit these criteria. Include both movies and TV shows (episodes/seasons that fit the time constraint). For each recommendation, provide:
+Please provide 5-6 diverse recommendations that fit these criteria. Include both movies and TV shows (episodes/seasons that fit the time constraint). For each recommendation, provide:
 
 1. Title and year
 2. Runtime in minutes
@@ -2058,8 +2058,8 @@ Respond with a JSON object in this exact format:
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 3000,
-        temperature: 0.7,
+        max_tokens: 2000,
+        temperature: 0.5,
       });
 
       const responseContent = response.choices[0].message.content || '{}';
@@ -2087,38 +2087,42 @@ Respond with a JSON object in this exact format:
         }
       }
       
-      // Fetch movie posters from OMDb API if available
-      if (process.env.OMDB_API_KEY && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
-        for (const movie of recommendation.recommendations) {
-          try {
-            const omdbResponse = await fetch(
-              `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=movie`
-            );
-            
-            if (omdbResponse.ok) {
-              const omdbData = await omdbResponse.json();
-              if (omdbData.Response === "True" && omdbData.Poster && omdbData.Poster !== "N/A") {
-                movie.poster = omdbData.Poster;
-                // Also update rating if available from OMDb
-                if (omdbData.imdbRating && omdbData.imdbRating !== "N/A") {
-                  movie.rating = parseFloat(omdbData.imdbRating);
+      // Fetch movie posters in parallel for faster performance
+      if (recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
+        if (process.env.OMDB_API_KEY) {
+          // Use OMDb API with parallel requests
+          await Promise.allSettled(
+            recommendation.recommendations.map(async (movie) => {
+              try {
+                const omdbResponse = await fetch(
+                  `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=movie`,
+                  { timeout: 3000 } // 3 second timeout
+                );
+                
+                if (omdbResponse.ok) {
+                  const omdbData = await omdbResponse.json();
+                  if (omdbData.Response === "True" && omdbData.Poster && omdbData.Poster !== "N/A") {
+                    movie.poster = omdbData.Poster;
+                    if (omdbData.imdbRating && omdbData.imdbRating !== "N/A") {
+                      movie.rating = parseFloat(omdbData.imdbRating);
+                    }
+                  } else {
+                    movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+                  }
+                } else {
+                  movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
                 }
+              } catch (omdbError) {
+                console.error(`Failed to fetch data for ${movie.title}:`, omdbError);
+                movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
               }
-            }
-          } catch (omdbError) {
-            console.error(`Failed to fetch data for ${movie.title}:`, omdbError);
-            // Use fallback poster service
-            movie.poster = `https://img.omdbapi.com/?apikey=placeholder&t=${encodeURIComponent(movie.title)}&y=${movie.year}`;
-          }
-        }
-      } else {
-        // Use alternative poster source when OMDb API is not available
-        if (recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
-          for (const movie of recommendation.recommendations) {
-            // Generate poster URL using movie title and year
-            const posterUrl = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
-            movie.poster = posterUrl;
-          }
+            })
+          );
+        } else {
+          // Use placeholder posters when API is not available
+          recommendation.recommendations.forEach((movie) => {
+            movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+          });
         }
       }
       
