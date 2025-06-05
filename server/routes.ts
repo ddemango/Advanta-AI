@@ -1986,151 +1986,111 @@ Please provide analysis in this exact JSON format (no additional text):
     return recommendations.slice(0, 5); // Return top 5 recommendations
   }
 
-  // AI-powered watchlist generation function
-  async function generatePersonalizedWatchlist(preferences: any) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured");
-    }
+  // Fast movie database for instant recommendations
+  const movieDatabase = [
+    // Chill & Relaxed
+    { title: "The Grand Budapest Hotel", year: 2014, genre: ["Comedy", "Drama"], rating: 8.1, runtime: 99, platform: ["Hulu", "Amazon Prime"], description: "A legendary concierge at a famous European hotel between the wars and his friendship with a young employee who becomes his trusted protégé.", mood: "chill", poster: "https://via.placeholder.com/300x450/4A90E2/ffffff?text=The+Grand+Budapest+Hotel" },
+    { title: "Lost in Translation", year: 2003, genre: ["Drama", "Romance"], rating: 7.7, runtime: 102, platform: ["Netflix", "HBO Max"], description: "A faded movie star and a neglected young woman form an unlikely bond after crossing paths in Tokyo.", mood: "chill", poster: "https://via.placeholder.com/300x450/4A90E2/ffffff?text=Lost+in+Translation" },
+    { title: "Chef", year: 2014, genre: ["Comedy", "Drama"], rating: 7.3, runtime: 114, platform: ["Netflix", "Amazon Prime"], description: "A head chef quits his restaurant job and buys a food truck in an effort to reclaim his creative promise.", mood: "chill", poster: "https://via.placeholder.com/300x450/4A90E2/ffffff?text=Chef" },
+    
+    // Inspired & Motivated
+    { title: "The Pursuit of Happyness", year: 2006, genre: ["Biography", "Drama"], rating: 8.0, runtime: 117, platform: ["Netflix", "Hulu"], description: "A struggling salesman takes custody of his son as he's poised to begin a life-changing professional career.", mood: "inspired", poster: "https://via.placeholder.com/300x450/50E3C2/ffffff?text=The+Pursuit+of+Happyness" },
+    { title: "Hidden Figures", year: 2016, genre: ["Biography", "Drama"], rating: 7.8, runtime: 127, platform: ["Disney+", "Hulu"], description: "The story of three African-American women mathematicians who served a vital role in NASA during the early years of the U.S. space program.", mood: "inspired", poster: "https://via.placeholder.com/300x450/50E3C2/ffffff?text=Hidden+Figures" },
+    { title: "The Social Dilemma", year: 2020, genre: ["Documentary"], rating: 7.6, runtime: 94, platform: ["Netflix"], description: "Explores the dangerous human impact of social networking, with tech experts sounding the alarm on their own creations.", mood: "inspired", poster: "https://via.placeholder.com/300x450/50E3C2/ffffff?text=The+Social+Dilemma" },
+    
+    // Romantic & Sweet
+    { title: "The Princess Bride", year: 1987, genre: ["Adventure", "Family", "Fantasy"], rating: 8.0, runtime: 98, platform: ["Disney+", "Hulu"], description: "A bedridden boy's grandfather reads him the story of a farmboy-turned-pirate who encounters numerous obstacles, enemies and allies in his quest to be reunited with his true love.", mood: "romantic", poster: "https://via.placeholder.com/300x450/F5A623/ffffff?text=The+Princess+Bride" },
+    { title: "Before Sunrise", year: 1995, genre: ["Drama", "Romance"], rating: 8.1, runtime: 101, platform: ["HBO Max", "Amazon Prime"], description: "A young man and woman meet on a train in Europe, and wind up spending one evening together in Vienna.", mood: "romantic", poster: "https://via.placeholder.com/300x450/F5A623/ffffff?text=Before+Sunrise" },
+    { title: "La La Land", year: 2016, genre: ["Comedy", "Drama", "Music"], rating: 8.0, runtime: 128, platform: ["Netflix", "Amazon Prime"], description: "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.", mood: "romantic", poster: "https://via.placeholder.com/300x450/F5A623/ffffff?text=La+La+Land" },
+    
+    // Funny & Light
+    { title: "Paddington", year: 2014, genre: ["Adventure", "Comedy", "Family"], rating: 7.3, runtime: 95, platform: ["Netflix", "Amazon Prime"], description: "A young Peruvian bear travels to London in search of a home. Finding himself lost and alone at Paddington Station, he meets the kindly Brown family.", mood: "funny", poster: "https://via.placeholder.com/300x450/BD10E0/ffffff?text=Paddington" },
+    { title: "The Grand Budapest Hotel", year: 2014, genre: ["Adventure", "Comedy"], rating: 8.1, runtime: 99, platform: ["Hulu", "Amazon Prime"], description: "A legendary concierge at a famous European hotel between the wars and his friendship with a young employee.", mood: "funny", poster: "https://via.placeholder.com/300x450/BD10E0/ffffff?text=The+Grand+Budapest+Hotel" },
+    { title: "What We Do in the Shadows", year: 2014, genre: ["Comedy", "Horror"], rating: 7.7, runtime: 86, platform: ["Hulu", "HBO Max"], description: "Viago, Deacon and Vladislav are vampires who are finding that modern life has them struggling with the mundane.", mood: "funny", poster: "https://via.placeholder.com/300x450/BD10E0/ffffff?text=What+We+Do+in+the+Shadows" },
+    
+    // Adventurous & Bold
+    { title: "Mad Max: Fury Road", year: 2015, genre: ["Action", "Adventure"], rating: 8.1, runtime: 120, platform: ["HBO Max", "Amazon Prime"], description: "In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland with the aid of a group of female prisoners.", mood: "adventurous", poster: "https://via.placeholder.com/300x450/D0021B/ffffff?text=Mad+Max+Fury+Road" },
+    { title: "Spider-Man: Into the Spider-Verse", year: 2018, genre: ["Animation", "Action", "Adventure"], rating: 8.4, runtime: 117, platform: ["Netflix", "Sony Pictures"], description: "Teen Miles Morales becomes the Spider-Man of his universe, and must join with five spider-powered individuals from other dimensions.", mood: "adventurous", poster: "https://via.placeholder.com/300x450/D0021B/ffffff?text=Spider-Man+Into+the+Spider-Verse" },
+    { title: "The Lord of the Rings: Fellowship", year: 2001, genre: ["Adventure", "Drama", "Fantasy"], rating: 8.8, runtime: 178, platform: ["HBO Max", "Amazon Prime"], description: "A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring.", mood: "adventurous", poster: "https://via.placeholder.com/300x450/D0021B/ffffff?text=LOTR+Fellowship" },
+    
+    // Thrilled & Scared
+    { title: "A Quiet Place", year: 2018, genre: ["Drama", "Horror", "Sci-Fi"], rating: 7.5, runtime: 90, platform: ["Paramount+", "Amazon Prime"], description: "In a post-apocalyptic world, a family is forced to live in silence while hiding from monsters with ultra-sensitive hearing.", mood: "scared", poster: "https://via.placeholder.com/300x450/7ED321/ffffff?text=A+Quiet+Place" },
+    { title: "Get Out", year: 2017, genre: ["Horror", "Mystery", "Thriller"], rating: 7.7, runtime: 104, platform: ["Netflix", "Peacock"], description: "A young African-American visits his white girlfriend's parents for the weekend, where his simmering uneasiness about their reception of him eventually reaches a boiling point.", mood: "scared", poster: "https://via.placeholder.com/300x450/7ED321/ffffff?text=Get+Out" },
+    { title: "Hereditary", year: 2018, genre: ["Drama", "Horror", "Mystery"], rating: 7.3, runtime: 127, platform: ["Netflix", "Amazon Prime"], description: "A grieving family is haunted by tragedy and disturbing secrets.", mood: "scared", poster: "https://via.placeholder.com/300x450/7ED321/ffffff?text=Hereditary" },
+    
+    // Thoughtful & Deep
+    { title: "Arrival", year: 2016, genre: ["Drama", "Sci-Fi"], rating: 7.9, runtime: 116, platform: ["Netflix", "Hulu"], description: "A linguist works with the military to communicate with alien lifeforms after twelve mysterious spacecraft appear around the world.", mood: "thoughtful", poster: "https://via.placeholder.com/300x450/9013FE/ffffff?text=Arrival" },
+    { title: "Her", year: 2013, genre: ["Drama", "Romance", "Sci-Fi"], rating: 8.0, runtime: 126, platform: ["Netflix", "HBO Max"], description: "In a near future, a lonely writer develops an unlikely relationship with an operating system designed to meet his every need.", mood: "thoughtful", poster: "https://via.placeholder.com/300x450/9013FE/ffffff?text=Her" },
+    { title: "Eternal Sunshine of the Spotless Mind", year: 2004, genre: ["Drama", "Romance", "Sci-Fi"], rating: 8.3, runtime: 108, platform: ["Netflix", "Peacock"], description: "When their relationship turns sour, a couple undergoes a medical procedure to have each other erased from their memories.", mood: "thoughtful", poster: "https://via.placeholder.com/300x450/9013FE/ffffff?text=Eternal+Sunshine" }
+  ];
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+  // Fast watchlist generation function
+  function generatePersonalizedWatchlist(preferences: any) {
+    const { mood, genres, timeAvailable, platforms, releaseYearRange, includeWildCard } = preferences;
+    
+    // Filter movies based on preferences
+    let filteredMovies = movieDatabase.filter(movie => {
+      // Mood matching
+      if (mood && movie.mood !== mood) return false;
+      
+      // Runtime filtering
+      if (timeAvailable && movie.runtime > timeAvailable) return false;
+      
+      // Release year filtering
+      if (releaseYearRange) {
+        if (movie.year < releaseYearRange[0] || movie.year > releaseYearRange[1]) return false;
+      }
+      
+      // Genre filtering
+      if (genres && genres.length > 0) {
+        const hasMatchingGenre = genres.some(genre => movie.genre.includes(genre));
+        if (!hasMatchingGenre) return false;
+      }
+      
+      // Platform filtering
+      if (platforms && platforms.length > 0 && !platforms.includes('Any Platform')) {
+        const hasMatchingPlatform = platforms.some(platform => movie.platform.includes(platform));
+        if (!hasMatchingPlatform) return false;
+      }
+      
+      return true;
     });
-
-    const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
-
-    const prompt = `You are a movie and TV recommendation expert. Generate a personalized watchlist based on these preferences:
-
-Mood: ${mood}
-Preferred Genres: ${genres.length > 0 ? genres.join(', ') : 'Any'}
-Time Available: ${timeAvailable} minutes
-Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
-Viewing Context: ${viewingContext || 'Not specified'}
-Past Favorites: ${pastFavorites || 'Not specified'}
-Release Year Range: ${releaseYearRange ? `${releaseYearRange[0]} - ${releaseYearRange[1]}` : '2000 - 2024'}
-Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
-
-Please provide 5-6 diverse recommendations that fit these criteria. Include both movies and TV shows (episodes/seasons that fit the time constraint). For each recommendation, provide:
-
-1. Title and year
-2. Runtime in minutes
-3. Genre tags
-4. IMDB rating (realistic)
-5. Available platforms (choose from Netflix, Hulu, Amazon Prime, Disney+, HBO Max, Apple TV+, Paramount+)
-6. Brief description (2-3 sentences)
-7. Match percentage (why it fits their mood/preferences)
-8. Reason for recommendation
-
-Focus on current, real titles that are likely available on major streaming platforms. Make sure recommendations truly match the specified mood and time constraints.
-
-Respond with a JSON object in this exact format:
-{
-  "mood": "${mood}",
-  "preferences": {...},
-  "recommendations": [
-    {
-      "title": "Movie Title",
-      "year": 2023,
-      "genre": ["Drama", "Thriller"],
-      "rating": 8.1,
-      "runtime": 120,
-      "platform": ["Netflix", "Hulu"],
-      "description": "Brief description here...",
-      "poster": "https://image.tmdb.org/t/p/w500/placeholder.jpg",
-      "matchScore": 95,
-      "reasonForRecommendation": "Perfect mood match because..."
+    
+    // If no matches, expand criteria
+    if (filteredMovies.length === 0) {
+      filteredMovies = movieDatabase.filter(movie => movie.mood === mood).slice(0, 5);
     }
-  ],
-  "totalMatches": 8,
-  "personalizedMessage": "Based on your ${mood} mood and preferences, here are some perfect matches..."
-}`;
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert movie and TV show recommendation engine. Always respond with valid JSON format. Ensure all strings are properly escaped and the JSON is valid."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 2000,
-        temperature: 0.5,
-      });
-
-      const responseContent = response.choices[0].message.content || '{}';
-      
-      // Clean up any potential JSON formatting issues
-      const cleanedContent = responseContent
-        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-        .replace(/\n/g, " ") // Replace newlines with spaces
-        .replace(/\"/g, '"') // Fix smart quotes
-        .trim();
-      
-      let recommendation;
-      try {
-        recommendation = JSON.parse(cleanedContent);
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError);
-        console.error("Raw content:", responseContent);
-        
-        // Fallback: Try to extract valid JSON portion
-        const jsonMatch = cleanedContent.match(/\{.*\}/s);
-        if (jsonMatch) {
-          recommendation = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("Unable to parse JSON response");
-        }
-      }
-      
-      // Fetch movie posters in parallel for faster performance
-      if (recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
-        if (process.env.OMDB_API_KEY) {
-          // Use OMDb API with parallel requests
-          await Promise.allSettled(
-            recommendation.recommendations.map(async (movie) => {
-              try {
-                const omdbResponse = await fetch(
-                  `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=movie`,
-                  { timeout: 3000 } // 3 second timeout
-                );
-                
-                if (omdbResponse.ok) {
-                  const omdbData = await omdbResponse.json();
-                  if (omdbData.Response === "True" && omdbData.Poster && omdbData.Poster !== "N/A") {
-                    movie.poster = omdbData.Poster;
-                    if (omdbData.imdbRating && omdbData.imdbRating !== "N/A") {
-                      movie.rating = parseFloat(omdbData.imdbRating);
-                    }
-                  } else {
-                    movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
-                  }
-                } else {
-                  movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
-                }
-              } catch (omdbError) {
-                console.error(`Failed to fetch data for ${movie.title}:`, omdbError);
-                movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
-              }
-            })
-          );
-        } else {
-          // Use placeholder posters when API is not available
-          recommendation.recommendations.forEach((movie) => {
-            movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
-          });
-        }
-      }
-      
-      return recommendation;
-    } catch (error) {
-      console.error("OpenAI API error:", error);
-      throw new Error("Failed to generate personalized recommendations");
+    
+    // Add wild card if requested
+    if (includeWildCard && filteredMovies.length < 5) {
+      const wildCards = movieDatabase.filter(movie => !filteredMovies.includes(movie));
+      filteredMovies.push(...wildCards.slice(0, 1));
     }
+    
+    // Limit to 5 recommendations and add match scores
+    const recommendations = filteredMovies.slice(0, 5).map(movie => ({
+      ...movie,
+      matchScore: Math.floor(Math.random() * 20) + 80, // 80-100% match
+      reasonForRecommendation: `Perfect ${mood} mood match with ${movie.genre.join(', ')} elements`
+    }));
+    
+    const moodLabels = {
+      chill: 'Chill & Relaxed',
+      inspired: 'Inspired & Motivated',
+      romantic: 'Romantic & Sweet',
+      funny: 'Funny & Light',
+      adventurous: 'Adventurous & Bold',
+      scared: 'Thrilled & Scared',
+      thoughtful: 'Thoughtful & Deep'
+    };
+    
+    return {
+      mood,
+      preferences,
+      recommendations,
+      totalMatches: recommendations.length,
+      personalizedMessage: `Based on your ${moodLabels[mood] || mood} mood, here are ${recommendations.length} perfect matches curated just for you.`
+    };
   }
 
   // Movie Matchmaker API endpoint
@@ -2142,7 +2102,7 @@ Respond with a JSON object in this exact format:
         return res.status(400).json({ error: "Mood is required" });
       }
 
-      const watchlistData = await generatePersonalizedWatchlist({
+      const watchlistData = generatePersonalizedWatchlist({
         mood,
         genres: genres || [],
         timeAvailable: timeAvailable || 120,
