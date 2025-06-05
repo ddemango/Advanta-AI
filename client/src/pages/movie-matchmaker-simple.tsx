@@ -136,6 +136,9 @@ export default function MovieMatchmaker() {
       const watchlistData = await response.json();
       setWatchlist(watchlistData);
       
+      // Scroll to top of page to show watchlist
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       toast({
         title: "Watchlist Generated!",
         description: `Found ${watchlistData.recommendations.length} perfect matches for your mood.`,
@@ -169,7 +172,7 @@ export default function MovieMatchmaker() {
       
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-6xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-12">
@@ -455,17 +458,14 @@ export default function MovieMatchmaker() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 pt-2">
-                          <Button size="sm" className="flex-1">
-                            <BookmarkPlus className="h-3 w-3 mr-1" />
-                            Add to List
-                          </Button>
-                          {movie.trailerUrl && (
-                            <Button size="sm" variant="outline">
-                              <Play className="h-3 w-3" />
+                        {movie.trailerUrl && (
+                          <div className="flex gap-2 pt-2">
+                            <Button size="sm" variant="outline" className="flex-1">
+                              <Play className="h-3 w-3 mr-1" />
+                              Watch Trailer
                             </Button>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
