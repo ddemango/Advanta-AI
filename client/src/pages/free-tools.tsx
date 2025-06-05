@@ -18,6 +18,7 @@ import {
   Presentation,
   Bot,
   BookOpen,
+  Film,
   Palette,
   Settings,
   Calendar,
@@ -193,6 +194,14 @@ export default function FreeTools() {
       icon: Calendar,
       category: 'Content Planning',
       route: '/content-calendar-generator'
+    },
+    {
+      id: 'movie-matchmaker',
+      name: 'Movie Matchmaker',
+      description: 'AI-powered watchlist generator that matches your mood and preferences to find perfect movies and TV shows.',
+      icon: Film,
+      category: 'Entertainment',
+      route: '/movie-matchmaker'
     },
     {
       id: 'pricing-strategy-assistant',
