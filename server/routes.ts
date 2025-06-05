@@ -2120,15 +2120,30 @@ Please provide analysis in this exact JSON format (no additional text):
 
     const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
+    // Build content type constraint
+    let contentTypeConstraint = "";
+    if (contentTypes && contentTypes.length > 0) {
+      if (contentTypes.includes('movies') && contentTypes.includes('tv_shows')) {
+        contentTypeConstraint = "Include both movies and TV shows in your recommendations.";
+      } else if (contentTypes.includes('movies')) {
+        contentTypeConstraint = "ONLY recommend movies. Do not include TV shows.";
+      } else if (contentTypes.includes('tv_shows')) {
+        contentTypeConstraint = "ONLY recommend TV shows. Do not include movies.";
+      }
+    } else {
+      contentTypeConstraint = "Include both movies and TV shows in your recommendations.";
+    }
+
     // Build genre constraint - STRICT requirement
     let genreConstraint = "";
     if (genres && genres.length > 0) {
-      genreConstraint = `CRITICAL REQUIREMENT: Movies MUST include ONLY these exact genres: ${genres.join(', ')}. Do not include movies with genres outside this list.`;
+      genreConstraint = `CRITICAL REQUIREMENT: Content MUST include ONLY these exact genres: ${genres.join(', ')}. Do not include content with genres outside this list.`;
     }
 
-    const prompt = `You are a movie and TV recommendation expert. Generate exactly 10 personalized recommendations based on these preferences:
+    const prompt = `You are a movie and TV show recommendation expert. Generate exactly 10 personalized recommendations based on these preferences:
 
 Mood: ${mood}
+Content Type: ${contentTypeConstraint}
 ${genreConstraint}
 Time Available: ${timeAvailable} minutes
 Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
@@ -2139,20 +2154,23 @@ Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
 
 IMPORTANT RULES:
 1. Provide exactly 10 recommendations
-2. If genres are specified, ONLY include movies that match those exact genres
-3. Include both movies and TV shows that fit the time constraint
-4. Focus on authentic, real titles available on major streaming platforms
-5. Match the specified mood accurately
+2. ${contentTypeConstraint}
+3. If genres are specified, ONLY include content that matches those exact genres
+4. For TV shows, consider episode runtime when matching time constraints
+5. Focus on authentic, real titles available on major streaming platforms
+6. Match the specified mood accurately
 
 For each recommendation, provide:
 - Title and year
-- Runtime in minutes
+- Content type ("movie" or "tv_show")
+- Runtime in minutes (for movies) or episode runtime (for TV shows)
 - Genre tags (MUST match user's selected genres if specified)
 - IMDB rating (realistic)
 - Available platforms
 - Brief description (2-3 sentences)
 - Match percentage (why it fits their preferences)
 - Reason for recommendation
+- For TV shows: number of seasons and episodes
 
 Respond with a JSON object in this exact format:
 {
@@ -2160,8 +2178,9 @@ Respond with a JSON object in this exact format:
   "preferences": {...},
   "recommendations": [
     {
-      "title": "Movie Title",
+      "title": "Content Title",
       "year": 2023,
+      "contentType": "movie",
       "genre": ["Drama", "Thriller"],
       "rating": 8.1,
       "runtime": 120,
@@ -2169,7 +2188,9 @@ Respond with a JSON object in this exact format:
       "description": "Brief description here...",
       "poster": "https://placeholder.com/poster.jpg",
       "matchScore": 95,
-      "reasonForRecommendation": "Perfect mood match because..."
+      "reasonForRecommendation": "Perfect mood match because...",
+      "seasons": 3,
+      "episodes": 30
     }
   ],
   "totalMatches": 10,

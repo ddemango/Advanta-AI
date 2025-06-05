@@ -451,7 +451,11 @@ export default function MovieMatchmaker() {
                             className="w-full h-full object-cover rounded-t-lg"
                           />
                         ) : (
-                          <Film className="h-16 w-16 text-muted-foreground" />
+                          movie.contentType === 'tv_show' ? (
+                            <Tv className="h-16 w-16 text-muted-foreground" />
+                          ) : (
+                            <Film className="h-16 w-16 text-muted-foreground" />
+                          )
                         )}
                       </div>
                       
@@ -462,7 +466,17 @@ export default function MovieMatchmaker() {
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span>{movie.year}</span>
                             <span>•</span>
-                            <span>{formatRuntime(movie.runtime)}</span>
+                            {movie.contentType === 'tv_show' ? (
+                              <>
+                                <span>{movie.seasons} seasons</span>
+                                <span>•</span>
+                                <span>{movie.episodes} episodes</span>
+                                <span>•</span>
+                                <span>{formatRuntime(movie.runtime)}/ep</span>
+                              </>
+                            ) : (
+                              <span>{formatRuntime(movie.runtime)}</span>
+                            )}
                             <span>•</span>
                             <div className="flex items-center gap-1">
                               <Star className="h-3 w-3 fill-current text-yellow-500" />
