@@ -1985,6 +1985,115 @@ Please provide analysis in this exact JSON format (no additional text):
     return recommendations.slice(0, 5); // Return top 5 recommendations
   }
 
+  // AI-powered watchlist generation function
+  async function generatePersonalizedWatchlist(preferences: any) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured");
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard } = preferences;
+
+    const prompt = `You are a movie and TV recommendation expert. Generate a personalized watchlist based on these preferences:
+
+Mood: ${mood}
+Preferred Genres: ${genres.length > 0 ? genres.join(', ') : 'Any'}
+Time Available: ${timeAvailable} minutes
+Available Platforms: ${platforms.length > 0 ? platforms.join(', ') : 'Any platform'}
+Viewing Context: ${viewingContext || 'Not specified'}
+Past Favorites: ${pastFavorites || 'Not specified'}
+Include Wild Card: ${includeWildCard ? 'Yes' : 'No'}
+
+Please provide 6-8 diverse recommendations that fit these criteria. Include both movies and TV shows (episodes/seasons that fit the time constraint). For each recommendation, provide:
+
+1. Title and year
+2. Runtime in minutes
+3. Genre tags
+4. IMDB rating (realistic)
+5. Available platforms (choose from Netflix, Hulu, Amazon Prime, Disney+, HBO Max, Apple TV+, Paramount+)
+6. Brief description (2-3 sentences)
+7. Match percentage (why it fits their mood/preferences)
+8. Reason for recommendation
+
+Focus on current, real titles that are likely available on major streaming platforms. Make sure recommendations truly match the specified mood and time constraints.
+
+Respond with a JSON object in this exact format:
+{
+  "mood": "${mood}",
+  "preferences": {...},
+  "recommendations": [
+    {
+      "title": "Movie Title",
+      "year": 2023,
+      "genre": ["Drama", "Thriller"],
+      "rating": 8.1,
+      "runtime": 120,
+      "platform": ["Netflix", "Hulu"],
+      "description": "Brief description here...",
+      "poster": "https://image.tmdb.org/t/p/w500/placeholder.jpg",
+      "matchScore": 95,
+      "reasonForRecommendation": "Perfect mood match because..."
+    }
+  ],
+  "totalMatches": 8,
+  "personalizedMessage": "Based on your ${mood} mood and preferences, here are some perfect matches..."
+}`;
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert movie and TV show recommendation engine. Always respond with valid JSON format and provide authentic, current movie and TV show recommendations."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 2000,
+        temperature: 0.7,
+      });
+
+      const recommendation = JSON.parse(response.choices[0].message.content || '{}');
+      return recommendation;
+    } catch (error) {
+      console.error("OpenAI API error:", error);
+      throw new Error("Failed to generate personalized recommendations");
+    }
+  }
+
+  // Movie Matchmaker API endpoint
+  app.post("/api/generate-watchlist", async (req: Request, res: Response) => {
+    try {
+      const { mood, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard } = req.body;
+
+      if (!mood) {
+        return res.status(400).json({ error: "Mood is required" });
+      }
+
+      const watchlistData = await generatePersonalizedWatchlist({
+        mood,
+        genres: genres || [],
+        timeAvailable: timeAvailable || 120,
+        platforms: platforms || [],
+        viewingContext: viewingContext || '',
+        pastFavorites: pastFavorites || '',
+        includeWildCard: includeWildCard || false
+      });
+
+      res.json(watchlistData);
+    } catch (error) {
+      console.error("Error generating watchlist:", error);
+      res.status(500).json({ error: "Failed to generate personalized watchlist" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
