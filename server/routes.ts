@@ -2049,7 +2049,7 @@ Respond with a JSON object in this exact format:
         messages: [
           {
             role: "system",
-            content: "You are an expert movie and TV show recommendation engine. Always respond with valid JSON format and provide authentic, current movie and TV show recommendations."
+            content: "You are an expert movie and TV show recommendation engine. Always respond with valid JSON format. Ensure all strings are properly escaped and the JSON is valid."
           },
           {
             role: "user",
@@ -2057,11 +2057,35 @@ Respond with a JSON object in this exact format:
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 2000,
+        max_tokens: 3000,
         temperature: 0.7,
       });
 
-      const recommendation = JSON.parse(response.choices[0].message.content || '{}');
+      const responseContent = response.choices[0].message.content || '{}';
+      
+      // Clean up any potential JSON formatting issues
+      const cleanedContent = responseContent
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
+        .replace(/\n/g, " ") // Replace newlines with spaces
+        .replace(/\"/g, '"') // Fix smart quotes
+        .trim();
+      
+      let recommendation;
+      try {
+        recommendation = JSON.parse(cleanedContent);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        console.error("Raw content:", responseContent);
+        
+        // Fallback: Try to extract valid JSON portion
+        const jsonMatch = cleanedContent.match(/\{.*\}/s);
+        if (jsonMatch) {
+          recommendation = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("Unable to parse JSON response");
+        }
+      }
+      
       return recommendation;
     } catch (error) {
       console.error("OpenAI API error:", error);
