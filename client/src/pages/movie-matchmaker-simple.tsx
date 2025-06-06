@@ -368,19 +368,20 @@ export default function MovieMatchmaker() {
                       {genreOptions.map((genre) => {
                         const isSelected = genres.includes(genre);
                         return (
-                          <Button
+                          <button
                             key={genre}
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
                             onClick={() => handleGenreToggle(genre)}
-                            className={`text-xs sm:text-sm h-9 sm:h-10 transition-colors ${
-                              isSelected 
-                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                                : 'border-border hover:border-border hover:bg-transparent hover:text-foreground'
-                            }`}
+                            className={`
+                              text-xs sm:text-sm h-9 sm:h-10 px-3 py-2 rounded-md font-medium transition-all duration-200
+                              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                              ${isSelected 
+                                ? 'bg-purple-600 text-white hover:bg-purple-700 border-0' 
+                                : 'bg-transparent text-white border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50'
+                              }
+                            `}
                           >
                             {genre}
-                          </Button>
+                          </button>
                         );
                       })}
                     </div>
@@ -393,19 +394,20 @@ export default function MovieMatchmaker() {
                       {platformOptions.map((platform) => {
                         const isSelected = platforms.includes(platform);
                         return (
-                          <Button
+                          <button
                             key={platform}
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
                             onClick={() => handlePlatformToggle(platform)}
-                            className={`text-xs sm:text-sm h-9 sm:h-10 transition-colors ${
-                              isSelected 
-                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                                : 'border-border hover:border-border hover:bg-transparent hover:text-foreground'
-                            }`}
+                            className={`
+                              text-xs sm:text-sm h-9 sm:h-10 px-3 py-2 rounded-md font-medium transition-all duration-200
+                              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                              ${isSelected 
+                                ? 'bg-purple-600 text-white hover:bg-purple-700 border-0' 
+                                : 'bg-transparent text-white border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50'
+                              }
+                            `}
                           >
                             {platform}
-                          </Button>
+                          </button>
                         );
                       })}
                     </div>
