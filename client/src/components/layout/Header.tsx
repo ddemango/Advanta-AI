@@ -447,6 +447,15 @@ export default function Header() {
                     </a>
                     <a 
                       onClick={() => {
+                        setLocation('/movie-matchmaker');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Movie and TV Show Matchmaker
+                    </a>
+                    <a 
+                      onClick={() => {
                         setLocation('/headline-split-test-generator');
                         closeMenu();
                       }}
