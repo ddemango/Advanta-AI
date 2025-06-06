@@ -190,37 +190,37 @@ export default function MovieMatchmaker() {
       
       <Header />
       
-      <main className="container mx-auto px-4 pt-24 pb-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-8">
         <div className="max-w-6xl mx-auto">
           {/* Hero Section */}
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Film className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+              <Film className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                 Movie and TV Show Matchmaker
               </h1>
             </div>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
               AI-powered watchlist generator that matches your mood, preferences, and viewing context 
               to find the perfect movie or TV show for any moment.
             </p>
           </div>
 
           {!watchlist ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Preferences Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <Card className="mx-2 sm:mx-0">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Heart className="h-5 w-5" />
                     Tell Us Your Mood & Preferences
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                   {/* Content Type Selection - FIRST QUESTION */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">What would you like to watch?</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">What would you like to watch?</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {contentTypeOptions.map((type) => {
                         const IconComponent = type.icon;
                         return (
@@ -228,7 +228,7 @@ export default function MovieMatchmaker() {
                             key={type.value}
                             variant={contentTypes.includes(type.value) ? "default" : "outline"}
                             onClick={() => handleContentTypeToggle(type.value)}
-                            className="justify-start h-auto p-3"
+                            className="justify-start h-auto p-3 text-sm sm:text-base"
                           >
                             <IconComponent className="mr-2 h-4 w-4" />
                             {type.label}
@@ -239,15 +239,15 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Mood Selection */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">What's your mood?</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">What's your mood?</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {moods.map((m) => (
                         <Button
                           key={m.value}
                           variant={mood === m.value ? "default" : "outline"}
                           onClick={() => setMood(m.value)}
-                          className="justify-start h-auto p-3"
+                          className="justify-start h-auto p-3 text-sm sm:text-base"
                         >
                           <span className="mr-2">{m.icon}</span>
                           {m.label}
@@ -257,8 +257,8 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Time Available */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">
                       Time Available: {formatRuntime(timeAvailable[0])}
                     </Label>
                     <Slider
@@ -269,7 +269,7 @@ export default function MovieMatchmaker() {
                       step={15}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>30min</span>
                       <span>2h</span>
                       <span>5h+</span>
@@ -277,10 +277,10 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Viewing Context */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">Watching with?</Label>
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">Watching with?</Label>
                     <Select value={viewingContext} onValueChange={setViewingContext}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-12">
                         <SelectValue placeholder="Select viewing context" />
                       </SelectTrigger>
                       <SelectContent>
@@ -294,8 +294,8 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Past Favorites */}
-                  <div>
-                    <Label htmlFor="favorites" className="text-base font-semibold mb-3 block">
+                  <div className="space-y-3">
+                    <Label htmlFor="favorites" className="text-sm sm:text-base font-semibold block">
                       Recent Favorites (Optional)
                     </Label>
                     <Input
@@ -307,8 +307,8 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Release Year Range */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">
                       Release Year Range: {releaseYearRange[0]} - {releaseYearRange[1]}
                     </Label>
                     <Slider
@@ -319,7 +319,7 @@ export default function MovieMatchmaker() {
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>1980</span>
                       <span>2000</span>
                       <span>2024</span>
@@ -327,13 +327,13 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Wild Card Option */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <Checkbox
                       id="wildcard"
                       checked={includeWildCard}
                       onCheckedChange={(checked) => setIncludeWildCard(checked === true)}
                     />
-                    <Label htmlFor="wildcard" className="text-sm">
+                    <Label htmlFor="wildcard" className="text-sm sm:text-base cursor-pointer">
                       Include a wild card surprise recommendation
                     </Label>
                   </div>
