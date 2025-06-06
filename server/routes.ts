@@ -2186,13 +2186,22 @@ JSON:
         messages: [
           {
             role: "system",
-            content: `You are an expert movie and TV show recommendation engine. Always respond with valid JSON format. Ensure all strings are properly escaped and the JSON is valid. When genres are specified, strictly adhere to those genres only. 
+            content: `You are a movie and TV show recommendation engine. You MUST respond with ONLY valid JSON - no additional text, explanations, or formatting.
 
-CRITICAL CONTENT TYPE RULES:
+CRITICAL JSON RULES:
+1. Response must start with { and end with }
+2. All strings must use double quotes, never single quotes
+3. Escape all quotes inside strings with \"
+4. Remove any line breaks or special characters from descriptions
+5. Use only these exact property names: recommendations, personalizedMessage
+
+CONTENT TYPE RULES:
 - If user requests TV shows only, ALL recommendations must have contentType: "tv_show"
 - If user requests movies only, ALL recommendations must have contentType: "movie"
 - Never mix content types when user specifies only one type
-- TV shows must include seasons and episodes fields`
+
+Example valid response format:
+{"recommendations":[{"title":"Movie Name","year":2020,"contentType":"movie","genre":["Action"],"rating":8.5,"runtime":120,"platform":["Netflix"],"description":"Short description without quotes or line breaks","matchScore":85,"reasonForRecommendation":"Why this matches"}],"personalizedMessage":"Your recommendations message"}`
           },
           {
             role: "user",
@@ -2205,17 +2214,7 @@ CRITICAL CONTENT TYPE RULES:
       });
 
       const responseContent = response.choices[0].message.content || '{}';
-      
-      // Clean up any potential JSON formatting issues
-      const cleanedContent = responseContent
-        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-        .replace(/\n/g, " ") // Replace newlines with spaces
-        .replace(/\"/g, '"') // Fix smart quotes
-        .replace(/,\s*}/g, "}") // Remove trailing commas before closing braces
-        .replace(/,\s*]/g, "]") // Remove trailing commas before closing brackets
-        .replace(/([^\\])"/g, '$1\\"') // Escape unescaped quotes in strings
-        .replace(/\\n/g, " ") // Replace escaped newlines
-        .trim();
+      console.log("Raw OpenAI response:", responseContent.substring(0, 500) + "...");
       
       let recommendation;
       try {
@@ -2225,58 +2224,55 @@ CRITICAL CONTENT TYPE RULES:
         console.error("Initial JSON parse error:", parseError);
         
         try {
-          // Fix common JSON issues that break parsing
+          // More aggressive JSON cleaning
           let fixedJson = responseContent
-            .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-            .replace(/\n/g, " ") // Replace newlines
-            .replace(/\r/g, " ") // Replace carriage returns  
-            .replace(/\t/g, " ") // Replace tabs
-            .replace(/\\"/g, '\\"') // Ensure quotes are properly escaped
-            .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+            // Remove control characters and non-printable chars
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+            // Fix line breaks and whitespace
+            .replace(/\r?\n|\r/g, " ")
+            .replace(/\t/g, " ")
+            .replace(/\s+/g, " ")
+            // Fix common quote issues
+            .replace(/[""]/g, '"')
+            .replace(/['']/g, "'")
+            // Remove trailing commas
+            .replace(/,(\s*[}\]])/g, '$1')
+            // Fix escaped quotes in JSON strings
+            .replace(/\\"/g, '"')
+            .replace(/"([^"]*)":/g, (match, key) => `"${key.replace(/"/g, '\\"')}":`)
             .trim();
 
-          // Extract just the JSON object
+          // Find the JSON object boundaries
           const jsonStart = fixedJson.indexOf('{');
           const jsonEnd = fixedJson.lastIndexOf('}');
           
           if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
             fixedJson = fixedJson.substring(jsonStart, jsonEnd + 1);
+            
+            // Additional fixes for common JSON issues
+            fixedJson = fixedJson
+              .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Ensure property names are quoted
+              .replace(/:\s*'([^']*)'/g, ': "$1"') // Convert single quotes to double quotes for values
+              .replace(/,\s*}/g, '}') // Remove trailing commas before }
+              .replace(/,\s*]/g, ']'); // Remove trailing commas before ]
+            
+            console.log("Fixed JSON:", fixedJson.substring(0, 500) + "...");
             recommendation = JSON.parse(fixedJson);
           } else {
-            // Create fallback response with real movies
-            recommendation = {
-              recommendations: [
-                {
-                  title: "The Dark Knight",
-                  year: 2008,
-                  contentType: "movie",
-                  genre: ["Action", "Crime", "Drama"],
-                  rating: 9.0,
-                  runtime: 152,
-                  platform: ["HBO Max", "Amazon Prime"],
-                  description: "Batman fights crime in Gotham City with the help of Lt. Jim Gordon and new district attorney Harvey Dent.",
-                  matchScore: 90,
-                  reasonForRecommendation: "Perfect for your mood",
-                  poster: ""
-                }
-              ],
-              personalizedMessage: "Here's a great recommendation for you"
-            };
+            throw new Error("Could not find valid JSON boundaries");
           }
         } catch (secondError) {
           console.error("Secondary parse error:", secondError);
-          // Use minimal fallback to prevent complete failure
-          recommendation = {
-            recommendations: [],
-            personalizedMessage: "Unable to generate recommendations. Please try again."
-          };
+          throw new Error("Failed to parse OpenAI response after multiple attempts");
         }
       }
       
       return recommendation;
     } catch (error) {
       console.error("OpenAI API error:", error);
-      throw new Error("Failed to generate personalized recommendations");
+      
+      // Return error response without fallback synthetic data
+      throw new Error("Failed to generate personalized recommendations. Please try again.");
     }
   }
 
@@ -2348,7 +2344,12 @@ CRITICAL CONTENT TYPE RULES:
       res.json(watchlistData);
     } catch (error) {
       console.error("Error generating watchlist:", error);
-      res.status(500).json({ error: "Failed to generate personalized watchlist" });
+      res.status(500).json({ 
+        error: "Failed to generate personalized watchlist",
+        message: "Please try again or contact support if the issue persists.",
+        recommendations: [],
+        personalizedMessage: "Unable to generate recommendations at this time."
+      });
     }
   });
 
