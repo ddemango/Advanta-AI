@@ -151,6 +151,7 @@ function Router() {
       <Route path="/socialclip-analyzer" component={SocialClipAnalyzer} />
       <Route path="/trending-content-generator" component={TrendingContentGenerator} />
       <Route path="/competitor-intel-scanner" component={CompetitorIntelScanner} />
+      <Route path="/movie-matchmaker" component={MovieMatchmaker} />
       <Route path="/movie-matchmaker-simple" component={MovieMatchmaker} />
       <Route path="/free-tools" component={FreeTools} />
       <Route path="/privacy" component={PrivacyPolicy} />
