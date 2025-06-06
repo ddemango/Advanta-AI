@@ -129,6 +129,44 @@
   @apply bg-primary;
 }
 
+/* Movie Matchmaker Button Override - Force Purple/Gray Only */
+button[data-variant="outline"]:hover,
+.outline:hover,
+button:hover {
+  background-color: transparent !important;
+  border-color: rgb(156 163 175) !important; /* gray-400 */
+  color: inherit !important;
+}
+
+button[data-variant="default"],
+.default,
+button.default {
+  background-color: rgb(109 40 217) !important; /* purple-600 */
+  color: white !important;
+  border: none !important;
+}
+
+button[data-variant="default"]:hover,
+.default:hover,
+button.default:hover {
+  background-color: rgb(88 28 135) !important; /* purple-700 */
+  color: white !important;
+}
+
+/* Specific overrides for any blue colors */
+button:not([data-variant="default"]):hover {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  border-color: rgb(156 163 175) !important;
+}
+
+/* Ensure no blue anywhere */
+.bg-blue-500,
+.bg-blue-600,
+.hover\\:bg-blue-500:hover,
+.hover\\:bg-blue-600:hover {
+  background-color: rgb(109 40 217) !important;
+}
+
 /* Mobile-specific improvements */
 @media (max-width: 768px) {
   .container {

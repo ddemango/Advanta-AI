@@ -365,25 +365,17 @@ export default function MovieMatchmaker() {
                   <div className="space-y-3">
                     <Label className="text-sm sm:text-base font-semibold block">Preferred Genres</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {genreOptions.map((genre) => {
-                        const isSelected = genres.includes(genre);
-                        return (
-                          <button
-                            key={genre}
-                            onClick={() => handleGenreToggle(genre)}
-                            className={`
-                              text-xs sm:text-sm h-9 sm:h-10 px-3 py-2 rounded-md font-medium transition-all duration-200
-                              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-                              ${isSelected 
-                                ? 'bg-purple-600 text-white hover:bg-purple-700 border-0' 
-                                : 'bg-transparent text-white border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50'
-                              }
-                            `}
-                          >
-                            {genre}
-                          </button>
-                        );
-                      })}
+                      {genreOptions.map((genre) => (
+                        <Button
+                          key={genre}
+                          variant={genres.includes(genre) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleGenreToggle(genre)}
+                          className="text-xs sm:text-sm h-9 sm:h-10"
+                        >
+                          {genre}
+                        </Button>
+                      ))}
                     </div>
                   </div>
 
@@ -391,25 +383,17 @@ export default function MovieMatchmaker() {
                   <div className="space-y-3">
                     <Label className="text-sm sm:text-base font-semibold block">Available Platforms</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {platformOptions.map((platform) => {
-                        const isSelected = platforms.includes(platform);
-                        return (
-                          <button
-                            key={platform}
-                            onClick={() => handlePlatformToggle(platform)}
-                            className={`
-                              text-xs sm:text-sm h-9 sm:h-10 px-3 py-2 rounded-md font-medium transition-all duration-200
-                              focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-                              ${isSelected 
-                                ? 'bg-purple-600 text-white hover:bg-purple-700 border-0' 
-                                : 'bg-transparent text-white border border-gray-600 hover:border-gray-400 hover:bg-gray-800/50'
-                              }
-                            `}
-                          >
-                            {platform}
-                          </button>
-                        );
-                      })}
+                      {platformOptions.map((platform) => (
+                        <Button
+                          key={platform}
+                          variant={platforms.includes(platform) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePlatformToggle(platform)}
+                          className="text-xs sm:text-sm h-9 sm:h-10"
+                        >
+                          {platform}
+                        </Button>
+                      ))}
                     </div>
                   </div>
 
