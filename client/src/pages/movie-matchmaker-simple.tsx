@@ -111,13 +111,11 @@ export default function MovieMatchmaker() {
   };
 
   const handleGenreToggle = (genre: string) => {
-    setGenres(prev => {
-      const newGenres = prev.includes(genre) 
+    setGenres(prev => 
+      prev.includes(genre) 
         ? prev.filter(g => g !== genre)
-        : [...prev, genre];
-      console.log('Genre toggled:', genre, 'New genres:', newGenres);
-      return newGenres;
-    });
+        : [...prev, genre]
+    );
   };
 
   const handlePlatformToggle = (platform: string) => {
@@ -225,12 +223,17 @@ export default function MovieMatchmaker() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {contentTypeOptions.map((type) => {
                         const IconComponent = type.icon;
+                        const isSelected = contentTypes.includes(type.value);
                         return (
                           <Button
                             key={type.value}
-                            variant={contentTypes.includes(type.value) ? "default" : "outline"}
+                            variant={isSelected ? "default" : "outline"}
                             onClick={() => handleContentTypeToggle(type.value)}
-                            className="justify-start h-auto p-3 text-sm sm:text-base"
+                            className={`justify-start h-auto p-3 text-sm sm:text-base transition-colors ${
+                              isSelected 
+                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                                : 'border-border hover:border-border hover:bg-transparent hover:text-foreground'
+                            }`}
                           >
                             <IconComponent className="mr-2 h-4 w-4" />
                             {type.label}
@@ -244,17 +247,24 @@ export default function MovieMatchmaker() {
                   <div className="space-y-3">
                     <Label className="text-sm sm:text-base font-semibold block">What's your mood?</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                      {moods.map((m) => (
-                        <Button
-                          key={m.value}
-                          variant={mood === m.value ? "default" : "outline"}
-                          onClick={() => setMood(m.value)}
-                          className="justify-start h-auto p-3 text-sm sm:text-base"
-                        >
-                          <span className="mr-2">{m.icon}</span>
-                          {m.label}
-                        </Button>
-                      ))}
+                      {moods.map((m) => {
+                        const isSelected = mood === m.value;
+                        return (
+                          <Button
+                            key={m.value}
+                            variant={isSelected ? "default" : "outline"}
+                            onClick={() => setMood(m.value)}
+                            className={`justify-start h-auto p-3 text-sm sm:text-base transition-colors ${
+                              isSelected 
+                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                                : 'border-border hover:border-border hover:bg-transparent hover:text-foreground'
+                            }`}
+                          >
+                            <span className="mr-2">{m.icon}</span>
+                            {m.label}
+                          </Button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -357,14 +367,17 @@ export default function MovieMatchmaker() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {genreOptions.map((genre) => {
                         const isSelected = genres.includes(genre);
-                        console.log(`Genre ${genre} is selected:`, isSelected);
                         return (
                           <Button
                             key={genre}
                             variant={isSelected ? "default" : "outline"}
                             size="sm"
                             onClick={() => handleGenreToggle(genre)}
-                            className="text-xs sm:text-sm h-9 sm:h-10"
+                            className={`text-xs sm:text-sm h-9 sm:h-10 transition-colors ${
+                              isSelected 
+                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                                : 'border-border hover:border-border hover:bg-transparent hover:text-foreground'
+                            }`}
                           >
                             {genre}
                           </Button>
@@ -377,17 +390,24 @@ export default function MovieMatchmaker() {
                   <div className="space-y-3">
                     <Label className="text-sm sm:text-base font-semibold block">Available Platforms</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {platformOptions.map((platform) => (
-                        <Button
-                          key={platform}
-                          variant={platforms.includes(platform) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handlePlatformToggle(platform)}
-                          className="text-xs sm:text-sm h-9 sm:h-10"
-                        >
-                          {platform}
-                        </Button>
-                      ))}
+                      {platformOptions.map((platform) => {
+                        const isSelected = platforms.includes(platform);
+                        return (
+                          <Button
+                            key={platform}
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePlatformToggle(platform)}
+                            className={`text-xs sm:text-sm h-9 sm:h-10 transition-colors ${
+                              isSelected 
+                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                                : 'border-border hover:border-border hover:bg-transparent hover:text-foreground'
+                            }`}
+                          >
+                            {platform}
+                          </Button>
+                        );
+                      })}
                     </div>
                   </div>
 
