@@ -371,7 +371,7 @@ export default function MovieMatchmaker() {
                           variant={genres.includes(genre) ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleGenreToggle(genre)}
-                          className="text-xs sm:text-sm h-9 sm:h-10"
+                          className="text-xs sm:text-sm h-9 sm:h-10 hover:bg-primary hover:text-primary-foreground"
                         >
                           {genre}
                         </Button>
@@ -389,7 +389,7 @@ export default function MovieMatchmaker() {
                           variant={platforms.includes(platform) ? "default" : "outline"}
                           size="sm"
                           onClick={() => handlePlatformToggle(platform)}
-                          className="text-xs sm:text-sm h-9 sm:h-10"
+                          className="text-xs sm:text-sm h-9 sm:h-10 hover:bg-primary hover:text-primary-foreground"
                         >
                           {platform}
                         </Button>
