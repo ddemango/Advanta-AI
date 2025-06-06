@@ -111,11 +111,13 @@ export default function MovieMatchmaker() {
   };
 
   const handleGenreToggle = (genre: string) => {
-    setGenres(prev => 
-      prev.includes(genre) 
+    setGenres(prev => {
+      const newGenres = prev.includes(genre) 
         ? prev.filter(g => g !== genre)
-        : [...prev, genre]
-    );
+        : [...prev, genre];
+      console.log('Genre toggled:', genre, 'New genres:', newGenres);
+      return newGenres;
+    });
   };
 
   const handlePlatformToggle = (platform: string) => {
@@ -353,17 +355,21 @@ export default function MovieMatchmaker() {
                   <div className="space-y-3">
                     <Label className="text-sm sm:text-base font-semibold block">Preferred Genres</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {genreOptions.map((genre) => (
-                        <Button
-                          key={genre}
-                          variant={genres.includes(genre) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleGenreToggle(genre)}
-                          className="text-xs sm:text-sm h-9 sm:h-10"
-                        >
-                          {genre}
-                        </Button>
-                      ))}
+                      {genreOptions.map((genre) => {
+                        const isSelected = genres.includes(genre);
+                        console.log(`Genre ${genre} is selected:`, isSelected);
+                        return (
+                          <Button
+                            key={genre}
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleGenreToggle(genre)}
+                            className="text-xs sm:text-sm h-9 sm:h-10"
+                          >
+                            {genre}
+                          </Button>
+                        );
+                      })}
                     </div>
                   </div>
 
