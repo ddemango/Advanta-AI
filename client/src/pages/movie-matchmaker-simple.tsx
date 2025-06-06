@@ -341,25 +341,25 @@ export default function MovieMatchmaker() {
               </Card>
 
               {/* Genre & Platform Selection */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <Card className="mx-2 sm:mx-0">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Tv className="h-5 w-5" />
                     Genres & Platforms
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                   {/* Genres */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">Preferred Genres</Label>
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">Preferred Genres</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {genreOptions.map((genre) => (
                         <Button
                           key={genre}
                           variant={genres.includes(genre) ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleGenreToggle(genre)}
-                          className="text-xs"
+                          className="text-xs sm:text-sm h-9 sm:h-10"
                         >
                           {genre}
                         </Button>
@@ -368,16 +368,16 @@ export default function MovieMatchmaker() {
                   </div>
 
                   {/* Platforms */}
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">Available Platforms</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-3">
+                    <Label className="text-sm sm:text-base font-semibold block">Available Platforms</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {platformOptions.map((platform) => (
                         <Button
                           key={platform}
                           variant={platforms.includes(platform) ? "default" : "outline"}
                           size="sm"
                           onClick={() => handlePlatformToggle(platform)}
-                          className="text-xs"
+                          className="text-xs sm:text-sm h-9 sm:h-10"
                         >
                           {platform}
                         </Button>
@@ -389,18 +389,20 @@ export default function MovieMatchmaker() {
                   <Button
                     onClick={generateWatchlist}
                     disabled={isGenerating || !mood}
-                    className="w-full h-12 text-lg"
+                    className="w-full h-12 sm:h-14 text-sm sm:text-lg"
                     size="lg"
                   >
                     {isGenerating ? (
                       <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Generating Your Perfect Watchlist...
+                        <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                        <span className="hidden sm:inline">Generating Your Perfect Watchlist...</span>
+                        <span className="sm:hidden">Generating...</span>
                       </>
                     ) : (
                       <>
-                        <Zap className="mr-2 h-5 w-5" />
-                        Generate My Watchlist
+                        <Zap className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="hidden sm:inline">Generate My Watchlist</span>
+                        <span className="sm:hidden">Generate Watchlist</span>
                       </>
                     )}
                   </Button>
@@ -409,14 +411,14 @@ export default function MovieMatchmaker() {
             </div>
           ) : (
             /* Watchlist Results */
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {/* Results Header */}
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="mx-2 sm:mx-0">
+                <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
                   <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-2">Your Personalized Watchlist</h2>
-                    <p className="text-muted-foreground mb-4">{watchlist.personalizedMessage}</p>
-                    <div className="flex items-center justify-center gap-4 text-sm">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Personalized Watchlist</h2>
+                    <p className="text-sm sm:text-base text-muted-foreground mb-4 px-2">{watchlist.personalizedMessage}</p>
+                    <div className="flex items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm">
                       <Badge variant="secondary" className="gap-1">
                         <Star className="h-3 w-3" />
                         {watchlist.totalMatches} Perfect Matches
@@ -429,7 +431,7 @@ export default function MovieMatchmaker() {
                     <Button
                       variant="outline"
                       onClick={() => setWatchlist(null)}
-                      className="mt-4"
+                      className="mt-4 text-sm sm:text-base"
                     >
                       Generate New Watchlist
                     </Button>
@@ -438,7 +440,7 @@ export default function MovieMatchmaker() {
               </Card>
 
               {/* Recommendations Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-0">
                 {watchlist.recommendations.map((movie, index) => (
                   <Card key={index} className="h-full hover:shadow-lg transition-shadow">
                     <CardContent className="p-0">
@@ -452,25 +454,27 @@ export default function MovieMatchmaker() {
                           />
                         ) : (
                           movie.contentType === 'tv_show' ? (
-                            <Tv className="h-16 w-16 text-muted-foreground" />
+                            <Tv className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
                           ) : (
-                            <Film className="h-16 w-16 text-muted-foreground" />
+                            <Film className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
                           )
                         )}
                       </div>
                       
                       {/* Movie Details */}
-                      <div className="p-4 space-y-3">
+                      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
                         <div>
-                          <h3 className="font-bold text-lg leading-tight">{movie.title}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <h3 className="font-bold text-base sm:text-lg leading-tight">{movie.title}</h3>
+                          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
                             <span>{movie.year}</span>
                             <span>•</span>
                             {movie.contentType === 'tv_show' ? (
                               <>
-                                <span>{movie.seasons} seasons</span>
+                                <span className="hidden sm:inline">{movie.seasons} seasons</span>
+                                <span className="sm:hidden">{movie.seasons}s</span>
                                 <span>•</span>
-                                <span>{movie.episodes} episodes</span>
+                                <span className="hidden sm:inline">{movie.episodes} episodes</span>
+                                <span className="sm:hidden">{movie.episodes}ep</span>
                                 <span>•</span>
                                 <span>{formatRuntime(movie.runtime)}/ep</span>
                               </>
@@ -493,7 +497,7 @@ export default function MovieMatchmaker() {
                           ))}
                         </div>
 
-                        <p className="text-sm text-muted-foreground line-clamp-3">
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                           {movie.description}
                         </p>
 
@@ -513,9 +517,10 @@ export default function MovieMatchmaker() {
 
                         {movie.trailerUrl && (
                           <div className="flex gap-2 pt-2">
-                            <Button size="sm" variant="outline" className="flex-1">
+                            <Button size="sm" variant="outline" className="flex-1 text-xs sm:text-sm">
                               <Play className="h-3 w-3 mr-1" />
-                              Watch Trailer
+                              <span className="hidden sm:inline">Watch Trailer</span>
+                              <span className="sm:hidden">Trailer</span>
                             </Button>
                           </div>
                         )}
