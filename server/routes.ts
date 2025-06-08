@@ -2154,12 +2154,21 @@ Please provide analysis in this exact JSON format (no additional text):
       `Focus specifically on ${genres.join(', ')} genre(s). Draw from the extensive catalog of authentic ${contentTypeText} in these genres from 1980-2024.` :
       `Draw from the full spectrum of authentic ${contentTypeText} across all genres from 1980-2024.`;
 
-    const prompt = `You are accessing a comprehensive database of authentic ${contentTypeText}. Generate 10 diverse recommendations for "${mood}" mood.
+    const prompt = `You are accessing a comprehensive database of authentic ${contentTypeText}. Generate 10 DIVERSE and VARIED recommendations for "${mood}" mood. AVOID commonly recommended titles like The Dark Knight, Inception, or other frequently suggested movies.
+
+CRITICAL DIVERSITY REQUIREMENTS:
+- Include mix of popular AND lesser-known quality titles
+- Vary release years across different decades
+- Include international films when appropriate
+- Avoid obvious/predictable choices
+- Include hidden gems and underrated titles
+- Mix different sub-genres within the main genre
+- Include both recent releases and classic titles
 
 ${contentTypeConstraint}
 ${genreConstraint}
 
-Database scope: Access the full catalog of real ${contentTypeText} from major studios, streaming platforms, and international cinema from 1980-2024. Include:
+Database scope: Access the full catalog of real ${contentTypeText} from major studios, streaming platforms, and international cinema from 1980-2024. Prioritize variety over popularity. Include:
 
 ${genres.includes('Action') ? `
 ACTION MOVIES: Mad Max Fury Road, John Wick series, Mission Impossible series, Fast & Furious franchise, Marvel/DC films, The Raid, Die Hard series, Terminator series, Matrix trilogy, Kill Bill, Casino Royale, Taken, Gladiator, 300, Pacific Rim, Edge of Tomorrow, Atomic Blonde, Baby Driver, Speed, Heat, Point Break, The Rock, Face/Off, Con Air, Lethal Weapon series, Rush Hour series, Pirates of Caribbean, Indiana Jones series, Bourne series, James Bond series, Top Gun series, xXx series, The Transporter series, Crank series, Expendables series, Rambo series, Rocky series, Creed series, Fast Five, Furious 7, Hobbs & Shaw, Wonder Woman, Black Panther, Avengers series, Iron Man trilogy, Captain America series, Thor series, Guardians of Galaxy, Doctor Strange, Spider-Man films, Batman films, Superman films, Justice League, Aquaman, Shazam, Birds of Prey
@@ -2189,11 +2198,18 @@ Time range: ${releaseYearRange ? `${releaseYearRange[0]}-${releaseYearRange[1]}`
 Platforms: ${platforms && platforms.length > 0 ? platforms.join(', ') : 'Netflix, Amazon Prime, Hulu, Disney+, HBO Max, Apple TV+, Paramount+, Peacock, Showtime, Starz'}
 Runtime preference: ${timeAvailable ? `Around ${timeAvailable} minutes` : 'Any length'}
 
+SELECTION STRATEGY: 
+- Randomly select from different decades: 1980s, 1990s, 2000s, 2010s, 2020s
+- Include at least 2-3 lesser-known but high-quality titles
+- Avoid repeating the same franchises or directors
+- Include international content when available
+- Mix mainstream and indie/arthouse options
+
 Return exactly 10 diverse recommendations in this JSON format:
 {
   "recommendations": [
     {
-      "title": "Authentic Title from Database",
+      "title": "Unique Title Not Previously Recommended",
       "year": 2020,
       "contentType": "${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'}",
       "genre": ["Primary Genre"],
@@ -2205,16 +2221,26 @@ Return exactly 10 diverse recommendations in this JSON format:
       "reasonForRecommendation": "Why this matches the ${mood} mood"${safeContentTypes.includes('tv_shows') ? ',\n      "seasons": 3,\n      "episodes": 30' : ''}
     }
   ],
-  "personalizedMessage": "Curated ${mood} recommendations from our extensive database"
+  "personalizedMessage": "Fresh ${mood} recommendations featuring variety across different eras"
 }`;
 
     try {
+      // Generate a random seed to ensure variety in recommendations
+      const randomSeed = Math.floor(Math.random() * 1000);
+      const enhancedPrompt = `${prompt}\n\nRANDOM_SEED: ${randomSeed} - Use this to vary your selection and ensure different titles each time.`;
+      
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           {
             role: "system",
             content: `You are a movie and TV show recommendation engine. You MUST respond with ONLY valid JSON - no additional text, explanations, or formatting.
+
+CRITICAL DIVERSITY MANDATE:
+- NEVER repeat the same movies/shows across different requests
+- Use the random seed to vary selections
+- Prioritize lesser-known gems over obvious choices
+- Include variety across decades, countries, and sub-genres
 
 CRITICAL JSON RULES:
 1. Response must start with { and end with }
@@ -2229,16 +2255,19 @@ CONTENT TYPE RULES:
 - Never mix content types when user specifies only one type
 
 Example valid response format:
-{"recommendations":[{"title":"Movie Name","year":2020,"contentType":"movie","genre":["Action"],"rating":8.5,"runtime":120,"platform":["Netflix"],"description":"Short description without quotes or line breaks","matchScore":85,"reasonForRecommendation":"Why this matches"}],"personalizedMessage":"Your recommendations message"}`
+{"recommendations":[{"title":"Unique Movie Name","year":2020,"contentType":"movie","genre":["Action"],"rating":8.5,"runtime":120,"platform":["Netflix"],"description":"Short description without quotes or line breaks","matchScore":85,"reasonForRecommendation":"Why this matches"}],"personalizedMessage":"Your recommendations message"}`
           },
           {
             role: "user",
-            content: prompt
+            content: enhancedPrompt
           }
         ],
         response_format: { type: "json_object" },
         max_tokens: 1500,
-        temperature: 0.3,
+        temperature: 0.8, // Increased temperature for more variety
+        top_p: 0.9, // Added top_p for more diverse sampling
+        frequency_penalty: 0.5, // Penalize repeated content
+        presence_penalty: 0.3, // Encourage new topics
       });
 
       const responseContent = response.choices[0].message.content || '{}';
