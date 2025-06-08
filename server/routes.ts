@@ -2324,6 +2324,23 @@ Example valid response format:
         }
       }
       
+      // Validate and normalize the recommendation data structure
+      if (recommendation && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
+        recommendation.recommendations = recommendation.recommendations.map((movie: any) => ({
+          ...movie,
+          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Unknown']),
+          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Streaming']),
+          rating: typeof movie.rating === 'number' ? movie.rating : 7.0,
+          runtime: typeof movie.runtime === 'number' ? movie.runtime : 120,
+          year: typeof movie.year === 'number' ? movie.year : new Date().getFullYear(),
+          matchScore: typeof movie.matchScore === 'number' ? movie.matchScore : 85,
+          title: movie.title || 'Unknown Title',
+          description: movie.description || 'No description available',
+          reasonForRecommendation: movie.reasonForRecommendation || 'Recommended for you',
+          contentType: movie.contentType || 'movie'
+        }));
+      }
+      
       return recommendation;
     } catch (error) {
       console.error("OpenAI API error:", error);

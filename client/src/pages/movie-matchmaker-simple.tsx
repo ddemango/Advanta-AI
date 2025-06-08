@@ -502,11 +502,11 @@ export default function MovieMatchmaker() {
                         </div>
 
                         <div className="flex flex-wrap gap-1">
-                          {movie.genre.slice(0, 3).map((g) => (
+                          {movie.genre && Array.isArray(movie.genre) ? movie.genre.slice(0, 3).map((g) => (
                             <Badge key={g} variant="outline" className="text-xs">
                               {g}
                             </Badge>
-                          ))}
+                          )) : null}
                         </div>
 
                         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
@@ -519,11 +519,11 @@ export default function MovieMatchmaker() {
                           </div>
                           
                           <div className="flex flex-wrap gap-1">
-                            {movie.platform.map((p) => (
+                            {movie.platform && Array.isArray(movie.platform) ? movie.platform.map((p) => (
                               <Badge key={p} variant="secondary" className="text-xs">
                                 {p}
                               </Badge>
-                            ))}
+                            )) : null}
                           </div>
                         </div>
 
