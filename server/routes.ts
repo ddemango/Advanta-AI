@@ -2140,14 +2140,14 @@ Please provide analysis in this exact JSON format (no additional text):
         'Starz': 'starz'
       };
       
-      const selectedPlatforms = platforms && platforms.length > 0 ? 
+      const selectedPlatforms = platforms && platforms.length > 0 && !platforms.includes('any platform') ? 
         platforms.map(p => platformMap[p] || p.toLowerCase()).join(',') : 
         'netflix,prime,hulu,disney';
 
-      console.log(`Fetching recommendations for mood: ${mood}, genres: ${genres?.join(', ')}, platforms: ${selectedPlatforms}, showType: ${showType}`);
+      console.log(`Fetching recommendations for mood: ${mood}, genres: ${genres?.join(', ')}, platforms: ${platforms?.includes('any platform') ? 'all platforms' : selectedPlatforms}, showType: ${showType}`);
 
-      // Try platform-specific searches first if platforms are specified
-      if (platforms && platforms.length > 0) {
+      // Try platform-specific searches first if specific platforms are selected
+      if (platforms && platforms.length > 0 && !platforms.includes('any platform')) {
         for (const platformName of platforms.slice(0, 2)) {
           const mappedPlatform = platformMap[platformName] || platformName.toLowerCase();
           
@@ -2256,13 +2256,114 @@ Please provide analysis in this exact JSON format (no additional text):
         }
       }
       
-      // Fill remaining slots with popular content matching criteria
-      if (recommendations.length < targetCount) {
+      // Handle "any platform" case or fill remaining slots with cross-platform search
+      if (platforms?.includes('any platform') || recommendations.length < targetCount) {
+        try {
+          // Search across multiple platforms when "any platform" is selected
+          const popularPlatforms = ['netflix', 'prime', 'hulu', 'disney'];
+          
+          for (const platform of popularPlatforms) {
+            if (recommendations.length >= targetCount) break;
+            
+            try {
+              const searchParams: any = {
+                catalogs: platform,
+                showType,
+                limit: Math.ceil((targetCount - recommendations.length) / popularPlatforms.length) + 2,
+                orderBy: 'rating',
+                orderDirection: 'desc'
+              };
+              
+              // Add genre filter if specified
+              if (genres && genres.length > 0) {
+                const genreMap: Record<string, string> = {
+                  'Action': 'action',
+                  'Comedy': 'comedy', 
+                  'Drama': 'drama',
+                  'Horror': 'horror',
+                  'Thriller': 'thriller',
+                  'Sci-Fi': 'scifi',
+                  'Fantasy': 'fantasy',
+                  'Romance': 'romance',
+                  'Crime': 'crime',
+                  'Documentary': 'documentary',
+                  'Animation': 'animation',
+                  'Adventure': 'adventure'
+                };
+                const mappedGenre = genreMap[genres[0]] || genres[0].toLowerCase();
+                searchParams.genre = mappedGenre;
+              }
+              
+              console.log(`Cross-platform search on ${platform}:`, searchParams);
+              const platformResponse = await streamingAPI.searchShows(searchParams);
+              
+              console.log(`Found ${platformResponse.shows.length} shows on ${platform}`);
+              
+              platformResponse.shows.forEach(show => {
+                if (recommendations.length < targetCount) {
+                  // Enhanced genre matching
+                  const matchesGenre = !genres || genres.length === 0 ||
+                    show.genres.some(showGenre => {
+                      return genres.some(userGenre => {
+                        const userGenreLower = userGenre.toLowerCase();
+                        const showGenreLower = showGenre.name.toLowerCase();
+                        
+                        if (showGenreLower === userGenreLower) return true;
+                        if (showGenreLower.includes(userGenreLower)) return true;
+                        if (userGenreLower.includes(showGenreLower)) return true;
+                        
+                        const genreMappings: Record<string, string[]> = {
+                          'action': ['action', 'adventure', 'thriller'],
+                          'adventure': ['action', 'adventure'],
+                          'sci-fi': ['science fiction', 'sci-fi', 'scifi'],
+                          'comedy': ['comedy', 'romantic comedy'],
+                          'drama': ['drama', 'biographical', 'biography'],
+                          'horror': ['horror', 'thriller', 'supernatural'],
+                          'thriller': ['thriller', 'mystery', 'crime'],
+                          'romance': ['romance', 'romantic', 'love']
+                        };
+                        
+                        const mappedGenres = genreMappings[userGenreLower] || [userGenreLower];
+                        return mappedGenres.some(mapped => showGenreLower.includes(mapped));
+                      });
+                    });
+                  
+                  const inYearRange = !releaseYearRange || 
+                    (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
+                  
+                  // Check for duplicates
+                  const alreadyAdded = recommendations.some(rec => rec.id === show.id);
+                  
+                  if (matchesGenre && inYearRange && !alreadyAdded) {
+                    const availablePlatforms = show.streamingOptions?.us || [];
+                    const platformNames = availablePlatforms.map(opt => opt.service.name);
+                    
+                    const recommendation = streamingAPI.convertToRecommendation(
+                      show,
+                      Math.floor(Math.random() * 20) + 80,
+                      `${mood} ${genres?.length ? genres[0] : ''} recommendation`.trim()
+                    );
+                    recommendations.push(recommendation);
+                    console.log(`✓ Added cross-platform ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                  }
+                }
+              });
+            } catch (error) {
+              console.error(`Error searching ${platform}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error('Error in cross-platform search:', error);
+        }
+      }
+      
+      // Legacy fallback only if still no results
+      if (recommendations.length === 0) {
         try {
           const popularResponse = await streamingAPI.searchShows({
             showType,
-            catalogs: selectedPlatforms,
-            limit: targetCount - recommendations.length + 5, // Get extra to account for filtering
+            catalogs: 'netflix',
+            limit: targetCount,
             orderBy: 'rating',
             orderDirection: 'desc'
           });
