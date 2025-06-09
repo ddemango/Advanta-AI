@@ -2207,7 +2207,7 @@ Please provide analysis in this exact JSON format (no additional text):
     };
   }
 
-  // Movie Matchmaker API endpoint
+  // Movie Matchmaker API endpoint - OMDb-first authentic data only
   app.post("/api/generate-watchlist", async (req: Request, res: Response) => {
     try {
       const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
@@ -2216,15 +2216,12 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(400).json({ error: "Mood is required" });
       }
 
-      // Generate recommendations using OMDb-first approach with authentic data only
-      const safeContentTypes = contentTypes || ['movies'];
-      const safePlatforms = platforms || ['Netflix'];
-
-      // Replace the entire recommendation system with OMDb-first approach
       if (!process.env.OMDB_API_KEY) {
-        throw new Error("Movie database access unavailable. Please contact support.");
+        return res.status(500).json({ error: "Movie database access unavailable. Please contact support." });
       }
 
+      const safeContentTypes = contentTypes || ['movies'];
+      const safePlatforms = platforms || ['Netflix'];
       const enrichedRecommendations = [];
       
       // Pre-verified movie database with exact OMDb titles and years
