@@ -2140,14 +2140,16 @@ Please provide analysis in this exact JSON format (no additional text):
         'Starz': 'starz'
       };
       
-      const selectedPlatforms = platforms && platforms.length > 0 && !platforms.includes('any platform') ? 
+      const hasAnyPlatform = platforms?.some(p => p.toLowerCase() === 'any platform');
+      
+      const selectedPlatforms = platforms && platforms.length > 0 && !hasAnyPlatform ? 
         platforms.map(p => platformMap[p] || p.toLowerCase()).join(',') : 
         'netflix,prime,hulu,disney';
 
-      console.log(`Fetching recommendations for mood: ${mood}, genres: ${genres?.join(', ')}, platforms: ${platforms?.includes('any platform') ? 'all platforms' : selectedPlatforms}, showType: ${showType}`);
+      console.log(`Fetching recommendations for mood: ${mood}, genres: ${genres?.join(', ')}, platforms: ${hasAnyPlatform ? 'all platforms' : selectedPlatforms}, showType: ${showType}`);
 
       // Try platform-specific searches first if specific platforms are selected
-      if (platforms && platforms.length > 0 && !platforms.includes('any platform')) {
+      if (platforms && platforms.length > 0 && !hasAnyPlatform) {
         for (const platformName of platforms.slice(0, 2)) {
           const mappedPlatform = platformMap[platformName] || platformName.toLowerCase();
           
@@ -2257,7 +2259,7 @@ Please provide analysis in this exact JSON format (no additional text):
       }
       
       // Handle "any platform" case or fill remaining slots with cross-platform search
-      if (platforms?.includes('any platform') || recommendations.length < targetCount) {
+      if (hasAnyPlatform || recommendations.length < targetCount) {
         try {
           // Search across multiple platforms when "any platform" is selected
           const popularPlatforms = ['netflix', 'prime', 'hulu', 'disney'];
