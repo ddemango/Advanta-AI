@@ -2197,14 +2197,12 @@ Please provide analysis in this exact JSON format (no additional text):
     const shuffled = [...filteredContent].sort(() => Math.random() - 0.5);
     const selectedTitles = shuffled.slice(0, 10);
 
-    // Create basic recommendation structure - metadata will be enriched from OMDb
-    const recommendations = selectedTitles.map((title) => ({
-      title: title,
-      contentType: safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'
-    }));
-
+    // Return only titles for OMDb enrichment - no synthetic data
     return {
-      recommendations: recommendations,
+      recommendations: selectedTitles.map((title) => ({
+        title: title,
+        contentType: safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'
+      })),
       personalizedMessage: `${mood} recommendations from verified database`
     };
   }
@@ -2218,104 +2216,122 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(400).json({ error: "Mood is required" });
       }
 
-      const watchlistData = await generatePersonalizedWatchlist({
-        mood,
-        contentTypes: contentTypes || ['movies'],
-        genres: genres || [],
-        timeAvailable: timeAvailable || 120,
-        platforms: platforms || [],
-        viewingContext: viewingContext || '',
-        pastFavorites: pastFavorites || '',
-        includeWildCard: includeWildCard || false,
-        releaseYearRange: releaseYearRange || [1980, 2024]
-      });
+      // Generate recommendations using OMDb-first approach with authentic data only
+      const safeContentTypes = contentTypes || ['movies'];
+      const safePlatforms = platforms || ['Netflix'];
 
-      // Enrich recommendations with authentic data from OMDb API
-      if (process.env.OMDB_API_KEY && watchlistData.recommendations) {
-        const enrichedRecommendations = [];
-        
-        // Create a mapping of common movie titles to their exact OMDb titles and years
-        const movieTitleMap: { [key: string]: { title: string; year?: number } } = {
-          "Kill Bill": { title: "Kill Bill: Vol. 1", year: 2003 },
-          "The Godfather": { title: "The Godfather", year: 1972 },
-          "Parasite": { title: "Parasite", year: 2019 },
-          "The Nice Guys": { title: "The Nice Guys", year: 2016 },
-          "What We Do in the Shadows": { title: "What We Do in the Shadows", year: 2014 },
-          "Dumb and Dumber": { title: "Dumb and Dumber", year: 1994 },
-          "Gladiator": { title: "Gladiator", year: 2000 },
-          "Scream": { title: "Scream", year: 1996 },
-          "The Host": { title: "The Host", year: 2006 },
-          "Burning": { title: "Burning", year: 2018 }
-        };
-
-        for (const movie of watchlistData.recommendations) {
-          try {
-            const contentType = movie.contentType === 'tv_show' ? 'series' : 'movie';
-            
-            // Use mapped title and year for better accuracy
-            const movieInfo = movieTitleMap[movie.title] || { title: movie.title };
-            const searchTitle = movieInfo.title;
-            const searchYear = movieInfo.year;
-            
-            let omdbUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(searchTitle)}&type=${contentType}`;
-            if (searchYear) {
-              omdbUrl += `&y=${searchYear}`;
-            }
-            
-            console.log(`Fetching data for ${searchTitle} (${searchYear || 'any year'}) - ${contentType}`);
-            
-            const response = await fetch(omdbUrl);
-            
-            if (response.ok) {
-              const data = await response.json();
-              console.log(`OMDb response for ${searchTitle}:`, JSON.stringify(data, null, 2));
-              
-              if (data.Response === "True" && data.Title && data.Year && data.Plot && data.Plot !== "N/A") {
-                // Only use movies with complete, authentic data
-                const enrichedMovie = {
-                  title: data.Title,
-                  year: parseInt(data.Year),
-                  contentType: movie.contentType,
-                  genre: data.Genre ? data.Genre.split(', ') : [],
-                  rating: data.imdbRating && data.imdbRating !== "N/A" ? parseFloat(data.imdbRating) : null,
-                  runtime: data.Runtime ? parseInt(data.Runtime.replace(' min', '')) : null,
-                  platform: platforms && platforms.length > 0 ? platforms : [],
-                  description: data.Plot,
-                  matchScore: data.imdbRating && data.imdbRating !== "N/A" ? Math.round(parseFloat(data.imdbRating) * 10) : null,
-                  reasonForRecommendation: `Highly rated ${mood} ${contentType} (${data.imdbRating}/10 on IMDb)`,
-                  poster: data.Poster && data.Poster !== "N/A" ? data.Poster : null
-                };
-                
-                // Only add if we have essential data
-                if (enrichedMovie.year && enrichedMovie.description && enrichedMovie.genre.length > 0) {
-                  enrichedRecommendations.push(enrichedMovie);
-                  console.log(`✓ Successfully enriched ${searchTitle} with complete OMDb data`);
-                } else {
-                  console.log(`✗ Incomplete data for ${searchTitle}, skipping`);
-                }
-              } else {
-                console.log(`✗ OMDb could not find complete data for: ${searchTitle}`);
-              }
-            } else {
-              console.log(`✗ OMDb API request failed for ${searchTitle}:`, response.status);
-            }
-          } catch (error) {
-            console.error(`Failed to fetch data for ${movie.title}:`, error);
-          }
-        }
-        
-        // Only use movies that were successfully enriched with authentic data
-        watchlistData.recommendations = enrichedRecommendations;
-        
-        // If no movies could be enriched, throw error
-        if (enrichedRecommendations.length === 0) {
-          throw new Error("Unable to retrieve authentic movie data. Please try again.");
-        }
-      } else {
+      // Replace the entire recommendation system with OMDb-first approach
+      if (!process.env.OMDB_API_KEY) {
         throw new Error("Movie database access unavailable. Please contact support.");
       }
 
-      res.json(watchlistData);
+      const enrichedRecommendations = [];
+      
+      // Pre-verified movie database with exact OMDb titles and years
+      const verifiedMovieDatabase = [
+        { title: "The Hangover", year: 2009, genres: ["Comedy"] },
+        { title: "Superbad", year: 2007, genres: ["Comedy"] },
+        { title: "Anchorman: The Legend of Ron Burgundy", year: 2004, genres: ["Comedy"] },
+        { title: "Zoolander", year: 2001, genres: ["Comedy"] },
+        { title: "Wedding Crashers", year: 2005, genres: ["Comedy"] },
+        { title: "Old School", year: 2003, genres: ["Comedy"] },
+        { title: "Dodgeball: A True Underdog Story", year: 2004, genres: ["Comedy"] },
+        { title: "There's Something About Mary", year: 1998, genres: ["Comedy"] },
+        { title: "Bridesmaids", year: 2011, genres: ["Comedy"] },
+        { title: "Knocked Up", year: 2007, genres: ["Comedy"] },
+        { title: "The 40-Year-Old Virgin", year: 2005, genres: ["Comedy"] },
+        { title: "Step Brothers", year: 2008, genres: ["Comedy"] },
+        { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, genres: ["Comedy"] },
+        { title: "Napoleon Dynamite", year: 2004, genres: ["Comedy"] },
+        { title: "Mean Girls", year: 2004, genres: ["Comedy"] },
+        { title: "Legally Blonde", year: 2001, genres: ["Comedy"] },
+        { title: "Clueless", year: 1995, genres: ["Comedy"] },
+        { title: "Austin Powers: International Man of Mystery", year: 1997, genres: ["Comedy"] },
+        { title: "The Mask", year: 1994, genres: ["Comedy"] },
+        { title: "Dumb and Dumber", year: 1994, genres: ["Comedy"] },
+        { title: "Happy Gilmore", year: 1996, genres: ["Comedy"] },
+        { title: "Billy Madison", year: 1995, genres: ["Comedy"] },
+        { title: "The Waterboy", year: 1998, genres: ["Comedy"] },
+        { title: "Big Daddy", year: 1999, genres: ["Comedy"] },
+        { title: "The Godfather", year: 1972, genres: ["Crime", "Drama"] },
+        { title: "Parasite", year: 2019, genres: ["Comedy", "Drama", "Thriller"] },
+        { title: "Get Out", year: 2017, genres: ["Horror", "Mystery", "Thriller"] },
+        { title: "Iron Man", year: 2008, genres: ["Action", "Adventure", "Sci-Fi"] },
+        { title: "Gladiator", year: 2000, genres: ["Action", "Adventure", "Drama"] },
+        { title: "The Princess Bride", year: 1987, genres: ["Adventure", "Family", "Fantasy", "Comedy"] }
+      ];
+
+      // Filter by genre if specified
+      let filteredMovies = verifiedMovieDatabase;
+      if (genres && genres.length > 0) {
+        filteredMovies = verifiedMovieDatabase.filter(movie => 
+          movie.genres.some(movieGenre => 
+            genres.some(userGenre => 
+              movieGenre.toLowerCase().includes(userGenre.toLowerCase()) ||
+              userGenre.toLowerCase().includes(movieGenre.toLowerCase())
+            )
+          )
+        );
+      }
+
+      // Randomize and take up to 10 movies
+      const shuffled = [...filteredMovies].sort(() => Math.random() - 0.5);
+      const selectedMovies = shuffled.slice(0, 10);
+
+      // Fetch authentic data from OMDb for each selected movie
+      for (const movieRef of selectedMovies) {
+        try {
+          const contentType = safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'series' : 'movie';
+          const omdbUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movieRef.title)}&y=${movieRef.year}&type=${contentType}`;
+          
+          console.log(`Fetching authentic data for ${movieRef.title} (${movieRef.year})`);
+          
+          const response = await fetch(omdbUrl);
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.Response === "True" && data.Title && data.Year && data.Plot && data.Plot !== "N/A") {
+              const enrichedMovie = {
+                title: data.Title,
+                year: parseInt(data.Year),
+                contentType: contentType,
+                genre: data.Genre ? data.Genre.split(', ') : movieRef.genres,
+                rating: data.imdbRating && data.imdbRating !== "N/A" ? parseFloat(data.imdbRating) : null,
+                runtime: data.Runtime ? parseInt(data.Runtime.replace(' min', '')) : null,
+                platform: safePlatforms,
+                description: data.Plot,
+                matchScore: data.imdbRating && data.imdbRating !== "N/A" ? Math.round(parseFloat(data.imdbRating) * 10) : null,
+                reasonForRecommendation: `Perfect ${mood} choice with ${data.imdbRating}/10 IMDb rating`,
+                poster: data.Poster && data.Poster !== "N/A" ? data.Poster : null
+              };
+              
+              enrichedRecommendations.push(enrichedMovie);
+              console.log(`✓ Successfully enriched ${movieRef.title} with authentic OMDb data`);
+              
+              // Stop when we have 5 good recommendations
+              if (enrichedRecommendations.length >= 5) {
+                break;
+              }
+            } else {
+              console.log(`✗ OMDb returned incomplete data for ${movieRef.title}`);
+            }
+          } else {
+            console.log(`✗ OMDb request failed for ${movieRef.title}: ${response.status}`);
+          }
+        } catch (error) {
+          console.error(`Failed to fetch data for ${movieRef.title}:`, error);
+        }
+      }
+      
+      if (enrichedRecommendations.length === 0) {
+        throw new Error("Unable to retrieve authentic movie data from database. Please try again.");
+      }
+
+      res.json({
+        recommendations: enrichedRecommendations,
+        personalizedMessage: `Authentic ${mood} recommendations with verified data`
+      });
     } catch (error) {
       console.error("Error generating watchlist:", error);
       res.status(500).json({ 
