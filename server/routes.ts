@@ -2306,44 +2306,44 @@ Please provide analysis in this exact JSON format (no additional text):
                     
                     console.log(`Found ${genreResponse.shows.length} ${genres[i]} shows on ${platform}`);
                     
-                    genreResponse.shows.forEach(show => {
+                    // Filter to only mainstream, recognizable movies
+                    const mainstreamMovies = genreResponse.shows.filter(show => {
+                      // Extremely strict filtering for only well-known movies
+                      const hasHighRating = show.rating >= 75;
+                      const isRecentEnough = show.releaseYear >= 2019;
+                      const hasMainstreamTitle = !show.title.startsWith('#') && 
+                                                !show.title.startsWith('"') && 
+                                                !show.title.startsWith('(') && 
+                                                !show.title.includes('...') &&
+                                                !show.title.match(/^\d+/) &&
+                                                show.title.length > 4;
+                      
+                      // Must have IMDb or TMDb ID (indicates it's a real movie)
+                      const hasValidIds = show.imdbId || show.tmdbId;
+                      
+                      // Must have proper English title (no special characters at start)
+                      const hasEnglishTitle = /^[A-Z]/.test(show.title);
+                      
+                      return hasHighRating && isRecentEnough && hasMainstreamTitle && hasValidIds && hasEnglishTitle;
+                    });
+                    
+                    console.log(`Filtered to ${mainstreamMovies.length} mainstream movies from ${genreResponse.shows.length} total`);
+                    
+                    mainstreamMovies.forEach(show => {
                       if (recommendations.length < targetCount) {
-                        // Enhanced genre matching
-                        const matchesGenre = show.genres.some(showGenre => {
-                          return genres.some(userGenre => {
-                            const userGenreLower = userGenre.toLowerCase();
-                            const showGenreLower = showGenre.name.toLowerCase();
-                            
-                            if (showGenreLower === userGenreLower) return true;
-                            if (showGenreLower.includes(userGenreLower)) return true;
-                            if (userGenreLower.includes(showGenreLower)) return true;
-                            
-                            const genreMappings: Record<string, string[]> = {
-                              'action': ['action', 'adventure', 'thriller'],
-                              'adventure': ['action', 'adventure'],
-                              'sci-fi': ['science fiction', 'sci-fi', 'scifi'],
-                              'comedy': ['comedy', 'romantic comedy'],
-                              'drama': ['drama', 'biographical', 'biography'],
-                              'horror': ['horror', 'thriller', 'supernatural'],
-                              'thriller': ['thriller', 'mystery', 'crime'],
-                              'romance': ['romance', 'romantic', 'love']
-                            };
-                            
-                            const mappedGenres = genreMappings[userGenreLower] || [userGenreLower];
-                            return mappedGenres.some(mapped => showGenreLower.includes(mapped));
-                          });
+                        // Verify genre match
+                        const matchesRequestedGenre = show.genres.some(showGenre => {
+                          const userGenreLower = genres[i].toLowerCase();
+                          const showGenreLower = showGenre.name.toLowerCase();
+                          return showGenreLower === userGenreLower;
                         });
                         
                         const inYearRange = !releaseYearRange || 
                           (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
                         
-                        // Check for duplicates
                         const alreadyAdded = recommendations.some(rec => rec.id === show.id);
                         
-                        // More strict filtering - must have valid year and match all criteria
-                        const hasValidYear = show.releaseYear && show.releaseYear > 1900;
-                        
-                        if (matchesGenre && inYearRange && !alreadyAdded && hasValidYear) {
+                        if (matchesRequestedGenre && inYearRange && !alreadyAdded) {
                           const availablePlatforms = show.streamingOptions?.us || [];
                           const platformNames = availablePlatforms.map(opt => opt.service.name);
                           
@@ -2353,7 +2353,7 @@ Please provide analysis in this exact JSON format (no additional text):
                             `${mood} ${genres[i]} recommendation`.trim()
                           );
                           recommendations.push(recommendation);
-                          console.log(`✓ Added genre-specific ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                          console.log(`✓ MAINSTREAM: ${show.title} (${show.releaseYear}) - Rating: ${show.rating}, Genres: ${show.genres.map(g => g.name).join(', ')}`);
                         }
                       }
                     });
@@ -2396,40 +2396,57 @@ Please provide analysis in this exact JSON format (no additional text):
                 continue;
               }
               
-              // Additional search without genre filters to get more variety
+              // High-quality mainstream movie search with stricter filtering
               if (recommendations.length < targetCount) {
-                console.log(`Additional variety search on ${platform} without genre filters`);
-                const varietyParams = {
+                console.log(`Searching for high-quality mainstream movies on ${platform}`);
+                const mainstreamParams = {
                   catalogs: platform,
-                  showType,
-                  limit: 20,
+                  showType: 'movie' as const,
+                  limit: 30,
                   orderBy: 'rating' as const,
                   orderDirection: 'desc' as const
                 };
                 
-                const varietyResponse = await streamingAPI.searchShows(varietyParams);
+                const mainstreamResponse = await streamingAPI.searchShows(mainstreamParams);
                 
-                console.log(`Found ${varietyResponse.shows.length} variety shows on ${platform}`);
+                console.log(`Found ${mainstreamResponse.shows.length} mainstream shows on ${platform}`);
                 
-                varietyResponse.shows.forEach(show => {
+                mainstreamResponse.shows.forEach(show => {
                   if (recommendations.length < targetCount) {
+                    // Very strict filtering for well-known movies
+                    const isHighQuality = show.rating >= 75 && show.releaseYear >= 2018;
+                    const hasMainstreamTitle = !show.title.startsWith('#') && 
+                                            !show.title.startsWith('"') && 
+                                            !show.title.startsWith('(') && 
+                                            !show.title.includes('...') &&
+                                            show.title.length > 3 &&
+                                            !show.title.match(/^\d+/); // No titles starting with numbers
+                    
                     const inYearRange = !releaseYearRange || 
                       (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
                     
                     const alreadyAdded = recommendations.some(rec => rec.id === show.id);
                     const hasValidYear = show.releaseYear && show.releaseYear > 1900;
                     
-                    if (inYearRange && !alreadyAdded && hasValidYear) {
+                    // Check if it matches at least one of the user's genres if genres are specified
+                    const matchesUserGenres = !genres || genres.length === 0 ||
+                      show.genres.some(showGenre => 
+                        genres.some(userGenre => 
+                          showGenre.name.toLowerCase() === userGenre.toLowerCase()
+                        )
+                      );
+                    
+                    if (isHighQuality && hasMainstreamTitle && inYearRange && !alreadyAdded && hasValidYear && matchesUserGenres) {
                       const availablePlatforms = show.streamingOptions?.us || [];
                       const platformNames = availablePlatforms.map(opt => opt.service.name);
                       
                       const recommendation = streamingAPI.convertToRecommendation(
                         show,
-                        Math.floor(Math.random() * 15) + 75,
-                        `${mood} variety pick`
+                        Math.floor(Math.random() * 15) + 85,
+                        `High-rated ${mood} pick`
                       );
                       recommendations.push(recommendation);
-                      console.log(`✓ Added variety ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                      console.log(`✓ Added mainstream ${show.title} (${show.releaseYear}) - Rating: ${show.rating}, Genres: ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
                     }
                   }
                 });
