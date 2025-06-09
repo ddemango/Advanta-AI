@@ -2108,500 +2108,262 @@ Please provide analysis in this exact JSON format (no additional text):
     { title: "Parasite", year: 2019, genre: ["Comedy", "Drama", "Thriller"], rating: 8.6, runtime: 132, platform: ["Netflix", "Hulu"], description: "Act of greed in family relationships, devides a poor and a rich family in a web of deceit.", mood: "thoughtful" }
   ];
 
-  // AI-powered watchlist generation function using RapidAPI streaming data
+  // AI-powered watchlist generation function with strict genre filtering
   async function generatePersonalizedWatchlist(preferences: any) {
-    const { streamingAPI } = await import('./streaming-api.js');
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured");
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = preferences;
 
-    try {
-      const recommendations: any[] = [];
-      const targetCount = 15;
-      
-      // Platform mapping
-      const platformMap: Record<string, string> = {
-        'Netflix': 'netflix',
-        'Amazon Prime': 'prime',
-        'Hulu': 'hulu',
-        'Disney+': 'disney',
-        'HBO Max': 'hbo',
-        'Apple TV+': 'apple',
-        'Paramount+': 'paramount'
-      };
-
-      const hasAnyPlatform = platforms?.some((p: string) => p.toLowerCase() === 'any platform');
-      const platformsToSearch = hasAnyPlatform ? 
-        ['netflix', 'prime', 'hulu', 'disney'] : 
-        platforms?.map((p: string) => platformMap[p] || p.toLowerCase()).slice(0, 3) || ['netflix'];
-
-      console.log(`Searching for mainstream ${genres?.join(', ')} movies on ${platformsToSearch.join(', ')}`);
-
-      // Search each platform with strict mainstream filtering
-      for (const platform of platformsToSearch) {
-        if (recommendations.length >= targetCount) break;
-
-        try {
-          // Search for each genre separately
-          if (genres && genres.length > 0) {
-            const genreMap: Record<string, string> = {
-              'Action': 'action',
-              'Comedy': 'comedy',
-              'Drama': 'drama', 
-              'Horror': 'horror',
-              'Thriller': 'thriller',
-              'Sci-Fi': 'scifi',
-              'Romance': 'romance',
-              'Crime': 'crime',
-              'Adventure': 'adventure'
-            };
-
-            for (const genre of genres) {
-              if (recommendations.length >= targetCount) break;
-
-              const mappedGenre = genreMap[genre] || genre.toLowerCase();
-              const searchParams = {
-                catalogs: platform,
-                showType: 'movie' as const,
-                genre: mappedGenre,
-                limit: 30,
-                orderBy: 'rating' as const,
-                orderDirection: 'desc' as const
-              };
-
-              console.log(`Searching ${platform} for ${genre} movies`);
-              const response = await streamingAPI.searchShows(searchParams);
-
-              // Apply extremely strict filtering for mainstream movies only
-              const mainstreamMovies = response.shows.filter((show: any) => {
-                const hasHighRating = show.rating >= 75;
-                const isRecentEnough = show.releaseYear >= 2018;
-                const hasMainstreamTitle = !show.title.startsWith('#') && 
-                                          !show.title.startsWith('"') && 
-                                          !show.title.startsWith('(') && 
-                                          !show.title.includes('...') &&
-                                          show.title.length > 4 &&
-                                          /^[A-Z]/.test(show.title);
-                const hasValidIds = show.imdbId || show.tmdbId;
-                
-                return hasHighRating && isRecentEnough && hasMainstreamTitle && hasValidIds;
-              });
-
-              console.log(`Found ${mainstreamMovies.length} mainstream ${genre} movies from ${response.shows.length} total`);
-
-              // Add filtered movies to recommendations
-              mainstreamMovies.forEach((show: any) => {
-                if (recommendations.length < targetCount) {
-                  const inYearRange = !releaseYearRange || 
-                    (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-                  
-                  const alreadyAdded = recommendations.some((rec: any) => rec.id === show.id);
-                  
-                  if (inYearRange && !alreadyAdded) {
-                    const recommendation = streamingAPI.convertToRecommendation(
-                      show,
-                      Math.floor(Math.random() * 15) + 85,
-                      `${mood} ${genre} recommendation`
-                    );
-                    recommendations.push(recommendation);
-                    console.log(`✓ MAINSTREAM: ${show.title} (${show.releaseYear}) - Rating: ${show.rating}`);
-                  }
-                }
-              });
-            }
-          }
-        } catch (error) {
-          console.error(`Error searching ${platform}:`, error);
-        }
+    // Build content type constraint - ensure contentTypes is always an array
+    const safeContentTypes = contentTypes || ['movies'];
+    let contentTypeConstraint = "";
+    
+    if (safeContentTypes.length > 0) {
+      if (safeContentTypes.includes('movies') && safeContentTypes.includes('tv_shows')) {
+        contentTypeConstraint = "Include both movies and TV shows in your recommendations.";
+      } else if (safeContentTypes.includes('movies')) {
+        contentTypeConstraint = "ONLY recommend movies. Do not include TV shows.";
+      } else if (safeContentTypes.includes('tv_shows')) {
+        contentTypeConstraint = "ONLY recommend TV shows. Do not include movies.";
       }
+    } else {
+      contentTypeConstraint = "Include both movies and TV shows in your recommendations.";
+    }
 
-      return recommendations;
-        'HBO Max': 'hbo',
-        'Apple TV+': 'apple',
-        'Paramount+': 'paramount',
-        'Peacock': 'peacock',
-        'Showtime': 'showtime',
-        'Starz': 'starz'
-      };
+    // Build genre constraint - STRICT requirement
+    let genreConstraint = "";
+    if (genres && genres.length > 0) {
+      genreConstraint = `CRITICAL REQUIREMENT: Content MUST include ONLY these exact genres: ${genres.join(', ')}. Do not include content with genres outside this list.`;
+    }
+
+    // Determine content type text for prompt
+    const contentTypeText = safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 
+      'TV shows' : 
+      safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows') ? 
+      'movies' : 
+      'movies and TV shows';
+
+    // Curated database of verified movies and TV shows that exist in OMDb
+    const verifiedMovies = [
+      // Action Movies
+      "Mad Max: Fury Road", "John Wick", "Mission: Impossible", "The Dark Knight", "Die Hard", "Terminator 2", "The Matrix", "Kill Bill", "Casino Royale", "Taken", "Gladiator", "300", "Edge of Tomorrow", "Baby Driver", "Speed", "Heat", "Point Break", "The Rock", "Face/Off", "Lethal Weapon", "Rush Hour", "Pirates of the Caribbean", "Raiders of the Lost Ark", "The Bourne Identity", "Top Gun", "Fast Five", "Wonder Woman", "Black Panther", "Iron Man", "Captain America", "Thor", "Guardians of the Galaxy", "Doctor Strange", "Spider-Man", "Batman Begins", "Man of Steel", "Aquaman", "Shazam", "The Raid", "Elite Squad", "The Man from Nowhere", "Oldboy", "I Saw the Devil", "The Chaser", "Train to Busan", "Snowpiercer", "The Host", "Burning", "Decision to Leave", "The Handmaiden",
       
-      const hasAnyPlatform = platforms?.some(p => p.toLowerCase() === 'any platform');
+      // Drama Movies  
+      "The Shawshank Redemption", "Forrest Gump", "The Godfather", "Goodfellas", "Pulp Fiction", "Fight Club", "The Departed", "There Will Be Blood", "No Country for Old Men", "Moonlight", "Manchester by the Sea", "Lady Bird", "Call Me by Your Name", "Nomadland", "Minari", "Sound of Metal", "The Power of the Dog", "CODA", "Everything Everywhere All at Once", "The Whale", "Parasite", "Roma", "The Irishman", "Marriage Story", "Uncut Gems", "Waves", "The Farewell", "Honey Boy", "Ad Astra", "A Hidden Life", "Pain and Glory", "Portrait of a Lady on Fire", "Amour", "The Tree of Life", "Her", "Lost in Translation", "The Master", "Phantom Thread", "Inherent Vice", "Magnolia", "Punch-Drunk Love", "Boogie Nights", "There Will Be Blood", "The Social Network", "Gone Girl", "Zodiac", "Se7en", "The Game", "Panic Room",
       
-      const selectedPlatforms = platforms && platforms.length > 0 && !hasAnyPlatform ? 
-        platforms.map(p => platformMap[p] || p.toLowerCase()).join(',') : 
-        'netflix,prime,hulu,disney';
+      // Comedy Movies
+      "The Grand Budapest Hotel", "Jojo Rabbit", "Knives Out", "The Nice Guys", "In Bruges", "Seven Psychopaths", "Three Billboards Outside Ebbing, Missouri", "The Lobster", "Hunt for the Wilderpeople", "What We Do in the Shadows", "Thor: Ragnarok", "Deadpool", "Spider-Man: Into the Spider-Verse", "The Lego Movie", "Toy Story", "Shrek", "The Incredibles", "Bridesmaids", "Superbad", "Pineapple Express", "Step Brothers", "Anchorman", "Zoolander", "Meet the Parents", "Dumb and Dumber", "Austin Powers", "Wayne's World", "Bill & Ted's Excellent Adventure", "21 Jump Street", "This Is the End", "Neighbors", "Game Night", "Tag", "Blockers", "Good Boys", "Booksmart", "Eighth Grade", "Napoleon Dynamite", "Office Space", "The Big Lebowski", "Groundhog Day", "The Princess Bride", "Ghostbusters", "Mean Girls", "Clueless", "Legally Blonde",
+      
+      // Horror Movies
+      "Get Out", "Hereditary", "Midsommar", "The Conjuring", "Insidious", "Sinister", "The Babadook", "It Follows", "A Quiet Place", "The Witch", "The Lighthouse", "Saint Maud", "His House", "Relic", "Color Out of Space", "Mandy", "Suspiria", "Climax", "Raw", "The Wailing", "Scream", "Halloween", "Friday the 13th", "A Nightmare on Elm Street", "The Texas Chain Saw Massacre", "Child's Play", "Saw", "Final Destination", "Paranormal Activity", "The Purge", "It", "The Exorcist", "The Shining", "Psycho", "Rosemary's Baby", "The Omen", "Poltergeist", "Alien", "The Thing", "They Live", "The Fly", "Videodrome", "Scanners", "Dead Ringers", "The Brood", "Carrie", "The Mist", "Gerald's Game", "Doctor Sleep", "Pet Sematary", "Annabelle", "The Nun", "Lights Out", "Don't Breathe", "Evil Dead", "30 Days of Night", "The Strangers", "You're Next", "The Guest",
+      
+      // Sci-Fi Movies
+      "Blade Runner 2049", "Arrival", "Ex Machina", "Interstellar", "Gravity", "The Martian", "Dune", "Blade Runner", "2001: A Space Odyssey", "Star Wars", "Star Trek", "Back to the Future", "Terminator", "Aliens", "Predator", "Total Recall", "Minority Report", "I, Robot", "Wall-E", "District 9", "Elysium", "Chappie", "The Fifth Element", "Demolition Man", "Strange Days", "Dark City", "The City of Lost Children", "Brazil", "12 Monkeys", "Looper", "Source Code", "Moon", "Primer", "Coherence", "The One I Love", "Another Earth", "Sound of My Voice", "The Signal", "Under the Skin", "Annihilation", "Sunshine", "Event Horizon", "Pandorum", "Life", "Prometheus", "Covenant"
+    ];
+    
+    const verifiedTVShows = [
+      // Action TV Shows
+      "24", "Jack Ryan", "The Boys", "Arrow", "The Flash", "Daredevil", "The Punisher", "The Mandalorian", "The Witcher", "Vikings", "The Last Kingdom", "Spartacus", "Banshee", "Strike Back", "The Expanse", "Altered Carbon", "Lost in Space", "Star Trek: Discovery", "Battlestar Galactica", "The 100", "Prison Break", "The Blacklist", "Person of Interest", "Sherlock", "Luther", "Money Heist", "Lupin", "Narcos", "Queen of the South", "Power", "Ozark", "Sons of Anarchy", "The Shield", "Justified", "Peaky Blinders", "Boardwalk Empire", "Game of Thrones", "House of the Dragon", "The Walking Dead", "Fear the Walking Dead", "Squid Game", "Alice in Borderland", "Kingdom", "All of Us Are Dead", "Sweet Home", "The Umbrella Academy", "Stranger Things", "Dark", "Russian Doll", "Westworld", "Severance", "The Sandman", "Lucifer", "Titans", "Watchmen", "Gotham",
+      
+      // Drama TV Shows
+      "Breaking Bad", "Better Call Saul", "The Sopranos", "The Wire", "Mad Men", "Lost", "This Is Us", "The Crown", "House of Cards", "Mindhunter", "True Detective", "Fargo", "The Leftovers", "Six Feet Under", "The West Wing", "ER", "Grey's Anatomy", "The Good Wife", "Succession", "Big Little Lies", "Mare of Easttown", "The Queen's Gambit", "Bridgerton", "The Handmaid's Tale", "Chernobyl", "Band of Brothers", "The Pacific", "Rome", "Deadwood", "Downton Abbey", "Call the Midwife", "Outlander", "Anne with an E", "Gilmore Girls", "Friday Night Lights", "Parenthood", "Brothers & Sisters", "Once and Again", "The Leftovers", "Rectify", "Halt and Catch Fire", "The Americans", "Better Things", "Atlanta", "Barry", "Succession", "Euphoria", "Industry", "I May Destroy You", "Normal People", "The White Lotus", "Mare of Easttown", "It's a Sin", "Squid Game", "Hellbound", "My Name", "Hometown's Embrace", "Beyond Evil", "Vincenzo", "Hospital Playlist", "Reply 1988", "Sky Castle", "Crash Landing on You", "Goblin", "Descendants of the Sun", "The World of the Married", "Itaewon Class",
+      
+      // Comedy TV Shows
+      "The Office", "Friends", "Seinfeld", "How I Met Your Mother", "The Big Bang Theory", "Parks and Recreation", "Brooklyn Nine-Nine", "Community", "30 Rock", "Arrested Development", "It's Always Sunny in Philadelphia", "Scrubs", "Modern Family", "The Simpsons", "Family Guy", "South Park", "Rick and Morty", "BoJack Horseman", "Archer", "Bob's Burgers", "The Good Place", "Schitt's Creek", "Ted Lasso", "What We Do in the Shadows", "Flight of the Conchords", "The IT Crowd", "Peep Show", "The Inbetweeners", "Derry Girls", "After Life", "Sex Education", "Never Have I Ever", "Emily in Paris", "Dead to Me", "Grace and Frankie", "Orange Is the New Black", "GLOW", "Unbreakable Kimmy Schmidt", "Master of None", "Veep", "Silicon Valley", "Curb Your Enthusiasm", "Entourage", "Californication", "Weeds", "Nurse Jackie", "Episodes", "The Comeback", "Getting On", "Louie", "Atlanta", "Dave", "Ramy", "Insecure", "The Marvelous Mrs. Maisel", "Fleabag", "Catastrophe", "Crashing", "Love", "Easy", "GLOW"
+    ];
 
-      console.log(`Fetching recommendations for mood: ${mood}, genres: ${genres?.join(', ')}, platforms: ${hasAnyPlatform ? 'all platforms' : selectedPlatforms}, showType: ${showType}`);
+    // Filter content based on user's content type preference
+    let verifiedContent;
+    if (safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies')) {
+      verifiedContent = verifiedTVShows;
+    } else if (safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows')) {
+      verifiedContent = verifiedMovies;
+    } else {
+      verifiedContent = [...verifiedMovies, ...verifiedTVShows];
+    }
 
-      // Use only mainstream filtering across all platforms
-      const platformsToSearch = hasAnyPlatform ? 
-        ['netflix', 'prime', 'hulu', 'disney'] : 
-        platforms.map(p => platformMap[p] || p.toLowerCase()).slice(0, 3);
+    const genreSpecificPrompt = genres && genres.length > 0 ? 
+      `Focus specifically on ${genres.join(', ')} genre(s). Select from this verified catalog of authentic ${contentTypeText} that exist in movie databases.` :
+      `Select from this verified catalog of authentic ${contentTypeText} that exist in movie databases.`;
 
-      for (const platform of platformsToSearch) {
-        if (recommendations.length >= targetCount) break;
+    const prompt = `You are accessing a verified database of authentic ${contentTypeText}. Generate 10 DIVERSE and VARIED recommendations for "${mood}" mood from this EXACT list of verified titles:
+
+VERIFIED ${contentTypeText.toUpperCase()} DATABASE:
+${verifiedContent.join(', ')}
+
+CRITICAL REQUIREMENTS:
+- ONLY recommend titles from the verified list above
+- NEVER suggest titles not in this list
+- Use exact title names as shown in the list
+- Each title MUST exist in the verified database above
+
+CRITICAL DIVERSITY REQUIREMENTS:
+- Include mix of popular AND lesser-known quality titles
+- Vary release years across different decades
+- Include international films when appropriate
+- Avoid obvious/predictable choices
+- Include hidden gems and underrated titles
+- Mix different sub-genres within the main genre
+- Include both recent releases and classic titles
+
+${contentTypeConstraint}
+${genreConstraint}
+
+SELECTION STRATEGY: 
+- Select exactly 10 titles from the verified database above
+- Ensure variety across decades and sub-genres  
+- Include mix of popular and lesser-known quality titles
+- Vary release years across different eras
+- Include international content when appropriate
+
+Return exactly 10 diverse recommendations in this JSON format:
+{
+  "recommendations": [
+    {
+      "title": "Unique Title Not Previously Recommended",
+      "year": 2020,
+      "contentType": "${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'}",
+      "genre": ["Primary Genre"],
+      "rating": 8.5,
+      "runtime": 120,
+      "platform": ["Available Platform"],
+      "description": "Authentic plot summary without quotes or line breaks",
+      "matchScore": 92,
+      "reasonForRecommendation": "Why this matches the ${mood} mood"${safeContentTypes.includes('tv_shows') ? ',\n      "seasons": 3,\n      "episodes": 30' : ''}
+    }
+  ],
+  "personalizedMessage": "Fresh ${mood} recommendations featuring variety across different eras"
+}`;
+
+    try {
+      // Generate a random seed to ensure variety in recommendations
+      const randomSeed = Math.floor(Math.random() * 1000);
+      const enhancedPrompt = `${prompt}\n\nRANDOM_SEED: ${randomSeed} - Use this to vary your selection and ensure different titles each time.`;
+      
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are a movie and TV show recommendation engine. You MUST respond with ONLY valid JSON - no additional text, explanations, or formatting.
+
+CRITICAL DIVERSITY MANDATE:
+- NEVER repeat the same movies/shows across different requests
+- Use the random seed to vary selections
+- Prioritize lesser-known gems over obvious choices
+- Include variety across decades, countries, and sub-genres
+
+CRITICAL JSON RULES:
+1. Response must start with { and end with }
+2. All strings must use double quotes, never single quotes
+3. Escape all quotes inside strings with \"
+4. Remove any line breaks or special characters from descriptions
+5. Use only these exact property names: recommendations, personalizedMessage
+
+CONTENT TYPE RULES:
+- If user requests TV shows only, ALL recommendations must have contentType: "tv_show"
+- If user requests movies only, ALL recommendations must have contentType: "movie"
+- Never mix content types when user specifies only one type
+
+Example valid response format:
+{"recommendations":[{"title":"Unique Movie Name","year":2020,"contentType":"movie","genre":["Action"],"rating":8.5,"runtime":120,"platform":["Netflix"],"description":"Short description without quotes or line breaks","matchScore":85,"reasonForRecommendation":"Why this matches"}],"personalizedMessage":"Your recommendations message"}`
+          },
+          {
+            role: "user",
+            content: enhancedPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1500,
+        temperature: 0.8, // Increased temperature for more variety
+        top_p: 0.9, // Added top_p for more diverse sampling
+        frequency_penalty: 0.5, // Penalize repeated content
+        presence_penalty: 0.3, // Encourage new topics
+      });
+
+      const responseContent = response.choices[0].message.content || '{}';
+      console.log("Raw OpenAI response:", responseContent.substring(0, 500) + "...");
+      
+      let recommendation;
+      try {
+        // Try parsing the raw response first
+        recommendation = JSON.parse(responseContent);
+      } catch (parseError) {
+        console.error("Initial JSON parse error:", parseError);
         
         try {
-          const searchParams: any = {
-            catalogs: platform,
-            showType: 'movie' as const,
-            limit: 30,
-            orderBy: 'rating' as const,
-            orderDirection: 'desc' as const
-          };
+          // More aggressive JSON cleaning
+          let fixedJson = responseContent
+            // Remove control characters and non-printable chars
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+            // Fix line breaks and whitespace
+            .replace(/\r?\n|\r/g, " ")
+            .replace(/\t/g, " ")
+            .replace(/\s+/g, " ")
+            // Fix common quote issues
+            .replace(/[""]/g, '"')
+            .replace(/['']/g, "'")
+            // Remove trailing commas
+            .replace(/,(\s*[}\]])/g, '$1')
+            // Fix escaped quotes in JSON strings
+            .replace(/\\"/g, '"')
+            .replace(/"([^"]*)":/g, (match, key) => `"${key.replace(/"/g, '\\"')}":`)
+            .trim();
 
-          // Search for each genre separately for better results
-          if (genres && genres.length > 0) {
-            const genreMap: Record<string, string> = {
-              'Action': 'action',
-              'Comedy': 'comedy', 
-              'Drama': 'drama',
-              'Horror': 'horror',
-              'Thriller': 'thriller',
-              'Sci-Fi': 'scifi',
-              'Fantasy': 'fantasy',
-              'Romance': 'romance',
-              'Crime': 'crime',
-              'Documentary': 'documentary',
-              'Animation': 'animation',
-              'Adventure': 'adventure'
-            };
-
-            for (const genre of genres) {
-              if (recommendations.length >= targetCount) break;
-              
-              const mappedGenre = genreMap[genre] || genre.toLowerCase();
-              const genreSearchParams = { ...searchParams, genre: mappedGenre };
-              
-              console.log(`Searching ${platform} for ${genre} movies`);
-              const response = await streamingAPI.searchShows(genreSearchParams);
-              
-              // Apply extremely strict filtering for mainstream movies only
-              const mainstreamMovies = response.shows.filter(show => {
-                const hasHighRating = show.rating >= 75;
-                const isRecentEnough = show.releaseYear >= 2018;
-                const hasMainstreamTitle = !show.title.startsWith('#') && 
-                                          !show.title.startsWith('"') && 
-                                          !show.title.startsWith('(') && 
-                                          !show.title.includes('...') &&
-                                          !show.title.match(/^\d+/) &&
-                                          show.title.length > 4 &&
-                                          /^[A-Z]/.test(show.title);
-                const hasValidIds = show.imdbId || show.tmdbId;
-                
-                return hasHighRating && isRecentEnough && hasMainstreamTitle && hasValidIds;
-              });
-              
-              console.log(`Found ${mainstreamMovies.length} mainstream ${genre} movies from ${response.shows.length} total on ${platform}`);
-              
-              mainstreamMovies.forEach(show => {
-                if (recommendations.length < targetCount) {
-                  const inYearRange = !releaseYearRange || 
-                    (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-                  
-                  const alreadyAdded = recommendations.some(rec => rec.id === show.id);
-                  
-                  if (inYearRange && !alreadyAdded) {
-                    const recommendation = streamingAPI.convertToRecommendation(
-                      show,
-                      Math.floor(Math.random() * 15) + 85,
-                      `${mood} ${genre} recommendation`
-                    );
-                    recommendations.push(recommendation);
-                    console.log(`✓ MAINSTREAM: ${show.title} (${show.releaseYear}) - Rating: ${show.rating}`);
-                  }
-                }
-              });
-            }
-          }
-        } catch (error) {
-          console.error(`Error searching ${platform}:`, error);
-        }
-      }
-
-      // If we still don't have enough results, add some high-quality movies without strict genre matching
-      if (recommendations.length < targetCount) {
-        try {
-          console.log('Filling remaining slots with high-quality movies');
-          const fallbackParams = {
-            catalogs: 'netflix,prime,hulu',
-            showType: 'movie' as const,
-            limit: 50,
-            orderBy: 'rating' as const,
-            orderDirection: 'desc' as const
-          };
-
-          const fallbackResponse = await streamingAPI.searchShows(fallbackParams);
+          // Find the JSON object boundaries
+          const jsonStart = fixedJson.indexOf('{');
+          const jsonEnd = fixedJson.lastIndexOf('}');
           
-          fallbackResponse.shows.forEach(show => {
-            if (recommendations.length < targetCount) {
-              // Apply strict mainstream filtering
-              const isHighQuality = show.rating >= 75 && show.releaseYear >= 2018;
-              const hasMainstreamTitle = !show.title.startsWith('#') && 
-                                        !show.title.startsWith('"') && 
-                                        !show.title.startsWith('(') && 
-                                        !show.title.includes('...') &&
-                                        show.title.length > 4 &&
-                                        /^[A-Z]/.test(show.title);
-              
-              const inYearRange = !releaseYearRange || 
-                (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-              
-              const alreadyAdded = recommendations.some((rec: any) => rec.id === show.id);
-              
-              if (isHighQuality && hasMainstreamTitle && inYearRange && !alreadyAdded) {
-                const recommendation = streamingAPI.convertToRecommendation(
-                  show,
-                  Math.floor(Math.random() * 15) + 80,
-                  `High-rated ${mood} pick`
-                );
-                recommendations.push(recommendation);
-                console.log(`✓ FALLBACK: ${show.title} (${show.releaseYear}) - Rating: ${show.rating}`);
-              }
-            }
-          });
-        } catch (error) {
-          console.error('Error in fallback search:', error);
-        }
-      }
-
-      console.log(`Final recommendation count: ${recommendations.length}`);
-
-      res.json({ recommendations });
-    } catch (error) {
-      console.error('Error generating personalized watchlist:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate personalized watchlist',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Generate trending data (with mock data - replace with real API)
-  async function generateTrendingData(timeFrame: string, industry: string, keywords?: string, platforms?: any) {
-                  'Action': 'action',
-                  'Comedy': 'comedy', 
-                  'Drama': 'drama',
-                  'Horror': 'horror',
-                  'Thriller': 'thriller',
-                  'Sci-Fi': 'scifi',
-                  'Fantasy': 'fantasy',
-                  'Romance': 'romance',
-                  'Crime': 'crime',
-                  'Documentary': 'documentary',
-                  'Animation': 'animation',
-                  'Adventure': 'adventure'
-                };
-                
-                // Try all selected genres to get maximum variety
-                for (let i = 0; i < genres.length; i++) {
-                  const mappedGenre = genreMap[genres[i]] || genres[i].toLowerCase();
-                  
-                  // Create separate search for each genre
-                  const genreSearchParams = { ...searchParams, genre: mappedGenre };
-                  
-                  try {
-                    console.log(`Searching ${platform} for ${genres[i]} with params:`, genreSearchParams);
-                    const genreResponse = await streamingAPI.searchShows(genreSearchParams);
-                    
-                    console.log(`Found ${genreResponse.shows.length} ${genres[i]} shows on ${platform}`);
-                    
-                    // Filter to only mainstream, recognizable movies
-                    const mainstreamMovies = genreResponse.shows.filter(show => {
-                      // Extremely strict filtering for only well-known movies
-                      const hasHighRating = show.rating >= 75;
-                      const isRecentEnough = show.releaseYear >= 2019;
-                      const hasMainstreamTitle = !show.title.startsWith('#') && 
-                                                !show.title.startsWith('"') && 
-                                                !show.title.startsWith('(') && 
-                                                !show.title.includes('...') &&
-                                                !show.title.match(/^\d+/) &&
-                                                show.title.length > 4;
-                      
-                      // Must have IMDb or TMDb ID (indicates it's a real movie)
-                      const hasValidIds = show.imdbId || show.tmdbId;
-                      
-                      // Must have proper English title (no special characters at start)
-                      const hasEnglishTitle = /^[A-Z]/.test(show.title);
-                      
-                      return hasHighRating && isRecentEnough && hasMainstreamTitle && hasValidIds && hasEnglishTitle;
-                    });
-                    
-                    console.log(`Filtered to ${mainstreamMovies.length} mainstream movies from ${genreResponse.shows.length} total`);
-                    
-                    mainstreamMovies.forEach(show => {
-                      if (recommendations.length < targetCount) {
-                        // Verify genre match
-                        const matchesRequestedGenre = show.genres.some(showGenre => {
-                          const userGenreLower = genres[i].toLowerCase();
-                          const showGenreLower = showGenre.name.toLowerCase();
-                          return showGenreLower === userGenreLower;
-                        });
-                        
-                        const inYearRange = !releaseYearRange || 
-                          (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-                        
-                        const alreadyAdded = recommendations.some(rec => rec.id === show.id);
-                        
-                        if (matchesRequestedGenre && inYearRange && !alreadyAdded) {
-                          const availablePlatforms = show.streamingOptions?.us || [];
-                          const platformNames = availablePlatforms.map(opt => opt.service.name);
-                          
-                          const recommendation = streamingAPI.convertToRecommendation(
-                            show,
-                            Math.floor(Math.random() * 20) + 80,
-                            `${mood} ${genres[i]} recommendation`.trim()
-                          );
-                          recommendations.push(recommendation);
-                          console.log(`✓ MAINSTREAM: ${show.title} (${show.releaseYear}) - Rating: ${show.rating}, Genres: ${show.genres.map(g => g.name).join(', ')}`);
-                        }
-                      }
-                    });
-                  } catch (error) {
-                    console.error(`Error searching ${platform} for ${genres[i]}:`, error);
-                  }
-                }
-                
-                // Skip the main search if we already have enough from genre searches
-                if (recommendations.length >= targetCount) continue;
-              } else {
-                // No genres specified, search for general popular content
-                console.log(`General cross-platform search on ${platform}:`, searchParams);
-                const platformResponse = await streamingAPI.searchShows(searchParams);
-                
-                console.log(`Found ${platformResponse.shows.length} general shows on ${platform}`);
-                
-                platformResponse.shows.forEach(show => {
-                  if (recommendations.length < targetCount) {
-                    const inYearRange = !releaseYearRange || 
-                      (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-                    
-                    const alreadyAdded = recommendations.some(rec => rec.id === show.id);
-                    const hasValidYear = show.releaseYear && show.releaseYear > 1900;
-                    
-                    if (inYearRange && !alreadyAdded && hasValidYear) {
-                      const availablePlatforms = show.streamingOptions?.us || [];
-                      const platformNames = availablePlatforms.map(opt => opt.service.name);
-                      
-                      const recommendation = streamingAPI.convertToRecommendation(
-                        show,
-                        Math.floor(Math.random() * 20) + 80,
-                        `${mood} recommendation`
-                      );
-                      recommendations.push(recommendation);
-                      console.log(`✓ Added general ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
-                    }
-                  }
-                });
-                continue;
-              }
-              
-              // High-quality mainstream movie search with stricter filtering
-              if (recommendations.length < targetCount) {
-                console.log(`Searching for high-quality mainstream movies on ${platform}`);
-                const mainstreamParams = {
-                  catalogs: platform,
-                  showType: 'movie' as const,
-                  limit: 30,
-                  orderBy: 'rating' as const,
-                  orderDirection: 'desc' as const
-                };
-                
-                const mainstreamResponse = await streamingAPI.searchShows(mainstreamParams);
-                
-                console.log(`Found ${mainstreamResponse.shows.length} mainstream shows on ${platform}`);
-                
-                mainstreamResponse.shows.forEach(show => {
-                  if (recommendations.length < targetCount) {
-                    // Very strict filtering for well-known movies
-                    const isHighQuality = show.rating >= 75 && show.releaseYear >= 2018;
-                    const hasMainstreamTitle = !show.title.startsWith('#') && 
-                                            !show.title.startsWith('"') && 
-                                            !show.title.startsWith('(') && 
-                                            !show.title.includes('...') &&
-                                            show.title.length > 3 &&
-                                            !show.title.match(/^\d+/); // No titles starting with numbers
-                    
-                    const inYearRange = !releaseYearRange || 
-                      (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-                    
-                    const alreadyAdded = recommendations.some(rec => rec.id === show.id);
-                    const hasValidYear = show.releaseYear && show.releaseYear > 1900;
-                    
-                    // Check if it matches at least one of the user's genres if genres are specified
-                    const matchesUserGenres = !genres || genres.length === 0 ||
-                      show.genres.some(showGenre => 
-                        genres.some(userGenre => 
-                          showGenre.name.toLowerCase() === userGenre.toLowerCase()
-                        )
-                      );
-                    
-                    if (isHighQuality && hasMainstreamTitle && inYearRange && !alreadyAdded && hasValidYear && matchesUserGenres) {
-                      const availablePlatforms = show.streamingOptions?.us || [];
-                      const platformNames = availablePlatforms.map(opt => opt.service.name);
-                      
-                      const recommendation = streamingAPI.convertToRecommendation(
-                        show,
-                        Math.floor(Math.random() * 15) + 85,
-                        `High-rated ${mood} pick`
-                      );
-                      recommendations.push(recommendation);
-                      console.log(`✓ Added mainstream ${show.title} (${show.releaseYear}) - Rating: ${show.rating}, Genres: ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
-                    }
-                  }
-                });
-              }
-            } catch (error) {
-              console.error(`Error searching ${platform}:`, error);
-            }
+          if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+            fixedJson = fixedJson.substring(jsonStart, jsonEnd + 1);
+            
+            // Additional fixes for common JSON issues
+            fixedJson = fixedJson
+              .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Ensure property names are quoted
+              .replace(/:\s*'([^']*)'/g, ': "$1"') // Convert single quotes to double quotes for values
+              .replace(/,\s*}/g, '}') // Remove trailing commas before }
+              .replace(/,\s*]/g, ']'); // Remove trailing commas before ]
+            
+            console.log("Fixed JSON:", fixedJson.substring(0, 500) + "...");
+            recommendation = JSON.parse(fixedJson);
+          } else {
+            throw new Error("Could not find valid JSON boundaries");
           }
-        } catch (error) {
-          console.error('Error in cross-platform search:', error);
+        } catch (secondError) {
+          console.error("Secondary parse error:", secondError);
+          throw new Error("Failed to parse OpenAI response after multiple attempts");
         }
       }
       
-      // Remove duplicate logic and clean up the structure
-      console.log(`Final recommendation count: ${recommendations.length}`);
-      
-      if (recommendations.length === 0) {
-        console.log('No recommendations found, using fallback search');
-        try {
-          const fallbackResponse = await streamingAPI.searchShows({
-            showType,
-            catalogs: 'netflix',
-            limit: 15,
-            orderBy: 'rating',
-            orderDirection: 'desc'
-          });
-          
-          fallbackResponse.shows.forEach(show => {
-            if (recommendations.length < targetCount) {
-              const inYearRange = !releaseYearRange || 
-                (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-              
-              const alreadyAdded = recommendations.some(rec => rec.id === show.id);
-              const hasValidYear = show.releaseYear && show.releaseYear > 1900;
-              
-              if (inYearRange && !alreadyAdded && hasValidYear) {
-                const recommendation = streamingAPI.convertToRecommendation(
-                  show,
-                  Math.floor(Math.random() * 15) + 85,
-                  `Popular ${mood} recommendation`
-                );
-                recommendations.push(recommendation);
-                console.log(`Added fallback ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')}`);
-              }
-            }
-          });
-        } catch (error) {
-          console.error('Error fetching fallback shows:', error);
-        }
+      // Validate and normalize the recommendation data structure
+      if (recommendation && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
+        recommendation.recommendations = recommendation.recommendations.map((movie: any) => ({
+          ...movie,
+          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Unknown']),
+          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Streaming']),
+          rating: typeof movie.rating === 'number' ? movie.rating : 7.0,
+          runtime: typeof movie.runtime === 'number' ? movie.runtime : 120,
+          year: typeof movie.year === 'number' ? movie.year : new Date().getFullYear(),
+          matchScore: typeof movie.matchScore === 'number' ? movie.matchScore : 85,
+          title: movie.title || 'Unknown Title',
+          description: movie.description || 'No description available',
+          reasonForRecommendation: movie.reasonForRecommendation || 'Recommended for you',
+          contentType: movie.contentType || 'movie'
+        }));
       }
-
-      return {
-        recommendations: recommendations.slice(0, targetCount),
-        personalizedMessage: `Fresh ${mood} recommendations with authentic streaming data and real availability`
-      };
+      
+      return recommendation;
     } catch (error) {
-      console.error('RapidAPI error:', error);
-      throw new Error('Unable to fetch streaming recommendations. Please check your RapidAPI configuration.');
+      console.error("OpenAI API error:", error);
+      
+      // Return error response without fallback synthetic data
+      throw new Error("Failed to generate personalized recommendations. Please try again.");
     }
   }
 
@@ -2611,28 +2373,73 @@ Please provide analysis in this exact JSON format (no additional text):
       const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
 
       if (!mood) {
-        return res.status(400).json({ error: 'Mood is required' });
+        return res.status(400).json({ error: "Mood is required" });
       }
 
       const watchlistData = await generatePersonalizedWatchlist({
         mood,
-        contentTypes,
-        genres,
-        timeAvailable,
-        platforms,
-        viewingContext,
-        pastFavorites,
-        includeWildCard,
-        releaseYearRange
+        contentTypes: contentTypes || ['movies'],
+        genres: genres || [],
+        timeAvailable: timeAvailable || 120,
+        platforms: platforms || [],
+        viewingContext: viewingContext || '',
+        pastFavorites: pastFavorites || '',
+        includeWildCard: includeWildCard || false,
+        releaseYearRange: releaseYearRange || [1980, 2024]
       });
+
+      // Add real movie posters using OMDb API if available
+      if (process.env.OMDB_API_KEY && watchlistData.recommendations) {
+        await Promise.allSettled(
+          watchlistData.recommendations.map(async (movie: any) => {
+            try {
+              // Use correct type parameter based on content type
+              const contentType = movie.contentType === 'tv_show' ? 'series' : 'movie';
+              const omdbUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=${contentType}`;
+              console.log(`Fetching poster for ${movie.title} (${movie.year}) - ${contentType}`);
+              
+              const response = await fetch(omdbUrl);
+              
+              if (response.ok) {
+                const data = await response.json();
+                console.log(`OMDb response for ${movie.title}:`, data);
+                
+                if (data.Response === "True" && data.Poster && data.Poster !== "N/A") {
+                  movie.poster = data.Poster;
+                  console.log(`✓ Found poster for ${movie.title}: ${data.Poster}`);
+                  // Update rating if available from OMDb
+                  if (data.imdbRating && data.imdbRating !== "N/A") {
+                    movie.rating = parseFloat(data.imdbRating);
+                  }
+                } else {
+                  console.log(`✗ No poster found for ${movie.title}:`, data.Error || 'Poster is N/A');
+                  movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+                }
+              } else {
+                console.log(`✗ OMDb API request failed for ${movie.title}:`, response.status, response.statusText);
+                movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+              }
+            } catch (error) {
+              console.error(`Failed to fetch poster for ${movie.title}:`, error);
+              movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+            }
+          })
+        );
+      } else {
+        // Use placeholder posters when OMDb API is not available
+        watchlistData.recommendations.forEach((movie: any) => {
+          movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+        });
+      }
 
       res.json(watchlistData);
     } catch (error) {
-      console.error('Error generating watchlist:', error);
+      console.error("Error generating watchlist:", error);
       res.status(500).json({ 
-        error: 'Failed to generate personalized watchlist',
+        error: "Failed to generate personalized watchlist",
+        message: "Please try again or contact support if the issue persists.",
         recommendations: [],
-        personalizedMessage: 'Unable to fetch recommendations at this time. Please try again.'
+        personalizedMessage: "Unable to generate recommendations at this time."
       });
     }
   });
