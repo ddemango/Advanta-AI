@@ -2149,27 +2149,63 @@ Please provide analysis in this exact JSON format (no additional text):
       'movies' : 
       'movies and TV shows';
 
-    const genreSpecificPrompt = genres && genres.length > 0 ? 
-      `Focus specifically on ${genres.join(', ')} genre(s). Draw from the extensive catalog of authentic ${contentTypeText} in these genres from 1980-2024.` :
-      `Draw from the full spectrum of authentic ${contentTypeText} across all genres from 1980-2024.`;
+    // Curated database of verified movies and TV shows that exist in OMDb
+    const verifiedMovies = [
+      // Action Movies
+      "Mad Max: Fury Road", "John Wick", "Mission: Impossible", "The Dark Knight", "Die Hard", "Terminator 2", "The Matrix", "Kill Bill", "Casino Royale", "Taken", "Gladiator", "300", "Edge of Tomorrow", "Baby Driver", "Speed", "Heat", "Point Break", "The Rock", "Face/Off", "Lethal Weapon", "Rush Hour", "Pirates of the Caribbean", "Raiders of the Lost Ark", "The Bourne Identity", "Top Gun", "Fast Five", "Wonder Woman", "Black Panther", "Iron Man", "Captain America", "Thor", "Guardians of the Galaxy", "Doctor Strange", "Spider-Man", "Batman Begins", "Man of Steel", "Aquaman", "Shazam", "The Raid", "Elite Squad", "The Man from Nowhere", "Oldboy", "I Saw the Devil", "The Chaser", "Train to Busan", "Snowpiercer", "The Host", "Burning", "Decision to Leave", "The Handmaiden",
+      
+      // Drama Movies  
+      "The Shawshank Redemption", "Forrest Gump", "The Godfather", "Goodfellas", "Pulp Fiction", "Fight Club", "The Departed", "There Will Be Blood", "No Country for Old Men", "Moonlight", "Manchester by the Sea", "Lady Bird", "Call Me by Your Name", "Nomadland", "Minari", "Sound of Metal", "The Power of the Dog", "CODA", "Everything Everywhere All at Once", "The Whale", "Parasite", "Roma", "The Irishman", "Marriage Story", "Uncut Gems", "Waves", "The Farewell", "Honey Boy", "Ad Astra", "A Hidden Life", "Pain and Glory", "Portrait of a Lady on Fire", "Amour", "The Tree of Life", "Her", "Lost in Translation", "The Master", "Phantom Thread", "Inherent Vice", "Magnolia", "Punch-Drunk Love", "Boogie Nights", "There Will Be Blood", "The Social Network", "Gone Girl", "Zodiac", "Se7en", "The Game", "Panic Room",
+      
+      // Comedy Movies
+      "The Grand Budapest Hotel", "Jojo Rabbit", "Knives Out", "The Nice Guys", "In Bruges", "Seven Psychopaths", "Three Billboards Outside Ebbing, Missouri", "The Lobster", "Hunt for the Wilderpeople", "What We Do in the Shadows", "Thor: Ragnarok", "Deadpool", "Spider-Man: Into the Spider-Verse", "The Lego Movie", "Toy Story", "Shrek", "The Incredibles", "Bridesmaids", "Superbad", "Pineapple Express", "Step Brothers", "Anchorman", "Zoolander", "Meet the Parents", "Dumb and Dumber", "Austin Powers", "Wayne's World", "Bill & Ted's Excellent Adventure", "21 Jump Street", "This Is the End", "Neighbors", "Game Night", "Tag", "Blockers", "Good Boys", "Booksmart", "Eighth Grade", "Napoleon Dynamite", "Office Space", "The Big Lebowski", "Groundhog Day", "The Princess Bride", "Ghostbusters", "Mean Girls", "Clueless", "Legally Blonde",
+      
+      // Horror Movies
+      "Get Out", "Hereditary", "Midsommar", "The Conjuring", "Insidious", "Sinister", "The Babadook", "It Follows", "A Quiet Place", "The Witch", "The Lighthouse", "Saint Maud", "His House", "Relic", "Color Out of Space", "Mandy", "Suspiria", "Climax", "Raw", "The Wailing", "Scream", "Halloween", "Friday the 13th", "A Nightmare on Elm Street", "The Texas Chain Saw Massacre", "Child's Play", "Saw", "Final Destination", "Paranormal Activity", "The Purge", "It", "The Exorcist", "The Shining", "Psycho", "Rosemary's Baby", "The Omen", "Poltergeist", "Alien", "The Thing", "They Live", "The Fly", "Videodrome", "Scanners", "Dead Ringers", "The Brood", "Carrie", "The Mist", "Gerald's Game", "Doctor Sleep", "Pet Sematary", "Annabelle", "The Nun", "Lights Out", "Don't Breathe", "Evil Dead", "30 Days of Night", "The Strangers", "You're Next", "The Guest",
+      
+      // Sci-Fi Movies
+      "Blade Runner 2049", "Arrival", "Ex Machina", "Interstellar", "Gravity", "The Martian", "Dune", "Blade Runner", "2001: A Space Odyssey", "Star Wars", "Star Trek", "Back to the Future", "Terminator", "Aliens", "Predator", "Total Recall", "Minority Report", "I, Robot", "Wall-E", "District 9", "Elysium", "Chappie", "The Fifth Element", "Demolition Man", "Strange Days", "Dark City", "The City of Lost Children", "Brazil", "12 Monkeys", "Looper", "Source Code", "Moon", "Primer", "Coherence", "The One I Love", "Another Earth", "Sound of My Voice", "The Signal", "Under the Skin", "Annihilation", "Sunshine", "Event Horizon", "Pandorum", "Life", "Prometheus", "Covenant"
+    ];
+    
+    const verifiedTVShows = [
+      // Action TV Shows
+      "24", "Jack Ryan", "The Boys", "Arrow", "The Flash", "Daredevil", "The Punisher", "The Mandalorian", "The Witcher", "Vikings", "The Last Kingdom", "Spartacus", "Banshee", "Strike Back", "The Expanse", "Altered Carbon", "Lost in Space", "Star Trek: Discovery", "Battlestar Galactica", "The 100", "Prison Break", "The Blacklist", "Person of Interest", "Sherlock", "Luther", "Money Heist", "Lupin", "Narcos", "Queen of the South", "Power", "Ozark", "Sons of Anarchy", "The Shield", "Justified", "Peaky Blinders", "Boardwalk Empire", "Game of Thrones", "House of the Dragon", "The Walking Dead", "Fear the Walking Dead", "Squid Game", "Alice in Borderland", "Kingdom", "All of Us Are Dead", "Sweet Home", "The Umbrella Academy", "Stranger Things", "Dark", "Russian Doll", "Westworld", "Severance", "The Sandman", "Lucifer", "Titans", "Watchmen", "Gotham",
+      
+      // Drama TV Shows
+      "Breaking Bad", "Better Call Saul", "The Sopranos", "The Wire", "Mad Men", "Lost", "This Is Us", "The Crown", "House of Cards", "Mindhunter", "True Detective", "Fargo", "The Leftovers", "Six Feet Under", "The West Wing", "ER", "Grey's Anatomy", "The Good Wife", "Succession", "Big Little Lies", "Mare of Easttown", "The Queen's Gambit", "Bridgerton", "The Handmaid's Tale", "Chernobyl", "Band of Brothers", "The Pacific", "Rome", "Deadwood", "Downton Abbey", "Call the Midwife", "Outlander", "Anne with an E", "Gilmore Girls", "Friday Night Lights", "Parenthood", "Brothers & Sisters", "Once and Again", "The Leftovers", "Rectify", "Halt and Catch Fire", "The Americans", "Better Things", "Atlanta", "Barry", "Succession", "Euphoria", "Industry", "I May Destroy You", "Normal People", "The White Lotus", "Mare of Easttown", "It's a Sin", "Squid Game", "Hellbound", "My Name", "Hometown's Embrace", "Beyond Evil", "Vincenzo", "Hospital Playlist", "Reply 1988", "Sky Castle", "Crash Landing on You", "Goblin", "Descendants of the Sun", "The World of the Married", "Itaewon Class",
+      
+      // Comedy TV Shows
+      "The Office", "Friends", "Seinfeld", "How I Met Your Mother", "The Big Bang Theory", "Parks and Recreation", "Brooklyn Nine-Nine", "Community", "30 Rock", "Arrested Development", "It's Always Sunny in Philadelphia", "Scrubs", "Modern Family", "The Simpsons", "Family Guy", "South Park", "Rick and Morty", "BoJack Horseman", "Archer", "Bob's Burgers", "The Good Place", "Schitt's Creek", "Ted Lasso", "What We Do in the Shadows", "Flight of the Conchords", "The IT Crowd", "Peep Show", "The Inbetweeners", "Derry Girls", "After Life", "Sex Education", "Never Have I Ever", "Emily in Paris", "Dead to Me", "Grace and Frankie", "Orange Is the New Black", "GLOW", "Unbreakable Kimmy Schmidt", "Master of None", "Veep", "Silicon Valley", "Curb Your Enthusiasm", "Entourage", "Californication", "Weeds", "Nurse Jackie", "Episodes", "The Comeback", "Getting On", "Louie", "Atlanta", "Dave", "Ramy", "Insecure", "The Marvelous Mrs. Maisel", "Fleabag", "Catastrophe", "Crashing", "Love", "Easy", "GLOW"
+    ];
 
-    const prompt = `You are a movie and TV show recommendation engine. Generate 10 DIVERSE and VARIED recommendations for "${mood}" mood. AVOID commonly recommended titles like The Dark Knight, Inception, or other frequently suggested movies.
+    // Filter content based on user's content type preference
+    let verifiedContent;
+    if (safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies')) {
+      verifiedContent = verifiedTVShows;
+    } else if (safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows')) {
+      verifiedContent = verifiedMovies;
+    } else {
+      verifiedContent = [...verifiedMovies, ...verifiedTVShows];
+    }
+
+    const genreSpecificPrompt = genres && genres.length > 0 ? 
+      `Focus specifically on ${genres.join(', ')} genre(s). Select from this verified catalog of authentic ${contentTypeText} that exist in movie databases.` :
+      `Select from this verified catalog of authentic ${contentTypeText} that exist in movie databases.`;
+
+    const prompt = `You are accessing a verified database of authentic ${contentTypeText}. Generate 10 DIVERSE and VARIED recommendations for "${mood}" mood from this EXACT list of verified titles:
+
+VERIFIED ${contentTypeText.toUpperCase()} DATABASE:
+${verifiedContent.join(', ')}
+
+CRITICAL REQUIREMENTS:
+- ONLY recommend titles from the verified list above
+- NEVER suggest titles not in this list
+- Use exact title names as shown in the list
+- Each title MUST exist in the verified database above
 
 CRITICAL DIVERSITY REQUIREMENTS:
 - Include mix of popular AND lesser-known quality titles
 - Vary release years across different decades
-- Include international films when appropriate
-- Avoid obvious/predictable choices
-- Include hidden gems and underrated titles
-- Mix different sub-genres within the main genre
-- Include both recent releases and classic titles
-
-SELECTION STRATEGY: 
-- Select exactly 10 titles from authentic movie/TV databases
-- Ensure variety across decades and sub-genres  
-- Include mix of popular and lesser-known quality titles
-- Vary release years across different eras
-- Include international content when appropriate
 - Include international films when appropriate
 - Avoid obvious/predictable choices
 - Include hidden gems and underrated titles
@@ -2244,11 +2280,11 @@ Example valid response format:
           }
         ],
         response_format: { type: "json_object" },
-        max_tokens: 2000,
-        temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0.3,
-        presence_penalty: 0.2
+        max_tokens: 1500,
+        temperature: 0.8, // Increased temperature for more variety
+        top_p: 0.9, // Added top_p for more diverse sampling
+        frequency_penalty: 0.5, // Penalize repeated content
+        presence_penalty: 0.3, // Encourage new topics
       });
 
       const responseContent = response.choices[0].message.content || '{}';
@@ -2309,16 +2345,16 @@ Example valid response format:
       if (recommendation && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
         recommendation.recommendations = recommendation.recommendations.map((movie: any) => ({
           ...movie,
-          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Drama']),
-          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Netflix']),
-          rating: typeof movie.rating === 'number' ? movie.rating : 7.5,
+          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Unknown']),
+          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Streaming']),
+          rating: typeof movie.rating === 'number' ? movie.rating : 7.0,
           runtime: typeof movie.runtime === 'number' ? movie.runtime : 120,
-          year: typeof movie.year === 'number' ? movie.year : 2020,
+          year: typeof movie.year === 'number' ? movie.year : new Date().getFullYear(),
           matchScore: typeof movie.matchScore === 'number' ? movie.matchScore : 85,
-          title: movie.title || 'Recommended Title',
-          description: movie.description || 'Quality entertainment recommendation',
-          reasonForRecommendation: movie.reasonForRecommendation || 'Matches your preferences',
-          contentType: movie.contentType || (safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie')
+          title: movie.title || 'Unknown Title',
+          description: movie.description || 'No description available',
+          reasonForRecommendation: movie.reasonForRecommendation || 'Recommended for you',
+          contentType: movie.contentType || 'movie'
         }));
       }
       
@@ -2352,8 +2388,8 @@ Example valid response format:
         releaseYearRange: releaseYearRange || [1980, 2024]
       });
 
-      // Add placeholder posters for movie recommendations
-      if (false && process.env.OMDB_API_KEY && watchlistData.recommendations) {
+      // Add real movie posters using OMDb API if available
+      if (process.env.OMDB_API_KEY && watchlistData.recommendations) {
         await Promise.allSettled(
           watchlistData.recommendations.map(async (movie: any) => {
             try {
