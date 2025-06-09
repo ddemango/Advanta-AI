@@ -2188,28 +2188,65 @@ Please provide analysis in this exact JSON format (no additional text):
             
             response.shows.forEach(show => {
               if (recommendations.length < targetCount) {
-                // Apply additional filtering
+                // Strict genre matching - must match user's selected genres
                 const matchesGenre = !genres || genres.length === 0 ||
-                  show.genres.some(showGenre => 
-                    genres.some(userGenre => 
-                      showGenre.name.toLowerCase() === userGenre.toLowerCase() ||
-                      showGenre.name.toLowerCase().includes(userGenre.toLowerCase())
-                    )
-                  );
+                  show.genres.some(showGenre => {
+                    const genreMatches = genres.some(userGenre => {
+                      const userGenreLower = userGenre.toLowerCase();
+                      const showGenreLower = showGenre.name.toLowerCase();
+                      
+                      // Direct matches
+                      if (showGenreLower === userGenreLower) return true;
+                      if (showGenreLower.includes(userGenreLower)) return true;
+                      if (userGenreLower.includes(showGenreLower)) return true;
+                      
+                      // Handle specific mappings
+                      const genreMappings = {
+                        'action': ['action', 'adventure', 'thriller'],
+                        'adventure': ['action', 'adventure'],
+                        'sci-fi': ['science fiction', 'sci-fi', 'scifi'],
+                        'comedy': ['comedy', 'romantic comedy'],
+                        'drama': ['drama', 'biographical', 'biography'],
+                        'horror': ['horror', 'thriller', 'supernatural'],
+                        'thriller': ['thriller', 'mystery', 'crime'],
+                        'romance': ['romance', 'romantic', 'love']
+                      };
+                      
+                      const mappedGenres = genreMappings[userGenreLower] || [userGenreLower];
+                      return mappedGenres.some(mapped => showGenreLower.includes(mapped));
+                    });
+                    return genreMatches;
+                  });
                 
                 const inYearRange = !releaseYearRange || 
                   (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
                 
-                if (matchesGenre && inYearRange) {
+                // Verify platform availability
+                const availablePlatforms = show.streamingOptions?.us || [];
+                const platformNames = availablePlatforms.map(opt => opt.service.name);
+                const hasCorrectPlatform = !platforms || platforms.length === 0 ||
+                  platforms.some(userPlatform => 
+                    platformNames.some(serviceName => 
+                      serviceName.toLowerCase().includes(userPlatform.toLowerCase()) ||
+                      userPlatform.toLowerCase().includes(serviceName.toLowerCase())
+                    )
+                  );
+                
+                console.log(`Checking ${show.title}: Genre match: ${matchesGenre}, Year range: ${inYearRange}, Platform: ${hasCorrectPlatform}`);
+                console.log(`  - Show genres: ${show.genres.map(g => g.name).join(', ')}`);
+                console.log(`  - Show year: ${show.releaseYear}, Range: ${releaseYearRange?.[0]}-${releaseYearRange?.[1]}`);
+                console.log(`  - Show platforms: ${platformNames.join(', ')}`);
+                
+                if (matchesGenre && inYearRange && hasCorrectPlatform) {
                   const recommendation = streamingAPI.convertToRecommendation(
                     show,
                     Math.floor(Math.random() * 20) + 80,
                     `${mood} ${genres?.length ? genres[0] : ''} pick on ${platformName}`.trim()
                   );
                   recommendations.push(recommendation);
-                  console.log(`✓ Added ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformName}`);
+                  console.log(`✓ Added ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
                 } else {
-                  console.log(`✗ Filtered out ${show.title} (${show.releaseYear}) - Genre: ${show.genres.map(g => g.name).join(', ')}, Year: ${show.releaseYear}`);
+                  console.log(`✗ Filtered out ${show.title} - Genre: ${!matchesGenre}, Year: ${!inYearRange}, Platform: ${!hasCorrectPlatform}`);
                 }
               }
             });
