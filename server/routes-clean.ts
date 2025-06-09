@@ -74,22 +74,33 @@ export async function setupMovieRecommendations(app: Express) {
               console.log(`Searching ${platform} for ${genre} movies`);
               const response = await streamingAPI.searchShows(searchParams);
 
-              // Apply extremely strict filtering for mainstream movies only
+              // Log sample data to understand the structure
+              if (response.shows.length > 0) {
+                console.log(`Sample movie data:`, {
+                  title: response.shows[0].title,
+                  rating: response.shows[0].rating,
+                  year: response.shows[0].releaseYear,
+                  imdb: response.shows[0].imdbId,
+                  tmdb: response.shows[0].tmdbId
+                });
+              }
+
+              // Apply practical filtering for quality movies
               const mainstreamMovies = response.shows.filter((show: any) => {
-                const hasHighRating = show.rating >= 75;
-                const isRecentEnough = show.releaseYear >= 2018;
-                const hasMainstreamTitle = !show.title.startsWith('#') && 
-                                          !show.title.startsWith('"') && 
-                                          !show.title.startsWith('(') && 
-                                          !show.title.includes('...') &&
-                                          show.title.length > 4 &&
-                                          /^[A-Z]/.test(show.title);
-                const hasValidIds = show.imdbId || show.tmdbId;
+                // More inclusive criteria to ensure we get results
+                const hasTitle = show.title && show.title.length > 1;
+                const hasYear = show.releaseYear && show.releaseYear >= 2000;
+                const hasRating = show.rating !== undefined && show.rating > 0;
+                const hasCleanTitle = !show.title.includes('²') && 
+                                     !show.title.includes('#Alive') &&
+                                     !show.title.includes('(Tillu)');
                 
-                return hasHighRating && isRecentEnough && hasMainstreamTitle && hasValidIds;
+                console.log(`Checking ${show.title}: rating=${show.rating}, year=${show.releaseYear}, clean=${hasCleanTitle}`);
+                
+                return hasTitle && hasYear && hasRating && hasCleanTitle;
               });
 
-              console.log(`Found ${mainstreamMovies.length} mainstream ${genre} movies from ${response.shows.length} total`);
+              console.log(`Found ${mainstreamMovies.length} quality ${genre} movies from ${response.shows.length} total`);
 
               // Add filtered movies to recommendations
               mainstreamMovies.forEach((show: any) => {
