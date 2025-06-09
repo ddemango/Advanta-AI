@@ -2124,7 +2124,7 @@ Please provide analysis in this exact JSON format (no additional text):
 
       // Fetch recommendations from RapidAPI based on preferences
       const recommendations = [];
-      const targetCount = 10;
+      const targetCount = 15;
       
       // Map user platforms to streaming service catalogs
       const platformMap: Record<string, string> = {
@@ -2262,7 +2262,7 @@ Please provide analysis in this exact JSON format (no additional text):
       if (hasAnyPlatform || recommendations.length < targetCount) {
         try {
           // Search across multiple platforms when "any platform" is selected
-          const popularPlatforms = ['netflix', 'prime', 'hulu', 'disney'];
+          const popularPlatforms = ['netflix', 'prime', 'hulu', 'disney', 'hbo', 'apple', 'paramount'];
           
           for (const platform of popularPlatforms) {
             if (recommendations.length >= targetCount) break;
@@ -2271,12 +2271,12 @@ Please provide analysis in this exact JSON format (no additional text):
               const searchParams: any = {
                 catalogs: platform,
                 showType,
-                limit: Math.ceil((targetCount - recommendations.length) / popularPlatforms.length) + 2,
+                limit: 25, // Increased limit to get more options for filtering
                 orderBy: 'rating',
                 orderDirection: 'desc'
               };
               
-              // Add genre filter if specified
+              // Search multiple genres to get diverse results
               if (genres && genres.length > 0) {
                 const genreMap: Record<string, string> = {
                   'Action': 'action',
@@ -2292,70 +2292,192 @@ Please provide analysis in this exact JSON format (no additional text):
                   'Animation': 'animation',
                   'Adventure': 'adventure'
                 };
-                const mappedGenre = genreMap[genres[0]] || genres[0].toLowerCase();
-                searchParams.genre = mappedGenre;
-              }
-              
-              console.log(`Cross-platform search on ${platform}:`, searchParams);
-              const platformResponse = await streamingAPI.searchShows(searchParams);
-              
-              console.log(`Found ${platformResponse.shows.length} shows on ${platform}`);
-              
-              platformResponse.shows.forEach(show => {
-                if (recommendations.length < targetCount) {
-                  // Enhanced genre matching
-                  const matchesGenre = !genres || genres.length === 0 ||
-                    show.genres.some(showGenre => {
-                      return genres.some(userGenre => {
-                        const userGenreLower = userGenre.toLowerCase();
-                        const showGenreLower = showGenre.name.toLowerCase();
-                        
-                        if (showGenreLower === userGenreLower) return true;
-                        if (showGenreLower.includes(userGenreLower)) return true;
-                        if (userGenreLower.includes(showGenreLower)) return true;
-                        
-                        const genreMappings: Record<string, string[]> = {
-                          'action': ['action', 'adventure', 'thriller'],
-                          'adventure': ['action', 'adventure'],
-                          'sci-fi': ['science fiction', 'sci-fi', 'scifi'],
-                          'comedy': ['comedy', 'romantic comedy'],
-                          'drama': ['drama', 'biographical', 'biography'],
-                          'horror': ['horror', 'thriller', 'supernatural'],
-                          'thriller': ['thriller', 'mystery', 'crime'],
-                          'romance': ['romance', 'romantic', 'love']
-                        };
-                        
-                        const mappedGenres = genreMappings[userGenreLower] || [userGenreLower];
-                        return mappedGenres.some(mapped => showGenreLower.includes(mapped));
-                      });
-                    });
+                
+                // Try all selected genres to get maximum variety
+                for (let i = 0; i < genres.length; i++) {
+                  const mappedGenre = genreMap[genres[i]] || genres[i].toLowerCase();
                   
-                  const inYearRange = !releaseYearRange || 
-                    (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
+                  // Create separate search for each genre
+                  const genreSearchParams = { ...searchParams, genre: mappedGenre };
                   
-                  // Check for duplicates
-                  const alreadyAdded = recommendations.some(rec => rec.id === show.id);
-                  
-                  if (matchesGenre && inYearRange && !alreadyAdded) {
-                    const availablePlatforms = show.streamingOptions?.us || [];
-                    const platformNames = availablePlatforms.map(opt => opt.service.name);
+                  try {
+                    console.log(`Searching ${platform} for ${genres[i]} with params:`, genreSearchParams);
+                    const genreResponse = await streamingAPI.searchShows(genreSearchParams);
                     
-                    const recommendation = streamingAPI.convertToRecommendation(
-                      show,
-                      Math.floor(Math.random() * 20) + 80,
-                      `${mood} ${genres?.length ? genres[0] : ''} recommendation`.trim()
-                    );
-                    recommendations.push(recommendation);
-                    console.log(`✓ Added cross-platform ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                    console.log(`Found ${genreResponse.shows.length} ${genres[i]} shows on ${platform}`);
+                    
+                    genreResponse.shows.forEach(show => {
+                      if (recommendations.length < targetCount) {
+                        // Enhanced genre matching
+                        const matchesGenre = show.genres.some(showGenre => {
+                          return genres.some(userGenre => {
+                            const userGenreLower = userGenre.toLowerCase();
+                            const showGenreLower = showGenre.name.toLowerCase();
+                            
+                            if (showGenreLower === userGenreLower) return true;
+                            if (showGenreLower.includes(userGenreLower)) return true;
+                            if (userGenreLower.includes(showGenreLower)) return true;
+                            
+                            const genreMappings: Record<string, string[]> = {
+                              'action': ['action', 'adventure', 'thriller'],
+                              'adventure': ['action', 'adventure'],
+                              'sci-fi': ['science fiction', 'sci-fi', 'scifi'],
+                              'comedy': ['comedy', 'romantic comedy'],
+                              'drama': ['drama', 'biographical', 'biography'],
+                              'horror': ['horror', 'thriller', 'supernatural'],
+                              'thriller': ['thriller', 'mystery', 'crime'],
+                              'romance': ['romance', 'romantic', 'love']
+                            };
+                            
+                            const mappedGenres = genreMappings[userGenreLower] || [userGenreLower];
+                            return mappedGenres.some(mapped => showGenreLower.includes(mapped));
+                          });
+                        });
+                        
+                        const inYearRange = !releaseYearRange || 
+                          (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
+                        
+                        // Check for duplicates
+                        const alreadyAdded = recommendations.some(rec => rec.id === show.id);
+                        
+                        // More strict filtering - must have valid year and match all criteria
+                        const hasValidYear = show.releaseYear && show.releaseYear > 1900;
+                        
+                        if (matchesGenre && inYearRange && !alreadyAdded && hasValidYear) {
+                          const availablePlatforms = show.streamingOptions?.us || [];
+                          const platformNames = availablePlatforms.map(opt => opt.service.name);
+                          
+                          const recommendation = streamingAPI.convertToRecommendation(
+                            show,
+                            Math.floor(Math.random() * 20) + 80,
+                            `${mood} ${genres[i]} recommendation`.trim()
+                          );
+                          recommendations.push(recommendation);
+                          console.log(`✓ Added genre-specific ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                        }
+                      }
+                    });
+                  } catch (error) {
+                    console.error(`Error searching ${platform} for ${genres[i]}:`, error);
                   }
                 }
-              });
+                
+                // Skip the main search if we already have enough from genre searches
+                if (recommendations.length >= targetCount) continue;
+              } else {
+                // No genres specified, search for general popular content
+                console.log(`General cross-platform search on ${platform}:`, searchParams);
+                const platformResponse = await streamingAPI.searchShows(searchParams);
+                
+                console.log(`Found ${platformResponse.shows.length} general shows on ${platform}`);
+                
+                platformResponse.shows.forEach(show => {
+                  if (recommendations.length < targetCount) {
+                    const inYearRange = !releaseYearRange || 
+                      (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
+                    
+                    const alreadyAdded = recommendations.some(rec => rec.id === show.id);
+                    const hasValidYear = show.releaseYear && show.releaseYear > 1900;
+                    
+                    if (inYearRange && !alreadyAdded && hasValidYear) {
+                      const availablePlatforms = show.streamingOptions?.us || [];
+                      const platformNames = availablePlatforms.map(opt => opt.service.name);
+                      
+                      const recommendation = streamingAPI.convertToRecommendation(
+                        show,
+                        Math.floor(Math.random() * 20) + 80,
+                        `${mood} recommendation`
+                      );
+                      recommendations.push(recommendation);
+                      console.log(`✓ Added general ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                    }
+                  }
+                });
+                continue;
+              }
+              
+              // Additional search without genre filters to get more variety
+              if (recommendations.length < targetCount) {
+                console.log(`Additional variety search on ${platform} without genre filters`);
+                const varietyParams = {
+                  catalogs: platform,
+                  showType,
+                  limit: 20,
+                  orderBy: 'rating',
+                  orderDirection: 'desc'
+                };
+                
+                const varietyResponse = await streamingAPI.searchShows(varietyParams);
+                
+                console.log(`Found ${varietyResponse.shows.length} variety shows on ${platform}`);
+                
+                varietyResponse.shows.forEach(show => {
+                  if (recommendations.length < targetCount) {
+                    const inYearRange = !releaseYearRange || 
+                      (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
+                    
+                    const alreadyAdded = recommendations.some(rec => rec.id === show.id);
+                    const hasValidYear = show.releaseYear && show.releaseYear > 1900;
+                    
+                    if (inYearRange && !alreadyAdded && hasValidYear) {
+                      const availablePlatforms = show.streamingOptions?.us || [];
+                      const platformNames = availablePlatforms.map(opt => opt.service.name);
+                      
+                      const recommendation = streamingAPI.convertToRecommendation(
+                        show,
+                        Math.floor(Math.random() * 15) + 75,
+                        `${mood} variety pick`
+                      );
+                      recommendations.push(recommendation);
+                      console.log(`✓ Added variety ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')} on ${platformNames.join(', ')}`);
+                    }
+                  }
+                });
+              }
             } catch (error) {
               console.error(`Error searching ${platform}:`, error);
             }
           }
         } catch (error) {
           console.error('Error in cross-platform search:', error);
+        }
+      }
+      
+      // Remove duplicate logic and clean up the structure
+      console.log(`Final recommendation count: ${recommendations.length}`);
+      
+      if (recommendations.length === 0) {
+        console.log('No recommendations found, using fallback search');
+        try {
+          const fallbackResponse = await streamingAPI.searchShows({
+            showType,
+            catalogs: 'netflix',
+            limit: 15,
+            orderBy: 'rating',
+            orderDirection: 'desc'
+          });
+          
+          fallbackResponse.shows.forEach(show => {
+            if (recommendations.length < targetCount) {
+              const inYearRange = !releaseYearRange || 
+                (show.releaseYear && show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
+              
+              const alreadyAdded = recommendations.some(rec => rec.id === show.id);
+              const hasValidYear = show.releaseYear && show.releaseYear > 1900;
+              
+              if (inYearRange && !alreadyAdded && hasValidYear) {
+                const recommendation = streamingAPI.convertToRecommendation(
+                  show,
+                  Math.floor(Math.random() * 15) + 85,
+                  `Popular ${mood} recommendation`
+                );
+                recommendations.push(recommendation);
+                console.log(`Added fallback ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')}`);
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Error fetching fallback shows:', error);
         }
       }
       
