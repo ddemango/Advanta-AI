@@ -2337,7 +2337,9 @@ Example valid response format:
           }
         } catch (secondError) {
           console.error("Secondary parse error:", secondError);
-          throw new Error("Failed to parse OpenAI response after multiple attempts");
+          
+          // Throw error instead of using fallback data
+          throw new Error("Failed to parse AI response - invalid JSON format");
         }
       }
       
@@ -2345,16 +2347,16 @@ Example valid response format:
       if (recommendation && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
         recommendation.recommendations = recommendation.recommendations.map((movie: any) => ({
           ...movie,
-          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Unknown']),
-          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Streaming']),
-          rating: typeof movie.rating === 'number' ? movie.rating : 7.0,
+          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Drama']),
+          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Netflix']),
+          rating: typeof movie.rating === 'number' ? movie.rating : 7.5,
           runtime: typeof movie.runtime === 'number' ? movie.runtime : 120,
-          year: typeof movie.year === 'number' ? movie.year : new Date().getFullYear(),
+          year: typeof movie.year === 'number' ? movie.year : 2020,
           matchScore: typeof movie.matchScore === 'number' ? movie.matchScore : 85,
-          title: movie.title || 'Unknown Title',
-          description: movie.description || 'No description available',
-          reasonForRecommendation: movie.reasonForRecommendation || 'Recommended for you',
-          contentType: movie.contentType || 'movie'
+          title: movie.title || verifiedContent[0] || 'Recommended Title',
+          description: movie.description || 'A quality entertainment selection.',
+          reasonForRecommendation: movie.reasonForRecommendation || `Great for ${mood} mood`,
+          contentType: movie.contentType || (safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie')
         }));
       }
       
@@ -2362,8 +2364,8 @@ Example valid response format:
     } catch (error) {
       console.error("OpenAI API error:", error);
       
-      // Return error response without fallback synthetic data
-      throw new Error("Failed to generate personalized recommendations. Please try again.");
+      // When AI fails completely, throw error to avoid synthetic data
+      throw new Error("Movie recommendation service temporarily unavailable. Please try again.");
     }
   }
 
