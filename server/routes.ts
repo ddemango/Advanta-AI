@@ -2193,27 +2193,19 @@ Please provide analysis in this exact JSON format (no additional text):
       // In a real implementation, this would filter by actual release years
     }
 
-    // Randomize and select recommendations
+    // Randomize and select titles from verified database
     const shuffled = [...filteredContent].sort(() => Math.random() - 0.5);
     const selectedTitles = shuffled.slice(0, 10);
 
-    // Create recommendation objects with basic metadata
-    const recommendations = selectedTitles.map((title, index) => ({
+    // Create basic recommendation structure - metadata will be enriched from OMDb
+    const recommendations = selectedTitles.map((title) => ({
       title: title,
-      year: 2020 - (index % 20), // Vary years from 2000-2020
-      contentType: safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie',
-      genre: genres && genres.length > 0 ? [genres[0]] : ['Drama'],
-      rating: 7.0 + (index % 4) * 0.5, // Vary ratings 7.0-8.5
-      runtime: 90 + (index % 6) * 15, // Vary runtime 90-165
-      platform: platforms && platforms.length > 0 ? [platforms[0]] : ['Netflix'],
-      description: `A ${mood} story with compelling characters and excellent direction.`,
-      matchScore: 80 + (index % 4) * 5, // Vary match scores 80-95
-      reasonForRecommendation: `Selected for your ${mood} preferences`
+      contentType: safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie'
     }));
 
     return {
       recommendations: recommendations,
-      personalizedMessage: `Curated ${mood} recommendations from verified sources`
+      personalizedMessage: `${mood} recommendations from verified database`
     };
   }
 
@@ -2238,48 +2230,89 @@ Please provide analysis in this exact JSON format (no additional text):
         releaseYearRange: releaseYearRange || [1980, 2024]
       });
 
-      // Add real movie posters using OMDb API if available
+      // Enrich recommendations with authentic data from OMDb API
       if (process.env.OMDB_API_KEY && watchlistData.recommendations) {
-        await Promise.allSettled(
-          watchlistData.recommendations.map(async (movie: any) => {
-            try {
-              // Use correct type parameter based on content type
-              const contentType = movie.contentType === 'tv_show' ? 'series' : 'movie';
-              const omdbUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(movie.title)}&y=${movie.year}&type=${contentType}`;
-              console.log(`Fetching poster for ${movie.title} (${movie.year}) - ${contentType}`);
+        const enrichedRecommendations = [];
+        
+        // Create a mapping of common movie titles to their exact OMDb titles and years
+        const movieTitleMap: { [key: string]: { title: string; year?: number } } = {
+          "Kill Bill": { title: "Kill Bill: Vol. 1", year: 2003 },
+          "The Godfather": { title: "The Godfather", year: 1972 },
+          "Parasite": { title: "Parasite", year: 2019 },
+          "The Nice Guys": { title: "The Nice Guys", year: 2016 },
+          "What We Do in the Shadows": { title: "What We Do in the Shadows", year: 2014 },
+          "Dumb and Dumber": { title: "Dumb and Dumber", year: 1994 },
+          "Gladiator": { title: "Gladiator", year: 2000 },
+          "Scream": { title: "Scream", year: 1996 },
+          "The Host": { title: "The Host", year: 2006 },
+          "Burning": { title: "Burning", year: 2018 }
+        };
+
+        for (const movie of watchlistData.recommendations) {
+          try {
+            const contentType = movie.contentType === 'tv_show' ? 'series' : 'movie';
+            
+            // Use mapped title and year for better accuracy
+            const movieInfo = movieTitleMap[movie.title] || { title: movie.title };
+            const searchTitle = movieInfo.title;
+            const searchYear = movieInfo.year;
+            
+            let omdbUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API_KEY}&t=${encodeURIComponent(searchTitle)}&type=${contentType}`;
+            if (searchYear) {
+              omdbUrl += `&y=${searchYear}`;
+            }
+            
+            console.log(`Fetching data for ${searchTitle} (${searchYear || 'any year'}) - ${contentType}`);
+            
+            const response = await fetch(omdbUrl);
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log(`OMDb response for ${searchTitle}:`, JSON.stringify(data, null, 2));
               
-              const response = await fetch(omdbUrl);
-              
-              if (response.ok) {
-                const data = await response.json();
-                console.log(`OMDb response for ${movie.title}:`, data);
+              if (data.Response === "True" && data.Title && data.Year && data.Plot && data.Plot !== "N/A") {
+                // Only use movies with complete, authentic data
+                const enrichedMovie = {
+                  title: data.Title,
+                  year: parseInt(data.Year),
+                  contentType: movie.contentType,
+                  genre: data.Genre ? data.Genre.split(', ') : [],
+                  rating: data.imdbRating && data.imdbRating !== "N/A" ? parseFloat(data.imdbRating) : null,
+                  runtime: data.Runtime ? parseInt(data.Runtime.replace(' min', '')) : null,
+                  platform: platforms && platforms.length > 0 ? platforms : [],
+                  description: data.Plot,
+                  matchScore: data.imdbRating && data.imdbRating !== "N/A" ? Math.round(parseFloat(data.imdbRating) * 10) : null,
+                  reasonForRecommendation: `Highly rated ${mood} ${contentType} (${data.imdbRating}/10 on IMDb)`,
+                  poster: data.Poster && data.Poster !== "N/A" ? data.Poster : null
+                };
                 
-                if (data.Response === "True" && data.Poster && data.Poster !== "N/A") {
-                  movie.poster = data.Poster;
-                  console.log(`✓ Found poster for ${movie.title}: ${data.Poster}`);
-                  // Update rating if available from OMDb
-                  if (data.imdbRating && data.imdbRating !== "N/A") {
-                    movie.rating = parseFloat(data.imdbRating);
-                  }
+                // Only add if we have essential data
+                if (enrichedMovie.year && enrichedMovie.description && enrichedMovie.genre.length > 0) {
+                  enrichedRecommendations.push(enrichedMovie);
+                  console.log(`✓ Successfully enriched ${searchTitle} with complete OMDb data`);
                 } else {
-                  console.log(`✗ No poster found for ${movie.title}:`, data.Error || 'Poster is N/A');
-                  movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+                  console.log(`✗ Incomplete data for ${searchTitle}, skipping`);
                 }
               } else {
-                console.log(`✗ OMDb API request failed for ${movie.title}:`, response.status, response.statusText);
-                movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+                console.log(`✗ OMDb could not find complete data for: ${searchTitle}`);
               }
-            } catch (error) {
-              console.error(`Failed to fetch poster for ${movie.title}:`, error);
-              movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
+            } else {
+              console.log(`✗ OMDb API request failed for ${searchTitle}:`, response.status);
             }
-          })
-        );
+          } catch (error) {
+            console.error(`Failed to fetch data for ${movie.title}:`, error);
+          }
+        }
+        
+        // Only use movies that were successfully enriched with authentic data
+        watchlistData.recommendations = enrichedRecommendations;
+        
+        // If no movies could be enriched, throw error
+        if (enrichedRecommendations.length === 0) {
+          throw new Error("Unable to retrieve authentic movie data. Please try again.");
+        }
       } else {
-        // Use placeholder posters when OMDb API is not available
-        watchlistData.recommendations.forEach((movie: any) => {
-          movie.poster = `https://via.placeholder.com/300x450/1a1a1a/ffffff?text=${encodeURIComponent(movie.title)}+(${movie.year})`;
-        });
+        throw new Error("Movie database access unavailable. Please contact support.");
       }
 
       res.json(watchlistData);
