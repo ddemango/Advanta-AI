@@ -2272,8 +2272,8 @@ Please provide analysis in this exact JSON format (no additional text):
                 catalogs: platform,
                 showType,
                 limit: 25, // Increased limit to get more options for filtering
-                orderBy: 'rating',
-                orderDirection: 'desc'
+                orderBy: 'rating' as const,
+                orderDirection: 'desc' as const
               };
               
               // Search multiple genres to get diverse results
@@ -2403,8 +2403,8 @@ Please provide analysis in this exact JSON format (no additional text):
                   catalogs: platform,
                   showType,
                   limit: 20,
-                  orderBy: 'rating',
-                  orderDirection: 'desc'
+                  orderBy: 'rating' as const,
+                  orderDirection: 'desc' as const
                 };
                 
                 const varietyResponse = await streamingAPI.searchShows(varietyParams);
@@ -2480,50 +2480,6 @@ Please provide analysis in this exact JSON format (no additional text):
           console.error('Error fetching fallback shows:', error);
         }
       }
-      
-      // Legacy fallback only if still no results
-      if (recommendations.length === 0) {
-        try {
-          const popularResponse = await streamingAPI.searchShows({
-            showType,
-            catalogs: 'netflix',
-            limit: targetCount,
-            orderBy: 'rating',
-            orderDirection: 'desc'
-          });
-          
-          console.log(`Found ${popularResponse.shows.length} popular shows`);
-          
-          popularResponse.shows.forEach(show => {
-            if (recommendations.length < targetCount) {
-              // Apply genre filtering if specified
-              const hasMatchingGenre = !genres || genres.length === 0 ||
-                show.genres.some(showGenre => 
-                  genres.some(userGenre => 
-                    showGenre.name.toLowerCase().includes(userGenre.toLowerCase()) ||
-                    userGenre.toLowerCase().includes(showGenre.name.toLowerCase())
-                  )
-                );
-              
-              // Filter by release year range
-              const inYearRange = !releaseYearRange || 
-                (show.releaseYear >= releaseYearRange[0] && show.releaseYear <= releaseYearRange[1]);
-              
-              if (hasMatchingGenre && inYearRange) {
-                const recommendation = streamingAPI.convertToRecommendation(
-                  show,
-                  Math.floor(Math.random() * 15) + 85, // 85-99% match
-                  `Highly rated ${mood} pick`
-                );
-                recommendations.push(recommendation);
-                console.log(`Added popular ${show.title} (${show.releaseYear}) - ${show.genres.map(g => g.name).join(', ')}`);
-              }
-            }
-          });
-        } catch (error) {
-          console.error('Error fetching popular shows:', error);
-        }
-      }
 
       return {
         recommendations: recommendations.slice(0, targetCount),
@@ -2541,31 +2497,28 @@ Please provide analysis in this exact JSON format (no additional text):
       const { mood, contentTypes, genres, timeAvailable, platforms, viewingContext, pastFavorites, includeWildCard, releaseYearRange } = req.body;
 
       if (!mood) {
-        return res.status(400).json({ error: "Mood is required" });
+        return res.status(400).json({ error: 'Mood is required' });
       }
 
       const watchlistData = await generatePersonalizedWatchlist({
         mood,
-        contentTypes: contentTypes || ['movies'],
-        genres: genres || [],
-        timeAvailable: timeAvailable || 120,
-        platforms: platforms || [],
-        viewingContext: viewingContext || '',
-        pastFavorites: pastFavorites || '',
-        includeWildCard: includeWildCard || false,
-        releaseYearRange: releaseYearRange || [1980, 2024]
+        contentTypes,
+        genres,
+        timeAvailable,
+        platforms,
+        viewingContext,
+        pastFavorites,
+        includeWildCard,
+        releaseYearRange
       });
-
-      // RapidAPI already provides authentic poster and streaming data
 
       res.json(watchlistData);
     } catch (error) {
-      console.error("Error generating watchlist:", error);
+      console.error('Error generating watchlist:', error);
       res.status(500).json({ 
-        error: "Failed to generate personalized watchlist",
-        message: "Please try again or contact support if the issue persists.",
+        error: 'Failed to generate personalized watchlist',
         recommendations: [],
-        personalizedMessage: "Unable to generate recommendations at this time."
+        personalizedMessage: 'Unable to fetch recommendations at this time. Please try again.'
       });
     }
   });
