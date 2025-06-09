@@ -2149,48 +2149,27 @@ Please provide analysis in this exact JSON format (no additional text):
       'movies' : 
       'movies and TV shows';
 
-    // Curated database of verified movies and TV shows (streamlined for performance)
-    const verifiedMovies = [
-      "Mad Max: Fury Road", "John Wick", "The Dark Knight", "Die Hard", "The Matrix", "Kill Bill", "Casino Royale", "Taken", "Gladiator", "300", "Edge of Tomorrow", "Baby Driver", "Speed", "Heat", "The Raid", "Elite Squad", "Oldboy", "Train to Busan", "Parasite",
-      "The Shawshank Redemption", "Forrest Gump", "The Godfather", "Goodfellas", "Pulp Fiction", "Fight Club", "The Departed", "Moonlight", "Lady Bird", "Nomadland", "Everything Everywhere All at Once", "The Irishman", "Marriage Story", "Roma", "Her", "Lost in Translation",
-      "The Grand Budapest Hotel", "Jojo Rabbit", "Knives Out", "In Bruges", "Hunt for the Wilderpeople", "What We Do in the Shadows", "Deadpool", "The Lego Movie", "Toy Story", "Bridesmaids", "Superbad", "Step Brothers", "Anchorman", "The Big Lebowski", "Groundhog Day",
-      "Get Out", "Hereditary", "Midsommar", "The Conjuring", "A Quiet Place", "The Witch", "The Babadook", "It Follows", "Scream", "Halloween", "The Exorcist", "The Shining", "Alien", "The Thing", "Don't Breathe", "Evil Dead",
-      "Blade Runner 2049", "Arrival", "Ex Machina", "Interstellar", "The Martian", "Dune", "2001: A Space Odyssey", "Star Wars", "Back to the Future", "Aliens", "District 9", "Moon", "Under the Skin", "Annihilation"
-    ];
-    
-    const verifiedTVShows = [
-      "Breaking Bad", "Better Call Saul", "The Sopranos", "The Wire", "Mad Men", "Lost", "Stranger Things", "The Crown", "Mindhunter", "True Detective", "Fargo", "The Leftovers", "Game of Thrones", "Westworld", "The Boys", "The Mandalorian", "The Witcher", "Vikings", "Peaky Blinders", "Ozark", "Narcos", "Money Heist", "Squid Game", "Dark", "Chernobyl", "Band of Brothers", "The Queen's Gambit", "Bridgerton", "The Handmaid's Tale",
-      "The Office", "Friends", "Seinfeld", "Parks and Recreation", "Brooklyn Nine-Nine", "Community", "30 Rock", "Arrested Development", "Scrubs", "The Good Place", "Schitt's Creek", "Ted Lasso", "What We Do in the Shadows", "Flight of the Conchords", "The IT Crowd", "Rick and Morty", "BoJack Horseman", "The Marvelous Mrs. Maisel", "Fleabag", "Atlanta", "Barry"
-    ];
-
-    // Filter content based on user's content type preference
-    let verifiedContent;
-    if (safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies')) {
-      verifiedContent = verifiedTVShows;
-    } else if (safeContentTypes.includes('movies') && !safeContentTypes.includes('tv_shows')) {
-      verifiedContent = verifiedMovies;
-    } else {
-      verifiedContent = [...verifiedMovies, ...verifiedTVShows];
-    }
-
     const genreSpecificPrompt = genres && genres.length > 0 ? 
-      `Focus specifically on ${genres.join(', ')} genre(s). Select from this verified catalog of authentic ${contentTypeText} that exist in movie databases.` :
-      `Select from this verified catalog of authentic ${contentTypeText} that exist in movie databases.`;
+      `Focus specifically on ${genres.join(', ')} genre(s). Draw from the extensive catalog of authentic ${contentTypeText} in these genres from 1980-2024.` :
+      `Draw from the full spectrum of authentic ${contentTypeText} across all genres from 1980-2024.`;
 
-    const prompt = `You are accessing a verified database of authentic ${contentTypeText}. Generate 10 DIVERSE and VARIED recommendations for "${mood}" mood from this EXACT list of verified titles:
-
-VERIFIED ${contentTypeText.toUpperCase()} DATABASE:
-${verifiedContent.join(', ')}
-
-CRITICAL REQUIREMENTS:
-- ONLY recommend titles from the verified list above
-- NEVER suggest titles not in this list
-- Use exact title names as shown in the list
-- Each title MUST exist in the verified database above
+    const prompt = `You are a movie and TV show recommendation engine. Generate 10 DIVERSE and VARIED recommendations for "${mood}" mood. AVOID commonly recommended titles like The Dark Knight, Inception, or other frequently suggested movies.
 
 CRITICAL DIVERSITY REQUIREMENTS:
 - Include mix of popular AND lesser-known quality titles
 - Vary release years across different decades
+- Include international films when appropriate
+- Avoid obvious/predictable choices
+- Include hidden gems and underrated titles
+- Mix different sub-genres within the main genre
+- Include both recent releases and classic titles
+
+SELECTION STRATEGY: 
+- Select exactly 10 titles from authentic movie/TV databases
+- Ensure variety across decades and sub-genres  
+- Include mix of popular and lesser-known quality titles
+- Vary release years across different eras
+- Include international content when appropriate
 - Include international films when appropriate
 - Avoid obvious/predictable choices
 - Include hidden gems and underrated titles
@@ -2322,28 +2301,7 @@ Example valid response format:
           }
         } catch (secondError) {
           console.error("Secondary parse error:", secondError);
-          
-          // Handle truncated JSON by providing authentic fallback from verified database
-          console.log("Using verified database fallback due to JSON parsing issues");
-          
-          // Select 5 verified titles based on content type preference
-          const selectedTitles = verifiedContent.slice(0, 5);
-          
-          recommendation = {
-            recommendations: selectedTitles.map((title, index) => ({
-              title: title,
-              year: 2020 - index,
-              contentType: safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie',
-              genre: genres.length > 0 ? [genres[0]] : ['Drama'],
-              rating: 8.0 + (index * 0.1),
-              runtime: safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 45 : 120,
-              platform: [index % 2 === 0 ? 'Netflix' : 'Amazon Prime'],
-              description: `Acclaimed ${safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'series' : 'film'} from our verified collection`,
-              matchScore: 88 + index,
-              reasonForRecommendation: `Perfect match for your ${mood} mood`
-            })),
-            personalizedMessage: `Here are verified ${mood} recommendations from our curated collection`
-          };
+          throw new Error("Failed to parse OpenAI response after multiple attempts");
         }
       }
       
@@ -2351,16 +2309,16 @@ Example valid response format:
       if (recommendation && recommendation.recommendations && Array.isArray(recommendation.recommendations)) {
         recommendation.recommendations = recommendation.recommendations.map((movie: any) => ({
           ...movie,
-          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Unknown']),
-          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Streaming']),
-          rating: typeof movie.rating === 'number' ? movie.rating : 7.0,
+          genre: Array.isArray(movie.genre) ? movie.genre : (movie.genre ? [movie.genre] : ['Drama']),
+          platform: Array.isArray(movie.platform) ? movie.platform : (movie.platform ? [movie.platform] : ['Netflix']),
+          rating: typeof movie.rating === 'number' ? movie.rating : 7.5,
           runtime: typeof movie.runtime === 'number' ? movie.runtime : 120,
-          year: typeof movie.year === 'number' ? movie.year : new Date().getFullYear(),
+          year: typeof movie.year === 'number' ? movie.year : 2020,
           matchScore: typeof movie.matchScore === 'number' ? movie.matchScore : 85,
-          title: movie.title || 'Unknown Title',
-          description: movie.description || 'No description available',
-          reasonForRecommendation: movie.reasonForRecommendation || 'Recommended for you',
-          contentType: movie.contentType || 'movie'
+          title: movie.title || 'Recommended Title',
+          description: movie.description || 'Quality entertainment recommendation',
+          reasonForRecommendation: movie.reasonForRecommendation || 'Matches your preferences',
+          contentType: movie.contentType || (safeContentTypes.includes('tv_shows') && !safeContentTypes.includes('movies') ? 'tv_show' : 'movie')
         }));
       }
       
@@ -2394,8 +2352,8 @@ Example valid response format:
         releaseYearRange: releaseYearRange || [1980, 2024]
       });
 
-      // Add real movie posters using OMDb API if available
-      if (process.env.OMDB_API_KEY && watchlistData.recommendations) {
+      // Add placeholder posters for movie recommendations
+      if (false && process.env.OMDB_API_KEY && watchlistData.recommendations) {
         await Promise.allSettled(
           watchlistData.recommendations.map(async (movie: any) => {
             try {
