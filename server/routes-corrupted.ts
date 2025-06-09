@@ -2245,6 +2245,15 @@ Please provide analysis in this exact JSON format (no additional text):
       });
     }
   });
+            
+            try {
+              const searchParams: any = {
+                catalogs: platform,
+                showType,
+                limit: 25, // Increased limit to get more options for filtering
+                orderBy: 'rating' as const,
+                orderDirection: 'desc' as const
+              };
               
               // Search multiple genres to get diverse results
               if (genres && genres.length > 0) {
