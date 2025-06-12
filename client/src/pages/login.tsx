@@ -33,12 +33,40 @@ export default function Login() {
       });
   }, [setLocation]);
 
-  const handleGoogleLogin = () => {
-    window.location.href = '/auth/google';
+  const handleGoogleLogin = async () => {
+    try {
+      const response = await fetch('/auth/demo/google', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        setLocation('/dashboard');
+      } else {
+        setError('Google login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      setError('Google login failed. Please try again.');
+    }
   };
 
-  const handleAppleLogin = () => {
-    window.location.href = '/auth/apple';
+  const handleAppleLogin = async () => {
+    try {
+      const response = await fetch('/auth/demo/apple', {
+        method: 'GET', 
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        setLocation('/dashboard');
+      } else {
+        setError('Apple login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Apple login error:', error);
+      setError('Apple login failed. Please try again.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
