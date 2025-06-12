@@ -19,16 +19,30 @@ export default function OAuthConsent() {
       // Simulate OAuth processing time
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Complete the OAuth flow
-      const response = await fetch('/auth/google/callback?code=demo_auth_code&state=demo', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.ok || response.redirected) {
-        setLocation('/dashboard');
-      } else {
-        setLocation('/login?error=oauth_failed');
+      try {
+        // Complete the OAuth flow by calling the demo Google auth endpoint
+        const response = await fetch('/auth/demo/google', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            // Successfully authenticated, redirect to dashboard
+            setLocation('/dashboard');
+          } else {
+            setLocation('/login?error=auth_failed');
+          }
+        } else {
+          setLocation('/login?error=oauth_failed');
+        }
+      } catch (error) {
+        console.error('OAuth error:', error);
+        setLocation('/login?error=network_error');
       }
     }
   };

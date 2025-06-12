@@ -2486,24 +2486,41 @@ Please provide analysis in this exact JSON format (no additional text):
 
   // Demo OAuth routes for test video demonstration
   app.get('/auth/demo/google', (req: Request, res: Response) => {
-    // Create demo Google user
-    const demoUser = {
-      id: Date.now(),
-      email: 'demo.user@gmail.com',
-      firstName: 'Demo',
-      lastName: 'User', 
-      picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-      provider: 'google',
-      providerId: 'demo_google_id_123',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    try {
+      // Create demo Google user
+      const demoUser = {
+        id: Date.now(),
+        email: 'demo.user@gmail.com',
+        firstName: 'Demo',
+        lastName: 'User', 
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        provider: 'google',
+        providerId: 'demo_google_id_123',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-    // Set session for demo user
-    req.session.userId = demoUser.id;
-    req.session.user = demoUser;
+      // Ensure session is initialized
+      if (!req.session) {
+        return res.status(500).json({ success: false, error: 'Session not initialized' });
+      }
 
-    res.json({ success: true, user: demoUser });
+      // Set session for demo user
+      req.session.userId = demoUser.id;
+      req.session.user = demoUser;
+
+      // Save session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error('Demo session save error:', err);
+          return res.status(500).json({ success: false, error: 'Failed to save session' });
+        }
+        res.json({ success: true, user: demoUser });
+      });
+    } catch (error) {
+      console.error('Demo OAuth error:', error);
+      res.status(500).json({ success: false, error: 'Authentication failed' });
+    }
   });
 
   app.get('/auth/demo/apple', (req: Request, res: Response) => {
@@ -2532,27 +2549,45 @@ Please provide analysis in this exact JSON format (no additional text):
     res.redirect('/auth/google/callback?code=demo_auth_code&state=demo');
   });
 
-  app.get('/auth/google/callback', (req: Request, res: Response) => {
-    // Handle Google OAuth callback - in production this would exchange the code for tokens
-    // For demo purposes, we'll create a demo user and redirect to dashboard
-    const demoUser = {
-      id: Date.now(),
-      email: 'demo.user@gmail.com',
-      firstName: 'Demo',
-      lastName: 'User',
-      picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-      provider: 'google',
-      providerId: 'demo_google_id_123',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+  app.get('/auth/google/callback', async (req: Request, res: Response) => {
+    try {
+      // Handle Google OAuth callback - in production this would exchange the code for tokens
+      // For demo purposes, we'll create a demo user and redirect to dashboard
+      const demoUser = {
+        id: Date.now(),
+        email: 'demo.user@gmail.com',
+        firstName: 'Demo',
+        lastName: 'User',
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        provider: 'google',
+        providerId: 'demo_google_id_123',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-    // Set session for demo user
-    req.session.userId = demoUser.id;
-    req.session.user = demoUser;
+      // Ensure session is initialized
+      if (!req.session) {
+        console.error('Session not initialized');
+        return res.redirect('/login?error=session_error');
+      }
 
-    // Redirect to dashboard (client suite) after successful authentication
-    res.redirect('/dashboard');
+      // Set session for demo user
+      req.session.userId = demoUser.id;
+      req.session.user = demoUser;
+
+      // Save session before redirect
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.redirect('/login?error=session_save_error');
+        }
+        // Redirect to dashboard (client suite) after successful authentication
+        res.redirect('/dashboard');
+      });
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect('/login?error=oauth_error');
+    }
   });
 
   // Demo Apple OAuth routes
