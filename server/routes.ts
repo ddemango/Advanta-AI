@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema } from "@shared/schema";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { log } from "./vite";
@@ -495,6 +496,9 @@ class BlogScheduler {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication first
+  setupAuth(app);
+
   // Start the blog scheduler to generate 2 articles daily
   const blogScheduler = new BlogScheduler(2);
   blogScheduler.start();
