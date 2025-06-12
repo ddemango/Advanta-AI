@@ -55,6 +55,8 @@ export default function Dashboard() {
     return null;
   }
 
+  console.log('Dashboard: Rendering dashboard with user:', user);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
       <div className="max-w-4xl mx-auto">
