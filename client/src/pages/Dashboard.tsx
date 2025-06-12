@@ -82,6 +82,63 @@ export default function Dashboard() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Google Ads Integration */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="lg:col-span-3"
+          >
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-3">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.5 3C10.37 3 8.75 4.95 8.99 7.04L9.29 9.88L5.97 9.88C3.61 9.88 1.85 11.92 2.09 14.23C2.29 16.18 3.95 17.63 5.91 17.63H15.5C17.99 17.63 20 15.62 20 13.13V10.5C20 6.91 17.09 4 13.5 4H12.5V3Z"/>
+                  </svg>
+                  Google Ads Workflow AI
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Connect your Google Ads account to automate campaigns and optimize performance with AI
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M9.93 13.5h4.14L12 7.98zM20 15.5c-1.25 0-2.45-.2-3.57-.57c-.1-.04-.21-.05-.31-.05c-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1c0 9.39 7.61 17 17 17c.55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">Google Ads Account</h3>
+                      <p className="text-gray-400 text-sm">Connect to enable AI-powered campaign management</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => window.location.href = '/google-ads-oauth'}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Connect Account
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                    <h4 className="text-white font-medium mb-2">Campaign Optimization</h4>
+                    <p className="text-gray-400 text-sm">AI-driven bid adjustments and keyword optimization</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                    <h4 className="text-white font-medium mb-2">Performance Analytics</h4>
+                    <p className="text-gray-400 text-sm">Real-time insights and conversion tracking</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                    <h4 className="text-white font-medium mb-2">Automated Reporting</h4>
+                    <p className="text-gray-400 text-sm">Daily performance summaries and recommendations</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
           {/* User Profile Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

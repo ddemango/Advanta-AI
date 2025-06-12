@@ -2557,6 +2557,41 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
+  app.get('/auth/demo/google-ads', (req: Request, res: Response) => {
+    try {
+      // Create demo Google Ads integration user
+      const demoUser = {
+        id: 3001, // Static small ID for Google Ads demo
+        email: 'ads.manager@gmail.com',
+        firstName: 'Google Ads',
+        lastName: 'Manager',
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        provider: 'google-ads',
+        providerId: 'demo_google_ads_id_789',
+        adsAccountId: 'demo_ads_account_123456789',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Use Passport's login method to establish proper session
+      req.login(demoUser, (err) => {
+        if (err) {
+          console.error('Demo Google Ads login error:', err);
+          return res.status(500).json({ success: false, error: 'Failed to establish session' });
+        }
+        
+        // Also set session data for compatibility
+        req.session.userId = demoUser.id;
+        req.session.user = demoUser;
+        
+        res.json({ success: true, user: demoUser, adsConnected: true });
+      });
+    } catch (error) {
+      console.error('Demo Google Ads OAuth error:', error);
+      res.status(500).json({ success: false, error: 'Google Ads authentication failed' });
+    }
+  });
+
   // Original OAuth routes (commented out for demo)
   app.get('/auth/google', (req: Request, res: Response) => {
     res.redirect('/auth/google/callback?code=demo_auth_code&state=demo');
