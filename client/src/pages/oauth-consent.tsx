@@ -58,9 +58,11 @@ export default function OAuthConsent() {
               console.log('User data:', userData);
               
               if (userData && userData.id) {
-                console.log('User verified, invalidating cache and redirecting to dashboard...');
-                // Invalidate React Query cache to ensure fresh user data on dashboard
-                queryClient.invalidateQueries({ queryKey: ['/auth/user'] });
+                console.log('User verified, setting cache and redirecting to dashboard...');
+                // Set the user data in React Query cache to avoid refetch issues
+                queryClient.setQueryData(['/auth/user'], userData);
+                // Small delay to ensure session is fully established
+                await new Promise(resolve => setTimeout(resolve, 100));
                 // Successfully authenticated and verified, redirect to dashboard
                 setLocation('/dashboard');
               } else {

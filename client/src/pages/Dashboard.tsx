@@ -35,6 +35,7 @@ export default function Dashboard() {
   }
 
   if (!user) {
+    console.log('Dashboard: No user found, redirecting to login');
     setLocation('/login');
     return null;
   }
