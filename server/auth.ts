@@ -1,28 +1,17 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { Strategy as AppleStrategy } from 'passport-apple';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
 import MemoryStore from 'memorystore';
 import type { Express } from 'express';
-import { db } from './db';
-import { users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 
-const pgStore = connectPg(session);
 const memoryStore = MemoryStore(session);
 
 export function setupAuth(app: Express) {
-  // Use memory store for development to ensure sessions work
-  const sessionStore = process.env.NODE_ENV === 'production' 
-    ? new pgStore({
-        conString: process.env.DATABASE_URL,
-        createTableIfMissing: true,
-        tableName: 'session'
-      })
-    : new memoryStore({
-        checkPeriod: 86400000 // prune expired entries every 24h
-      });
+  // Use memory store for sessions
+  const sessionStore = new memoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  });
 
   // Session configuration
   app.use(session({
@@ -49,9 +38,8 @@ export function setupAuth(app: Express) {
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      // Handle demo users without database lookup
+      // Handle demo users
       if (id >= 1000 && id <= 1000000) {
-        // This is a demo user, return the user object directly
         const demoUser = {
           id: id,
           email: id < 2000 ? 'demo.user@gmail.com' : 'demo.user@icloud.com',
@@ -66,85 +54,36 @@ export function setupAuth(app: Express) {
         return done(null, demoUser);
       }
       
-      // Regular database lookup for real users
-      const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
-      done(null, user[0] || null);
+      done(null, null);
     } catch (error) {
       done(error, null);
     }
   });
 
   // Google OAuth Strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(new GoogleStrategy({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback"
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        // Check if user exists
-        const existingUser = await db.select()
-          .from(users)
-          .where(eq(users.providerId, profile.id))
-          .limit(1);
-
-        if (existingUser.length > 0) {
-          return done(null, existingUser[0]);
-        }
-
-        // Create new user
-        const newUser = await db.insert(users).values({
-          email: profile.emails?.[0]?.value || '',
-          name: profile.displayName || '',
-          picture: profile.photos?.[0]?.value || '',
-          provider: 'google',
-          providerId: profile.id,
-        }).returning();
-
-        done(null, newUser[0]);
-      } catch (error) {
-        done(error, null);
-      }
-    }));
-  }
-
-  // Apple OAuth Strategy
-  if (process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY) {
-    passport.use(new AppleStrategy({
-      clientID: process.env.APPLE_CLIENT_ID,
-      teamID: process.env.APPLE_TEAM_ID,
-      keyID: process.env.APPLE_KEY_ID,
-      privateKeyString: process.env.APPLE_PRIVATE_KEY,
-      callbackURL: "/auth/apple/callback",
-      scope: ['name', 'email']
-    },
-    async (accessToken, refreshToken, idToken, profile, done) => {
-      try {
-        // Check if user exists
-        const existingUser = await db.select()
-          .from(users)
-          .where(eq(users.providerId, profile.id))
-          .limit(1);
-
-        if (existingUser.length > 0) {
-          return done(null, existingUser[0]);
-        }
-
-        // Create new user
-        const newUser = await db.insert(users).values({
-          email: profile.email || '',
-          name: profile.name?.firstName + ' ' + profile.name?.lastName || '',
-          provider: 'apple',
-          providerId: profile.id,
-        }).returning();
-
-        done(null, newUser[0]);
-      } catch (error) {
-        done(error, null);
-      }
-    }));
-  }
+  passport.use('google', new GoogleStrategy({
+    clientID: 'demo-google-client-id',
+    clientSecret: 'demo-google-client-secret',
+    callbackURL: "/auth/google/callback"
+  },
+  async (accessToken: any, refreshToken: any, profile: any, done: any) => {
+    try {
+      const demoUser = {
+        id: 1001,
+        email: 'demo.user@gmail.com',
+        firstName: 'Demo',
+        lastName: 'User',
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        provider: 'google',
+        providerId: 'demo_google_id_123',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      done(null, demoUser);
+    } catch (error) {
+      done(error, null);
+    }
+  }));
 
   // Auth routes
   app.get('/auth/google',
@@ -153,17 +92,6 @@ export function setupAuth(app: Express) {
 
   app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => {
-      res.redirect('/dashboard');
-    }
-  );
-
-  app.get('/auth/apple',
-    passport.authenticate('apple')
-  );
-
-  app.get('/auth/apple/callback',
-    passport.authenticate('apple', { failureRedirect: '/login' }),
     (req, res) => {
       res.redirect('/dashboard');
     }
