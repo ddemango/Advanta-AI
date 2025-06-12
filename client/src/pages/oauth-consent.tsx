@@ -62,9 +62,10 @@ export default function OAuthConsent() {
                 // Set the user data in React Query cache to avoid refetch issues
                 queryClient.setQueryData(['/auth/user'], userData);
                 // Small delay to ensure session is fully established
-                await new Promise(resolve => setTimeout(resolve, 100));
-                // Successfully authenticated and verified, redirect to dashboard
-                setLocation('/dashboard');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                // Use window.location for more reliable redirect
+                console.log('Redirecting via window.location...');
+                window.location.href = '/dashboard';
               } else {
                 console.error('User verification failed - no user data');
                 setLocation('/login?error=verification_failed');
