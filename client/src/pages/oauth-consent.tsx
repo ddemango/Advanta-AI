@@ -61,11 +61,13 @@ export default function OAuthConsent() {
                 console.log('User verified, setting cache and redirecting to dashboard...');
                 // Set the user data in React Query cache to avoid refetch issues
                 queryClient.setQueryData(['/auth/user'], userData);
+                // Invalidate and refetch the auth cache to ensure fresh data
+                await queryClient.invalidateQueries({ queryKey: ['/auth/user'] });
                 // Small delay to ensure session is fully established
-                await new Promise(resolve => setTimeout(resolve, 200));
-                // Use window.location for more reliable redirect
-                console.log('Redirecting via window.location...');
-                window.location.href = '/dashboard';
+                await new Promise(resolve => setTimeout(resolve, 500));
+                // Use setLocation for client-side routing
+                console.log('Redirecting to dashboard...');
+                setLocation('/dashboard');
               } else {
                 console.error('User verification failed - no user data');
                 setLocation('/login?error=verification_failed');
