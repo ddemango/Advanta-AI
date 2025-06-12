@@ -10,10 +10,12 @@ import { LogOut, User, Settings, Shield } from "lucide-react";
 export default function Dashboard() {
   const [, setLocation] = useLocation();
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ['/auth/user'],
     retry: false,
   });
+
+  console.log('Dashboard render:', { user, isLoading, error });
 
   const handleLogout = async () => {
     try {

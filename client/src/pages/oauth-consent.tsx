@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function OAuthConsent() {
   const [, setLocation] = useWouterLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const queryClient = useQueryClient();
 
   const handleContinue = async () => {
     if (currentStep < 3) {
@@ -20,6 +22,8 @@ export default function OAuthConsent() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       try {
+        console.log('Starting OAuth authentication...');
+        
         // Complete the OAuth flow by calling the demo Google auth endpoint
         const response = await fetch('/auth/demo/google', {
           method: 'GET',
@@ -29,9 +33,15 @@ export default function OAuthConsent() {
           }
         });
         
+        console.log('Auth response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('Auth response data:', data);
+          
           if (data.success) {
+            console.log('Authentication successful, verifying user...');
+            
             // Verify authentication state before redirecting
             const userCheck = await fetch('/auth/user', {
               method: 'GET',
@@ -41,21 +51,32 @@ export default function OAuthConsent() {
               }
             });
             
+            console.log('User check status:', userCheck.status);
+            
             if (userCheck.ok) {
               const userData = await userCheck.json();
+              console.log('User data:', userData);
+              
               if (userData && userData.id) {
+                console.log('User verified, invalidating cache and redirecting to dashboard...');
+                // Invalidate React Query cache to ensure fresh user data on dashboard
+                queryClient.invalidateQueries({ queryKey: ['/auth/user'] });
                 // Successfully authenticated and verified, redirect to dashboard
                 setLocation('/dashboard');
               } else {
+                console.error('User verification failed - no user data');
                 setLocation('/login?error=verification_failed');
               }
             } else {
+              console.error('User check failed with status:', userCheck.status);
               setLocation('/login?error=verification_failed');
             }
           } else {
+            console.error('Authentication failed - no success flag');
             setLocation('/login?error=auth_failed');
           }
         } else {
+          console.error('Auth request failed with status:', response.status);
           setLocation('/login?error=oauth_failed');
         }
       } catch (error) {
