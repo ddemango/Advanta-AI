@@ -3,28 +3,40 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as AppleStrategy } from 'passport-apple';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
+import MemoryStore from 'memorystore';
 import type { Express } from 'express';
 import { db } from './db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const pgStore = connectPg(session);
+const memoryStore = MemoryStore(session);
 
 export function setupAuth(app: Express) {
+  // Use memory store for development to ensure sessions work
+  const sessionStore = process.env.NODE_ENV === 'production' 
+    ? new pgStore({
+        conString: process.env.DATABASE_URL,
+        createTableIfMissing: true,
+        tableName: 'session'
+      })
+    : new memoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      });
+
   // Session configuration
   app.use(session({
-    store: new pgStore({
-      conString: process.env.DATABASE_URL,
-      createTableIfMissing: true,
-    }),
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
     },
+    name: 'connect.sid'
   }));
 
   app.use(passport.initialize());

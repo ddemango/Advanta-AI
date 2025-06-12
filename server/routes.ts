@@ -2504,21 +2504,17 @@ Please provide analysis in this exact JSON format (no additional text):
         updatedAt: new Date()
       };
 
-      // Ensure session is initialized
-      if (!req.session) {
-        return res.status(500).json({ success: false, error: 'Session not initialized' });
-      }
-
-      // Set session for demo user
-      req.session.userId = demoUser.id;
-      req.session.user = demoUser;
-
-      // Save session before responding
-      req.session.save((err) => {
+      // Use Passport's login method to establish proper session
+      req.login(demoUser, (err) => {
         if (err) {
-          console.error('Demo session save error:', err);
-          return res.status(500).json({ success: false, error: 'Failed to save session' });
+          console.error('Demo login error:', err);
+          return res.status(500).json({ success: false, error: 'Failed to establish session' });
         }
+        
+        // Also set session data for compatibility
+        req.session.userId = demoUser.id;
+        req.session.user = demoUser;
+        
         res.json({ success: true, user: demoUser });
       });
     } catch (error) {
