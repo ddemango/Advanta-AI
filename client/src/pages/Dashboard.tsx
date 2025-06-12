@@ -13,6 +13,21 @@ export default function Dashboard() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['/auth/user'],
     retry: false,
+    queryFn: async () => {
+      const res = await fetch('/auth/user', {
+        credentials: 'include',
+      });
+      
+      if (res.status === 401) {
+        return null; // Return null instead of throwing for 401s
+      }
+      
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+      
+      return await res.json();
+    },
   });
 
   console.log('Dashboard render:', { user, isLoading, error });
@@ -34,8 +49,8 @@ export default function Dashboard() {
     );
   }
 
-  if (!user) {
-    console.log('Dashboard: No user found, redirecting to login');
+  if (!isLoading && !user) {
+    console.log('Dashboard: No user found after loading completed, redirecting to login');
     setLocation('/login');
     return null;
   }
