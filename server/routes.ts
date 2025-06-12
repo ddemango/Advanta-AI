@@ -1,4 +1,18 @@
 import type { Express, Request, Response } from "express";
+import bcrypt from "bcrypt";
+
+// Extend session interface
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+    user: {
+      id: number;
+      email: string;
+      firstName: string | null;
+      lastName: string | null;
+    };
+  }
+}
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
@@ -2359,8 +2373,7 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Verify password (assuming bcrypt is used)
-      const bcrypt = require('bcrypt');
+      // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
         return res.status(401).json({ message: 'Invalid email or password' });
@@ -2413,7 +2426,6 @@ Please provide analysis in this exact JSON format (no additional text):
       }
 
       // Hash password
-      const bcrypt = require('bcrypt');
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
