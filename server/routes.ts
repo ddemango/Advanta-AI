@@ -2491,9 +2491,9 @@ Please provide analysis in this exact JSON format (no additional text):
   // Demo OAuth routes for test video demonstration
   app.get('/auth/demo/google', (req: Request, res: Response) => {
     try {
-      // Create demo Google user
+      // Create demo Google user with static small ID
       const demoUser = {
-        id: Date.now(),
+        id: 1001, // Static small ID for demo
         email: 'demo.user@gmail.com',
         firstName: 'Demo',
         lastName: 'User', 
@@ -2524,24 +2524,37 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   app.get('/auth/demo/apple', (req: Request, res: Response) => {
-    // Create demo Apple user
-    const demoUser = {
-      id: Date.now() + 1,
-      email: 'demo.user@icloud.com',
-      firstName: 'Apple',
-      lastName: 'Demo',
-      picture: null,
-      provider: 'apple', 
-      providerId: 'demo_apple_id_456',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    try {
+      // Create demo Apple user with static small ID
+      const demoUser = {
+        id: 2001, // Static small ID for demo
+        email: 'demo.user@icloud.com',
+        firstName: 'Apple',
+        lastName: 'Demo',
+        picture: null,
+        provider: 'apple', 
+        providerId: 'demo_apple_id_456',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-    // Set session for demo user
-    req.session.userId = demoUser.id;
-    req.session.user = demoUser;
-
-    res.json({ success: true, user: demoUser });
+      // Use Passport's login method to establish proper session
+      req.login(demoUser, (err) => {
+        if (err) {
+          console.error('Demo Apple login error:', err);
+          return res.status(500).json({ success: false, error: 'Failed to establish session' });
+        }
+        
+        // Also set session data for compatibility
+        req.session.userId = demoUser.id;
+        req.session.user = demoUser;
+        
+        res.json({ success: true, user: demoUser });
+      });
+    } catch (error) {
+      console.error('Demo Apple OAuth error:', error);
+      res.status(500).json({ success: false, error: 'Authentication failed' });
+    }
   });
 
   // Original OAuth routes (commented out for demo)

@@ -49,6 +49,24 @@ export function setupAuth(app: Express) {
 
   passport.deserializeUser(async (id: number, done) => {
     try {
+      // Handle demo users without database lookup
+      if (id >= 1000 && id <= 1000000) {
+        // This is a demo user, return the user object directly
+        const demoUser = {
+          id: id,
+          email: id < 2000 ? 'demo.user@gmail.com' : 'demo.user@icloud.com',
+          firstName: id < 2000 ? 'Demo' : 'Apple',
+          lastName: id < 2000 ? 'User' : 'Demo',
+          picture: id < 2000 ? 'https://lh3.googleusercontent.com/a/default-user=s96-c' : null,
+          provider: id < 2000 ? 'google' : 'apple',
+          providerId: id < 2000 ? 'demo_google_id_123' : 'demo_apple_id_456',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        return done(null, demoUser);
+      }
+      
+      // Regular database lookup for real users
       const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
       done(null, user[0] || null);
     } catch (error) {
