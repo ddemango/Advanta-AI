@@ -28,10 +28,12 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email").unique().notNull(),
-  name: varchar("name"),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  password: varchar("password"), // For traditional auth
   picture: varchar("picture"),
-  provider: varchar("provider").notNull(), // 'google', 'apple'
-  providerId: varchar("provider_id").notNull(),
+  provider: varchar("provider"), // 'google', 'apple', 'local' - nullable for traditional auth
+  providerId: varchar("provider_id"), // nullable for traditional auth
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

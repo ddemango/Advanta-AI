@@ -2344,6 +2344,134 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
+  // Traditional Login/Signup Routes
+  app.post('/auth/login', async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Verify password (assuming bcrypt is used)
+      const bcrypt = require('bcrypt');
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Create session
+      req.session.userId = user.id;
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      };
+
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName
+        }
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/auth/signup', async (req: Request, res: Response) => {
+    try {
+      const { name, email, password, confirmPassword } = req.body;
+
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Name, email, and password are required' });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({ message: 'Passwords do not match' });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: 'User with this email already exists' });
+      }
+
+      // Hash password
+      const bcrypt = require('bcrypt');
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Split name into first and last name
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Create user
+      const newUser = await storage.createUser({
+        email,
+        firstName,
+        lastName,
+        password: hashedPassword
+      });
+
+      // Create session
+      req.session.userId = newUser.id;
+      req.session.user = {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName
+      };
+
+      res.status(201).json({
+        success: true,
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName
+        }
+      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/auth/user', (req: Request, res: Response) => {
+    if (req.session.user) {
+      res.json(req.session.user);
+    } else {
+      res.status(401).json({ message: 'Not authenticated' });
+    }
+  });
+
+  app.post('/auth/logout', (req: Request, res: Response) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Could not log out' });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ success: true });
+    });
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

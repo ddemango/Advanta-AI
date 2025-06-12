@@ -1,12 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [remember, setRemember] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -30,6 +41,39 @@ export default function Login() {
     window.location.href = '/auth/apple';
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const endpoint = isSignUp ? '/auth/signup' : '/auth/login';
+      const body = isSignUp 
+        ? { name, email, password, confirmPassword }
+        : { email, password };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setLocation('/dashboard');
+      } else {
+        setError(data.message || 'Authentication failed');
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
       <motion.div
@@ -46,15 +90,16 @@ export default function Login() {
               transition={{ delay: 0.2, duration: 0.4 }}
             >
               <CardTitle className="text-3xl font-bold text-white">
-                Welcome Back
+                {isSignUp ? 'Create Account' : 'Welcome Back'}
               </CardTitle>
               <CardDescription className="text-gray-300 text-lg">
-                Sign in to access your portal
+                {isSignUp ? 'Sign up to get started' : 'Sign in to access your portal'}
               </CardDescription>
             </motion.div>
           </CardHeader>
           
           <CardContent className="space-y-6">
+            {/* OAuth Buttons */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -88,20 +133,9 @@ export default function Login() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-              className="flex items-center"
-            >
-              <Separator className="flex-1 bg-white/20" />
-              <span className="px-3 text-gray-400 text-sm">OR</span>
-              <Separator className="flex-1 bg-white/20" />
-            </motion.div>
-
-            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
             >
               <Button
                 onClick={handleAppleLogin}
@@ -116,13 +150,151 @@ export default function Login() {
             </motion.div>
 
             <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.4 }}
+              className="flex items-center"
+            >
+              <Separator className="flex-1 bg-white/20" />
+              <span className="px-3 text-gray-400 text-sm">OR</span>
+              <Separator className="flex-1 bg-white/20" />
+            </motion.div>
+
+            {/* Traditional Login/Signup Form */}
+            <motion.form
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.4 }}
+              className="space-y-4"
+            >
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/30 text-red-100 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-gray-300">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-white/40"
+                    required={isSignUp}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-300">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-white/40"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-300">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-white/40"
+                  required
+                />
+              </div>
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-gray-300">
+                    Confirm Password
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-white/40"
+                    required={isSignUp}
+                  />
+                </div>
+              )}
+
+              {!isSignUp && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={remember}
+                    onCheckedChange={(checked) => setRemember(!!checked)}
+                    className="border-white/20 data-[state=checked]:bg-white data-[state=checked]:border-white"
+                  />
+                  <Label htmlFor="remember" className="text-gray-300 text-sm">
+                    Remember me
+                  </Label>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium transition-all duration-200"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              </Button>
+            </motion.form>
+
+            {/* Toggle Sign Up/Sign In */}
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.4 }}
+              transition={{ delay: 0.9, duration: 0.4 }}
+              className="text-center"
+            >
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                  setEmail('');
+                  setPassword('');
+                  setConfirmPassword('');
+                  setName('');
+                }}
+                className="text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                {isSignUp 
+                  ? 'Already have an account? Sign in' 
+                  : "Don't have an account? Sign up"
+                }
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.4 }}
               className="text-center"
             >
               <p className="text-gray-400 text-sm">
-                By signing in, you agree to our Terms of Service and Privacy Policy
+                By continuing, you agree to our Terms of Service and Privacy Policy
               </p>
             </motion.div>
           </CardContent>
