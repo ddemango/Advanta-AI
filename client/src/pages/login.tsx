@@ -33,22 +33,17 @@ export default function Login() {
       });
   }, [setLocation]);
 
-  const handleGoogleLogin = async () => {
-    try {
-      const response = await fetch('/auth/demo/google', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        setLocation('/dashboard');
-      } else {
-        setError('Google login failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Google login error:', error);
-      setError('Google login failed. Please try again.');
-    }
+  const handleGoogleLogin = () => {
+    // Redirect to Google OAuth consent screen for demo
+    const googleOAuthUrl = 'https://accounts.google.com/oauth/authorize?' + 
+      'client_id=demo-client-id&' +
+      'redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/google/callback') + '&' +
+      'response_type=code&' +
+      'scope=' + encodeURIComponent('openid email profile') + '&' +
+      'access_type=offline&' +
+      'prompt=consent';
+    
+    window.location.href = googleOAuthUrl;
   };
 
   const handleAppleLogin = async () => {

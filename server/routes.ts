@@ -2533,6 +2533,8 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   app.get('/auth/google/callback', (req: Request, res: Response) => {
+    // Handle Google OAuth callback - in production this would exchange the code for tokens
+    // For demo purposes, we'll create a demo user and redirect to dashboard
     const demoUser = {
       id: Date.now(),
       email: 'demo.user@gmail.com',
@@ -2545,9 +2547,11 @@ Please provide analysis in this exact JSON format (no additional text):
       updatedAt: new Date()
     };
 
+    // Set session for demo user
     req.session.userId = demoUser.id;
     req.session.user = demoUser;
 
+    // Redirect to dashboard (client suite) after successful authentication
     res.redirect('/dashboard');
   });
 
