@@ -1,183 +1,133 @@
-import React, { useState } from 'react';
-import { useLocation } from 'wouter';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { motion } from 'framer-motion';
-import { fadeIn } from '@/lib/animations';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { Helmet } from 'react-helmet';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [, setLocation] = useLocation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // In a real implementation, this would call an authentication API
-      // For demo purposes, we'll simulate a successful login with a timeout
-      setTimeout(() => {
-        // Check for specific credentials
-        if ((email === 'admin' && password === '12345') ||
-            (email === 'd.s.demango@gmail.com' && password === '12345') || 
-            // Also keep the email-based login for flexibility
-            (email.endsWith('@advanta.ai') && password.length >= 6)) {
-          
-          // Store authentication in session/local storage
-          sessionStorage.setItem('isAuthenticated', 'true');
-          sessionStorage.setItem('userEmail', email);
-          
-          // Redirect to client dashboard
-          window.location.href = '/dashboard';
-        } else {
-          setError('Invalid email or password. Please try again.');
+  // Check if user is already authenticated
+  useEffect(() => {
+    fetch('/auth/user')
+      .then(res => res.json())
+      .then(user => {
+        if (user) {
+          setLocation('/dashboard');
         }
-        setIsLoading(false);
-      }, 1000);
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      setIsLoading(false);
-    }
+      })
+      .catch(() => {
+        // User not authenticated, stay on login page
+      });
+  }, [setLocation]);
+
+  const handleGoogleLogin = () => {
+    window.location.href = '/auth/google';
+  };
+
+  const handleAppleLogin = () => {
+    window.location.href = '/auth/apple';
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Client Login - Advanta AI</title>
-        <meta name="description" content="Log in to your Advanta AI client portal to manage your AI solutions, view analytics, and control your AI-powered services." />
-        <meta property="og:title" content="Client Login - Advanta AI" />
-        <meta property="og:description" content="Log in to your Advanta AI client portal to manage your AI solutions, view analytics, and control your AI-powered services." />
-      </Helmet>
-
-      <Header />
-
-      <main className="pt-28 pb-20 min-h-screen flex flex-col justify-center">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-md">
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            className="text-center mb-8"
-          >
-            <h1 className="text-3xl font-bold mb-2">Client Portal Login</h1>
-            <p className="text-muted-foreground">
-              Access your AI solutions dashboard and management tools
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            className="mb-8"
-          >
-            <Card className="p-6">
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-500 rounded-md p-3 mb-4">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email"
-                    type="email" 
-                    placeholder="client@company.com" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-md"
+      >
+        <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-2xl">
+          <CardHeader className="text-center space-y-4">
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              <CardTitle className="text-3xl font-bold text-white">
+                Welcome Back
+              </CardTitle>
+              <CardDescription className="text-gray-300 text-lg">
+                Sign in to access your portal
+              </CardDescription>
+            </motion.div>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+            >
+              <Button
+                onClick={handleGoogleLogin}
+                variant="outline"
+                className="w-full h-12 bg-white text-gray-900 border-0 hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-3 text-base font-medium"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   />
-                </div>
-                
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label htmlFor="password">Password</Label>
-                    <a href="#" className="text-sm text-primary hover:underline">
-                      Forgot password?
-                    </a>
-                  </div>
-                  <Input 
-                    id="password"
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
                   />
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="remember" 
-                    checked={remember}
-                    onCheckedChange={(checked) => setRemember(checked as boolean)}
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
                   />
-                  <Label htmlFor="remember" className="text-sm cursor-pointer">
-                    Remember me for 30 days
-                  </Label>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Logging in...</span>
-                    </span>
-                  ) : 'Log in to portal'}
-                </Button>
-              </form>
-              
-              <div className="mt-6 pt-6 border-t border-border text-center text-sm text-muted-foreground">
-                <p>Don't have an account yet?</p>
-                <p className="mt-1">
-                  <a 
-                    onClick={() => setLocation('/calculator')}
-                    className="text-primary hover:underline cursor-pointer"
-                  >
-                    Build your AI stack
-                  </a>{' '}
-                  to get started with AdvantaAI
-                </p>
-              </div>
-            </Card>
-          </motion.div>
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
+                </svg>
+                Continue with Google
+              </Button>
+            </motion.div>
 
-          {/* Demo Credentials Notice */}
-          <motion.div
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            className="text-sm text-center text-muted-foreground"
-          >
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-4">
-              <h3 className="font-medium text-blue-500 mb-1">Demo Access</h3>
-              <p>For demo purposes, use any email ending with @advanta.ai and a password with 6+ characters</p>
-            </div>
-          </motion.div>
-        </div>
-      </main>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="flex items-center"
+            >
+              <Separator className="flex-1 bg-white/20" />
+              <span className="px-3 text-gray-400 text-sm">OR</span>
+              <Separator className="flex-1 bg-white/20" />
+            </motion.div>
 
-      <Footer />
-    </>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6, duration: 0.4 }}
+            >
+              <Button
+                onClick={handleAppleLogin}
+                variant="outline"
+                className="w-full h-12 bg-black text-white border-0 hover:bg-gray-900 transition-all duration-200 flex items-center justify-center gap-3 text-base font-medium"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                Continue with Apple
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.4 }}
+              className="text-center"
+            >
+              <p className="text-gray-400 text-sm">
+                By signing in, you agree to our Terms of Service and Privacy Policy
+              </p>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
   );
 }
