@@ -34,16 +34,8 @@ export default function Login() {
   }, [setLocation]);
 
   const handleGoogleLogin = () => {
-    // Redirect to Google OAuth consent screen for demo
-    const googleOAuthUrl = 'https://accounts.google.com/oauth/authorize?' + 
-      'client_id=demo-client-id&' +
-      'redirect_uri=' + encodeURIComponent(window.location.origin + '/auth/google/callback') + '&' +
-      'response_type=code&' +
-      'scope=' + encodeURIComponent('openid email profile') + '&' +
-      'access_type=offline&' +
-      'prompt=consent';
-    
-    window.location.href = googleOAuthUrl;
+    // Redirect to OAuth consent screen
+    setLocation('/oauth-consent');
   };
 
   const handleAppleLogin = async () => {

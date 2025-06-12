@@ -53,6 +53,7 @@ import MovieMatchmaker from "@/pages/movie-matchmaker-simple";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import FreeTools from "@/pages/free-tools";
+import OAuthConsent from "@/pages/oauth-consent";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -106,6 +107,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/build-my-ai-stack" component={Calculator} />
       <Route path="/login" component={Login} />
+      <Route path="/oauth-consent" component={OAuthConsent} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/onboarding" component={Onboarding} />
