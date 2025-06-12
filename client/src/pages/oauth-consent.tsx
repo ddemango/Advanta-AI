@@ -232,21 +232,21 @@ export default function OAuthConsent() {
             ✕
           </button>
           <div className="w-4 h-4 bg-gray-800 rounded-sm"></div>
-          <span className="text-sm text-gray-600">connect.tunery.com</span>
+          <span className="text-sm text-gray-600">connect.advanta-ai.com</span>
         </div>
         <div className="text-gray-400">⋮</div>
       </div>
 
-      {/* Tunery logo */}
+      {/* Advanta AI logo */}
       <div className="flex items-center gap-2 mb-8">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-sm">T</span>
+        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-sm">A</span>
         </div>
-        <span className="text-xl font-medium text-gray-900">tunery</span>
+        <span className="text-xl font-medium text-gray-900">advanta ai</span>
       </div>
 
       <p className="text-sm text-gray-700 mb-6">
-        By agreeing, you are allowing Tunery to share data with Google.
+        By agreeing, you are allowing Advanta AI to share data with Google.
       </p>
 
       <div className="space-y-3 mb-8">
@@ -265,7 +265,7 @@ export default function OAuthConsent() {
       </div>
 
       <p className="text-xs text-gray-600 mb-8">
-        You can remove this access at any time at tunery.com/account
+        You can remove this access at any time at advanta-ai.com/account
       </p>
 
       <div className="flex gap-3">
