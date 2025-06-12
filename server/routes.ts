@@ -2467,10 +2467,14 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   app.get('/auth/user', (req: Request, res: Response) => {
-    if (req.session.user) {
+    console.log('Auth user check - Session ID:', req.sessionID);
+    console.log('Auth user check - Session data:', req.session);
+    console.log('Auth user check - User in session:', req.session?.user);
+    
+    if (req.session?.user) {
       res.json(req.session.user);
     } else {
-      res.status(401).json({ message: 'Not authenticated' });
+      res.json(null);
     }
   });
 
