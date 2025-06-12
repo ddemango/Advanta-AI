@@ -32,8 +32,26 @@ export default function OAuthConsent() {
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            // Successfully authenticated, redirect to dashboard
-            setLocation('/dashboard');
+            // Verify authentication state before redirecting
+            const userCheck = await fetch('/auth/user', {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            if (userCheck.ok) {
+              const userData = await userCheck.json();
+              if (userData && userData.id) {
+                // Successfully authenticated and verified, redirect to dashboard
+                setLocation('/dashboard');
+              } else {
+                setLocation('/login?error=verification_failed');
+              }
+            } else {
+              setLocation('/login?error=verification_failed');
+            }
           } else {
             setLocation('/login?error=auth_failed');
           }
