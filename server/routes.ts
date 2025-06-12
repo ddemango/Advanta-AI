@@ -2484,6 +2484,58 @@ Please provide analysis in this exact JSON format (no additional text):
     });
   });
 
+  // Demo Google OAuth routes for test video demonstration
+  app.get('/auth/google', (req: Request, res: Response) => {
+    // Simulate Google OAuth redirect for demo purposes
+    res.redirect('/auth/google/callback?code=demo_auth_code&state=demo');
+  });
+
+  app.get('/auth/google/callback', (req: Request, res: Response) => {
+    // Simulate successful Google OAuth callback
+    const demoUser = {
+      id: Date.now(),
+      email: 'demo.user@gmail.com',
+      firstName: 'Demo',
+      lastName: 'User',
+      picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+      provider: 'google',
+      providerId: 'demo_google_id_123',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Set session for demo user
+    req.session.userId = demoUser.id;
+    req.session.user = demoUser;
+
+    // Redirect to dashboard (client suite) after successful authentication
+    res.redirect('/dashboard');
+  });
+
+  // Demo Apple OAuth routes
+  app.get('/auth/apple', (req: Request, res: Response) => {
+    res.redirect('/auth/apple/callback?code=demo_apple_code&state=demo');
+  });
+
+  app.get('/auth/apple/callback', (req: Request, res: Response) => {
+    const demoUser = {
+      id: Date.now() + 1,
+      email: 'demo.user@icloud.com',
+      firstName: 'Apple',
+      lastName: 'Demo',
+      picture: null,
+      provider: 'apple',
+      providerId: 'demo_apple_id_456',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    req.session.userId = demoUser.id;
+    req.session.user = demoUser;
+
+    res.redirect('/dashboard');
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
