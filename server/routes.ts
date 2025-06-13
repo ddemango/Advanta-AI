@@ -2663,6 +2663,177 @@ Please provide analysis in this exact JSON format (no additional text):
     res.redirect('/dashboard');
   });
 
+  // Workflow Automation API Routes
+  app.get('/api/workflows', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const workflows = await storage.getWorkflows(userId);
+      res.json(workflows);
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+      res.status(500).json({ message: 'Failed to fetch workflows' });
+    }
+  });
+
+  app.post('/api/workflows/parse', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: 'Prompt is required' });
+      }
+
+      const workflowDef = await workflowEngine.parseWorkflow(prompt);
+      res.json(workflowDef);
+    } catch (error) {
+      console.error('Error parsing workflow:', error);
+      res.status(500).json({ message: 'Failed to parse workflow with AI' });
+    }
+  });
+
+  app.post('/api/workflows', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const workflowData = insertWorkflowSchema.parse({
+        ...req.body,
+        userId
+      });
+
+      const workflow = await storage.createWorkflow(workflowData);
+      res.json(workflow);
+    } catch (error) {
+      console.error('Error creating workflow:', error);
+      res.status(500).json({ message: 'Failed to create workflow' });
+    }
+  });
+
+  app.get('/api/workflows/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const workflow = await storage.getWorkflowById(workflowId);
+      
+      if (!workflow) {
+        return res.status(404).json({ message: 'Workflow not found' });
+      }
+
+      res.json(workflow);
+    } catch (error) {
+      console.error('Error fetching workflow:', error);
+      res.status(500).json({ message: 'Failed to fetch workflow' });
+    }
+  });
+
+  app.put('/api/workflows/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      const workflow = await storage.updateWorkflow(workflowId, updateData);
+      res.json(workflow);
+    } catch (error) {
+      console.error('Error updating workflow:', error);
+      res.status(500).json({ message: 'Failed to update workflow' });
+    }
+  });
+
+  app.delete('/api/workflows/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const success = await storage.deleteWorkflow(workflowId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Workflow not found' });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting workflow:', error);
+      res.status(500).json({ message: 'Failed to delete workflow' });
+    }
+  });
+
+  app.post('/api/workflows/:id/execute', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { triggerData = {} } = req.body;
+
+      const runId = await workflowEngine.executeWorkflow(workflowId, triggerData);
+      res.json({ runId, status: 'started' });
+    } catch (error) {
+      console.error('Error executing workflow:', error);
+      res.status(500).json({ message: 'Failed to execute workflow' });
+    }
+  });
+
+  app.get('/api/workflows/:id/logs', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const logs = await storage.getWorkflowLogs(workflowId);
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching workflow logs:', error);
+      res.status(500).json({ message: 'Failed to fetch workflow logs' });
+    }
+  });
+
+  app.get('/api/workflows/runs/:runId/logs', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { runId } = req.params;
+      const logs = await storage.getWorkflowLogsByRunId(runId);
+      res.json(logs);
+    } catch (error) {
+      console.error('Error fetching run logs:', error);
+      res.status(500).json({ message: 'Failed to fetch run logs' });
+    }
+  });
+
+  app.get('/api/connections', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const connections = await storage.getConnections(userId);
+      res.json(connections);
+    } catch (error) {
+      console.error('Error fetching connections:', error);
+      res.status(500).json({ message: 'Failed to fetch connections' });
+    }
+  });
+
+  app.post('/api/connections', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const { appName, accessToken, refreshToken, expiresAt } = req.body;
+
+      const connection = await storage.createConnection({
+        userId,
+        appName,
+        accessToken,
+        refreshToken,
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined
+      });
+
+      res.json(connection);
+    } catch (error) {
+      console.error('Error creating connection:', error);
+      res.status(500).json({ message: 'Failed to create connection' });
+    }
+  });
+
+  app.delete('/api/connections/:id', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const connectionId = parseInt(req.params.id);
+      const success = await storage.deleteConnection(connectionId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Connection not found' });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting connection:', error);
+      res.status(500).json({ message: 'Failed to delete connection' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

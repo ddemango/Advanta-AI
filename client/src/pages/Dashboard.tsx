@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { LogOut, User, Settings, Shield } from "lucide-react";
+import { LogOut, User, Settings, Shield, Zap, Bot, Workflow, Clock, Play, CheckCircle, AlertCircle } from "lucide-react";
+import { PromptInput } from "@/components/workflow/PromptInput";
+import { WorkflowPreview } from "@/components/workflow/WorkflowPreview";
+import { WorkflowList } from "@/components/workflow/WorkflowList";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
