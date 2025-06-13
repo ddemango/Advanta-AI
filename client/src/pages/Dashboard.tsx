@@ -11,12 +11,16 @@ import { LogOut, User, Settings, Shield, Zap, Bot, Workflow, Clock, Play, CheckC
 import { PromptInput } from "@/components/workflow/PromptInput";
 import { WorkflowPreview } from "@/components/workflow/WorkflowPreview";
 import { WorkflowList } from "@/components/workflow/WorkflowList";
+import { WorkflowAnalytics } from "@/components/workflow/WorkflowAnalytics";
+import { AIQueryInterface } from "@/components/workflow/AIQueryInterface";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [generatedWorkflow, setGeneratedWorkflow] = useState(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState('builder');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   const { data: user, isLoading, error } = useQuery({
@@ -292,23 +296,64 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6 }}
             >
-              <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                <CardHeader>
-                  <CardTitle className="text-white">Workflow Analytics</CardTitle>
-                  <CardDescription className="text-gray-300">
-                    Performance insights and execution statistics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-center py-12">
-                  <Clock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-300 mb-2">
-                    Analytics Dashboard
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Detailed analytics and performance metrics coming soon
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  {selectedWorkflowId ? (
+                    <WorkflowAnalytics workflowId={selectedWorkflowId} />
+                  ) : (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardHeader>
+                        <CardTitle className="text-white">Select a Workflow</CardTitle>
+                        <CardDescription className="text-gray-300">
+                          Choose a workflow from the list to view detailed analytics
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="text-center py-12">
+                        <Clock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                        <h3 className="text-lg font-medium text-gray-300 mb-2">
+                          Analytics Dashboard
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Select a workflow to see performance insights and execution statistics
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+                
+                <div className="space-y-6">
+                  <AIQueryInterface workflowId={selectedWorkflowId || undefined} />
+                  
+                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <CardHeader>
+                      <CardTitle className="text-white">Your Workflows</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {workflowsQuery.data?.map((workflow: any) => (
+                          <div
+                            key={workflow.id}
+                            className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                              selectedWorkflowId === workflow.id
+                                ? 'bg-blue-600/30 border border-blue-500'
+                                : 'bg-white/5 hover:bg-white/10'
+                            }`}
+                            onClick={() => setSelectedWorkflowId(workflow.id)}
+                          >
+                            <h4 className="text-white font-medium">{workflow.name}</h4>
+                            <p className="text-gray-400 text-sm">{workflow.description}</p>
+                            <div className="flex items-center space-x-2 mt-2">
+                              <Badge variant={workflow.isActive ? 'default' : 'secondary'}>
+                                {workflow.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </motion.div>
           </TabsContent>
         </Tabs>
