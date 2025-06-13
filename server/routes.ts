@@ -16,8 +16,9 @@ declare module 'express-session' {
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertBlogPostSchema, insertResourceSchema } from "@shared/schema";
+import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema } from "@shared/schema";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
+import { workflowEngine } from "./workflow-engine";
 import { log } from "./vite";
 import Stripe from "stripe";
 import OpenAI from "openai";
