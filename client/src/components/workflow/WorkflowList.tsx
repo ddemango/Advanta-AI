@@ -24,7 +24,7 @@ interface WorkflowListProps {
 export function WorkflowList({ onWorkflowSelect }: WorkflowListProps) {
   const queryClient = useQueryClient();
   
-  const { data: workflows = [], isLoading } = useQuery({
+  const { data: workflows = [], isLoading } = useQuery<Workflow[]>({
     queryKey: ['/api/workflows'],
   });
 
@@ -164,7 +164,6 @@ export function WorkflowList({ onWorkflowSelect }: WorkflowListProps) {
               <Switch
                 checked={workflow.isActive}
                 onCheckedChange={() => handleToggleActive(workflow)}
-                size="sm"
               />
             </div>
             
