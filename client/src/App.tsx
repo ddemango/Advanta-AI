@@ -44,6 +44,7 @@ import BrandKitGenerator from "@/pages/brand-kit-generator";
 import PromptLibrary from "@/pages/prompt-library";
 import CustomGPTGenerator from "@/pages/custom-gpt-generator";
 import AutomationBuilder from "@/pages/automation-builder";
+import WorkflowBuilder from "@/pages/WorkflowBuilder";
 import Checkout from "@/pages/checkout";
 import Partnerships from "@/pages/partnerships";
 import SocialClipAnalyzer from "@/pages/socialclip-analyzer";
@@ -149,6 +150,8 @@ function Router() {
       <Route path="/prompt-library" component={PromptLibrary} />
       <Route path="/custom-gpt-generator" component={CustomGPTGenerator} />
       <Route path="/automation-builder" component={AutomationBuilder} />
+      <Route path="/workflow-builder" component={WorkflowBuilder} />
+      <Route path="/workflow-builder/:id" component={WorkflowBuilder} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/partnerships" component={Partnerships} />
       <Route path="/socialclip-analyzer" component={SocialClipAnalyzer} />

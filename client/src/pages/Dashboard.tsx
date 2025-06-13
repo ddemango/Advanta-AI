@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { LogOut, User, Settings, Shield, Zap, Bot, Workflow, Clock, Play, CheckCircle, AlertCircle } from "lucide-react";
+import { LogOut, User, Settings, Shield, Zap, Bot, Workflow, Clock, Play, CheckCircle, AlertCircle, Plus } from "lucide-react";
 import { PromptInput } from "@/components/workflow/PromptInput";
 import { WorkflowPreview } from "@/components/workflow/WorkflowPreview";
 import { WorkflowList } from "@/components/workflow/WorkflowList";
@@ -308,7 +308,18 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6 }}
+              className="space-y-6"
             >
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-white">My Workflows</h2>
+                <Button 
+                  onClick={() => setLocation('/workflow-builder')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Workflow
+                </Button>
+              </div>
               <WorkflowList onWorkflowSelect={setSelectedWorkflow} />
             </motion.div>
           </TabsContent>
