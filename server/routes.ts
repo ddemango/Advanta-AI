@@ -2700,12 +2700,15 @@ Please provide analysis in this exact JSON format (no additional text):
   app.post('/api/workflows/parse', requireAuth, async (req: Request, res: Response) => {
     try {
       const { prompt } = req.body;
+      const userId = req.session.userId!;
       
       if (!prompt) {
         return res.status(400).json({ message: 'Prompt is required' });
       }
 
-      const workflowDef = await workflowEngine.parseWorkflow(prompt);
+      // Import AI workflow engine
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const workflowDef = await aiWorkflowEngine.parseNaturalLanguageWorkflow(prompt, userId);
       res.json(workflowDef);
     } catch (error) {
       console.error('Error parsing workflow:', error);
@@ -2795,6 +2798,149 @@ Please provide analysis in this exact JSON format (no additional text):
     } catch (error) {
       console.error('Error fetching workflow logs:', error);
       res.status(500).json({ message: 'Failed to fetch workflow logs' });
+    }
+  });
+
+  // AI-powered workflow analytics
+  app.get('/api/workflows/:id/analytics', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const analytics = await aiWorkflowEngine.analyzeWorkflowPerformance(workflowId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching workflow analytics:', error);
+      res.status(500).json({ message: 'Failed to fetch workflow analytics' });
+    }
+  });
+
+  // AI query interface for conversational workflow analysis
+  app.post('/api/workflows/query', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { query, workflowId } = req.body;
+      const userId = req.session.userId!;
+      
+      if (!query) {
+        return res.status(400).json({ message: 'Query is required' });
+      }
+
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const answer = await aiWorkflowEngine.answerWorkflowQuery(query, workflowId, userId);
+      res.json({ answer });
+    } catch (error) {
+      console.error('Error processing workflow query:', error);
+      res.status(500).json({ message: 'Failed to process query' });
+    }
+  });
+
+  // Predictive scheduling
+  app.get('/api/workflows/:id/schedule/predict', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const prediction = await aiWorkflowEngine.generatePredictiveSchedule(workflowId);
+      res.json(prediction);
+    } catch (error) {
+      console.error('Error generating predictive schedule:', error);
+      res.status(500).json({ message: 'Failed to generate predictive schedule' });
+    }
+  });
+
+  // Natural language scheduling
+  app.post('/api/workflows/schedule/parse', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { scheduleText } = req.body;
+      
+      if (!scheduleText) {
+        return res.status(400).json({ message: 'Schedule text is required' });
+      }
+
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const cronExpression = await aiWorkflowEngine.parseNaturalLanguageSchedule(scheduleText);
+      res.json({ cronExpression, originalText: scheduleText });
+    } catch (error) {
+      console.error('Error parsing schedule:', error);
+      res.status(500).json({ message: 'Failed to parse schedule' });
+    }
+  });
+
+  // Error recovery suggestions
+  app.post('/api/workflows/:id/recovery', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { error } = req.body;
+      
+      if (!error) {
+        return res.status(400).json({ message: 'Error description is required' });
+      }
+
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const strategy = await aiWorkflowEngine.generateErrorRecoveryStrategy(error, workflowId);
+      res.json(strategy);
+    } catch (error) {
+      console.error('Error generating recovery strategy:', error);
+      res.status(500).json({ message: 'Failed to generate recovery strategy' });
+    }
+  });
+
+  // Decision tree generation for complex logic
+  app.post('/api/workflows/decision-tree', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { prompt, context } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: 'Prompt is required' });
+      }
+
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const decisionTree = await aiWorkflowEngine.generateDecisionTree(prompt, context);
+      res.json({ decisionTree });
+    } catch (error) {
+      console.error('Error generating decision tree:', error);
+      res.status(500).json({ message: 'Failed to generate decision tree' });
+    }
+  });
+
+  // Webhook endpoints for external triggers
+  app.post('/api/webhooks/:workflowId', async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.workflowId);
+      const triggerData = {
+        type: 'webhook',
+        data: req.body,
+        headers: req.headers,
+        timestamp: new Date(),
+        sourceIp: req.ip
+      };
+      
+      // Log webhook trigger
+      await storage.logWorkflowExecution(workflowId, `webhook_${Date.now()}`, 'running', 0, 'webhook_trigger', triggerData, null, null);
+      
+      // Execute workflow with webhook data
+      const runId = await workflowEngine.executeWorkflow(workflowId, triggerData);
+      res.json({ success: true, runId, message: 'Webhook processed successfully' });
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({ error: 'Failed to process webhook' });
+    }
+  });
+
+  // Workflow optimization suggestions
+  app.get('/api/workflows/:id/optimize', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const workflow = await storage.getWorkflowById(workflowId);
+      
+      if (!workflow) {
+        return res.status(404).json({ message: 'Workflow not found' });
+      }
+
+      const { aiWorkflowEngine } = await import('./ai-workflow-engine');
+      const optimizations = await aiWorkflowEngine.optimizeWorkflow(workflow.workflowJson);
+      res.json(optimizations);
+    } catch (error) {
+      console.error('Error generating optimizations:', error);
+      res.status(500).json({ message: 'Failed to generate optimizations' });
     }
   });
 

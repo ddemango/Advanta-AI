@@ -251,6 +251,37 @@ class AdvancedTriggerSystem {
 export const triggerSystem = new AdvancedTriggerSystem();
 
 // Natural language processing for advanced scheduling
+// Database change monitoring
+export async function setupDatabaseTriggers() {
+  // Create PostgreSQL triggers for workflow automation
+  const triggerQueries = [
+    `CREATE OR REPLACE FUNCTION notify_workflow_trigger() RETURNS trigger AS $$
+     BEGIN
+       PERFORM pg_notify('workflow_trigger', json_build_object(
+         'table', TG_TABLE_NAME,
+         'operation', TG_OP,
+         'data', row_to_json(NEW)
+       )::text);
+       RETURN NEW;
+     END;
+     $$ LANGUAGE plpgsql;`,
+    
+    `DROP TRIGGER IF EXISTS workflow_data_trigger ON users;
+     CREATE TRIGGER workflow_data_trigger 
+     AFTER INSERT OR UPDATE ON users 
+     FOR EACH ROW EXECUTE FUNCTION notify_workflow_trigger();`
+  ];
+  
+  for (const query of triggerQueries) {
+    try {
+      // This would need actual database execution
+      console.log('Setting up database trigger:', query);
+    } catch (error) {
+      console.error('Database trigger setup error:', error);
+    }
+  }
+}
+
 export async function parseAdvancedSchedule(input: string): Promise<{
   cronExpression: string;
   description: string;
