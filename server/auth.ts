@@ -17,8 +17,9 @@ export function setupAuth(app: Express) {
   app.use(session({
     store: sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
+    resave: true,
     saveUninitialized: true,
+    rolling: true,
     cookie: {
       secure: false,
       httpOnly: true,

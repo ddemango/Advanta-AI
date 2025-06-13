@@ -2513,16 +2513,16 @@ Please provide analysis in this exact JSON format (no additional text):
         });
       }
 
-      // Use Passport's login method to establish proper session
-      req.login(demoUser, (err) => {
+      // Set session data directly
+      req.session.userId = demoUser.id;
+      req.session.user = demoUser;
+      
+      // Save session explicitly
+      req.session.save((err) => {
         if (err) {
-          console.error('Demo login error:', err);
-          return res.status(500).json({ success: false, error: 'Failed to establish session' });
+          console.error('Session save error:', err);
+          return res.status(500).json({ success: false, error: 'Failed to save session' });
         }
-        
-        // Also set session data for compatibility
-        req.session.userId = demoUser.id;
-        req.session.user = demoUser;
         
         res.json({ success: true, user: demoUser });
       });
