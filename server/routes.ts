@@ -2363,6 +2363,31 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   // Traditional Login/Signup Routes
+  // Demo session establishment
+  app.post('/auth/demo-login', async (req: Request, res: Response) => {
+    try {
+      // Establish demo user session
+      req.session.userId = 1001;
+      req.session.user = {
+        id: 1001,
+        email: 'demo@advanta-ai.com',
+        firstName: 'Demo',
+        lastName: 'User'
+      };
+      
+      await new Promise((resolve) => req.session.save(resolve));
+      
+      res.json({ 
+        success: true, 
+        user: req.session.user,
+        message: 'Demo session established'
+      });
+    } catch (error) {
+      console.error('Demo login error:', error);
+      res.status(500).json({ error: 'Failed to establish demo session' });
+    }
+  });
+
   app.post('/auth/login', async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;

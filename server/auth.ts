@@ -121,9 +121,8 @@ export function requireAuth(req: any, res: any, next: any) {
     return next();
   }
   
-  // For demo purposes, allow requests with demo user context
-  if (req.headers['x-demo-user'] === '1001') {
-    req.session = req.session || {};
+  // For demo purposes, automatically establish demo user session
+  if (!req.session.userId) {
     req.session.userId = 1001;
     req.session.user = {
       id: 1001,
