@@ -170,6 +170,26 @@ export default function Login() {
 
             <div className="space-y-3">
               <Button
+                onClick={() => {
+                  // Simple direct login - create demo user and go to dashboard
+                  const demoUser = {
+                    id: 1001,
+                    email: 'demo@advanta-ai.com',
+                    firstName: 'Demo',
+                    lastName: 'User',
+                    picture: null,
+                    provider: 'demo',
+                    providerId: 'demo_123'
+                  };
+                  localStorage.setItem('demo_auth', JSON.stringify(demoUser));
+                  setLocation('/dashboard');
+                }}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+              >
+                Access Dashboard
+              </Button>
+              
+              <Button
                 onClick={() => handleOAuthDemo('google')}
                 variant="outline"
                 className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
