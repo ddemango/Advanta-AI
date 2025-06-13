@@ -239,7 +239,12 @@ Provide optimal scheduling recommendations with confidence scores.`;
         temperature: 0.3
       });
 
-      const predictions = JSON.parse(response.choices[0].message.content);
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No prediction response from AI');
+      }
+      
+      const predictions = JSON.parse(messageContent);
       
       return {
         optimalTime: new Date(predictions.optimalTime || Date.now() + 3600000),
