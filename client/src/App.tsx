@@ -2,6 +2,7 @@ import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
@@ -57,7 +58,6 @@ import TermsOfService from "@/pages/terms-of-service";
 import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
-import { useLocation } from "wouter";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
@@ -70,7 +70,7 @@ function Router() {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        const response = await fetch('/api/auth/demo-login', {
+        const response = await fetch('/auth/demo-login', {
           method: 'POST',
           credentials: 'include',
           headers: {

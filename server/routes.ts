@@ -2722,7 +2722,7 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
-  app.post('/api/workflows/parse', requireAuth, async (req: Request, res: Response) => {
+  app.post('/api/workflows/parse', async (req: Request, res: Response) => {
     try {
       const { prompt } = req.body;
       const userId = req.session.userId!;
