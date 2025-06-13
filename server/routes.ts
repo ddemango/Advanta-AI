@@ -2493,20 +2493,25 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   // Demo OAuth routes for test video demonstration
-  app.get('/auth/demo/google', (req: Request, res: Response) => {
+  app.get('/auth/demo/google', async (req: Request, res: Response) => {
     try {
-      // Create demo Google user with static small ID
-      const demoUser = {
-        id: 1001, // Static small ID for demo
-        email: 'demo.user@gmail.com',
-        firstName: 'Demo',
-        lastName: 'User', 
-        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-        provider: 'google',
-        providerId: 'demo_google_id_123',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Check if demo user already exists
+      let existingUser = await storage.getUserByEmail('demo.user@gmail.com');
+      
+      let demoUser;
+      if (existingUser) {
+        demoUser = existingUser;
+      } else {
+        // Create demo Google user in database
+        demoUser = await storage.createUser({
+          email: 'demo.user@gmail.com',
+          firstName: 'Demo',
+          lastName: 'User', 
+          picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+          provider: 'google',
+          providerId: 'demo_google_id_123'
+        });
+      }
 
       // Use Passport's login method to establish proper session
       req.login(demoUser, (err) => {
