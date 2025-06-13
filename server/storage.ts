@@ -447,6 +447,34 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async logWorkflowExecution(
+    workflowId: number, 
+    runId: string, 
+    status: string, 
+    stepIndex: number, 
+    stepName: string, 
+    input: any, 
+    output: any, 
+    error: string | null
+  ): Promise<WorkflowLog> {
+    const logData = {
+      workflowId,
+      runId,
+      status,
+      stepIndex,
+      stepName,
+      input,
+      output,
+      error
+    };
+    
+    const result = await db
+      .insert(workflowLogs)
+      .values(logData)
+      .returning();
+    return result[0];
+  }
+
   async getWorkflowLogsByRunId(runId: string): Promise<WorkflowLog[]> {
     return await db
       .select()

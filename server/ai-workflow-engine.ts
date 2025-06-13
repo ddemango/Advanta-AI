@@ -98,7 +98,12 @@ Example output structure:
         temperature: 0.3
       });
 
-      const workflowConfig = JSON.parse(response.choices[0].message.content);
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
+      }
+      
+      const workflowConfig = JSON.parse(messageContent);
       
       // Enhance with AI-generated optimizations
       const optimizedConfig = await this.optimizeWorkflow(workflowConfig);
@@ -142,7 +147,12 @@ Return the optimized workflow with improvements and explanations.`;
         temperature: 0.2
       });
 
-      const optimizations = JSON.parse(response.choices[0].message.content);
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No optimization response from AI');
+      }
+      
+      const optimizations = JSON.parse(messageContent);
       
       return {
         ...workflowConfig,
@@ -178,7 +188,12 @@ Return only the cron expression as a string.`;
         temperature: 0.1
       });
 
-      return response.choices[0].message.content.trim().replace(/"/g, '');
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No schedule response from AI');
+      }
+      
+      return messageContent.trim().replace(/"/g, '');
     } catch (error) {
       console.error('Error parsing schedule:', error);
       throw new Error('Failed to parse schedule');

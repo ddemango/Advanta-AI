@@ -72,12 +72,12 @@ export default function WorkflowAnalytics({ workflowId }: WorkflowAnalyticsProps
   const [timeRange, setTimeRange] = useState('7d');
   
   const { data: analytics, isLoading } = useQuery<AnalyticsData>({
-    queryKey: ['/api/workflows', workflowId, 'analytics', timeRange],
+    queryKey: ['/api/workflows', workflowId, 'analytics'],
     enabled: !!workflowId,
   });
 
-  const { data: insights } = useQuery({
-    queryKey: ['/api/workflows', workflowId, 'insights'],
+  const { data: optimizations } = useQuery({
+    queryKey: ['/api/workflows', workflowId, 'optimize'],
     enabled: !!workflowId,
   });
 

@@ -68,9 +68,8 @@ export default function AIQueryInterface({ workflowId }: AIQueryInterfaceProps) 
 
     try {
       const response = await apiRequest('POST', '/api/workflows/query', {
-        question: queryText,
-        workflowId,
-        userId: 1001
+        query: queryText,
+        workflowId
       });
 
       const data = await response.json();
