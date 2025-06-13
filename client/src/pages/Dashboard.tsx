@@ -48,6 +48,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           name: workflow.name,
           description: workflow.description,
+          prompt: workflow.description, // Add the required prompt field
           workflowJson: workflow,
           isActive: false
         }),
