@@ -153,8 +153,8 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
   return (
     <div className="flex h-full">
       {/* Node Palette */}
-      <div className="w-64 border-r bg-muted/50 p-4">
-        <h3 className="font-semibold mb-4">Components</h3>
+      <div className="w-64 border-r border-white/20 bg-white/10 backdrop-blur-sm p-4">
+        <h3 className="font-semibold mb-4 text-white">Components</h3>
         <div className="space-y-2">
           {nodeTypes.map((nodeType, index) => {
             const Icon = nodeType.icon;
@@ -163,11 +163,11 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
                 key={index}
                 draggable
                 onDragStart={() => setDraggedNodeType(nodeType.label)}
-                className="flex items-center p-2 bg-white rounded border cursor-grab hover:shadow-sm"
+                className="flex items-center p-2 bg-white/90 rounded border border-white/20 cursor-grab hover:bg-white hover:shadow-sm transition-colors"
               >
                 <div className={`w-3 h-3 rounded-full ${nodeType.color} mr-2`} />
-                <Icon className="w-4 h-4 mr-2" />
-                <span className="text-sm">{nodeType.label}</span>
+                <Icon className="w-4 h-4 mr-2 text-gray-700" />
+                <span className="text-sm text-gray-700 font-medium">{nodeType.label}</span>
               </div>
             );
           })}
@@ -177,19 +177,20 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
       {/* Canvas */}
       <div className="flex-1 flex flex-col">
         {/* Toolbar */}
-        <div className="border-b p-4 bg-white">
+        <div className="border-b border-white/20 p-4 bg-white/10 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex-1 max-w-md">
-              <Label htmlFor="workflow-name">Workflow Name</Label>
+              <Label htmlFor="workflow-name" className="text-white font-medium">Workflow Name</Label>
               <Input
                 id="workflow-name"
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
                 placeholder="Enter workflow name..."
+                className="bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={saveWorkflow} className="flex items-center gap-2">
+              <Button onClick={saveWorkflow} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white">
                 <Save className="w-4 h-4" />
                 Save
               </Button>
@@ -197,7 +198,7 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
                 onClick={executeWorkflow} 
                 disabled={!workflowId || isExecuting}
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-white/20 text-white hover:bg-white/10"
               >
                 <Play className="w-4 h-4" />
                 {isExecuting ? 'Executing...' : 'Run'}
@@ -206,28 +207,29 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
           </div>
           
           <div>
-            <Label htmlFor="workflow-description">Description</Label>
+            <Label htmlFor="workflow-description" className="text-white font-medium">Description</Label>
             <Textarea
               id="workflow-description"
               value={workflowDescription}
               onChange={(e) => setWorkflowDescription(e.target.value)}
               placeholder="Describe what this workflow does..."
               rows={2}
+              className="bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
             />
           </div>
         </div>
 
         {/* Canvas Area */}
         <div 
-          className="flex-1 relative bg-gray-50 overflow-auto"
+          className="flex-1 relative bg-gray-900/50 overflow-auto"
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
           {nodes.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+            <div className="absolute inset-0 flex items-center justify-center text-white/70">
               <div className="text-center">
                 <Plus className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Drag components from the palette to start building</p>
+                <p className="text-white">Drag components from the palette to start building</p>
               </div>
             </div>
           ) : (
@@ -283,21 +285,22 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
 
       {/* Properties Panel */}
       {selectedNode && (
-        <div className="w-80 border-l bg-muted/50 p-4">
-          <h3 className="font-semibold mb-4">Node Properties</h3>
+        <div className="w-80 border-l border-white/20 bg-white/10 backdrop-blur-sm p-4">
+          <h3 className="font-semibold mb-4 text-white">Node Properties</h3>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="node-title">Title</Label>
+              <Label htmlFor="node-title" className="text-white font-medium">Title</Label>
               <Input
                 id="node-title"
                 value={selectedNode.title}
                 onChange={(e) => updateNode(selectedNode.id, { title: e.target.value })}
+                className="bg-white/90 border-white/20 text-gray-900"
               />
             </div>
             
             {selectedNode.type === 'trigger' && selectedNode.title.includes('Schedule') && (
               <div>
-                <Label htmlFor="schedule">Schedule</Label>
+                <Label htmlFor="schedule" className="text-white font-medium">Schedule</Label>
                 <Input
                   id="schedule"
                   placeholder="0 9 * * 1 (Every Monday at 9 AM)"
@@ -305,6 +308,7 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
                   onChange={(e) => updateNode(selectedNode.id, { 
                     config: { ...selectedNode.config, schedule: e.target.value }
                   })}
+                  className="bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
                 />
               </div>
             )}
@@ -312,7 +316,7 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
             {selectedNode.type === 'action' && selectedNode.title.includes('Email') && (
               <>
                 <div>
-                  <Label htmlFor="email-to">To</Label>
+                  <Label htmlFor="email-to" className="text-white font-medium">To</Label>
                   <Input
                     id="email-to"
                     placeholder="recipient@example.com"
@@ -320,10 +324,11 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
                     onChange={(e) => updateNode(selectedNode.id, { 
                       config: { ...selectedNode.config, to: e.target.value }
                     })}
+                    className="bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email-subject">Subject</Label>
+                  <Label htmlFor="email-subject" className="text-white font-medium">Subject</Label>
                   <Input
                     id="email-subject"
                     placeholder="Email subject"
@@ -331,10 +336,11 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
                     onChange={(e) => updateNode(selectedNode.id, { 
                       config: { ...selectedNode.config, subject: e.target.value }
                     })}
+                    className="bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email-body">Body</Label>
+                  <Label htmlFor="email-body" className="text-white font-medium">Body</Label>
                   <Textarea
                     id="email-body"
                     placeholder="Email content..."
@@ -343,6 +349,7 @@ export default function WorkflowBuilder({ workflowId, initialWorkflow, onSave }:
                       config: { ...selectedNode.config, body: e.target.value }
                     })}
                     rows={4}
+                    className="bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
               </>

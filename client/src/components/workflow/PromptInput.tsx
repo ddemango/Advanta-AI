@@ -44,13 +44,13 @@ export function PromptInput({ onWorkflowGenerated, isLoading }: PromptInputProps
   ];
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-white/10 backdrop-blur-md border-white/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-blue-500" />
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Sparkles className="w-5 h-5 text-blue-400" />
           AI Workflow Builder
         </CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-300">
           Describe your automation in plain English and our AI will create the workflow for you
         </p>
       </CardHeader>
@@ -61,12 +61,12 @@ export function PromptInput({ onWorkflowGenerated, isLoading }: PromptInputProps
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Describe your automation workflow..."
             rows={4}
-            className="resize-none"
+            className="resize-none bg-white/90 border-white/20 text-gray-900 placeholder:text-gray-500"
           />
           <Button 
             type="submit" 
             disabled={!prompt.trim() || isLoading}
-            className="w-full"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
           >
             {isLoading ? (
               <>
@@ -83,14 +83,14 @@ export function PromptInput({ onWorkflowGenerated, isLoading }: PromptInputProps
         </form>
 
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700">Example prompts:</h4>
+          <h4 className="text-sm font-medium text-white">Example prompts:</h4>
           <div className="space-y-2">
             {examples.map((example, index) => (
               <motion.button
                 key={index}
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setPrompt(example)}
-                className="w-full text-left p-3 text-xs bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                className="w-full text-left p-3 text-xs bg-white/90 hover:bg-white rounded-lg border border-white/20 transition-colors text-gray-700"
               >
                 {example}
               </motion.button>
