@@ -2472,12 +2472,19 @@ Please provide analysis in this exact JSON format (no additional text):
 
   app.get('/auth/user', (req: Request, res: Response) => {
     console.log('Auth user check - Session ID:', req.sessionID);
-    console.log('Auth user check - Session data:', req.session);
+    console.log('Auth user check - Session data:', JSON.stringify(req.session, null, 2));
     console.log('Auth user check - User in session:', req.session?.user);
+    console.log('Auth user check - Session userId:', req.session?.userId);
+    console.log('Auth user check - Headers:', req.headers.cookie);
     
     if (req.session?.user) {
+      console.log('Session user found, returning:', req.session.user);
       res.json(req.session.user);
+    } else if (req.session?.userId) {
+      console.log('Session userId found but no user object, userId:', req.session.userId);
+      res.json(null);
     } else {
+      console.log('No session data found');
       res.json(null);
     }
   });
@@ -2517,14 +2524,21 @@ Please provide analysis in this exact JSON format (no additional text):
       req.session.userId = demoUser.id;
       req.session.user = demoUser;
       
-      // Save session explicitly
+      console.log('Setting session data:', {
+        sessionId: req.sessionID,
+        userId: demoUser.id,
+        user: demoUser
+      });
+      
+      // Save session explicitly and regenerate session ID
       req.session.save((err) => {
         if (err) {
           console.error('Session save error:', err);
           return res.status(500).json({ success: false, error: 'Failed to save session' });
         }
         
-        res.json({ success: true, user: demoUser });
+        console.log('Session saved successfully, session ID:', req.sessionID);
+        res.json({ success: true, user: demoUser, storeInLocalStorage: true });
       });
     } catch (error) {
       console.error('Demo OAuth error:', error);

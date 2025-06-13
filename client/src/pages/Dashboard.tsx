@@ -27,6 +27,18 @@ export default function Dashboard() {
     queryKey: ['/auth/user'],
     retry: false,
     queryFn: async () => {
+      // Check localStorage first for demo auth
+      const demoAuth = localStorage.getItem('demo_auth');
+      if (demoAuth) {
+        try {
+          const userData = JSON.parse(demoAuth);
+          console.log('Using demo auth from localStorage:', userData);
+          return userData;
+        } catch (e) {
+          localStorage.removeItem('demo_auth');
+        }
+      }
+
       const res = await fetch('/auth/user', {
         credentials: 'include',
       });

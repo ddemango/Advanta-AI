@@ -40,7 +40,13 @@ export default function OAuthConsent() {
           console.log('Auth response data:', data);
           
           if (data.success) {
-            console.log('Authentication successful, verifying user...');
+            console.log('Authentication successful, storing user data...');
+            
+            // Store user data in localStorage as fallback
+            if (data.storeInLocalStorage && data.user) {
+              localStorage.setItem('demo_auth', JSON.stringify(data.user));
+              console.log('User data stored in localStorage');
+            }
             
             // Verify authentication state before redirecting
             const userCheck = await fetch('/auth/user', {
