@@ -19,6 +19,9 @@ import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema } from "@shared/schema";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { workflowEngine } from "./workflow-engine";
+import { getWorkflowAnalytics, generatePerformanceReport } from "./workflow-analytics";
+import { triggerSystem, parseAdvancedSchedule } from "./advanced-triggers";
+import { aiCapabilities } from "./ai-capabilities";
 import { log } from "./vite";
 import Stripe from "stripe";
 import OpenAI from "openai";
@@ -2831,6 +2834,173 @@ Please provide analysis in this exact JSON format (no additional text):
     } catch (error) {
       console.error('Error deleting connection:', error);
       res.status(500).json({ message: 'Failed to delete connection' });
+    }
+  });
+
+  // Advanced Analytics Endpoints
+  app.get('/api/workflows/:id/analytics', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { timeRange = '30d' } = req.query;
+      
+      const days = timeRange === '7d' ? 7 : timeRange === '90d' ? 90 : 30;
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const endDate = new Date();
+      
+      const analytics = await getWorkflowAnalytics(workflowId, {
+        start: startDate,
+        end: endDate
+      });
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error getting workflow analytics:', error);
+      res.status(500).json({ message: 'Failed to get analytics' });
+    }
+  });
+
+  app.get('/api/workflows/:id/insights', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const insights = await aiCapabilities.generateWorkflowOptimizations(workflowId);
+      res.json(insights);
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      res.status(500).json({ message: 'Failed to generate insights' });
+    }
+  });
+
+  app.get('/api/analytics/dashboard', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const report = await generatePerformanceReport(userId);
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating dashboard analytics:', error);
+      res.status(500).json({ message: 'Failed to generate dashboard analytics' });
+    }
+  });
+
+  // AI Query Endpoint
+  app.post('/api/workflows/query', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session.userId!;
+      const { question, workflowId } = req.body;
+      
+      const answer = await aiCapabilities.answerWorkflowQuery({
+        question,
+        workflowId: workflowId ? parseInt(workflowId) : undefined,
+        userId
+      });
+      
+      res.json({ answer });
+    } catch (error) {
+      console.error('Error processing workflow query:', error);
+      res.status(500).json({ message: 'Failed to process query' });
+    }
+  });
+
+  // Advanced Trigger Endpoints
+  app.post('/api/workflows/:id/triggers/schedule', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { naturalLanguageSchedule, timezone } = req.body;
+      
+      const schedule = await parseAdvancedSchedule(naturalLanguageSchedule);
+      const triggerId = await triggerSystem.createScheduleTrigger(workflowId, {
+        cronExpression: schedule.cronExpression,
+        naturalLanguageSchedule,
+        timezone: timezone || 'UTC'
+      });
+      
+      res.json({ 
+        triggerId, 
+        schedule: {
+          ...schedule,
+          timezone: timezone || 'UTC'
+        }
+      });
+    } catch (error) {
+      console.error('Error creating schedule trigger:', error);
+      res.status(500).json({ message: 'Failed to create schedule trigger' });
+    }
+  });
+
+  app.post('/api/workflows/:id/triggers/webhook', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { method = 'POST', authentication } = req.body;
+      
+      const triggerId = await triggerSystem.createWebhookTrigger(workflowId, {
+        url: `/webhook/${triggerId}`,
+        method,
+        authentication
+      });
+      
+      res.json({ 
+        triggerId,
+        webhookUrl: `${req.protocol}://${req.get('host')}/webhook/${triggerId}`,
+        method
+      });
+    } catch (error) {
+      console.error('Error creating webhook trigger:', error);
+      res.status(500).json({ message: 'Failed to create webhook trigger' });
+    }
+  });
+
+  app.get('/api/workflows/:id/triggers', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const triggers = triggerSystem.getWorkflowTriggers(workflowId);
+      res.json(triggers);
+    } catch (error) {
+      console.error('Error getting workflow triggers:', error);
+      res.status(500).json({ message: 'Failed to get triggers' });
+    }
+  });
+
+  app.delete('/api/triggers/:triggerId', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { triggerId } = req.params;
+      await triggerSystem.removeTrigger(triggerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing trigger:', error);
+      res.status(500).json({ message: 'Failed to remove trigger' });
+    }
+  });
+
+  // Webhook handler for external triggers
+  app.post('/webhook/:triggerId', async (req: Request, res: Response) => {
+    try {
+      const { triggerId } = req.params;
+      const result = await triggerSystem.handleWebhookRequest(`/webhook/${triggerId}`, req.body, req.headers);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error('Error handling webhook:', error);
+      res.status(500).json({ message: 'Webhook execution failed' });
+    }
+  });
+
+  // Predictive Scheduling
+  app.post('/api/workflows/:id/predict-schedule', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.id);
+      const { workflowType, constraints } = req.body;
+      
+      const logs = await storage.getWorkflowLogs(workflowId);
+      const historicalData = logs.slice(-100);
+      
+      const prediction = await aiCapabilities.predictOptimalScheduling(
+        workflowType,
+        historicalData,
+        constraints
+      );
+      
+      res.json(prediction);
+    } catch (error) {
+      console.error('Error predicting schedule:', error);
+      res.status(500).json({ message: 'Failed to predict optimal schedule' });
     }
   });
 
