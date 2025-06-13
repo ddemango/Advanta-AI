@@ -2725,7 +2725,7 @@ Please provide analysis in this exact JSON format (no additional text):
   app.post('/api/workflows/parse', async (req: Request, res: Response) => {
     try {
       const { prompt } = req.body;
-      const userId = req.session.userId!;
+      const userId = req.session.userId || 1001; // Default demo user
       
       if (!prompt) {
         return res.status(400).json({ message: 'Prompt is required' });
