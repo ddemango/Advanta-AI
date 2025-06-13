@@ -43,6 +43,17 @@ export default function Dashboard() {
     },
   });
 
+  const workflowsQuery = useQuery({
+    queryKey: ['/api/workflows'],
+    queryFn: async () => {
+      const response = await fetch('/api/workflows', {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch workflows');
+      return response.json();
+    }
+  });
+
   const saveWorkflowMutation = useMutation({
     mutationFn: async (workflow: any) => {
       const response = await fetch('/api/workflows', {
@@ -330,7 +341,7 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {workflowsQuery.data?.map((workflow: any) => (
+                        {workflowsQuery?.data?.map((workflow: any) => (
                           <div
                             key={workflow.id}
                             className={`p-3 rounded-lg cursor-pointer transition-colors ${
