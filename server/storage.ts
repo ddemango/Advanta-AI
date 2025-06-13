@@ -4,6 +4,9 @@ import {
   quotes,
   blogPosts,
   resources,
+  workflows,
+  connections,
+  workflowLogs,
   type User, 
   type InsertUser, 
   type InsertContact, 
@@ -13,10 +16,16 @@ import {
   type BlogPost,
   type InsertBlogPost,
   type Resource,
-  type InsertResource
+  type InsertResource,
+  type Workflow,
+  type InsertWorkflow,
+  type Connection,
+  type InsertConnection,
+  type WorkflowLog,
+  type InsertWorkflowLog
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -50,6 +59,25 @@ export interface IStorage {
   updateResource(id: number, resource: Partial<InsertResource>): Promise<Resource>;
   deleteResource(id: number): Promise<boolean>;
   incrementResourceDownloadCount(id: number): Promise<void>;
+  
+  // Workflow operations
+  getWorkflows(userId: number): Promise<Workflow[]>;
+  getWorkflowById(id: number): Promise<Workflow | undefined>;
+  createWorkflow(workflow: InsertWorkflow): Promise<Workflow>;
+  updateWorkflow(id: number, workflow: Partial<InsertWorkflow>): Promise<Workflow>;
+  deleteWorkflow(id: number): Promise<boolean>;
+  
+  // Connection operations
+  getConnections(userId: number): Promise<Connection[]>;
+  getConnectionByApp(userId: number, appName: string): Promise<Connection | undefined>;
+  createConnection(connection: InsertConnection): Promise<Connection>;
+  updateConnection(id: number, connection: Partial<InsertConnection>): Promise<Connection>;
+  deleteConnection(id: number): Promise<boolean>;
+  
+  // Workflow log operations
+  getWorkflowLogs(workflowId: number): Promise<WorkflowLog[]>;
+  createWorkflowLog(log: InsertWorkflowLog): Promise<WorkflowLog>;
+  getWorkflowLogsByRunId(runId: string): Promise<WorkflowLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -307,9 +335,124 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(resources)
       .set({
-        download_count: sql`${resources.download_count} + 1`
+        downloadCount: sql`${resources.downloadCount} + 1`
       })
       .where(eq(resources.id, id));
+  }
+
+  // Workflow operations
+  async getWorkflows(userId: number): Promise<Workflow[]> {
+    return await db
+      .select()
+      .from(workflows)
+      .where(eq(workflows.userId, userId))
+      .orderBy(desc(workflows.createdAt));
+  }
+
+  async getWorkflowById(id: number): Promise<Workflow | undefined> {
+    const result = await db
+      .select()
+      .from(workflows)
+      .where(eq(workflows.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async createWorkflow(workflow: InsertWorkflow): Promise<Workflow> {
+    const result = await db
+      .insert(workflows)
+      .values(workflow)
+      .returning();
+    return result[0];
+  }
+
+  async updateWorkflow(id: number, workflow: Partial<InsertWorkflow>): Promise<Workflow> {
+    const result = await db
+      .update(workflows)
+      .set({
+        ...workflow,
+        updatedAt: new Date()
+      })
+      .where(eq(workflows.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWorkflow(id: number): Promise<boolean> {
+    const result = await db
+      .delete(workflows)
+      .where(eq(workflows.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Connection operations
+  async getConnections(userId: number): Promise<Connection[]> {
+    return await db
+      .select()
+      .from(connections)
+      .where(eq(connections.userId, userId))
+      .orderBy(desc(connections.createdAt));
+  }
+
+  async getConnectionByApp(userId: number, appName: string): Promise<Connection | undefined> {
+    const result = await db
+      .select()
+      .from(connections)
+      .where(eq(connections.userId, userId) && eq(connections.appName, appName))
+      .limit(1);
+    return result[0];
+  }
+
+  async createConnection(connection: InsertConnection): Promise<Connection> {
+    const result = await db
+      .insert(connections)
+      .values(connection)
+      .returning();
+    return result[0];
+  }
+
+  async updateConnection(id: number, connection: Partial<InsertConnection>): Promise<Connection> {
+    const result = await db
+      .update(connections)
+      .set({
+        ...connection,
+        updatedAt: new Date()
+      })
+      .where(eq(connections.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteConnection(id: number): Promise<boolean> {
+    const result = await db
+      .delete(connections)
+      .where(eq(connections.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // Workflow log operations
+  async getWorkflowLogs(workflowId: number): Promise<WorkflowLog[]> {
+    return await db
+      .select()
+      .from(workflowLogs)
+      .where(eq(workflowLogs.workflowId, workflowId))
+      .orderBy(desc(workflowLogs.executedAt));
+  }
+
+  async createWorkflowLog(log: InsertWorkflowLog): Promise<WorkflowLog> {
+    const result = await db
+      .insert(workflowLogs)
+      .values(log)
+      .returning();
+    return result[0];
+  }
+
+  async getWorkflowLogsByRunId(runId: string): Promise<WorkflowLog[]> {
+    return await db
+      .select()
+      .from(workflowLogs)
+      .where(eq(workflowLogs.runId, runId))
+      .orderBy(workflowLogs.stepIndex);
   }
 }
 

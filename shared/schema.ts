@@ -123,6 +123,8 @@ export const insertResourceSchema = createInsertSchema(resources).omit({
 export const usersRelations = relations(users, ({ many }) => ({
   quotes: many(quotes),
   blogPosts: many(blogPosts),
+  workflows: many(workflows),
+  connections: many(connections),
 }));
 
 export const quotesRelations = relations(quotes, ({ one }) => ({
@@ -154,3 +156,91 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 
 export type InsertResource = z.infer<typeof insertResourceSchema>;
 export type Resource = typeof resources.$inferSelect;
+
+// Workflows table
+export const workflows = pgTable("workflows", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  prompt: text("prompt").notNull(),
+  workflowJson: jsonb("workflow_json").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Connections table for OAuth integrations
+export const connections = pgTable("connections", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  appName: varchar("app_name", { length: 100 }).notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Workflow execution logs
+export const workflowLogs = pgTable("workflow_logs", {
+  id: serial("id").primaryKey(),
+  workflowId: integer("workflow_id").references(() => workflows.id).notNull(),
+  runId: varchar("run_id", { length: 100 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull(), // 'running', 'success', 'error'
+  stepIndex: integer("step_index").default(0),
+  stepName: varchar("step_name", { length: 255 }),
+  input: jsonb("input"),
+  output: jsonb("output"),
+  error: text("error"),
+  executedAt: timestamp("executed_at").defaultNow(),
+});
+
+export const insertWorkflowSchema = createInsertSchema(workflows).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertConnectionSchema = createInsertSchema(connections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWorkflowLogSchema = createInsertSchema(workflowLogs).omit({
+  id: true,
+  executedAt: true,
+});
+
+// Update relations
+export const workflowsRelations = relations(workflows, ({ one, many }) => ({
+  user: one(users, {
+    fields: [workflows.userId],
+    references: [users.id],
+  }),
+  logs: many(workflowLogs),
+}));
+
+export const connectionsRelations = relations(connections, ({ one }) => ({
+  user: one(users, {
+    fields: [connections.userId],
+    references: [users.id],
+  }),
+}));
+
+export const workflowLogsRelations = relations(workflowLogs, ({ one }) => ({
+  workflow: one(workflows, {
+    fields: [workflowLogs.workflowId],
+    references: [workflows.id],
+  }),
+}));
+
+export type InsertWorkflow = z.infer<typeof insertWorkflowSchema>;
+export type Workflow = typeof workflows.$inferSelect;
+
+export type InsertConnection = z.infer<typeof insertConnectionSchema>;
+export type Connection = typeof connections.$inferSelect;
+
+export type InsertWorkflowLog = z.infer<typeof insertWorkflowLogSchema>;
+export type WorkflowLog = typeof workflowLogs.$inferSelect;
