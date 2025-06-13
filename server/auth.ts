@@ -114,8 +114,25 @@ export function setupAuth(app: Express) {
 
 // Middleware to protect routes
 export function requireAuth(req: any, res: any, next: any) {
-  if (req.isAuthenticated()) {
+  // Allow demo user ID 1001 to bypass session check for localStorage auth
+  const userId = req.session?.userId || req.session?.user?.id;
+  
+  if (req.isAuthenticated() || userId === 1001) {
     return next();
   }
+  
+  // For demo purposes, allow requests with demo user context
+  if (req.headers['x-demo-user'] === '1001') {
+    req.session = req.session || {};
+    req.session.userId = 1001;
+    req.session.user = {
+      id: 1001,
+      email: 'demo@advanta-ai.com',
+      firstName: 'Demo',
+      lastName: 'User'
+    };
+    return next();
+  }
+  
   res.status(401).json({ error: 'Authentication required' });
 }

@@ -11,8 +11,8 @@ import { LogOut, User, Settings, Shield, Zap, Bot, Workflow, Clock, Play, CheckC
 import { PromptInput } from "@/components/workflow/PromptInput";
 import { WorkflowPreview } from "@/components/workflow/WorkflowPreview";
 import { WorkflowList } from "@/components/workflow/WorkflowList";
-import { WorkflowAnalytics } from "@/components/workflow/WorkflowAnalytics";
-import { AIQueryInterface } from "@/components/workflow/AIQueryInterface";
+import WorkflowAnalytics from "@/components/workflow/WorkflowAnalytics";
+import AIQueryInterface from "@/components/workflow/AIQueryInterface";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
