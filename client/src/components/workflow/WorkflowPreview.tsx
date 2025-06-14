@@ -6,17 +6,16 @@ import { motion } from 'framer-motion';
 
 interface WorkflowStep {
   id: string;
-  type: 'trigger' | 'action';
-  app: string;
-  action: string;
-  parameters: Record<string, any>;
-  description: string;
+  type: 'trigger' | 'action' | 'condition';
+  name: string;
+  config: Record<string, any>;
+  position: { x: number; y: number };
+  connections: string[];
 }
 
 interface WorkflowDefinition {
   name: string;
   description: string;
-  trigger: WorkflowStep;
   steps: WorkflowStep[];
 }
 
@@ -53,7 +52,7 @@ export function WorkflowPreview({ workflow, onSave, onExecute, onEdit, isLoading
             <CardTitle className="flex items-center gap-2">
               <span className="text-lg">{workflow.name}</span>
               <Badge variant="outline" className="text-xs">
-                {workflow.steps.length + 1} steps
+                {workflow.steps.length} steps
               </Badge>
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">{workflow.description}</p>
@@ -67,51 +66,42 @@ export function WorkflowPreview({ workflow, onSave, onExecute, onEdit, isLoading
       <CardContent className="space-y-6">
         {/* Workflow Steps Visualization */}
         <div className="space-y-4">
-          {/* Trigger */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4"
-          >
-            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg flex-1">
-              <div className="text-2xl">{getStepIcon(workflow.trigger.app)}</div>
-              <div>
-                <div className="font-medium text-sm">Trigger</div>
-                <div className="text-xs text-gray-600">{workflow.trigger.description}</div>
-              </div>
-              <Badge variant="secondary" className="ml-auto text-xs">
-                {workflow.trigger.app}
-              </Badge>
-            </div>
-          </motion.div>
-
-          {/* Steps */}
           {workflow.steps.map((step, index) => (
             <motion.div
               key={step.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: (index + 1) * 0.1 }}
+              transition={{ delay: index * 0.1 }}
               className="flex items-center gap-4"
             >
-              <div className="flex items-center justify-center w-8 h-8 bg-gray-200 rounded-full">
-                <ArrowRight className="w-4 h-4 text-gray-600" />
-              </div>
-              <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg flex-1">
-                <div className="text-2xl">{getStepIcon(step.app)}</div>
+              {index > 0 && (
+                <div className="flex items-center justify-center w-8 h-8 bg-gray-200 rounded-full">
+                  <ArrowRight className="w-4 h-4 text-gray-600" />
+                </div>
+              )}
+              <div className={`flex items-center gap-3 p-4 rounded-lg flex-1 ${
+                step.type === 'trigger' 
+                  ? 'bg-blue-50 border border-blue-200' 
+                  : step.type === 'condition'
+                  ? 'bg-yellow-50 border border-yellow-200'
+                  : 'bg-green-50 border border-green-200'
+              }`}>
+                <div className="text-2xl">
+                  {step.type === 'trigger' ? '⏰' : step.type === 'condition' ? '❓' : '⚡'}
+                </div>
                 <div>
-                  <div className="font-medium text-sm">{step.description}</div>
+                  <div className="font-medium text-sm">{step.name}</div>
                   <div className="text-xs text-gray-600">
-                    {Object.entries(step.parameters).slice(0, 2).map(([key, value]) => (
-                      <span key={key} className="mr-2">
-                        {key}: {String(value).substring(0, 30)}
-                        {String(value).length > 30 ? '...' : ''}
-                      </span>
-                    ))}
+                    {Object.keys(step.config).length > 0 
+                      ? Object.entries(step.config).slice(0, 2).map(([key, value]) => 
+                          `${key}: ${typeof value === 'string' ? value.slice(0, 30) : value}`
+                        ).join(', ')
+                      : 'No configuration'
+                    }
                   </div>
                 </div>
-                <Badge variant="secondary" className="ml-auto text-xs">
-                  {step.app}
+                <Badge variant="secondary" className="ml-auto text-xs capitalize">
+                  {step.type}
                 </Badge>
               </div>
             </motion.div>
