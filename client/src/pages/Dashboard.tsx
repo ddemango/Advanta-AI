@@ -156,6 +156,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
               <Bot className="w-8 h-8 text-blue-500" />
               AI Workflow Automation
+              <span className="text-sm bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full font-medium">Beta</span>
             </h1>
             <p className="text-gray-300">Build powerful automations with natural language</p>
           </div>

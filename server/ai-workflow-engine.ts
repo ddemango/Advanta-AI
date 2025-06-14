@@ -105,11 +105,11 @@ Example output structure:
       
       const workflowConfig = JSON.parse(messageContent);
       
-      // Enhance with AI-generated optimizations
-      const optimizedConfig = await this.optimizeWorkflow(workflowConfig);
+      // Skip optimization for now to avoid API issues
+      // const optimizedConfig = await this.optimizeWorkflow(workflowConfig);
       
       return {
-        ...optimizedConfig,
+        ...workflowConfig,
         prompt,
         userId,
         aiGenerated: true,
@@ -135,12 +135,12 @@ Provide optimizations for:
 4. Resource efficiency
 5. User experience enhancements
 
-Return the optimized workflow with improvements and explanations.`;
+Return the optimized workflow as a JSON object with improvements and explanations.`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
-          { role: "system", content: "You are a workflow optimization expert. Improve workflows for better performance, reliability, and user experience." },
+          { role: "system", content: "You are a workflow optimization expert. Improve workflows for better performance, reliability, and user experience. Always respond in JSON format." },
           { role: "user", content: optimizationPrompt }
         ],
         response_format: { type: "json_object" },
