@@ -213,6 +213,12 @@ export default function Header() {
                   >
                     🧲 Lead Magnet Builder
                   </a>
+                  <a 
+                    onClick={() => setLocation('/travel-hacker-ai')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    ✈️ Travel Hacker AI
+                  </a>
                 </div>
               </div>
             </div>
@@ -462,6 +468,15 @@ export default function Header() {
                       className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
                     >
                       Headline Split-Test Generator
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/travel-hacker-ai');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Travel Hacker AI
                     </a>
                     <a 
                       onClick={() => {
