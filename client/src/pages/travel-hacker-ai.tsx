@@ -42,6 +42,7 @@ interface TravelHackResult {
     price: string;
     source: string;
     urgency: string;
+    departureDistance?: string;
   }>;
   dateOptimization: {
     suggestion: string;
@@ -165,10 +166,18 @@ export default function TravelHackerAI() {
     ],
     mistakeFares: [
       {
-        route: "Miami → Barcelona",
+        route: "Nashville → Barcelona",
         price: "$289 RT",
         source: "SecretFlying",
-        urgency: "Limited dates"
+        urgency: "Limited dates",
+        departureDistance: "0 miles"
+      },
+      {
+        route: "Memphis → London",
+        price: "$345 RT",
+        source: "Scott's Cheap Flights",
+        urgency: "Book by tonight",
+        departureDistance: "210 miles from Nashville"
       }
     ],
     dateOptimization: {
@@ -586,6 +595,12 @@ export default function TravelHackerAI() {
                         <div key={index} className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
                           <div className="font-semibold text-orange-300 text-lg">🚨 {fare.route}: {fare.price}</div>
                           <div className="text-gray-300 text-sm">{fare.urgency} via {fare.source}</div>
+                          {fare.departureDistance && (
+                            <div className="text-xs text-orange-300 mt-1 flex items-center">
+                              <span className="mr-1">📍</span>
+                              {fare.departureDistance}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </CardContent>

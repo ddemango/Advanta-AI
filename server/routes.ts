@@ -3210,6 +3210,7 @@ Please provide analysis in this exact JSON format (no additional text):
 Your job is to help the user:
 - Find the cheapest flights possible based on their input
 - Spot budget airline options, low-cost routes, mistake fares, and travel hacks
+- Prioritize mistake fares from the departure city or nearby airports within 100 miles
 - Offer links, tools, and date recommendations
 - Never sell. Just help save money.
 
@@ -3245,10 +3246,11 @@ Always follow this output format in JSON:
   ],
   "mistakeFares": [
     {
-      "route": "[City A] → [City B]",
+      "route": "[Departure City or nearby] → [Destination]",
       "price": "$[price] RT",
       "source": "SecretFlying",
-      "urgency": "limited dates"
+      "urgency": "limited dates",
+      "departureDistance": "[0 miles | 25 miles from departure city]"
     }
   ],
   "dateOptimization": {
@@ -3273,6 +3275,14 @@ Always follow this output format in JSON:
     }
   ]
 }
+
+SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
+- Always prioritize mistake fares departing from ${formData.departureCity} or nearby airports within 100 miles
+- For each mistake fare, include a "departureDistance" field:
+  * "0 miles" if departing from ${formData.departureCity}
+  * "[X] miles from ${formData.departureCity}" if departing from nearby airports
+- Show the most relevant mistake fares first (closest to departure city)
+- Include at least 1-2 mistake fares when available
 
 User request: ${prompt}`;
 
