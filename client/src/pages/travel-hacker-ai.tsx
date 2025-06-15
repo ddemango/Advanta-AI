@@ -49,6 +49,7 @@ export default function TravelHackerAI() {
     endDate: '',
     budget: '',
     flexibility: 'exact',
+    datePreset: 'custom',
     preferences: {
       flightsOnly: true,
       includeHotels: false,
@@ -63,10 +64,20 @@ export default function TravelHackerAI() {
     setIsGenerating(true);
 
     try {
+      const dateInfo = formData.datePreset === 'spontaneous' 
+        ? 'I am completely flexible with dates - find the cheapest possible times to travel'
+        : formData.datePreset === 'this-month'
+        ? 'I want to travel this month - any dates work'
+        : formData.datePreset === 'next-month'
+        ? 'I want to travel next month - any dates work'
+        : formData.datePreset === 'this-year'
+        ? 'I want to travel sometime this year - very flexible on dates'
+        : `between ${formData.startDate} and ${formData.endDate}`;
+
       const prompt = `Find cheap flights from ${formData.departureCity} to ${formData.destinationCity || 'anywhere flexible'} 
-        between ${formData.startDate} and ${formData.endDate}. 
+        ${dateInfo}. 
         Budget: ${formData.budget || 'flexible'}. 
-        Flexibility: ${formData.flexibility}. 
+        Date Flexibility: ${formData.flexibility}. 
         Preferences: ${Object.entries(formData.preferences).filter(([_, value]) => value).map(([key]) => key).join(', ')}.
         
         Find the best deals, mistake fares, and travel hacks.`;
@@ -213,27 +224,112 @@ export default function TravelHackerAI() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="startDate" className="text-white">Departure Date</Label>
-                        <Input
-                          id="startDate"
-                          type="date"
-                          value={formData.startDate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                          className="bg-white/10 border-white/30 text-white"
-                          required
-                        />
+                    <div>
+                      <Label className="text-white mb-3 block">When do you want to travel?</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={`border-white/30 text-white hover:bg-white/10 ${
+                            formData.datePreset === 'spontaneous' ? 'bg-blue-600/30 border-blue-400' : ''
+                          }`}
+                          onClick={() => {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              datePreset: 'spontaneous',
+                              startDate: '',
+                              endDate: ''
+                            }));
+                          }}
+                        >
+                          ⚡ Spontaneous
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={`border-white/30 text-white hover:bg-white/10 ${
+                            formData.datePreset === 'this-month' ? 'bg-blue-600/30 border-blue-400' : ''
+                          }`}
+                          onClick={() => {
+                            const now = new Date();
+                            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              datePreset: 'this-month',
+                              startDate: now.toISOString().split('T')[0],
+                              endDate: endOfMonth.toISOString().split('T')[0]
+                            }));
+                          }}
+                        >
+                          📅 This Month
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={`border-white/30 text-white hover:bg-white/10 ${
+                            formData.datePreset === 'next-month' ? 'bg-blue-600/30 border-blue-400' : ''
+                          }`}
+                          onClick={() => {
+                            const now = new Date();
+                            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                            const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              datePreset: 'next-month',
+                              startDate: nextMonth.toISOString().split('T')[0],
+                              endDate: endOfNextMonth.toISOString().split('T')[0]
+                            }));
+                          }}
+                        >
+                          🗓️ Next Month
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={`border-white/30 text-white hover:bg-white/10 ${
+                            formData.datePreset === 'this-year' ? 'bg-blue-600/30 border-blue-400' : ''
+                          }`}
+                          onClick={() => {
+                            const now = new Date();
+                            const endOfYear = new Date(now.getFullYear(), 11, 31);
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              datePreset: 'this-year',
+                              startDate: now.toISOString().split('T')[0],
+                              endDate: endOfYear.toISOString().split('T')[0]
+                            }));
+                          }}
+                        >
+                          📆 This Year
+                        </Button>
                       </div>
-                      <div>
-                        <Label htmlFor="endDate" className="text-white">Return Date</Label>
-                        <Input
-                          id="endDate"
-                          type="date"
-                          value={formData.endDate}
-                          onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                          className="bg-white/10 border-white/30 text-white"
-                        />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="startDate" className="text-white">Departure Date</Label>
+                          <Input
+                            id="startDate"
+                            type="date"
+                            value={formData.startDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value, datePreset: 'custom' }))}
+                            className="bg-white/10 border-white/30 text-white"
+                            required={formData.datePreset !== 'spontaneous'}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="endDate" className="text-white">Return Date</Label>
+                          <Input
+                            id="endDate"
+                            type="date"
+                            value={formData.endDate}
+                            onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value, datePreset: 'custom' }))}
+                            className="bg-white/10 border-white/30 text-white"
+                          />
+                        </div>
                       </div>
                     </div>
 
