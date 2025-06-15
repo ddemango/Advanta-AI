@@ -23,6 +23,13 @@ interface TravelHackResult {
     airline: string;
     tools: string[];
   }>;
+  carRentals?: Array<{
+    location: string;
+    price: string;
+    company: string;
+    vehicleType: string;
+    tips: string[];
+  }>;
   mistakeFares: Array<{
     route: string;
     price: string;
@@ -53,6 +60,7 @@ export default function TravelHackerAI() {
     preferences: {
       flightsOnly: true,
       includeHotels: false,
+      includeCarRentals: false,
       mistakeFares: true
     }
   });
@@ -116,6 +124,22 @@ export default function TravelHackerAI() {
         tools: ["Skyscanner", "Kayak"]
       }
     ],
+    carRentals: [
+      {
+        location: "Tampa Airport",
+        price: "$23/day",
+        company: "Budget",
+        vehicleType: "Economy",
+        tips: ["Costco Travel", "Off-airport savings"]
+      },
+      {
+        location: "Downtown Tampa",
+        price: "$18/day",
+        company: "Enterprise",
+        vehicleType: "Compact",
+        tips: ["Priceline bidding", "Weekend rates"]
+      }
+    ],
     mistakeFares: [
       {
         route: "Miami → Barcelona",
@@ -131,13 +155,15 @@ export default function TravelHackerAI() {
     bonusHacks: [
       "Consider flying into Orlando ($72) and taking a $20 FlixBus to Tampa (~2 hrs)",
       "Book Tuesday departures for 15% average savings",
-      "Use ITA Matrix to find hidden low-fare combinations"
+      "Use ITA Matrix to find hidden low-fare combinations",
+      "Book car rentals off-airport for 30-50% savings"
     ],
     helpfulLinks: [
       { name: "Google Flights Search", url: "https://flights.google.com", description: "Real-time flight comparison" },
       { name: "Skyscanner", url: "https://skyscanner.com", description: "Global flight search engine" },
       { name: "SecretFlying", url: "https://secretflying.com", description: "Mistake fares and deals" },
-      { name: "Rome2Rio", url: "https://rome2rio.com", description: "Multi-modal transport options" }
+      { name: "Rome2Rio", url: "https://rome2rio.com", description: "Multi-modal transport options" },
+      { name: "Kayak Car Rentals", url: "https://www.kayak.com/cars", description: "Compare car rental prices" }
     ]
   };
 
@@ -391,6 +417,19 @@ export default function TravelHackerAI() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
+                            id="includeCarRentals"
+                            checked={formData.preferences.includeCarRentals}
+                            onCheckedChange={(checked) => 
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                preferences: { ...prev.preferences, includeCarRentals: !!checked }
+                              }))
+                            }
+                          />
+                          <Label htmlFor="includeCarRentals" className="text-white">🚗 Include car rentals</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
                             id="mistakeFares"
                             checked={formData.preferences.mistakeFares}
                             onCheckedChange={(checked) => 
@@ -444,7 +483,7 @@ export default function TravelHackerAI() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {mockResult.flightDeals.map((deal, index) => (
+                      {(result?.flightDeals || mockResult.flightDeals).map((deal, index) => (
                         <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
                           <div className="font-semibold text-white text-lg">{deal.route}: {deal.price}</div>
                           <div className="text-gray-300 text-sm">Dates: {deal.dates} • {deal.airline}</div>
@@ -459,6 +498,32 @@ export default function TravelHackerAI() {
                       ))}
                     </CardContent>
                   </Card>
+
+                  {/* Car Rentals */}
+                  {(formData.preferences.includeCarRentals && (result?.carRentals || mockResult.carRentals)) && (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardHeader>
+                        <CardTitle className="text-white flex items-center">
+                          🚗 Best Car Rental Deals
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {(result?.carRentals || mockResult.carRentals || []).map((rental, index) => (
+                          <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                            <div className="font-semibold text-white text-lg">{rental.location}: {rental.price}</div>
+                            <div className="text-gray-300 text-sm">{rental.vehicleType} • {rental.company}</div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {rental.tips.map((tip, i) => (
+                                <Badge key={i} variant="outline" className="text-xs text-green-300 border-green-300/50">
+                                  {tip}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Mistake Fares */}
                   <Card className="bg-white/10 backdrop-blur-md border-white/20">

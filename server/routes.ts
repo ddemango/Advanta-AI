@@ -3225,6 +3225,15 @@ Always follow this output format in JSON:
       "tools": ["Google Flights", "Skyscanner", "etc"]
     }
   ],
+  "carRentals": [
+    {
+      "location": "[City/Airport]",
+      "price": "$[price]/day",
+      "company": "[Rental company]",
+      "vehicleType": "[Economy/Compact/etc]",
+      "tips": ["Book through Costco Travel for discounts", "Use Priceline bidding"]
+    }
+  ],
   "mistakeFares": [
     {
       "route": "[City A] → [City B]",
@@ -3239,13 +3248,19 @@ Always follow this output format in JSON:
   },
   "bonusHacks": [
     "Consider flying into [cheaper nearby city] and bus/train to destination",
-    "Use Rome2Rio for ground transport options"
+    "Use Rome2Rio for ground transport options",
+    "Book car rentals off-airport for 30-50% savings"
   ],
   "helpfulLinks": [
     {
       "name": "Google Flights Search",
       "url": "https://flights.google.com",
       "description": "Real-time flight comparison"
+    },
+    {
+      "name": "Kayak Car Rentals",
+      "url": "https://www.kayak.com/cars",
+      "description": "Compare car rental prices"
     }
   ]
 }
