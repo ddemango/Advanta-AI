@@ -307,7 +307,7 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 ${
+                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
                             formData.datePreset === 'this-month' ? 'bg-blue-600/30 border-blue-400' : ''
                           }`}
                           onClick={() => {

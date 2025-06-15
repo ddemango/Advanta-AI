@@ -3276,15 +3276,15 @@ Always follow this output format in JSON:
   ]
 }
 
-SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
-- Always prioritize mistake fares departing from ${formData.departureCity} or nearby airports within 100 miles
-- For each mistake fare, include a "departureDistance" field:
-  * "0 miles" if departing from ${formData.departureCity}
-  * "[X] miles from ${formData.departureCity}" if departing from nearby airports
-- Show the most relevant mistake fares first (closest to departure city)
-- Include at least 1-2 mistake fares when available
+User request: ${prompt}
 
-User request: ${prompt}`;
+SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
+- Always prioritize mistake fares departing from the user's departure city or nearby airports within 100 miles
+- For each mistake fare, include a "departureDistance" field:
+  * "0 miles" if departing from the exact departure city mentioned by user
+  * "[X] miles from [departure city]" if departing from nearby airports
+- Show the most relevant mistake fares first (closest to departure city)
+- Include at least 1-2 mistake fares when available`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
