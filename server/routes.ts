@@ -3194,6 +3194,91 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
+  // Travel Hacker AI endpoint
+  app.post('/api/travel-hack', async (req: Request, res: Response) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: 'Prompt is required' });
+      }
+
+      const travelPrompt = `You are Travel Hacker GPT — a world-class budget travel assistant.
+
+Your job is to help the user:
+- Find the cheapest flights possible based on their input
+- Spot budget airline options, low-cost routes, mistake fares, and travel hacks
+- Offer links, tools, and date recommendations
+- Never sell. Just help save money.
+
+Always follow this output format in JSON:
+
+{
+  "flightDeals": [
+    {
+      "route": "[City A] → [City B]",
+      "price": "$[price]",
+      "dates": "[date range]",
+      "airline": "[airline name]",
+      "tools": ["Google Flights", "Skyscanner", "etc"]
+    }
+  ],
+  "mistakeFares": [
+    {
+      "route": "[City A] → [City B]",
+      "price": "$[price] RT",
+      "source": "SecretFlying",
+      "urgency": "limited dates"
+    }
+  ],
+  "dateOptimization": {
+    "suggestion": "Flying out [date] instead of [date]",
+    "savings": "$[amount]"
+  },
+  "bonusHacks": [
+    "Consider flying into [cheaper nearby city] and bus/train to destination",
+    "Use Rome2Rio for ground transport options"
+  ],
+  "helpfulLinks": [
+    {
+      "name": "Google Flights Search",
+      "url": "https://flights.google.com",
+      "description": "Real-time flight comparison"
+    }
+  ]
+}
+
+User request: ${prompt}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a travel hacking expert. Respond with comprehensive travel deal recommendations in JSON format."
+          },
+          {
+            role: "user",
+            content: travelPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
+
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
+      }
+
+      const travelData = JSON.parse(messageContent);
+      res.json(travelData);
+    } catch (error) {
+      console.error('Error generating travel hack:', error);
+      res.status(500).json({ message: 'Failed to generate travel recommendations' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
