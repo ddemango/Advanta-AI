@@ -23,6 +23,13 @@ interface TravelHackResult {
     airline: string;
     tools: string[];
   }>;
+  hotels?: Array<{
+    location: string;
+    price: string;
+    hotel: string;
+    rating: string;
+    tips: string[];
+  }>;
   carRentals?: Array<{
     location: string;
     price: string;
@@ -122,6 +129,22 @@ export default function TravelHackerAI() {
         dates: "Aug 13-17",
         airline: "Frontier",
         tools: ["Skyscanner", "Kayak"]
+      }
+    ],
+    hotels: [
+      {
+        location: "Tampa Downtown",
+        price: "$89/night",
+        hotel: "Hampton Inn & Suites",
+        rating: "4.2★",
+        tips: ["Book directly for perks", "HotelTonight last-minute deals"]
+      },
+      {
+        location: "Tampa Bay Area",
+        price: "$67/night",
+        hotel: "Holiday Inn Express",
+        rating: "4.0★",
+        tips: ["Priceline Express Deals", "AAA discounts"]
       }
     ],
     carRentals: [
@@ -499,8 +522,34 @@ export default function TravelHackerAI() {
                     </CardContent>
                   </Card>
 
+                  {/* Hotels */}
+                  {formData.preferences.includeHotels && (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardHeader>
+                        <CardTitle className="text-white flex items-center">
+                          🏨 Best Hotel Deals
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {(result?.hotels || mockResult.hotels || []).map((hotel, index) => (
+                          <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                            <div className="font-semibold text-white text-lg">{hotel.location}: {hotel.price}</div>
+                            <div className="text-gray-300 text-sm">{hotel.hotel} • {hotel.rating}</div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {hotel.tips.map((tip, i) => (
+                                <Badge key={i} variant="outline" className="text-xs text-purple-300 border-purple-300/50">
+                                  {tip}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Car Rentals */}
-                  {(formData.preferences.includeCarRentals && (result?.carRentals || mockResult.carRentals)) && (
+                  {formData.preferences.includeCarRentals && (
                     <Card className="bg-white/10 backdrop-blur-md border-white/20">
                       <CardHeader>
                         <CardTitle className="text-white flex items-center">

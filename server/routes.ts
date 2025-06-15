@@ -3225,6 +3225,15 @@ Always follow this output format in JSON:
       "tools": ["Google Flights", "Skyscanner", "etc"]
     }
   ],
+  "hotels": [
+    {
+      "location": "[City/Area]",
+      "price": "$[price]/night",
+      "hotel": "[Hotel name]",
+      "rating": "[X.X★]",
+      "tips": ["Book directly for perks", "HotelTonight last-minute deals"]
+    }
+  ],
   "carRentals": [
     {
       "location": "[City/Airport]",
