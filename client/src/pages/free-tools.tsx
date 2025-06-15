@@ -29,7 +29,8 @@ import {
   Eye,
   Lightbulb,
   Video,
-  Workflow
+  Workflow,
+  Plane
 } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
@@ -81,6 +82,15 @@ export default function FreeTools() {
       icon: Target,
       category: 'Market Research',
       route: '/competitor-intel-scanner',
+      featured: true
+    },
+    {
+      id: 'travel-hacker-ai',
+      name: 'Travel Hacker AI',
+      description: 'Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search.',
+      icon: Plane,
+      category: 'Travel & Lifestyle',
+      route: '/travel-hacker-ai',
       featured: true
     },
     {

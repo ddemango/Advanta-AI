@@ -1,0 +1,126 @@
+Travel Hacker AI — Cheap Flights, Budget Travel & Mistake Fare Deals
+By Advanta AI
+
+Let Travel Hacker AI, a proprietary feature of Advanta AI, do all the heavy lifting and remove the headaches of planning a trip.
+
+Whether you're looking for:
+
+💸 Ultra-cheap roundtrip flights
+
+⚡ Rare mistake fares or hidden city deals
+
+🧳 Full budget travel plans with hotel, transit, and hacks included
+
+Travel Hacker AI scours flight deal platforms, compares hundreds of routes, and uses advanced prompt intelligence to give you:
+
+✅ The best flight deals from your city
+✅ Budget airline options and flexible date strategies
+✅ SecretFlying-style error fares — instantly surfaced
+✅ Open-jaw, multi-city, and low-fare hacks that save time and money
+
+All you do is:
+
+Enter your departure city, optional destination, and travel window
+
+Select preferences (flights only, add hotels, mistake fares)
+
+Hit “Find My Deal”
+
+🎯 Let Advanta AI do what search engines can’t — hack your next trip in seconds. Instructions for Developer (Replit Integration)
+Frontend Components:
+
+Input Form with fields:
+
+Departure City (text input)
+
+Destination City (optional, text input)
+
+Date Range (date picker: start + end)
+
+Budget (optional)
+
+Travel Flexibility (dropdown: Exact / +/- 1-3 days / Weekend Only)
+
+Preferences (checkboxes: ✈️ Flights only, 🏨 Hotels too, ⚡ Mistake Fares)
+
+AI Chat Output Window (chat UI styled)
+
+"Find My Deal" Button to trigger GPT query
+
+Backend (GPT Prompt + Logic):
+
+plaintext
+Copy
+Edit
+You are Travel Hacker GPT — a world-class budget travel assistant.
+
+Your job is to help the user:
+- Find the cheapest flights possible based on their input
+- Spot budget airline options, low-cost routes, mistake fares, and travel hacks
+- Offer links, tools, and date recommendations
+- Never sell. Just help save money.
+
+Always follow this output format:
+
+1. ✈️ Best Flight Deal(s):
+- [City A] → [City B]: $[price], Dates: [date range]
+- Include tools: Google Flights, Skyscanner, SecretFlying, Hopper
+- Mention airlines or tricks used (e.g., hidden city, low-cost carrier)
+
+2. ⚡ Mistake Fare or Hidden Gem:
+- If any are available (e.g., via SecretFlying, ErrorFareAlerts)
+
+3. 📅 Better Date Suggestion (optional):
+- If shifting 2–3 days saves money, say so
+
+4. 🧠 Bonus Travel Hack:
+- E.g., “Fly into [cheaper nearby city] and bus/train to destination”
+- Mention tools like Rome2Rio, Kiwi.com, etc.
+
+5. 🔗 Helpful Links:
+- Google Flights search link (use real parameters)
+- Skyscanner or SecretFlying suggestions
+
+Always keep it short, bold the deal cities, and format with ✅ bullets.
+🔍 Example User Prompt:
+“Find me cheap flights from Nashville (BNA) to Tampa next month. I’m flexible by 3 days. Budget is around $150.”
+
+🧠 GPT Output Example:
+1. ✈️ Best Flight Deal:
+✅ Nashville → Tampa: $98 roundtrip on Spirit Airlines
+🗓️ Aug 12–16 (Google Flights, Hopper)
+
+2. ⚡ Mistake Fare Found:
+🚨 Miami → Barcelona $289 RT (limited dates via SecretFlying)
+
+3. 📅 Better Date Tip:
+💡 Flying out Aug 13 instead of 12 drops fare by $40
+
+4. 🧠 Bonus Hack:
+Consider flying into Orlando ($72) and taking a $20 FlixBus to Tampa (~2 hrs)
+
+5. 🔗 Links:
+🔗 Google Flights Search
+🔗 Skyscanner Cheap Flights
+
+🔗 Tools the AI Recommends:
+Google Flights
+
+Skyscanner
+
+SecretFlying
+
+Hopper
+
+ITA Matrix
+
+Rome2Rio
+
+Kiwi.com
+
+Weekly Travel Deals Email Digest
+Let users subscribe for:
+
+Top 3 deals of the week from their airport
+
+Mistake fares and alerts (API pull from SecretFlying / custom scrape)

@@ -1,0 +1,522 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { Plane, MapPin, Calendar, DollarSign, Zap, ExternalLink, Search, Clock, Target } from 'lucide-react';
+import { fadeIn, fadeInUp } from '@/lib/animations';
+
+interface TravelHackResult {
+  flightDeals: Array<{
+    route: string;
+    price: string;
+    dates: string;
+    airline: string;
+    tools: string[];
+  }>;
+  mistakeFares: Array<{
+    route: string;
+    price: string;
+    source: string;
+    urgency: string;
+  }>;
+  dateOptimization: {
+    suggestion: string;
+    savings: string;
+  } | null;
+  bonusHacks: string[];
+  helpfulLinks: Array<{
+    name: string;
+    url: string;
+    description: string;
+  }>;
+}
+
+export default function TravelHackerAI() {
+  const [formData, setFormData] = useState({
+    departureCity: '',
+    destinationCity: '',
+    startDate: '',
+    endDate: '',
+    budget: '',
+    flexibility: 'exact',
+    preferences: {
+      flightsOnly: true,
+      includeHotels: false,
+      mistakeFares: true
+    }
+  });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [result, setResult] = useState<TravelHackResult | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGenerating(true);
+
+    try {
+      const prompt = `Find cheap flights from ${formData.departureCity} to ${formData.destinationCity || 'anywhere flexible'} 
+        between ${formData.startDate} and ${formData.endDate}. 
+        Budget: ${formData.budget || 'flexible'}. 
+        Flexibility: ${formData.flexibility}. 
+        Preferences: ${Object.entries(formData.preferences).filter(([_, value]) => value).map(([key]) => key).join(', ')}.
+        
+        Find the best deals, mistake fares, and travel hacks.`;
+
+      const response = await fetch('/api/travel-hack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate travel hack');
+      
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error('Error generating travel hack:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const mockResult: TravelHackResult = {
+    flightDeals: [
+      {
+        route: "Nashville → Tampa",
+        price: "$98",
+        dates: "Aug 12-16",
+        airline: "Spirit Airlines",
+        tools: ["Google Flights", "Hopper"]
+      },
+      {
+        route: "Nashville → Orlando",
+        price: "$72",
+        dates: "Aug 13-17",
+        airline: "Frontier",
+        tools: ["Skyscanner", "Kayak"]
+      }
+    ],
+    mistakeFares: [
+      {
+        route: "Miami → Barcelona",
+        price: "$289 RT",
+        source: "SecretFlying",
+        urgency: "Limited dates"
+      }
+    ],
+    dateOptimization: {
+      suggestion: "Flying out Aug 13 instead of 12",
+      savings: "$40"
+    },
+    bonusHacks: [
+      "Consider flying into Orlando ($72) and taking a $20 FlixBus to Tampa (~2 hrs)",
+      "Book Tuesday departures for 15% average savings",
+      "Use ITA Matrix to find hidden low-fare combinations"
+    ],
+    helpfulLinks: [
+      { name: "Google Flights Search", url: "https://flights.google.com", description: "Real-time flight comparison" },
+      { name: "Skyscanner", url: "https://skyscanner.com", description: "Global flight search engine" },
+      { name: "SecretFlying", url: "https://secretflying.com", description: "Mistake fares and deals" },
+      { name: "Rome2Rio", url: "https://rome2rio.com", description: "Multi-modal transport options" }
+    ]
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+      <Helmet>
+        <title>Travel Hacker AI - Cheap Flights & Budget Travel Deals | Advanta AI</title>
+        <meta name="description" content="Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search. Save money on flights and travel with smart hacks." />
+      </Helmet>
+
+      <Header />
+
+      <main className="pt-24 pb-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Hero Section */}
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="show"
+            className="text-center mb-12"
+          >
+            <div className="flex items-center justify-center mb-6">
+              <Plane className="w-12 h-12 text-blue-400 mr-4" />
+              <h1 className="text-4xl md:text-5xl font-bold text-white">
+                Travel Hacker AI
+              </h1>
+            </div>
+            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+              Let Travel Hacker AI do all the heavy lifting and remove the headaches of planning a trip. 
+              Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search.
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
+              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+                💸 Ultra-cheap roundtrip flights
+              </Badge>
+              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+                ⚡ Rare mistake fares
+              </Badge>
+              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+                🧳 Full budget travel plans
+              </Badge>
+            </div>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Input Form */}
+            <motion.div
+              variants={fadeIn}
+              initial="hidden"
+              animate="show"
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <Search className="w-5 h-5 mr-2" />
+                    Find My Travel Deal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="departure" className="text-white">Departure City</Label>
+                        <Input
+                          id="departure"
+                          placeholder="e.g., Nashville, New York"
+                          value={formData.departureCity}
+                          onChange={(e) => setFormData(prev => ({ ...prev, departureCity: e.target.value }))}
+                          className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="destination" className="text-white">Destination (Optional)</Label>
+                        <Input
+                          id="destination"
+                          placeholder="Leave empty for anywhere"
+                          value={formData.destinationCity}
+                          onChange={(e) => setFormData(prev => ({ ...prev, destinationCity: e.target.value }))}
+                          className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="startDate" className="text-white">Departure Date</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                          className="bg-white/10 border-white/30 text-white"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="endDate" className="text-white">Return Date</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={formData.endDate}
+                          onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                          className="bg-white/10 border-white/30 text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="budget" className="text-white">Budget (Optional)</Label>
+                        <Input
+                          id="budget"
+                          placeholder="e.g., $500"
+                          value={formData.budget}
+                          onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                          className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="flexibility" className="text-white">Date Flexibility</Label>
+                        <Select value={formData.flexibility} onValueChange={(value) => setFormData(prev => ({ ...prev, flexibility: value }))}>
+                          <SelectTrigger className="bg-white/10 border-white/30 text-white">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="exact">Exact dates</SelectItem>
+                            <SelectItem value="plus-minus-1">± 1 day</SelectItem>
+                            <SelectItem value="plus-minus-3">± 3 days</SelectItem>
+                            <SelectItem value="weekend-only">Weekends only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-white mb-3 block">Preferences</Label>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="flightsOnly"
+                            checked={formData.preferences.flightsOnly}
+                            onCheckedChange={(checked) => 
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                preferences: { ...prev.preferences, flightsOnly: !!checked }
+                              }))
+                            }
+                          />
+                          <Label htmlFor="flightsOnly" className="text-white">✈️ Flights only</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="includeHotels"
+                            checked={formData.preferences.includeHotels}
+                            onCheckedChange={(checked) => 
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                preferences: { ...prev.preferences, includeHotels: !!checked }
+                              }))
+                            }
+                          />
+                          <Label htmlFor="includeHotels" className="text-white">🏨 Include hotels</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="mistakeFares"
+                            checked={formData.preferences.mistakeFares}
+                            onCheckedChange={(checked) => 
+                              setFormData(prev => ({ 
+                                ...prev, 
+                                preferences: { ...prev.preferences, mistakeFares: !!checked }
+                              }))
+                            }
+                          />
+                          <Label htmlFor="mistakeFares" className="text-white">⚡ Mistake fares</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          Finding Deals...
+                        </>
+                      ) : (
+                        <>
+                          <Target className="w-4 h-4 mr-2" />
+                          Find My Deal
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Results */}
+            <motion.div
+              variants={fadeIn}
+              initial="hidden"
+              animate="show"
+              transition={{ delay: 0.4 }}
+            >
+              {result || (formData.departureCity && !isGenerating) ? (
+                <div className="space-y-6">
+                  {/* Flight Deals */}
+                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center">
+                        ✈️ Best Flight Deals
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {mockResult.flightDeals.map((deal, index) => (
+                        <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                          <div className="font-semibold text-white text-lg">{deal.route}: {deal.price}</div>
+                          <div className="text-gray-300 text-sm">Dates: {deal.dates} • {deal.airline}</div>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {deal.tools.map((tool, i) => (
+                              <Badge key={i} variant="outline" className="text-xs text-blue-300 border-blue-300/50">
+                                {tool}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Mistake Fares */}
+                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center">
+                        ⚡ Mistake Fares Found
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {mockResult.mistakeFares.map((fare, index) => (
+                        <div key={index} className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                          <div className="font-semibold text-orange-300 text-lg">🚨 {fare.route}: {fare.price}</div>
+                          <div className="text-gray-300 text-sm">{fare.urgency} via {fare.source}</div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Date Optimization */}
+                  {mockResult.dateOptimization && (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardHeader>
+                        <CardTitle className="text-white flex items-center">
+                          📅 Better Date Tip
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                          <div className="text-green-300 font-medium">
+                            💡 {mockResult.dateOptimization.suggestion} drops fare by {mockResult.dateOptimization.savings}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Bonus Hacks */}
+                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center">
+                        🧠 Bonus Travel Hacks
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {mockResult.bonusHacks.map((hack, index) => (
+                          <div key={index} className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-gray-300">{hack}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Helpful Links */}
+                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center">
+                        🔗 Helpful Links
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {mockResult.helpfulLinks.map((link, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div>
+                              <div className="text-white font-medium">{link.name}</div>
+                              <div className="text-gray-400 text-sm">{link.description}</div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(link.url, '_blank')}
+                              className="border-white/30 text-white hover:bg-white/10"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <Card className="bg-white/10 backdrop-blur-md border-white/20 h-full flex items-center justify-center">
+                  <CardContent className="text-center py-12">
+                    <Plane className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      Travel Deals Preview
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Enter your travel details to find the best deals
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Features Section */}
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="show"
+            transition={{ delay: 0.6 }}
+            className="mt-16"
+          >
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Why Travel Hacker AI Works
+              </h2>
+              <p className="text-xl text-gray-300">
+                Advanced AI algorithms that outperform traditional search engines
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-center">
+                <CardContent className="p-6">
+                  <div className="text-4xl mb-4">🔍</div>
+                  <h3 className="text-white font-semibold mb-2">Multi-Source Search</h3>
+                  <p className="text-gray-300 text-sm">Scours multiple platforms simultaneously for the best deals</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-center">
+                <CardContent className="p-6">
+                  <div className="text-4xl mb-4">⚡</div>
+                  <h3 className="text-white font-semibold mb-2">Mistake Fares</h3>
+                  <p className="text-gray-300 text-sm">Instantly surfaces rare pricing errors and hidden city deals</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-center">
+                <CardContent className="p-6">
+                  <div className="text-4xl mb-4">🧠</div>
+                  <h3 className="text-white font-semibold mb-2">Smart Optimization</h3>
+                  <p className="text-gray-300 text-sm">AI suggests better dates and routing strategies</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-center">
+                <CardContent className="p-6">
+                  <div className="text-4xl mb-4">💰</div>
+                  <h3 className="text-white font-semibold mb-2">Maximum Savings</h3>
+                  <p className="text-gray-300 text-sm">Advanced hacks that search engines can't provide</p>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
