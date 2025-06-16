@@ -205,9 +205,7 @@ export default function TravelHackerAI() {
         <title>Travel Hacker AI - Cheap Flights & Budget Travel Deals | Advanta AI</title>
         <meta name="description" content="Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search. Save money on flights and travel with smart hacks." />
       </Helmet>
-
       <Header />
-
       <main className="pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}
@@ -289,9 +287,7 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 ${
-                            formData.datePreset === 'spontaneous' ? 'bg-blue-600/30 border-blue-400' : ''
-                          }`}
+                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border hover:text-accent-foreground h-9 rounded-md px-3 text-white hover:bg-white/10 border-blue-400 bg-[#b5b3b31a]"
                           onClick={() => {
                             setFormData(prev => ({ 
                               ...prev, 
@@ -740,7 +736,6 @@ export default function TravelHackerAI() {
           </motion.div>
         </div>
       </main>
-
       <Footer />
     </div>
   );
