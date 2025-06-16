@@ -287,7 +287,9 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border hover:text-accent-foreground h-9 rounded-md px-3 text-white hover:bg-white/10 border-blue-400 bg-[#b5b3b31a]"
+                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
+                            formData.datePreset === 'spontaneous' ? 'bg-purple-600 border-purple-500' : ''
+                          }`}
                           onClick={() => {
                             setFormData(prev => ({ 
                               ...prev, 
@@ -304,7 +306,7 @@ export default function TravelHackerAI() {
                           variant="outline"
                           size="sm"
                           className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
-                            formData.datePreset === 'this-month' ? 'bg-blue-600/30 border-blue-400' : ''
+                            formData.datePreset === 'this-month' ? 'bg-purple-600 border-purple-500' : ''
                           }`}
                           onClick={() => {
                             const now = new Date();
@@ -323,7 +325,9 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border hover:text-accent-foreground h-9 rounded-md px-3 border-white/30 text-white hover:bg-white/10 bg-[#bfb4b41a]"
+                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
+                            formData.datePreset === 'next-month' ? 'bg-purple-600 border-purple-500' : ''
+                          }`}
                           onClick={() => {
                             const now = new Date();
                             const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -342,7 +346,9 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border hover:text-accent-foreground h-9 rounded-md px-3 text-white hover:bg-white/10 border-blue-400 bg-[#b8b0b01a]"
+                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
+                            formData.datePreset === 'this-year' ? 'bg-purple-600 border-purple-500' : ''
+                          }`}
                           onClick={() => {
                             const now = new Date();
                             const endOfYear = new Date(now.getFullYear(), 11, 31);
