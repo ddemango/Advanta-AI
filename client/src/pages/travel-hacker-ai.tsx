@@ -323,9 +323,7 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 ${
-                            formData.datePreset === 'next-month' ? 'bg-blue-600/30 border-blue-400' : ''
-                          }`}
+                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border hover:text-accent-foreground h-9 rounded-md px-3 border-white/30 text-white hover:bg-white/10 bg-[#bfb4b41a]"
                           onClick={() => {
                             const now = new Date();
                             const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
