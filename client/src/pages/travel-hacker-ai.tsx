@@ -204,6 +204,20 @@ export default function TravelHackerAI() {
       <Helmet>
         <title>Travel Hacker AI - Cheap Flights & Budget Travel Deals | Advanta AI</title>
         <meta name="description" content="Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search. Save money on flights and travel with smart hacks." />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://advanta-ai.com/travel-hacker-ai" />
+        <meta property="og:title" content="Advanta AI - AI-Powered Workflow Automation Platform" />
+        <meta property="og:description" content="Build, automate, and scale with AI. Smart automation, AI workflows, and free AI tools including Travel Hacker AI for finding cheap flights." />
+        <meta property="og:image" content="/travel-hacker-ai-og.svg" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://advanta-ai.com/travel-hacker-ai" />
+        <meta property="twitter:title" content="Advanta AI - AI-Powered Workflow Automation Platform" />
+        <meta property="twitter:description" content="Build, automate, and scale with AI. Smart automation, AI workflows, and free AI tools including Travel Hacker AI for finding cheap flights." />
+        <meta property="twitter:image" content="/travel-hacker-ai-og.svg" />
       </Helmet>
       <Header />
       <main className="pt-24 pb-16">
