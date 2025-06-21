@@ -192,9 +192,7 @@ export default function FantasyFootballTools() {
         <meta property="twitter:description" content="AI-powered fantasy football tools for smarter draft and lineup decisions using real NFL data." />
         <meta property="twitter:image" content="/advanta-ai-og.png" />
       </Helmet>
-
       <Header />
-
       <main className="pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}
@@ -407,7 +405,7 @@ export default function FantasyFootballTools() {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="player2" className="text-white">Select Player to Compare (Optional)</Label>
+                            <Label htmlFor="player2" className="text-white">Select Player to Compare</Label>
                             <Input
                               id="player2"
                               placeholder="Type to Select Player"
@@ -719,7 +717,6 @@ export default function FantasyFootballTools() {
           </motion.div>
         </div>
       </main>
-
       <Footer />
     </div>
   );
