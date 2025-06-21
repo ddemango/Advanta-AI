@@ -3762,10 +3762,10 @@ Analysis factors:
 
       // Generate comprehensive fantasy analysis using real player data and analytics
       const startSitAnalysis = await generateFantasyAnalysis(
-        playerToStart, 
-        playerToCompare, 
-        opponentDefense, 
-        weatherConditions,
+        player1, 
+        player2, 
+        opponent, 
+        weatherConcerns,
         leagueFormat
       );
       res.json(startSitAnalysis);
