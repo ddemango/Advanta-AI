@@ -3339,7 +3339,7 @@ Lineup Decision Context:
 - Opponent Defense: ${opponent}
 - League Format: ${leagueFormat}
 - Weather Concerns: ${weatherConcerns ? 'Yes' : 'No'}
-- Players to Analyze: ${players.join(', ') || 'General position analysis'}
+- Players to Analyze: ${player1}${player2 ? ` vs ${player2}` : ''}
 
 NFL Team Data for Matchup Analysis: ${JSON.stringify(nflData)}
 

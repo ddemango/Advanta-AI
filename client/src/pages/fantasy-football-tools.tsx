@@ -440,18 +440,18 @@ export default function FantasyFootballTools() {
 
                         <Button
                           type="submit"
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                          disabled={isAnalyzing}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                          disabled={isAnalyzing || !startSitData.player1 || !startSitData.position}
                         >
                           {isAnalyzing ? (
                             <>
                               <Clock className="w-4 h-4 mr-2 animate-spin" />
-                              Analyzing Lineup...
+                              Analyzing these Start/Sit Choices...
                             </>
                           ) : (
                             <>
                               <Users className="w-4 h-4 mr-2" />
-                              Get Start/Sit Advice
+                              Analyze these Start/Sit Choices
                             </>
                           )}
                         </Button>
