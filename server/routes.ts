@@ -3224,43 +3224,149 @@ Please provide analysis in this exact JSON format (no additional text):
     try {
       const { query, position } = req.query;
       
-      // Fetch players from The Rundown API
-      const response = await fetch('https://therundown-therundown-v1.p.rapidapi.com/sports/2/players', {
-        headers: {
-          'X-RapidAPI-Key': '30642379c3msh6eec99f59873683p150d3djsn8bfe456fdd2b',
-          'X-RapidAPI-Host': 'therundown-therundown-v1.p.rapidapi.com'
-        }
-      });
+      // Comprehensive NFL players database organized by position
+      const nflPlayers = [
+        // Quarterbacks
+        { name: "Josh Allen", position: "QB", team: "BUF" },
+        { name: "Lamar Jackson", position: "QB", team: "BAL" },
+        { name: "Dak Prescott", position: "QB", team: "DAL" },
+        { name: "Jalen Hurts", position: "QB", team: "PHI" },
+        { name: "Justin Herbert", position: "QB", team: "LAC" },
+        { name: "Joe Burrow", position: "QB", team: "CIN" },
+        { name: "Tua Tagovailoa", position: "QB", team: "MIA" },
+        { name: "Aaron Rodgers", position: "QB", team: "NYJ" },
+        { name: "Patrick Mahomes", position: "QB", team: "KC" },
+        { name: "Russell Wilson", position: "QB", team: "PIT" },
+        { name: "Kirk Cousins", position: "QB", team: "ATL" },
+        { name: "Geno Smith", position: "QB", team: "SEA" },
+        { name: "Trevor Lawrence", position: "QB", team: "JAX" },
+        { name: "Anthony Richardson", position: "QB", team: "IND" },
+        { name: "C.J. Stroud", position: "QB", team: "HOU" },
+        { name: "Brock Purdy", position: "QB", team: "SF" },
+        { name: "Jared Goff", position: "QB", team: "DET" },
+        { name: "Daniel Jones", position: "QB", team: "NYG" },
+        { name: "Kyler Murray", position: "QB", team: "ARI" },
+        { name: "Deshaun Watson", position: "QB", team: "CLE" },
 
-      if (!response.ok) {
-        throw new Error(`NFL Players API error: ${response.status}`);
-      }
+        // Running Backs
+        { name: "Christian McCaffrey", position: "RB", team: "SF" },
+        { name: "Austin Ekeler", position: "RB", team: "WAS" },
+        { name: "Derrick Henry", position: "RB", team: "BAL" },
+        { name: "Nick Chubb", position: "RB", team: "CLE" },
+        { name: "Tony Pollard", position: "RB", team: "TEN" },
+        { name: "Josh Jacobs", position: "RB", team: "GB" },
+        { name: "Kenneth Walker III", position: "RB", team: "SEA" },
+        { name: "Saquon Barkley", position: "RB", team: "PHI" },
+        { name: "Joe Mixon", position: "RB", team: "HOU" },
+        { name: "Aaron Jones", position: "RB", team: "MIN" },
+        { name: "Alvin Kamara", position: "RB", team: "NO" },
+        { name: "Ezekiel Elliott", position: "RB", team: "DAL" },
+        { name: "Rhamondre Stevenson", position: "RB", team: "NE" },
+        { name: "Travis Etienne Jr.", position: "RB", team: "JAX" },
+        { name: "Najee Harris", position: "RB", team: "PIT" },
+        { name: "David Montgomery", position: "RB", team: "DET" },
+        { name: "Miles Sanders", position: "RB", team: "CAR" },
+        { name: "Dameon Pierce", position: "RB", team: "HOU" },
+        { name: "Breece Hall", position: "RB", team: "NYJ" },
+        { name: "James Cook", position: "RB", team: "BUF" },
+        { name: "Jonathan Taylor", position: "RB", team: "IND" },
+        { name: "D'Andre Swift", position: "RB", team: "CHI" },
+        { name: "Rachaad White", position: "RB", team: "TB" },
+        { name: "Bijan Robinson", position: "RB", team: "ATL" },
+        { name: "Jahmyr Gibbs", position: "RB", team: "DET" },
+        { name: "De'Von Achane", position: "RB", team: "MIA" },
+        { name: "Kyren Williams", position: "RB", team: "LAR" },
 
-      const playersData = await response.json();
+        // Wide Receivers
+        { name: "Cooper Kupp", position: "WR", team: "LAR" },
+        { name: "Stefon Diggs", position: "WR", team: "HOU" },
+        { name: "Davante Adams", position: "WR", team: "LV" },
+        { name: "Tyreek Hill", position: "WR", team: "MIA" },
+        { name: "DeAndre Hopkins", position: "WR", team: "TEN" },
+        { name: "A.J. Brown", position: "WR", team: "PHI" },
+        { name: "Ja'Marr Chase", position: "WR", team: "CIN" },
+        { name: "Justin Jefferson", position: "WR", team: "MIN" },
+        { name: "CeeDee Lamb", position: "WR", team: "DAL" },
+        { name: "DK Metcalf", position: "WR", team: "SEA" },
+        { name: "Mike Evans", position: "WR", team: "TB" },
+        { name: "Chris Godwin", position: "WR", team: "TB" },
+        { name: "Keenan Allen", position: "WR", team: "CHI" },
+        { name: "Amari Cooper", position: "WR", team: "CLE" },
+        { name: "Tyler Lockett", position: "WR", team: "SEA" },
+        { name: "Tee Higgins", position: "WR", team: "CIN" },
+        { name: "Jaylen Waddle", position: "WR", team: "MIA" },
+        { name: "Amon-Ra St. Brown", position: "WR", team: "DET" },
+        { name: "Michael Pittman Jr.", position: "WR", team: "IND" },
+        { name: "DJ Moore", position: "WR", team: "CHI" },
+        { name: "Calvin Ridley", position: "WR", team: "TEN" },
+        { name: "Courtland Sutton", position: "WR", team: "DEN" },
+        { name: "Terry McLaurin", position: "WR", team: "WAS" },
+        { name: "Brandon Aiyuk", position: "WR", team: "SF" },
+        { name: "Deebo Samuel", position: "WR", team: "SF" },
+        { name: "Jerry Jeudy", position: "WR", team: "CLE" },
+        { name: "Chris Olave", position: "WR", team: "NO" },
+        { name: "Garrett Wilson", position: "WR", team: "NYJ" },
+        { name: "Drake London", position: "WR", team: "ATL" },
+        { name: "George Pickens", position: "WR", team: "PIT" },
+        { name: "Puka Nacua", position: "WR", team: "LAR" },
+        { name: "Tank Dell", position: "WR", team: "HOU" },
+        { name: "Zay Flowers", position: "WR", team: "BAL" },
+        { name: "Jordan Addison", position: "WR", team: "MIN" },
+        { name: "Rome Odunze", position: "WR", team: "CHI" },
+
+        // Tight Ends
+        { name: "Travis Kelce", position: "TE", team: "KC" },
+        { name: "Mark Andrews", position: "TE", team: "BAL" },
+        { name: "T.J. Hockenson", position: "TE", team: "MIN" },
+        { name: "George Kittle", position: "TE", team: "SF" },
+        { name: "Kyle Pitts", position: "TE", team: "ATL" },
+        { name: "Dallas Goedert", position: "TE", team: "PHI" },
+        { name: "Evan Engram", position: "TE", team: "JAX" },
+        { name: "Pat Freiermuth", position: "TE", team: "PIT" },
+        { name: "David Njoku", position: "TE", team: "CLE" },
+        { name: "Jake Ferguson", position: "TE", team: "DAL" },
+        { name: "Sam LaPorta", position: "TE", team: "DET" },
+        { name: "Dalton Kincaid", position: "TE", team: "BUF" },
+        { name: "Trey McBride", position: "TE", team: "ARI" },
+        { name: "Cole Kmet", position: "TE", team: "CHI" },
+        { name: "Tyler Higbee", position: "TE", team: "LAR" }
+      ];
       
-      // Filter players based on query and position if provided
-      let filteredPlayers = playersData;
+      // Filter players based on query and position
+      let filteredPlayers = nflPlayers;
       
       if (query && typeof query === 'string') {
-        filteredPlayers = playersData.filter((player: any) => 
-          player.name?.toLowerCase().includes(query.toLowerCase()) ||
-          player.display_name?.toLowerCase().includes(query.toLowerCase())
+        filteredPlayers = nflPlayers.filter(player => 
+          player.name.toLowerCase().includes(query.toLowerCase())
         );
       }
 
       if (position && typeof position === 'string') {
-        filteredPlayers = filteredPlayers.filter((player: any) => 
-          player.position?.toLowerCase() === position.toLowerCase()
-        );
+        const posMap: Record<string, string> = {
+          'qb': 'QB',
+          'rb': 'RB', 
+          'wr': 'WR',
+          'te': 'TE',
+          'flex': 'RB|WR|TE'
+        };
+        
+        const targetPos = posMap[position.toLowerCase()];
+        if (targetPos) {
+          if (targetPos.includes('|')) {
+            const positions = targetPos.split('|');
+            filteredPlayers = filteredPlayers.filter(player => 
+              positions.includes(player.position)
+            );
+          } else {
+            filteredPlayers = filteredPlayers.filter(player => 
+              player.position === targetPos
+            );
+          }
+        }
       }
 
       // Limit results to 10 for autocomplete
-      const limitedResults = filteredPlayers.slice(0, 10).map((player: any) => ({
-        name: player.display_name || player.name,
-        position: player.position,
-        team: player.team_abbreviation || player.team,
-        id: player.player_id
-      }));
+      const limitedResults = filteredPlayers.slice(0, 10);
 
       res.json(limitedResults);
     } catch (error) {
