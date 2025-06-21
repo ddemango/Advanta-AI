@@ -327,6 +327,8 @@ function getPlayerPosition(playerName: string): string {
     { name: "Courtland Sutton", position: "WR" }, { name: "Diontae Johnson", position: "WR" }, { name: "Tank Dell", position: "WR" },
     { name: "Nico Collins", position: "WR" }, { name: "Tyler Lockett", position: "WR" }, { name: "Marvin Harrison Jr.", position: "WR" },
     { name: "Malik Nabers", position: "WR" }, { name: "Rome Odunze", position: "WR" }, { name: "Brian Thomas Jr.", position: "WR" },
+    { name: "Justin Jefferson", position: "WR" }, { name: "Julio Jones", position: "WR" }, { name: "Mike Williams", position: "WR" },
+    { name: "JuJu Smith-Schuster", position: "WR" }, { name: "Adam Thielen", position: "WR" }, { name: "Jerry Jeudy", position: "WR" },
     // TE
     { name: "Travis Kelce", position: "TE" }, { name: "Mark Andrews", position: "TE" }, { name: "T.J. Hockenson", position: "TE" },
     { name: "George Kittle", position: "TE" }, { name: "Kyle Pitts", position: "TE" }, { name: "Dallas Goedert", position: "TE" },
@@ -336,7 +338,7 @@ function getPlayerPosition(playerName: string): string {
   ];
   
   const player = playerDatabase.find(p => p.name === playerName);
-  return player?.position || 'RB';
+  return player?.position || 'WR';
 }
 
 function getPlayerTeam(playerName: string): string {
@@ -373,6 +375,8 @@ function getPlayerTeam(playerName: string): string {
     { name: "Courtland Sutton", team: "DEN" }, { name: "Diontae Johnson", team: "CAR" }, { name: "Tank Dell", team: "HOU" },
     { name: "Nico Collins", team: "HOU" }, { name: "Tyler Lockett", team: "SEA" }, { name: "Marvin Harrison Jr.", team: "ARI" },
     { name: "Malik Nabers", team: "NYG" }, { name: "Rome Odunze", team: "CHI" }, { name: "Brian Thomas Jr.", team: "JAX" },
+    { name: "Justin Jefferson", team: "MIN" }, { name: "Julio Jones", team: "PHI" }, { name: "Mike Williams", team: "PIT" },
+    { name: "JuJu Smith-Schuster", team: "NE" }, { name: "Adam Thielen", team: "CAR" }, { name: "Jerry Jeudy", team: "CLE" },
     // TE
     { name: "Travis Kelce", team: "KC" }, { name: "Mark Andrews", team: "BAL" }, { name: "T.J. Hockenson", team: "MIN" },
     { name: "George Kittle", team: "SF" }, { name: "Kyle Pitts", team: "ATL" }, { name: "Dallas Goedert", team: "PHI" },
