@@ -539,16 +539,7 @@ export default function FantasyFootballTools() {
                           </div>
                         </div>
 
-                        <div>
-                          <Label htmlFor="opponent" className="text-white">Opponent Defense</Label>
-                          <Input
-                            id="opponent"
-                            placeholder="e.g., Dallas Cowboys"
-                            value={startSitData.opponent}
-                            onChange={(e) => setStartSitData(prev => ({ ...prev, opponent: e.target.value }))}
-                            className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
-                          />
-                        </div>
+                        
 
                         <div className="flex items-center space-x-2">
                           <Checkbox
