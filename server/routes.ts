@@ -3197,6 +3197,217 @@ Please provide analysis in this exact JSON format (no additional text):
   });
 
   // Travel Hacker AI endpoint
+  // NFL Teams endpoint
+  app.get('/api/nfl-teams', async (req: Request, res: Response) => {
+    try {
+      const response = await fetch('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+        headers: {
+          'X-RapidAPI-Key': process.env.NFL_API_KEY!,
+          'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`NFL API error: ${response.status}`);
+      }
+
+      const nflData = await response.json();
+      res.json(nflData);
+    } catch (error) {
+      console.error('Error fetching NFL teams:', error);
+      res.status(500).json({ message: 'Failed to fetch NFL teams' });
+    }
+  });
+
+  // Fantasy Draft Analysis endpoint
+  app.post('/api/fantasy-draft-analysis', async (req: Request, res: Response) => {
+    try {
+      const { leagueType, rosterNeeds, currentRound, pickNumber, scoringSettings } = req.body;
+
+      if (!leagueType || !currentRound) {
+        return res.status(400).json({ message: 'League type and current round are required' });
+      }
+
+      // Fetch NFL team data for context
+      const nflResponse = await fetch('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+        headers: {
+          'X-RapidAPI-Key': process.env.NFL_API_KEY!,
+          'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com'
+        }
+      });
+
+      const nflData = await nflResponse.json();
+
+      const draftPrompt = `You are a fantasy football draft expert analyzing a ${leagueType} league draft situation.
+
+League Settings:
+- League Type: ${leagueType}
+- Scoring: ${scoringSettings}
+- Current Round: ${currentRound}
+- Pick Number: ${pickNumber}
+- Roster Needs: ${rosterNeeds.join(', ')}
+
+NFL Team Data Context: ${JSON.stringify(nflData)}
+
+Based on this draft situation, provide expert analysis in this JSON format:
+
+{
+  "bestPick": {
+    "name": "[Player Name]",
+    "position": "[Position]", 
+    "team": "[NFL Team]",
+    "analysis": "[Detailed reasoning for this pick]",
+    "confidence": [confidence percentage as number]
+  },
+  "alternatives": [
+    {
+      "name": "[Alternative Player]",
+      "position": "[Position]",
+      "team": "[Team]", 
+      "reason": "[Why this is a good alternative]"
+    }
+  ],
+  "strategyTips": [
+    "[Strategy tip 1]",
+    "[Strategy tip 2]"
+  ],
+  "positionalScarcity": [
+    "[Scarcity warning if applicable]"
+  ]
+}
+
+Consider:
+- Current ADP (Average Draft Position) for round ${currentRound}
+- Positional value and scarcity
+- League format impact (${leagueType})
+- Team offensive schemes and target distribution
+- Upcoming schedule strength
+- Injury concerns and depth charts`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a fantasy football expert providing draft advice based on current NFL data and league settings."
+          },
+          {
+            role: "user",
+            content: draftPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
+
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
+      }
+
+      const draftAnalysis = JSON.parse(messageContent);
+      res.json(draftAnalysis);
+    } catch (error) {
+      console.error('Error generating draft analysis:', error);
+      res.status(500).json({ message: 'Failed to generate draft analysis' });
+    }
+  });
+
+  // Fantasy Start/Sit Analysis endpoint  
+  app.post('/api/fantasy-start-sit-analysis', async (req: Request, res: Response) => {
+    try {
+      const { position, players, opponent, leagueFormat, weatherConcerns } = req.body;
+
+      if (!position || !opponent) {
+        return res.status(400).json({ message: 'Position and opponent are required' });
+      }
+
+      // Fetch NFL team data for matchup context
+      const nflResponse = await fetch('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+        headers: {
+          'X-RapidAPI-Key': process.env.NFL_API_KEY!,
+          'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com'
+        }
+      });
+
+      const nflData = await nflResponse.json();
+
+      const startSitPrompt = `You are a fantasy football start/sit expert analyzing weekly lineup decisions.
+
+Lineup Decision Context:
+- Position: ${position}
+- Opponent Defense: ${opponent}
+- League Format: ${leagueFormat}
+- Weather Concerns: ${weatherConcerns ? 'Yes' : 'No'}
+- Players to Analyze: ${players.join(', ') || 'General position analysis'}
+
+NFL Team Data for Matchup Analysis: ${JSON.stringify(nflData)}
+
+Provide start/sit recommendations in this JSON format:
+
+{
+  "recommendations": [
+    {
+      "player": "[Player Name]",
+      "position": "[Position]",
+      "decision": "start" or "sit",
+      "reasoning": "[Detailed matchup analysis]",
+      "projection": [projected points as number],
+      "confidence": [confidence percentage as number]
+    }
+  ],
+  "boomWatch": [
+    {
+      "player": "[Player with high ceiling]",
+      "ceiling": [ceiling points as number],
+      "reason": "[Why they could boom]"
+    }
+  ],
+  "matchupAlerts": [
+    "[Important matchup factor 1]",
+    "[Important matchup factor 2]"
+  ]
+}
+
+Analysis factors:
+- Defensive rankings vs ${position} position
+- Recent defensive performance trends
+- Offensive game script expectations
+- Weather impact (if applicable)
+- Target/touch share and usage trends
+- Injury reports affecting the matchup
+- Home/away splits
+- Divisional matchup history`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", 
+        messages: [
+          {
+            role: "system",
+            content: "You are a fantasy football expert providing start/sit advice based on current NFL matchup data."
+          },
+          {
+            role: "user",
+            content: startSitPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
+
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
+      }
+
+      const startSitAnalysis = JSON.parse(messageContent);
+      res.json(startSitAnalysis);
+    } catch (error) {
+      console.error('Error generating start/sit analysis:', error);
+      res.status(500).json({ message: 'Failed to generate start/sit analysis' });
+    }
+  });
+
   app.post('/api/travel-hack', async (req: Request, res: Response) => {
     try {
       const { prompt } = req.body;

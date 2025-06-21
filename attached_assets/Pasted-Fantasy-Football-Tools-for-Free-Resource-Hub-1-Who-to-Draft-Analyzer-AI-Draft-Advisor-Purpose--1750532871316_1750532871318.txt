@@ -1,0 +1,103 @@
+Fantasy Football Tools for Free Resource Hub
+🔹 1. Who to Draft Analyzer (AI Draft Advisor)
+Purpose:
+Suggests the best player to draft at each round based on league settings, team needs, and available player pool.
+
+User Inputs:
+League Type: PPR, Standard, Superflex, Dynasty
+
+Roster Needs: QB, RB, WR, TE, FLEX, DEF, K
+
+Current Round + Pick Number
+
+Players Already Drafted
+
+Scoring Settings
+
+Remaining Available Players
+
+AI Output:
+Top 3 recommended picks
+
+Upside/downside analysis with confidence %
+
+Positional scarcity warnings (e.g. “few RBs remaining”)
+
+Strategy tips: Zero RB, Hero RB, WR heavy, etc.
+
+Example Output:
+java
+Copy
+Edit
+Best Pick: Chris Olave (WR – NO)
+• Great value at this spot. High target share.
+• Saints’ schedule is WR-friendly Weeks 1–6.
+Confidence: 91%
+Alternative Picks: Breece Hall (RB), Mark Andrews (TE)
+Tech Stack Suggestion:
+AI: GPT-4o
+
+Fantasy Data: Sleeper API or FantasyPros (via RapidAPI)
+
+Performance Boost: Cache player data daily/weekly to reduce API calls
+
+🔹 2. Who to Start Analyzer (AI Start/Sit Assistant)
+Purpose:
+Helps users make weekly Start/Sit decisions using matchup, projection, injury, and boom/bust data.
+
+User Inputs:
+Full Starting Lineup (including bench)
+
+Opponent Matchup
+
+League Format (PPR, etc.)
+
+Player Injury Status
+
+Bye Weeks
+
+AI Output:
+Start/Sit recommendation per player
+
+Matchup reasoning (e.g. “30th ranked vs WRs”)
+
+Boom/Bust prediction
+
+Game script/weather impact if relevant
+
+Example Output:
+vbnet
+Copy
+Edit
+Start: Jordan Addison (WR – MIN)
+• Facing Bears secondary (30th vs WRs).
+• High volume with Jefferson out.
+Bench: Drake London – Tough matchup vs Jets, low pass volume expected.
+Boom Watch: Addison — Projected 18.4 pts, 25+ ceiling.
+Tech Stack Suggestion:
+AI: GPT-4o
+
+APIs: FantasyData API (RapidAPI), NFL Live Data, or TheRundown (for game script)
+
+Logic Layer: AI compares projection, matchup, depth chart, and scoring rules
+
+🧱 UI Elements for Draft Tool (Top Section Layout)
+Element	Description
+✅ Recommended Banner	“Recommended” tag based on AI analysis
+🏈 Player Card	Player image, name, team, position
+🔁 Change Player Button	Swap for another draft candidate
+⭐ Star Rating	Draft value score (out of 5 stars)
+📊 Draft Value	Calculated metric (e.g. 2.29 vs 1.86)
+📈 ADP & PROJ Rows	Avg. Draft Position and Projected Points
+
+🧠 Additional Tool Ideas (Add Later)
+✨ Sleepers to Draft Late – Hidden value picks by round
+
+🧠 Waiver Wire Watch – GPT flags weekly waiver priorities
+
+📅 Weekly AI Team Evaluator – Full roster health + grade
+
+📈 Trade Analyzer Tool – GPT reviews trade balance
+
+🔁 Roster Optimizer – AI auto-suggests best lineup combo
+

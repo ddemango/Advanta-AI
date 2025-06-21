@@ -219,6 +219,12 @@ export default function Header() {
                   >
                     ✈️ Travel Hacker AI
                   </a>
+                  <a 
+                    onClick={() => setLocation('/fantasy-football-tools')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🏈 Fantasy Football Tools
+                  </a>
                 </div>
               </div>
             </div>
@@ -477,6 +483,15 @@ export default function Header() {
                       className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
                     >
                       Travel Hacker AI
+                    </a>
+                    <a 
+                      onClick={() => {
+                        setLocation('/fantasy-football-tools');
+                        closeMenu();
+                      }}
+                      className="text-gray-300 hover:text-white transition-colors cursor-pointer text-sm px-3 py-1"
+                    >
+                      Fantasy Football Tools
                     </a>
                     <a 
                       onClick={() => {
