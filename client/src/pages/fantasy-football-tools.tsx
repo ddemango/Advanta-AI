@@ -34,7 +34,8 @@ interface DraftFormData {
 
 interface StartSitFormData {
   position: string;
-  players: string[];
+  player1: string;
+  player2: string;
   opponent: string;
   leagueFormat: string;
   weatherConcerns: boolean;
@@ -86,7 +87,8 @@ export default function FantasyFootballTools() {
 
   const [startSitData, setStartSitData] = useState<StartSitFormData>({
     position: '',
-    players: [],
+    player1: '',
+    player2: '',
     opponent: '',
     leagueFormat: '',
     weatherConcerns: false
@@ -95,6 +97,7 @@ export default function FantasyFootballTools() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [draftResult, setDraftResult] = useState<DraftRecommendation | null>(null);
   const [startSitResult, setStartSitResult] = useState<StartSitRecommendation | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch NFL teams for data
   const { data: nflTeams } = useQuery({
@@ -109,6 +112,8 @@ export default function FantasyFootballTools() {
   const handleDraftAnalysis = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAnalyzing(true);
+    setError(null);
+    setDraftResult(null);
     
     try {
       const response = await fetch('/api/fantasy-draft-analysis', {
@@ -117,12 +122,16 @@ export default function FantasyFootballTools() {
         body: JSON.stringify(draftData)
       });
       
-      if (!response.ok) throw new Error('Failed to analyze draft');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Analysis service temporarily unavailable');
+      }
       
       const result = await response.json();
       setDraftResult(result);
     } catch (error) {
       console.error('Draft analysis error:', error);
+      setError(error instanceof Error ? error.message : 'Analysis service temporarily unavailable. Please try again later.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -131,6 +140,8 @@ export default function FantasyFootballTools() {
   const handleStartSitAnalysis = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAnalyzing(true);
+    setError(null);
+    setStartSitResult(null);
     
     try {
       const response = await fetch('/api/fantasy-start-sit-analysis', {
@@ -139,12 +150,16 @@ export default function FantasyFootballTools() {
         body: JSON.stringify(startSitData)
       });
       
-      if (!response.ok) throw new Error('Failed to analyze start/sit');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Analysis service temporarily unavailable');
+      }
       
       const result = await response.json();
       setStartSitResult(result);
     } catch (error) {
       console.error('Start/Sit analysis error:', error);
+      setError(error instanceof Error ? error.message : 'Analysis service temporarily unavailable. Please try again later.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -377,6 +392,29 @@ export default function FantasyFootballTools() {
                                 <SelectItem value="half-ppr">Half PPR</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="player1" className="text-white">Select Player to Start/Sit</Label>
+                            <Input
+                              id="player1"
+                              placeholder="Type to Select Player"
+                              value={startSitData.player1}
+                              onChange={(e) => setStartSitData(prev => ({ ...prev, player1: e.target.value }))}
+                              className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="player2" className="text-white">Select Player to Compare (Optional)</Label>
+                            <Input
+                              id="player2"
+                              placeholder="Type to Select Player"
+                              value={startSitData.player2}
+                              onChange={(e) => setStartSitData(prev => ({ ...prev, player2: e.target.value }))}
+                              className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                            />
                           </div>
                         </div>
 

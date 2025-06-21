@@ -3284,130 +3284,28 @@ Consider:
 - Upcoming schedule strength
 - Injury concerns and depth charts`;
 
-      let draftAnalysis;
-      
-      try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: "You are a fantasy football expert providing draft advice based on current NFL data and league settings."
-            },
-            {
-              role: "user",
-              content: draftPrompt
-            }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.3
-        });
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a fantasy football expert providing draft advice based on current NFL data and league settings."
+          },
+          {
+            role: "user",
+            content: draftPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
 
-        const messageContent = response.choices[0].message.content;
-        if (!messageContent) {
-          throw new Error('No response from AI');
-        }
-
-        draftAnalysis = JSON.parse(messageContent);
-      } catch (openaiError) {
-        console.log('OpenAI API unavailable, using fallback analysis...');
-        
-        // Fallback analysis based on round and league type
-        const roundNum = parseInt(currentRound) || 1;
-        const pickNum = parseInt(pickNumber) || 1;
-        
-        if (roundNum <= 2) {
-          draftAnalysis = {
-            bestPick: {
-              name: leagueType === 'ppr' ? "Christian McCaffrey" : "Josh Allen",
-              position: leagueType === 'ppr' ? "RB" : "QB",
-              team: leagueType === 'ppr' ? "San Francisco 49ers" : "Buffalo Bills",
-              analysis: `Perfect ${leagueType.toUpperCase()} pick for round ${roundNum}. ${leagueType === 'ppr' ? 'Elite volume and receiving ability make him the safest floor with massive upside.' : 'Dual-threat QB1 with rushing upside and elite arm talent.'}`,
-              confidence: 92
-            },
-            alternatives: [
-              {
-                name: leagueType === 'ppr' ? "Tyreek Hill" : "Christian McCaffrey",
-                position: leagueType === 'ppr' ? "WR" : "RB",
-                team: leagueType === 'ppr' ? "Miami Dolphins" : "San Francisco 49ers",
-                reason: `Elite ${leagueType === 'ppr' ? 'WR1 with explosive big-play ability' : 'RB with proven track record and versatility'}`
-              },
-              {
-                name: "Austin Ekeler",
-                position: "RB",
-                team: "Los Angeles Chargers",
-                reason: "PPR monster with consistent target share and red zone opportunities"
-              }
-            ],
-            strategyTips: [
-              `In ${leagueType.toUpperCase()} leagues, prioritize players with high target/touch volume`,
-              `Round ${roundNum} is perfect for securing a cornerstone player`,
-              "Consider positional scarcity - elite RBs become rare quickly"
-            ],
-            positionalScarcity: [
-              "Only 8-10 elite RBs available - secure one early",
-              "WR depth extends deeper than RB depth this year"
-            ]
-          };
-        } else if (roundNum <= 6) {
-          draftAnalysis = {
-            bestPick: {
-              name: rosterNeeds.includes('WR') ? "Stefon Diggs" : "Saquon Barkley",
-              position: rosterNeeds.includes('WR') ? "WR" : "RB",
-              team: rosterNeeds.includes('WR') ? "Buffalo Bills" : "New York Giants",
-              analysis: `Strong middle-round value pick. ${rosterNeeds.includes('WR') ? 'Consistent target monster with QB upgrade.' : 'Bounce-back candidate with improved offensive line.'}`,
-              confidence: 85
-            },
-            alternatives: [
-              {
-                name: "George Kittle",
-                position: "TE",
-                team: "San Francisco 49ers",
-                reason: "Elite TE option if you missed early tight ends"
-              },
-              {
-                name: "Lamar Jackson",
-                position: "QB",
-                team: "Baltimore Ravens",
-                reason: "Rushing floor provides weekly upside in any format"
-              }
-            ],
-            strategyTips: [
-              `Round ${roundNum} is ideal for addressing roster needs`,
-              "Look for players with clear usage trends and target competition",
-              "Consider handcuffing your RBs in upcoming rounds"
-            ],
-            positionalScarcity: [
-              "Quality TEs become scarce after round 6",
-              "QB depth allows you to wait if needed"
-            ]
-          };
-        } else {
-          draftAnalysis = {
-            bestPick: {
-              name: "Gus Edwards",
-              position: "RB",
-              team: "Los Angeles Chargers",
-              analysis: "Later round value pick with clear path to touches and goal line work. Handcuff with upside.",
-              confidence: 78
-            },
-            alternatives: [
-              {
-                name: "Romeo Doubs",
-                position: "WR",
-                team: "Green Bay Packers",
-                reason: "High-upside WR with Aaron Rodgers connection"
-              }
-            ],
-            strategyTips: [
-              "Focus on upside plays and handcuffs",
-              "Target players with clear paths to increased usage"
-            ],
-            positionalScarcity: []
-          };
-        }
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
       }
-      
+
+      const draftAnalysis = JSON.parse(messageContent);
       res.json(draftAnalysis);
     } catch (error) {
       console.error('Error generating draft analysis:', error);
@@ -3418,10 +3316,10 @@ Consider:
   // Fantasy Start/Sit Analysis endpoint  
   app.post('/api/fantasy-start-sit-analysis', async (req: Request, res: Response) => {
     try {
-      const { position, players, opponent, leagueFormat, weatherConcerns } = req.body;
+      const { position, player1, player2, opponent, leagueFormat, weatherConcerns } = req.body;
 
-      if (!position || !opponent) {
-        return res.status(400).json({ message: 'Position and opponent are required' });
+      if (!position || !player1) {
+        return res.status(400).json({ message: 'Position and at least one player are required' });
       }
 
       // Fetch NFL team data for matchup context
@@ -3481,116 +3379,28 @@ Analysis factors:
 - Home/away splits
 - Divisional matchup history`;
 
-      let startSitAnalysis;
-      
-      try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o", 
-          messages: [
-            {
-              role: "system",
-              content: "You are a fantasy football expert providing start/sit advice based on current NFL matchup data."
-            },
-            {
-              role: "user",
-              content: startSitPrompt
-            }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.3
-        });
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", 
+        messages: [
+          {
+            role: "system",
+            content: "You are a fantasy football expert providing start/sit advice based on current NFL matchup data."
+          },
+          {
+            role: "user",
+            content: startSitPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
 
-        const messageContent = response.choices[0].message.content;
-        if (!messageContent) {
-          throw new Error('No response from AI');
-        }
-
-        startSitAnalysis = JSON.parse(messageContent);
-      } catch (openaiError) {
-        console.log('OpenAI API unavailable, using fallback start/sit analysis...');
-        
-        // Fallback analysis based on position and matchup
-        const isGoodMatchup = !opponent.toLowerCase().includes('buffalo') && 
-                             !opponent.toLowerCase().includes('san francisco') &&
-                             !opponent.toLowerCase().includes('dallas');
-        
-        if (position === 'qb') {
-          startSitAnalysis = {
-            recommendations: [
-              {
-                player: "Your QB",
-                position: "QB",
-                decision: isGoodMatchup ? "start" : "sit",
-                reasoning: isGoodMatchup ? 
-                  `Favorable matchup against ${opponent}. Defense allows above-average passing yards and has shown vulnerability to mobile QBs.` :
-                  `Tough matchup against ${opponent}. Strong defense with good pass rush and secondary coverage. Consider streaming options.`,
-                projection: isGoodMatchup ? 22.5 : 16.8,
-                confidence: isGoodMatchup ? 85 : 72
-              }
-            ],
-            boomWatch: isGoodMatchup ? [
-              {
-                player: "Your QB",
-                ceiling: 35,
-                reason: "Opposing defense allows big plays and has injury concerns in secondary"
-              }
-            ] : [],
-            matchupAlerts: [
-              `${opponent} defense ranks ${isGoodMatchup ? 'bottom 10' : 'top 5'} against QBs this season`,
-              weatherConcerns ? "Weather conditions may impact passing game" : "Indoor/dome game provides stable conditions"
-            ]
-          };
-        } else if (position === 'rb') {
-          startSitAnalysis = {
-            recommendations: [
-              {
-                player: "Your RB",
-                position: "RB",
-                decision: "start",
-                reasoning: `Solid matchup against ${opponent}. Defense allows ${isGoodMatchup ? '4.8 YPC and' : '4.2 YPC but'} multiple rushing TDs per game. ${leagueFormat === 'ppr' ? 'Target share in passing game adds floor.' : 'Goal line work provides TD upside.'}`,
-                projection: leagueFormat === 'ppr' ? 18.2 : 15.7,
-                confidence: 82
-              }
-            ],
-            boomWatch: [
-              {
-                player: "Your RB",
-                ceiling: 28,
-                reason: "Game script favors rushing attack with potential for multiple scores"
-              }
-            ],
-            matchupAlerts: [
-              `${opponent} allows ${isGoodMatchup ? '5.1' : '3.9'} YPC to opposing RBs`,
-              "Monitor injury report for offensive line changes"
-            ]
-          };
-        } else {
-          startSitAnalysis = {
-            recommendations: [
-              {
-                player: "Your WR",
-                position: "WR",
-                decision: isGoodMatchup ? "start" : "sit",
-                reasoning: `${isGoodMatchup ? 'Excellent' : 'Challenging'} matchup against ${opponent}. Defense ${isGoodMatchup ? 'struggles with slot coverage and allows big plays' : 'has elite cornerbacks and strong pass rush'}. ${leagueFormat === 'ppr' ? 'Target volume provides safe floor.' : 'TD dependent but has red zone usage.'}`,
-                projection: leagueFormat === 'ppr' ? 16.8 : 12.4,
-                confidence: isGoodMatchup ? 88 : 65
-              }
-            ],
-            boomWatch: isGoodMatchup ? [
-              {
-                player: "Your WR",
-                ceiling: 32,
-                reason: "Cornerback matchup heavily favors receiver with big-play potential"
-              }
-            ] : [],
-            matchupAlerts: [
-              `${opponent} ${isGoodMatchup ? 'allows most' : 'allows fewest'} fantasy points to WRs`,
-              "Check snap count trends and target competition"
-            ]
-          };
-        }
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
       }
-      
+
+      const startSitAnalysis = JSON.parse(messageContent);
       res.json(startSitAnalysis);
     } catch (error) {
       console.error('Error generating start/sit analysis:', error);
