@@ -252,18 +252,36 @@ async function generateFantasyAnalysis(
   };
 
   const pointsDifference = player1Analysis.projectedPoints - player2Analysis.projectedPoints;
-  let recommendation: 'START_PLAYER_1' | 'START_PLAYER_2' | 'NEUTRAL';
+  let recommendation: 'START_PLAYER_1' | 'START_PLAYER_2';
   let confidenceLevel: number;
 
-  if (pointsDifference > 2) {
+  // Always provide a definitive recommendation - never neutral
+  if (pointsDifference >= 0) {
     recommendation = 'START_PLAYER_1';
-    confidenceLevel = Math.min(85, 60 + Math.abs(pointsDifference) * 5);
-  } else if (pointsDifference < -2) {
-    recommendation = 'START_PLAYER_2';
-    confidenceLevel = Math.min(85, 60 + Math.abs(pointsDifference) * 5);
+    // Higher confidence for larger point differences
+    if (pointsDifference > 2) {
+      confidenceLevel = Math.min(90, 75 + Math.abs(pointsDifference) * 3);
+    } else if (pointsDifference > 1) {
+      confidenceLevel = 70 + Math.abs(pointsDifference) * 5;
+    } else {
+      // Close call - use other factors for confidence
+      const player1Advantages = (player1Analysis.confidence > player2Analysis.confidence ? 1 : 0) +
+                               (player1Analysis.matchupRating === 'Elite' || player1Analysis.matchupRating === 'Good' ? 1 : 0);
+      confidenceLevel = 55 + player1Advantages * 8 + Math.random() * 10;
+    }
   } else {
-    recommendation = 'NEUTRAL';
-    confidenceLevel = 55 + Math.random() * 15;
+    recommendation = 'START_PLAYER_2';
+    // Higher confidence for larger point differences
+    if (pointsDifference < -2) {
+      confidenceLevel = Math.min(90, 75 + Math.abs(pointsDifference) * 3);
+    } else if (pointsDifference < -1) {
+      confidenceLevel = 70 + Math.abs(pointsDifference) * 5;
+    } else {
+      // Close call - use other factors for confidence
+      const player2Advantages = (player2Analysis.confidence > player1Analysis.confidence ? 1 : 0) +
+                               (player2Analysis.matchupRating === 'Elite' || player2Analysis.matchupRating === 'Good' ? 1 : 0);
+      confidenceLevel = 55 + player2Advantages * 8 + Math.random() * 10;
+    }
   }
 
   return {
@@ -3904,9 +3922,13 @@ Consider:
   // Fantasy Start/Sit Analysis endpoint  
   app.post('/api/fantasy-start-sit-analysis', async (req: Request, res: Response) => {
     try {
-      const { position, player1, player2, opponent, leagueFormat, weatherConcerns } = req.body;
+      const { position, player1, player2, playerToStart, playerToCompare, opponent, leagueFormat, weatherConcerns } = req.body;
 
-      if (!position || !player1) {
+      // Handle both naming conventions for backwards compatibility
+      const actualPlayer1 = player1 || playerToStart;
+      const actualPlayer2 = player2 || playerToCompare;
+
+      if (!position || !actualPlayer1) {
         return res.status(400).json({ message: 'Position and at least one player are required' });
       }
 
@@ -3927,7 +3949,7 @@ Lineup Decision Context:
 - Opponent Defense: ${opponent}
 - League Format: ${leagueFormat}
 - Weather Concerns: ${weatherConcerns ? 'Yes' : 'No'}
-- Players to Analyze: ${player1}${player2 ? ` vs ${player2}` : ''}
+- Players to Analyze: ${actualPlayer1}${actualPlayer2 ? ` vs ${actualPlayer2}` : ''}
 
 NFL Team Data for Matchup Analysis: ${JSON.stringify(nflData)}
 
@@ -3967,15 +3989,60 @@ Analysis factors:
 - Home/away splits
 - Divisional matchup history`;
 
-      // Generate comprehensive fantasy analysis using real player data and analytics
-      const startSitAnalysis = await generateFantasyAnalysis(
-        player1, 
-        player2, 
-        opponent, 
-        weatherConcerns,
-        leagueFormat
-      );
-      res.json(startSitAnalysis);
+      // Use our custom analysis engine instead of OpenAI
+      if (actualPlayer2) {
+        // Two-player comparison
+        const comparison = await generateFantasyAnalysis(
+          actualPlayer1,
+          actualPlayer2,
+          opponent || 'Cowboys',
+          weatherConcerns || false,
+          leagueFormat || 'PPR'
+        );
+        res.json(comparison);
+      } else {
+        // Single player analysis - create a basic recommendation
+        const playerProfile = getPlayerProfile(actualPlayer1, getPlayerPosition(actualPlayer1));
+        const playerTeam = getPlayerTeam(actualPlayer1);
+        const weeklyMatchups = await getCurrentWeekMatchups();
+        const playerOpponent = getPlayerOpponent(actualPlayer1, playerTeam, weeklyMatchups);
+        
+        const defenseData = defensiveRankings[playerOpponent] || defensiveRankings[opponent] || {
+          passDefRank: 15, rushDefRank: 15, pointsAllowed: 22.5, passYardsAllowed: 240, rushYardsAllowed: 120
+        };
+
+        const projectedPoints = Math.round((playerProfile.avgPoints + (32 - defenseData.rushDefRank) / 10) * 10) / 10;
+        const confidence = Math.round(playerProfile.consistency * 100);
+        
+        const singlePlayerAnalysis = {
+          recommendation: projectedPoints > 12 ? 'START_PLAYER_1' : 'START_PLAYER_2',
+          confidenceLevel: confidence,
+          player1Analysis: {
+            playerName: actualPlayer1,
+            position: getPlayerPosition(actualPlayer1),
+            team: playerTeam,
+            projectedPoints,
+            confidence,
+            matchupRating: getMatchupRating(defenseData, playerProfile),
+            boomBustPotential: getBoomBustPotential(playerProfile),
+            reasoning: generateReasoningPoints(actualPlayer1, playerProfile, defenseData, weatherConcerns, playerOpponent),
+            keyFactors: generateKeyFactors(playerProfile, defenseData, playerOpponent)
+          },
+          player2Analysis: {
+            playerName: 'Bench Option',
+            position: getPlayerPosition(actualPlayer1),
+            team: 'BEN',
+            projectedPoints: 8.5,
+            confidence: 45,
+            matchupRating: 'Average' as const,
+            boomBustPotential: 'Low Ceiling' as const,
+            reasoning: ['Consider keeping on bench for this week'],
+            keyFactors: ['Backup option analysis']
+          }
+        };
+        
+        res.json(singlePlayerAnalysis);
+      }
     } catch (error) {
       console.error('Error generating start/sit analysis:', error);
       res.status(500).json({ message: 'Failed to generate start/sit analysis' });
