@@ -11,8 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Target, Users, TrendingUp, Star, Clock, CheckCircle, Trophy } from "lucide-react";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
