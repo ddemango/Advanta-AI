@@ -523,38 +523,87 @@ export default function FantasyFootballTools() {
 
               {startSitResult && (
                 <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center">
-                      📊 Start/Sit Analysis
-                    </CardTitle>
+                  <CardHeader className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
+                      <CardTitle className="text-green-400 text-xl">Strong Recommendation</CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {startSitResult.recommendations.map((rec, index) => (
-                      <div key={index} className={`p-4 rounded-lg border ${
-                        rec.decision === 'start' 
-                          ? 'bg-green-500/20 border-green-500/30' 
-                          : 'bg-red-500/20 border-red-500/30'
-                      }`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className={`font-bold text-lg ${
-                            rec.decision === 'start' ? 'text-green-300' : 'text-red-300'
+                  <CardContent>
+                    {/* Player Comparison Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      {startSitResult.recommendations.map((rec, index) => (
+                        <div key={index} className="text-center">
+                          <h3 className="text-white text-lg font-semibold mb-2">{rec.player}</h3>
+                          <button className="text-gray-400 text-sm mb-4 hover:text-white transition-colors">
+                            ⚙️ Change Player
+                          </button>
+                          
+                          {/* Player Card */}
+                          <div className="bg-gray-200 rounded-lg p-6 mb-4 min-h-[200px] flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-20 h-20 bg-gray-300 rounded-full mx-auto mb-2"></div>
+                              <div className="text-gray-600 text-sm">{rec.position}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Star Rating */}
+                          <div className="bg-purple-600 text-white py-2 px-4 rounded-lg mb-4">
+                            <div className="text-sm mb-1">2025 Preseason Projections</div>
+                            <div className="flex justify-center space-x-1">
+                              {Array.from({ length: Math.floor(rec.confidence / 20) }, (_, i) => (
+                                <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Stats */}
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center py-2 border-b border-gray-300">
+                              <span className="font-medium">Draft Value</span>
+                              <span className="font-bold">{(rec.projection / 10).toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-gray-300">
+                              <span className="font-medium">ADP</span>
+                              <span>{index === 0 ? '2.29' : '1.33'}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2">
+                              <span className="font-medium">PROJ</span>
+                              <span>{rec.projection.toFixed(2)}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Decision Badge */}
+                          <div className={`mt-4 p-3 rounded-lg ${
+                            rec.decision === 'start' 
+                              ? 'bg-green-500/20 border border-green-500/30' 
+                              : 'bg-red-500/20 border border-red-500/30'
                           }`}>
-                            {rec.decision === 'start' ? '✅ START' : '❌ SIT'}: {rec.player}
-                          </h3>
-                          <Badge className={rec.decision === 'start' ? 'bg-green-600' : 'bg-red-600'}>
-                            {rec.confidence}% Confidence
-                          </Badge>
+                            <div className={`font-bold text-lg ${
+                              rec.decision === 'start' ? 'text-green-300' : 'text-red-300'
+                            }`}>
+                              {rec.decision === 'start' ? '✅ START' : '❌ SIT'}
+                            </div>
+                            <div className="text-white text-sm mt-1">
+                              {rec.confidence}% Confidence
+                            </div>
+                          </div>
+                          
+                          {/* Reasoning */}
+                          <div className="mt-4 p-3 bg-white/5 rounded-lg">
+                            <p className="text-gray-300 text-sm">{rec.reasoning}</p>
+                          </div>
                         </div>
-                        <p className="text-gray-300 text-sm mb-2">
-                          Projected: {rec.projection} points
-                        </p>
-                        <p className="text-gray-200">{rec.reasoning}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
 
+                    {/* Additional Analysis */}
                     {startSitResult.boomWatch.length > 0 && (
-                      <div>
-                        <h4 className="text-white font-semibold mb-2">🚀 Boom Watch:</h4>
+                      <div className="mt-6">
+                        <h4 className="text-white font-semibold mb-3 flex items-center">
+                          <TrendingUp className="w-5 h-5 text-orange-400 mr-2" />
+                          Boom Watch
+                        </h4>
                         {startSitResult.boomWatch.map((boom, index) => (
                           <div key={index} className="p-3 bg-orange-500/20 rounded-lg border border-orange-500/30 mb-2">
                             <div className="font-medium text-orange-300">
@@ -565,11 +614,43 @@ export default function FantasyFootballTools() {
                         ))}
                       </div>
                     )}
+
+                    {/* Matchup Alerts */}
+                    {startSitResult.matchupAlerts && startSitResult.matchupAlerts.length > 0 && (
+                      <div className="mt-4">
+                        <h4 className="text-white font-semibold mb-2">📊 Matchup Insights</h4>
+                        {startSitResult.matchupAlerts.map((alert, index) => (
+                          <div key={index} className="p-2 bg-blue-500/20 rounded border border-blue-500/30 mb-2">
+                            <p className="text-blue-200 text-sm">{alert}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
 
-              {!draftResult && !startSitResult && (
+              {error && (
+                <Card className="bg-red-500/10 backdrop-blur-md border-red-500/30">
+                  <CardContent className="text-center py-8">
+                    <div className="text-red-400 text-6xl mb-4">⚠️</div>
+                    <h3 className="text-lg font-medium text-red-300 mb-2">
+                      Analysis Unavailable
+                    </h3>
+                    <p className="text-sm text-red-200 mb-4">
+                      {error}
+                    </p>
+                    <Button 
+                      onClick={() => setError(null)}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Try Again
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {!draftResult && !startSitResult && !error && (
                 <Card className="bg-white/10 backdrop-blur-md border-white/20 h-full flex items-center justify-center">
                   <CardContent className="text-center py-12">
                     <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-400" />
