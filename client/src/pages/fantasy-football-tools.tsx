@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { Target, Users, TrendingUp, Star, Clock, CheckCircle, Trophy } from "lucide-react";
+import { Target, Users, TrendingUp, Star, Clock, CheckCircle, Trophy, Search } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -98,6 +98,85 @@ export default function FantasyFootballTools() {
   const [draftResult, setDraftResult] = useState<DraftRecommendation | null>(null);
   const [startSitResult, setStartSitResult] = useState<StartSitRecommendation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [player1Suggestions, setPlayer1Suggestions] = useState<string[]>([]);
+  const [player2Suggestions, setPlayer2Suggestions] = useState<string[]>([]);
+  const [showPlayer1Dropdown, setShowPlayer1Dropdown] = useState(false);
+  const [showPlayer2Dropdown, setShowPlayer2Dropdown] = useState(false);
+  const player1Ref = useRef<HTMLInputElement>(null);
+  const player2Ref = useRef<HTMLInputElement>(null);
+
+  // Fetch players from API
+  const fetchPlayers = async (query: string, position?: string) => {
+    if (!query || query.length < 2) return [];
+    
+    try {
+      const params = new URLSearchParams();
+      params.append('query', query);
+      if (position) params.append('position', position);
+      
+      const response = await fetch(`/api/nfl-players?${params.toString()}`);
+      if (!response.ok) return [];
+      
+      const players = await response.json();
+      return players;
+    } catch (error) {
+      console.error('Error fetching players:', error);
+      return [];
+    }
+  };
+
+  const handlePlayer1Change = async (value: string) => {
+    setStartSitData(prev => ({ ...prev, player1: value }));
+    if (value.length >= 2) {
+      const suggestions = await fetchPlayers(value, startSitData.position);
+      setPlayer1Suggestions(suggestions.map((p: any) => `${p.name} (${p.position} - ${p.team})`));
+      setShowPlayer1Dropdown(suggestions.length > 0);
+    } else {
+      setShowPlayer1Dropdown(false);
+    }
+  };
+
+  const handlePlayer2Change = async (value: string) => {
+    setStartSitData(prev => ({ ...prev, player2: value }));
+    if (value.length >= 2) {
+      const suggestions = await fetchPlayers(value, startSitData.position);
+      setPlayer2Suggestions(suggestions.map((p: any) => `${p.name} (${p.position} - ${p.team})`));
+      setShowPlayer2Dropdown(suggestions.length > 0);
+    } else {
+      setShowPlayer2Dropdown(false);
+    }
+  };
+
+  const selectPlayer1 = (player: string) => {
+    setStartSitData(prev => ({ ...prev, player1: player }));
+    setShowPlayer1Dropdown(false);
+    if (player1Ref.current) {
+      player1Ref.current.blur();
+    }
+  };
+
+  const selectPlayer2 = (player: string) => {
+    setStartSitData(prev => ({ ...prev, player2: player }));
+    setShowPlayer2Dropdown(false);
+    if (player2Ref.current) {
+      player2Ref.current.blur();
+    }
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (player1Ref.current && !player1Ref.current.contains(event.target as Node)) {
+        setShowPlayer1Dropdown(false);
+      }
+      if (player2Ref.current && !player2Ref.current.contains(event.target as Node)) {
+        setShowPlayer2Dropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch NFL teams for data
   const { data: nflTeams } = useQuery({
@@ -394,25 +473,69 @@ export default function FantasyFootballTools() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
+                          <div className="relative" ref={player1Ref}>
                             <Label htmlFor="player1" className="text-white">Select Player to Start/Sit</Label>
-                            <Input
-                              id="player1"
-                              placeholder="Type to Select Player"
-                              value={startSitData.player1}
-                              onChange={(e) => setStartSitData(prev => ({ ...prev, player1: e.target.value }))}
-                              className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
-                            />
+                            <div className="relative">
+                              <Input
+                                id="player1"
+                                placeholder="Type to Select Player"
+                                value={startSitData.player1}
+                                onChange={(e) => handlePlayer1Change(e.target.value)}
+                                onFocus={() => {
+                                  if (startSitData.player1.length >= 2) {
+                                    setShowPlayer1Dropdown(true);
+                                  }
+                                }}
+                                className="bg-white/10 border-white/30 text-white placeholder:text-gray-400 pr-10"
+                                autoComplete="off"
+                              />
+                              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            </div>
+                            {showPlayer1Dropdown && (
+                              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {player1Suggestions.map((player, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => selectPlayer1(player)}
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-900 border-b border-gray-100 last:border-b-0"
+                                  >
+                                    {player}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <div>
+                          <div className="relative" ref={player2Ref}>
                             <Label htmlFor="player2" className="text-white">Select Player to Compare</Label>
-                            <Input
-                              id="player2"
-                              placeholder="Type to Select Player"
-                              value={startSitData.player2}
-                              onChange={(e) => setStartSitData(prev => ({ ...prev, player2: e.target.value }))}
-                              className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
-                            />
+                            <div className="relative">
+                              <Input
+                                id="player2"
+                                placeholder="Type to Select Player"
+                                value={startSitData.player2}
+                                onChange={(e) => handlePlayer2Change(e.target.value)}
+                                onFocus={() => {
+                                  if (startSitData.player2.length >= 2) {
+                                    setShowPlayer2Dropdown(true);
+                                  }
+                                }}
+                                className="bg-white/10 border-white/30 text-white placeholder:text-gray-400 pr-10"
+                                autoComplete="off"
+                              />
+                              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            </div>
+                            {showPlayer2Dropdown && (
+                              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {player2Suggestions.map((player, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => selectPlayer2(player)}
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-900 border-b border-gray-100 last:border-b-0"
+                                  >
+                                    {player}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
 

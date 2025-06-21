@@ -3200,10 +3200,10 @@ Please provide analysis in this exact JSON format (no additional text):
   // NFL Teams endpoint
   app.get('/api/nfl-teams', async (req: Request, res: Response) => {
     try {
-      const response = await fetch('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
+      const response = await fetch('https://therundown-therundown-v1.p.rapidapi.com/sports/2/teams', {
         headers: {
-          'X-RapidAPI-Key': process.env.NFL_API_KEY!,
-          'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com'
+          'X-RapidAPI-Key': '30642379c3msh6eec99f59873683p150d3djsn8bfe456fdd2b',
+          'X-RapidAPI-Host': 'therundown-therundown-v1.p.rapidapi.com'
         }
       });
 
@@ -3216,6 +3216,56 @@ Please provide analysis in this exact JSON format (no additional text):
     } catch (error) {
       console.error('Error fetching NFL teams:', error);
       res.status(500).json({ message: 'Failed to fetch NFL teams' });
+    }
+  });
+
+  // NFL Players endpoint for autocomplete
+  app.get('/api/nfl-players', async (req: Request, res: Response) => {
+    try {
+      const { query, position } = req.query;
+      
+      // Fetch players from The Rundown API
+      const response = await fetch('https://therundown-therundown-v1.p.rapidapi.com/sports/2/players', {
+        headers: {
+          'X-RapidAPI-Key': '30642379c3msh6eec99f59873683p150d3djsn8bfe456fdd2b',
+          'X-RapidAPI-Host': 'therundown-therundown-v1.p.rapidapi.com'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`NFL Players API error: ${response.status}`);
+      }
+
+      const playersData = await response.json();
+      
+      // Filter players based on query and position if provided
+      let filteredPlayers = playersData;
+      
+      if (query && typeof query === 'string') {
+        filteredPlayers = playersData.filter((player: any) => 
+          player.name?.toLowerCase().includes(query.toLowerCase()) ||
+          player.display_name?.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+
+      if (position && typeof position === 'string') {
+        filteredPlayers = filteredPlayers.filter((player: any) => 
+          player.position?.toLowerCase() === position.toLowerCase()
+        );
+      }
+
+      // Limit results to 10 for autocomplete
+      const limitedResults = filteredPlayers.slice(0, 10).map((player: any) => ({
+        name: player.display_name || player.name,
+        position: player.position,
+        team: player.team_abbreviation || player.team,
+        id: player.player_id
+      }));
+
+      res.json(limitedResults);
+    } catch (error) {
+      console.error('Error fetching NFL players:', error);
+      res.status(500).json({ message: 'Failed to fetch NFL players' });
     }
   });
 
