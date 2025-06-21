@@ -759,7 +759,7 @@ export default function FantasyFootballTools() {
                       Analysis Unavailable
                     </h3>
                     <p className="text-sm text-red-200 mb-4">
-                      {error}
+                      AI analysis service is currently unavailable. Please contact support to enable fantasy football analysis.
                     </p>
                     <Button 
                       onClick={() => setError(null)}
