@@ -468,25 +468,36 @@ async function generateCustomDraftAnalysis(draftData: {
   const scoredPlayers = availablePlayers.map(player => {
     let score = 100;
     
-    // Position need bonus
+    // Position need bonus - significant bonus for needed positions
     if (rosterNeeds.includes(player.position.toLowerCase())) {
-      score += 25;
+      score += 40;
     }
     
     // League format bonuses
     if (leagueType === 'PPR' && (player.position === 'WR' || player.position === 'RB')) {
-      score += 10;
-    }
-    if (leagueType === 'Standard' && player.position === 'RB') {
       score += 15;
     }
-    if (leagueType === 'Superflex' && player.position === 'QB') {
+    if (leagueType === 'Standard' && player.position === 'RB') {
       score += 20;
     }
+    if (leagueType === 'Superflex' && player.position === 'QB') {
+      score += 30;
+    }
+    if (leagueType === 'Half PPR' && (player.position === 'WR' || player.position === 'RB')) {
+      score += 10;
+    }
     
-    // ADP value - prefer players available at current pick
+    // ADP value - significant bonus for value picks
     const adpDiff = player.adp - pickNumber;
-    if (adpDiff < 0) score += Math.abs(adpDiff) * 2; // Value pick
+    if (adpDiff < 0) score += Math.abs(adpDiff) * 3; // Big value pick bonus
+    if (adpDiff > 5) score -= adpDiff * 2; // Penalty for reaching
+    
+    // Position scarcity bonuses
+    if (player.position === 'TE' && currentRound <= 3) score += 10;
+    if (player.position === 'QB' && currentRound <= 4 && leagueType !== 'Superflex') score += 5;
+    
+    // Random factor to ensure different results
+    score += Math.random() * 10;
     
     return { ...player, score };
   });
@@ -520,19 +531,41 @@ async function generateCustomDraftAnalysis(draftData: {
     positionalScarcity.push("Consider QB soon - depth diminishes quickly");
   }
 
+  // Generate dynamic analysis based on player and situation
+  const getPlayerAnalysis = (player: any) => {
+    const isValuePick = player.adp > pickNumber;
+    const isNeededPosition = rosterNeeds.includes(player.position.toLowerCase());
+    
+    let analysis = `${player.name} is `;
+    
+    if (isValuePick && isNeededPosition) {
+      analysis += `an excellent value pick at ${pickNumber} overall. Fills a key roster need (${player.position}) and has ADP of ${player.adp}, making this a steal.`;
+    } else if (isNeededPosition) {
+      analysis += `the top choice to address your ${player.position} need. Strong production in ${leagueType} leagues with proven reliability.`;
+    } else if (isValuePick) {
+      analysis += `outstanding value at pick ${pickNumber}. ADP of ${player.adp} suggests you're getting a premium player at a discount.`;
+    } else {
+      analysis += `a solid choice for ${leagueType} leagues. Consistent performer with upside potential for your roster.`;
+    }
+    
+    return analysis;
+  };
+
   return {
     bestPick: {
       name: bestPick.name,
       position: bestPick.position,
       team: bestPick.team,
-      analysis: `${bestPick.name} is the optimal pick at ${pickNumber} overall. Strong ${bestPick.position} with proven production and favorable ${leagueType} league scoring. ADP of ${bestPick.adp} makes this excellent value.`,
-      confidence: Math.min(95, Math.max(75, bestPick.score - 50))
+      analysis: getPlayerAnalysis(bestPick),
+      confidence: Math.min(95, Math.max(70, Math.round(bestPick.score - 40)))
     },
     alternatives: alternatives.map(alt => ({
       name: alt.name,
       position: alt.position,
       team: alt.team,
-      reason: `Solid ${alt.position} option with ADP ${alt.adp}. Good backup plan if your preferred position is taken.`
+      reason: rosterNeeds.includes(alt.position.toLowerCase()) 
+        ? `Top ${alt.position} to fill roster need. ADP ${alt.adp} fits your draft position well.`
+        : `Best available player at ADP ${alt.adp}. Strong ${leagueType} league producer.`
     })),
     strategyTips,
     positionalScarcity
