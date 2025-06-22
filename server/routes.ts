@@ -4205,11 +4205,16 @@ Please provide analysis in this exact JSON format (no additional text):
         { name: "Commanders D/ST", position: "DEF", team: "WAS" }
       ];
       
+      // Remove duplicates first
+      const uniquePlayers = nflPlayers.filter((player, index, self) => 
+        index === self.findIndex(p => p.name === player.name && p.position === player.position)
+      );
+      
       // Filter players based on query and position
-      let filteredPlayers = nflPlayers;
+      let filteredPlayers = uniquePlayers;
       
       if (query && typeof query === 'string') {
-        filteredPlayers = nflPlayers.filter(player => 
+        filteredPlayers = uniquePlayers.filter(player => 
           player.name.toLowerCase().includes(query.toLowerCase())
         );
       }

@@ -154,13 +154,17 @@ export default function FantasyFootballTools() {
   const searchPlayers = (query: string, position?: string): string[] => {
     if (!query || query.length < 2) return [];
     
-    return nflPlayers
+    const uniquePlayers = nflPlayers.filter((player: any, index: number, self: any[]) => 
+      index === self.findIndex((p: any) => p.name === player.name)
+    );
+    
+    return uniquePlayers
       .filter((player: any) => {
         const nameMatch = player.name.toLowerCase().includes(query.toLowerCase());
         const positionMatch = !position || player.position === position;
         return nameMatch && positionMatch;
       })
-      .slice(0, 8)
+      .slice(0, 15)
       .map((player: any) => player.name);
   };
 
