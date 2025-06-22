@@ -389,6 +389,140 @@ function getPlayerTeam(playerName: string): string {
   return player?.team || 'UNK';
 }
 
+// Custom draft analysis engine
+async function generateCustomDraftAnalysis(draftData: {
+  leagueType: string;
+  rosterNeeds: string[];
+  currentRound: number;
+  pickNumber: number;
+  scoringSettings: string;
+}) {
+  const { leagueType, rosterNeeds, currentRound, pickNumber, scoringSettings } = draftData;
+  
+  // Draft board by round (realistic ADP values)
+  const draftBoard = {
+    1: [
+      { name: "Christian McCaffrey", position: "RB", team: "SF", adp: 1.2 },
+      { name: "Josh Allen", position: "QB", team: "BUF", adp: 1.8 },
+      { name: "Tyreek Hill", position: "WR", team: "MIA", adp: 2.1 },
+      { name: "Travis Kelce", position: "TE", team: "KC", adp: 2.4 },
+      { name: "Stefon Diggs", position: "WR", team: "BUF", adp: 2.7 },
+      { name: "Davante Adams", position: "WR", team: "LV", adp: 3.1 },
+      { name: "Cooper Kupp", position: "WR", team: "LAR", adp: 3.4 },
+      { name: "Derrick Henry", position: "RB", team: "BAL", adp: 3.8 },
+      { name: "Saquon Barkley", position: "RB", team: "PHI", adp: 4.2 },
+      { name: "CeeDee Lamb", position: "WR", team: "DAL", adp: 4.6 },
+      { name: "Bijan Robinson", position: "RB", team: "ATL", adp: 5.1 },
+      { name: "Patrick Mahomes", position: "QB", team: "KC", adp: 5.8 }
+    ],
+    2: [
+      { name: "Jonathan Taylor", position: "RB", team: "IND", adp: 13.2 },
+      { name: "A.J. Brown", position: "WR", team: "PHI", adp: 13.8 },
+      { name: "Ja'Marr Chase", position: "WR", team: "CIN", adp: 14.1 },
+      { name: "Lamar Jackson", position: "QB", team: "BAL", adp: 14.7 },
+      { name: "Mark Andrews", position: "TE", team: "BAL", adp: 15.2 },
+      { name: "Alvin Kamara", position: "RB", team: "NO", adp: 15.8 },
+      { name: "Justin Jefferson", position: "WR", team: "MIN", adp: 16.3 },
+      { name: "Joe Burrow", position: "QB", team: "CIN", adp: 16.9 },
+      { name: "Breece Hall", position: "RB", team: "NYJ", adp: 17.4 },
+      { name: "George Kittle", position: "TE", team: "SF", adp: 18.1 },
+      { name: "Josh Jacobs", position: "RB", team: "GB", adp: 18.7 },
+      { name: "DeAndre Hopkins", position: "WR", team: "TEN", adp: 19.3 }
+    ],
+    3: [
+      { name: "Aaron Jones", position: "RB", team: "MIN", adp: 25.1 },
+      { name: "Joe Mixon", position: "RB", team: "HOU", adp: 25.8 },
+      { name: "Mike Evans", position: "WR", team: "TB", adp: 26.2 },
+      { name: "DK Metcalf", position: "WR", team: "SEA", adp: 26.9 },
+      { name: "Calvin Ridley", position: "WR", team: "TEN", adp: 27.4 },
+      { name: "Jalen Hurts", position: "QB", team: "PHI", adp: 27.8 },
+      { name: "De'Von Achane", position: "RB", team: "MIA", adp: 28.3 },
+      { name: "Chris Godwin", position: "WR", team: "TB", adp: 28.7 },
+      { name: "Jahmyr Gibbs", position: "RB", team: "DET", adp: 29.2 },
+      { name: "Garrett Wilson", position: "WR", team: "NYJ", adp: 29.6 },
+      { name: "Kyle Pitts", position: "TE", team: "ATL", adp: 30.1 },
+      { name: "Rachaad White", position: "RB", team: "TB", adp: 30.7 }
+    ]
+  };
+
+  // Get available players for current round
+  const availablePlayers = draftBoard[currentRound] || draftBoard[3];
+  
+  // Score players based on league needs and settings
+  const scoredPlayers = availablePlayers.map(player => {
+    let score = 100;
+    
+    // Position need bonus
+    if (rosterNeeds.includes(player.position.toLowerCase())) {
+      score += 25;
+    }
+    
+    // League format bonuses
+    if (leagueType === 'PPR' && (player.position === 'WR' || player.position === 'RB')) {
+      score += 10;
+    }
+    if (leagueType === 'Standard' && player.position === 'RB') {
+      score += 15;
+    }
+    if (leagueType === 'Superflex' && player.position === 'QB') {
+      score += 20;
+    }
+    
+    // ADP value - prefer players available at current pick
+    const adpDiff = player.adp - pickNumber;
+    if (adpDiff < 0) score += Math.abs(adpDiff) * 2; // Value pick
+    
+    return { ...player, score };
+  });
+
+  // Sort by score and get top recommendations
+  scoredPlayers.sort((a, b) => b.score - a.score);
+  
+  const bestPick = scoredPlayers[0];
+  const alternatives = scoredPlayers.slice(1, 4);
+  
+  // Generate strategy tips based on round and needs
+  const strategyTips = [];
+  if (currentRound <= 2) {
+    strategyTips.push("Focus on high-volume players with proven track records");
+    strategyTips.push("Consider positional scarcity - elite TEs and QBs become harder to find later");
+  } else {
+    strategyTips.push("Look for breakout candidates and favorable matchups");
+    strategyTips.push("Consider handcuffs for your RBs or high-upside sleepers");
+  }
+  
+  if (rosterNeeds.length > 2) {
+    strategyTips.push("Fill your most critical position need first");
+  }
+
+  // Position scarcity warnings
+  const positionalScarcity = [];
+  if (currentRound >= 2 && !rosterNeeds.includes('te')) {
+    positionalScarcity.push("Elite tight ends become very scarce after round 3");
+  }
+  if (currentRound >= 3 && !rosterNeeds.includes('qb') && leagueType !== 'Superflex') {
+    positionalScarcity.push("Consider QB soon - depth diminishes quickly");
+  }
+
+  return {
+    bestPick: {
+      name: bestPick.name,
+      position: bestPick.position,
+      team: bestPick.team,
+      analysis: `${bestPick.name} is the optimal pick at ${pickNumber} overall. Strong ${bestPick.position} with proven production and favorable ${leagueType} league scoring. ADP of ${bestPick.adp} makes this excellent value.`,
+      confidence: Math.min(95, Math.max(75, bestPick.score - 50))
+    },
+    alternatives: alternatives.map(alt => ({
+      name: alt.name,
+      position: alt.position,
+      team: alt.team,
+      reason: `Solid ${alt.position} option with ADP ${alt.adp}. Good backup plan if your preferred position is taken.`
+    })),
+    strategyTips,
+    positionalScarcity
+  };
+}
+
 function getMatchupRating(defenseData: any, playerProfile: any): 'Elite' | 'Good' | 'Average' | 'Poor' | 'Avoid' {
   const defensiveStrength = (defenseData.passDefRank + defenseData.rushDefRank) / 2;
   const playerStrength = playerProfile.avgPoints;
@@ -3838,84 +3972,15 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(400).json({ message: 'League type and current round are required' });
       }
 
-      // Fetch NFL team data for context
-      const nflResponse = await fetch('https://nfl-api-data.p.rapidapi.com/nfl-team-listing/v1/data', {
-        headers: {
-          'X-RapidAPI-Key': process.env.NFL_API_KEY!,
-          'X-RapidAPI-Host': 'nfl-api-data.p.rapidapi.com'
-        }
+      // Generate custom draft analysis using our internal engine
+      const draftAnalysis = await generateCustomDraftAnalysis({
+        leagueType,
+        rosterNeeds,
+        currentRound: parseInt(currentRound),
+        pickNumber: parseInt(pickNumber),
+        scoringSettings
       });
 
-      const nflData = await nflResponse.json();
-
-      const draftPrompt = `You are a fantasy football draft expert analyzing a ${leagueType} league draft situation.
-
-League Settings:
-- League Type: ${leagueType}
-- Scoring: ${scoringSettings}
-- Current Round: ${currentRound}
-- Pick Number: ${pickNumber}
-- Roster Needs: ${rosterNeeds.join(', ')}
-
-NFL Team Data Context: ${JSON.stringify(nflData)}
-
-Based on this draft situation, provide expert analysis in this JSON format:
-
-{
-  "bestPick": {
-    "name": "[Player Name]",
-    "position": "[Position]", 
-    "team": "[NFL Team]",
-    "analysis": "[Detailed reasoning for this pick]",
-    "confidence": [confidence percentage as number]
-  },
-  "alternatives": [
-    {
-      "name": "[Alternative Player]",
-      "position": "[Position]",
-      "team": "[Team]", 
-      "reason": "[Why this is a good alternative]"
-    }
-  ],
-  "strategyTips": [
-    "[Strategy tip 1]",
-    "[Strategy tip 2]"
-  ],
-  "positionalScarcity": [
-    "[Scarcity warning if applicable]"
-  ]
-}
-
-Consider:
-- Current ADP (Average Draft Position) for round ${currentRound}
-- Positional value and scarcity
-- League format impact (${leagueType})
-- Team offensive schemes and target distribution
-- Upcoming schedule strength
-- Injury concerns and depth charts`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are a fantasy football expert providing draft advice based on current NFL data and league settings."
-          },
-          {
-            role: "user",
-            content: draftPrompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3
-      });
-
-      const messageContent = response.choices[0].message.content;
-      if (!messageContent) {
-        throw new Error('No response from AI');
-      }
-
-      const draftAnalysis = JSON.parse(messageContent);
       res.json(draftAnalysis);
     } catch (error) {
       console.error('Error generating draft analysis:', error);
