@@ -3972,15 +3972,72 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(400).json({ message: 'League type and current round are required' });
       }
 
-      // Generate custom draft analysis using our internal engine
-      const draftAnalysis = await generateCustomDraftAnalysis({
-        leagueType,
-        rosterNeeds,
-        currentRound: parseInt(currentRound),
-        pickNumber: parseInt(pickNumber),
-        scoringSettings
+      const draftPrompt = `You are a fantasy football draft expert analyzing a ${leagueType} league draft situation.
+
+League Settings:
+- League Type: ${leagueType}
+- Scoring: ${scoringSettings}
+- Current Round: ${currentRound}
+- Pick Number: ${pickNumber}
+- Roster Needs: ${rosterNeeds.join(', ')}
+
+Based on this draft situation, provide expert analysis in this JSON format:
+
+{
+  "bestPick": {
+    "name": "[Player Name]",
+    "position": "[Position]", 
+    "team": "[NFL Team]",
+    "analysis": "[Detailed reasoning for this pick]",
+    "confidence": [confidence percentage as number]
+  },
+  "alternatives": [
+    {
+      "name": "[Alternative Player]",
+      "position": "[Position]",
+      "team": "[Team]", 
+      "reason": "[Why this is a good alternative]"
+    }
+  ],
+  "strategyTips": [
+    "[Strategy tip 1]",
+    "[Strategy tip 2]"
+  ],
+  "positionalScarcity": [
+    "[Scarcity warning if applicable]"
+  ]
+}
+
+Consider:
+- Current ADP (Average Draft Position) for round ${currentRound}
+- Positional value and scarcity
+- League format impact (${leagueType})
+- Team offensive schemes and target distribution
+- Upcoming schedule strength
+- Injury concerns and depth charts`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a fantasy football expert providing draft advice based on current NFL data and league settings."
+          },
+          {
+            role: "user",
+            content: draftPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
       });
 
+      const messageContent = response.choices[0].message.content;
+      if (!messageContent) {
+        throw new Error('No response from AI');
+      }
+
+      const draftAnalysis = JSON.parse(messageContent);
       res.json(draftAnalysis);
     } catch (error) {
       console.error('Error generating draft analysis:', error);
