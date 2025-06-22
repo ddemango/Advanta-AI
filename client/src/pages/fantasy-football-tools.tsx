@@ -105,6 +105,46 @@ export default function FantasyFootballTools() {
   const player1Ref = useRef<HTMLInputElement>(null);
   const player2Ref = useRef<HTMLInputElement>(null);
 
+  // Team color gradients for player avatars
+  const getTeamGradient = (team: string) => {
+    const teamColors: Record<string, string> = {
+      'BUF': 'bg-gradient-to-br from-blue-600 to-red-600',
+      'MIA': 'bg-gradient-to-br from-teal-500 to-orange-500',
+      'NE': 'bg-gradient-to-br from-blue-900 to-red-600',
+      'NYJ': 'bg-gradient-to-br from-green-600 to-white',
+      'BAL': 'bg-gradient-to-br from-purple-700 to-black',
+      'CIN': 'bg-gradient-to-br from-orange-600 to-black',
+      'CLE': 'bg-gradient-to-br from-orange-800 to-amber-800',
+      'PIT': 'bg-gradient-to-br from-yellow-400 to-black',
+      'HOU': 'bg-gradient-to-br from-red-700 to-blue-900',
+      'IND': 'bg-gradient-to-br from-blue-600 to-white',
+      'JAX': 'bg-gradient-to-br from-teal-600 to-yellow-400',
+      'TEN': 'bg-gradient-to-br from-blue-700 to-red-600',
+      'DEN': 'bg-gradient-to-br from-orange-600 to-blue-800',
+      'KC': 'bg-gradient-to-br from-red-600 to-yellow-400',
+      'LV': 'bg-gradient-to-br from-gray-900 to-gray-400',
+      'LAC': 'bg-gradient-to-br from-blue-500 to-yellow-400',
+      'DAL': 'bg-gradient-to-br from-blue-800 to-gray-400',
+      'NYG': 'bg-gradient-to-br from-blue-700 to-red-600',
+      'PHI': 'bg-gradient-to-br from-green-700 to-gray-400',
+      'WAS': 'bg-gradient-to-br from-red-800 to-yellow-400',
+      'CHI': 'bg-gradient-to-br from-blue-800 to-orange-600',
+      'DET': 'bg-gradient-to-br from-blue-600 to-gray-400',
+      'GB': 'bg-gradient-to-br from-green-600 to-yellow-400',
+      'MIN': 'bg-gradient-to-br from-purple-700 to-yellow-400',
+      'ATL': 'bg-gradient-to-br from-red-600 to-black',
+      'CAR': 'bg-gradient-to-br from-blue-500 to-gray-400',
+      'NO': 'bg-gradient-to-br from-black to-yellow-400',
+      'TB': 'bg-gradient-to-br from-red-700 to-orange-600',
+      'ARI': 'bg-gradient-to-br from-red-700 to-white',
+      'LAR': 'bg-gradient-to-br from-blue-700 to-yellow-400',
+      'SF': 'bg-gradient-to-br from-red-700 to-yellow-400',
+      'SEA': 'bg-gradient-to-br from-blue-700 to-green-600'
+    };
+    
+    return teamColors[team] || 'bg-gradient-to-br from-gray-600 to-gray-800';
+  };
+
   // Fetch players from API
   const fetchPlayers = async (query: string, position?: string) => {
     if (!query || query.length < 2) return [];
@@ -654,7 +694,16 @@ export default function FantasyFootballTools() {
                           {/* Player Card */}
                           <div className="bg-gray-200 rounded-lg p-6 mb-4 min-h-[200px] flex items-center justify-center">
                             <div className="text-center">
-                              <div className="w-20 h-20 bg-gray-300 rounded-full mx-auto mb-2"></div>
+                              <div className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 ${getTeamGradient(player.team)}`}>
+                                <div className="text-center">
+                                  <div className="text-lg font-black tracking-tight">
+                                    {player.playerName.split(' ').map(name => name[0]).join('').slice(0, 2)}
+                                  </div>
+                                  <div className="text-xs opacity-90 font-medium">
+                                    {player.team}
+                                  </div>
+                                </div>
+                              </div>
                               <div className="text-gray-600 text-sm">{player.position} - {player.team}</div>
                             </div>
                           </div>
