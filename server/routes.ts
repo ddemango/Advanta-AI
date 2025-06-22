@@ -545,19 +545,20 @@ async function generateCustomDraftAnalysis(draftData: {
     ]
   };
 
-  // Get available players for current round - adjust pick number to realistic ranges
-  let playerPool;
-  const adjustedPick = pickNumber;
+  // Calculate realistic pick number based on round and position in 12-team league
+  const calculatedPick = (currentRound - 1) * 12 + (pickNumber > 12 ? pickNumber % 12 || 12 : pickNumber);
   
-  if (adjustedPick <= 12) playerPool = draftBoard[1];
-  else if (adjustedPick <= 24) playerPool = draftBoard[2];
-  else if (adjustedPick <= 36) playerPool = draftBoard[3];
-  else if (adjustedPick <= 48) playerPool = draftBoard[4];
-  else if (adjustedPick <= 60) playerPool = draftBoard[5];
-  else if (adjustedPick <= 72) playerPool = draftBoard[6];
-  else if (adjustedPick <= 84) playerPool = draftBoard[7];
-  else if (adjustedPick <= 96) playerPool = draftBoard[8];
-  else if (adjustedPick <= 108) playerPool = draftBoard[9];
+  // Get available players based on calculated overall pick
+  let playerPool;
+  if (calculatedPick <= 12) playerPool = draftBoard[1];
+  else if (calculatedPick <= 24) playerPool = draftBoard[2];
+  else if (calculatedPick <= 36) playerPool = draftBoard[3];
+  else if (calculatedPick <= 48) playerPool = draftBoard[4];
+  else if (calculatedPick <= 60) playerPool = draftBoard[5];
+  else if (calculatedPick <= 72) playerPool = draftBoard[6];
+  else if (calculatedPick <= 84) playerPool = draftBoard[7];
+  else if (calculatedPick <= 96) playerPool = draftBoard[8];
+  else if (calculatedPick <= 108) playerPool = draftBoard[9];
   else playerPool = draftBoard[10];
   
   const availablePlayers = playerPool || draftBoard[10];
