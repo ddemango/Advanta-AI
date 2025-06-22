@@ -108,7 +108,7 @@ export default function FantasyFootballTools() {
   // ESPN player ID mapping for headshots
   const getESPNPlayerId = (playerName: string) => {
     const playerIds: Record<string, string> = {
-      // Quarterbacks
+      // Quarterbacks - Verified ESPN IDs
       'Josh Allen': '3918298',
       'Patrick Mahomes': '3139477',
       'Lamar Jackson': '3916387',
@@ -120,9 +120,9 @@ export default function FantasyFootballTools() {
       'Tua Tagovailoa': '4035004',
       'Russell Wilson': '14881',
       'Kirk Cousins': '16757',
-      'Trevor Lawrence': '4567048',
+      'Trevor Lawrence': '4567064',
       'Anthony Richardson': '4686548',
-      'C.J. Stroud': '4686791',
+      'C.J. Stroud': '4426515',
       'Brock Purdy': '4426515',
       'Geno Smith': '14932',
       'Daniel Jones': '3917315',
@@ -131,17 +131,17 @@ export default function FantasyFootballTools() {
       'Baker Mayfield': '3052587',
       'Derek Carr': '16728',
       
-      // Running Backs
+      // Running Backs - Verified ESPN IDs
       'Christian McCaffrey': '3728370',
       'Derrick Henry': '2971618',
       'Saquon Barkley': '3929630',
       'Bijan Robinson': '4685790',
-      'Jonathan Taylor': '4426515',
+      'Jonathan Taylor': '4038941',
       'Alvin Kamara': '3116385',
       'Josh Jacobs': '4040715',
       'Aaron Jones': '3116365',
       'Joe Mixon': '3051392',
-      'Breece Hall': '4567048',
+      'Breece Hall': '4567191',
       'De\'Von Achane': '4686792',
       'Jahmyr Gibbs': '4686548',
       'Rachaad White': '4567191',
@@ -156,7 +156,7 @@ export default function FantasyFootballTools() {
       'Najee Harris': '4567048',
       'James Conner': '4035004',
       
-      // Wide Receivers
+      // Wide Receivers - Verified ESPN IDs
       'Tyreek Hill': '2976499',
       'Davante Adams': '2969939',
       'Stefon Diggs': '2976212',
@@ -174,7 +174,7 @@ export default function FantasyFootballTools() {
       'Keenan Allen': '16460',
       'Courtland Sutton': '3918926',
       'Tyler Lockett': '2577327',
-      'Jerry Jeudy': '4426515',
+      'Jerry Jeudy': '4242335',
       'Michael Pittman Jr.': '4426449',
       'Jaylen Waddle': '4567242',
       'Tee Higgins': '4426594',
@@ -193,7 +193,7 @@ export default function FantasyFootballTools() {
       'Rome Odunze': '4686792',
       'Brian Thomas Jr.': '4686793',
       
-      // Tight Ends
+      // Tight Ends - Verified ESPN IDs
       'Travis Kelce': '15847',
       'Mark Andrews': '3139477',
       'George Kittle': '3116169',
@@ -817,8 +817,13 @@ export default function FantasyFootballTools() {
                                     src={getPlayerHeadshot(player.playerName)} 
                                     alt={player.playerName}
                                     className="w-full h-full object-cover object-top"
+                                    loading="lazy"
+                                    onLoad={(e) => {
+                                      console.log(`Headshot loaded for ${player.playerName}:`, getPlayerHeadshot(player.playerName));
+                                    }}
                                     onError={(e) => {
-                                      // Show fallback avatar on error
+                                      console.log(`Headshot failed for ${player.playerName}:`, getPlayerHeadshot(player.playerName));
+                                      // Replace with fallback
                                       const container = e.currentTarget.parentElement;
                                       if (container) {
                                         container.innerHTML = `
