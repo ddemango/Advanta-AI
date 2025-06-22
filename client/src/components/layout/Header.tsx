@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import customLogo from '@assets/ChatGPT Image Jun 2, 2025, 12_02_20 PM.png';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-export default function Header() {
+export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [aiPlatformOpen, setAiPlatformOpen] = useState(false);
@@ -224,6 +224,12 @@ export default function Header() {
                     className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
                   >
                     🏈 Fantasy Football Tools
+                  </a>
+                  <a 
+                    onClick={() => setLocation('/movie-matchmaker')}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                  >
+                    🎬 AI Movie Matchmaker
                   </a>
                 </div>
               </div>
@@ -658,3 +664,5 @@ export default function Header() {
     </header>
   );
 }
+
+export default Header;
