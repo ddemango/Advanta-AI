@@ -458,11 +458,109 @@ async function generateCustomDraftAnalysis(draftData: {
       { name: "Russell Wilson", position: "QB", team: "PIT", adp: 41.8 },
       { name: "Kenneth Walker III", position: "RB", team: "SEA", adp: 42.3 },
       { name: "Jordan Love", position: "QB", team: "GB", adp: 42.9 }
+    ],
+    5: [
+      { name: "Michael Pittman Jr.", position: "WR", team: "IND", adp: 49.1 },
+      { name: "Diontae Johnson", position: "WR", team: "CAR", adp: 49.8 },
+      { name: "Jordan Addison", position: "WR", team: "MIN", adp: 50.2 },
+      { name: "Rome Odunze", position: "WR", team: "CHI", adp: 50.9 },
+      { name: "Zamir White", position: "RB", team: "LV", adp: 51.3 },
+      { name: "Marvin Harrison Jr.", position: "WR", team: "ARI", adp: 51.7 },
+      { name: "Brian Thomas Jr.", position: "WR", team: "JAX", adp: 52.1 },
+      { name: "Zay Flowers", position: "WR", team: "BAL", adp: 52.6 },
+      { name: "Dak Prescott", position: "QB", team: "DAL", adp: 53.2 },
+      { name: "Jayden Reed", position: "WR", team: "GB", adp: 53.8 },
+      { name: "Tank Dell", position: "WR", team: "HOU", adp: 54.3 },
+      { name: "Tua Tagovailoa", position: "QB", team: "MIA", adp: 54.9 }
+    ],
+    6: [
+      { name: "Nico Collins", position: "WR", team: "HOU", adp: 61.1 },
+      { name: "Christian Kirk", position: "WR", team: "JAX", adp: 61.8 },
+      { name: "Hollywood Brown", position: "WR", team: "KC", adp: 62.2 },
+      { name: "Malik Nabers", position: "WR", team: "NYG", adp: 62.9 },
+      { name: "Gus Edwards", position: "RB", team: "LAC", adp: 63.3 },
+      { name: "Xavier Worthy", position: "WR", team: "KC", adp: 63.7 },
+      { name: "Khalil Shakir", position: "WR", team: "BUF", adp: 64.1 },
+      { name: "Jalen Tolbert", position: "WR", team: "DAL", adp: 64.6 },
+      { name: "Anthony Richardson", position: "QB", team: "IND", adp: 65.2 },
+      { name: "Brock Bowers", position: "TE", team: "LV", adp: 65.8 },
+      { name: "Jaylen Warren", position: "RB", team: "PIT", adp: 66.3 },
+      { name: "C.J. Stroud", position: "QB", team: "HOU", adp: 66.9 }
+    ],
+    7: [
+      { name: "Curtis Samuel", position: "WR", team: "BUF", adp: 73.1 },
+      { name: "Darnell Mooney", position: "WR", team: "ATL", adp: 73.8 },
+      { name: "Rashid Shaheed", position: "WR", team: "NO", adp: 74.2 },
+      { name: "Josh Downs", position: "WR", team: "IND", adp: 74.9 },
+      { name: "Keon Coleman", position: "WR", team: "BUF", adp: 75.3 },
+      { name: "Ladd McConkey", position: "WR", team: "LAC", adp: 75.7 },
+      { name: "Isaiah Pacheco", position: "RB", team: "KC", adp: 76.1 },
+      { name: "Tre Tucker", position: "WR", team: "LV", adp: 76.6 },
+      { name: "Caleb Williams", position: "QB", team: "CHI", adp: 77.2 },
+      { name: "Rico Dowdle", position: "RB", team: "DAL", adp: 77.8 },
+      { name: "Tyler Boyd", position: "WR", team: "TEN", adp: 78.3 },
+      { name: "Jalen McMillan", position: "WR", team: "TB", adp: 78.9 }
+    ],
+    8: [
+      { name: "Jerry Jeudy", position: "WR", team: "CLE", adp: 85.1 },
+      { name: "Demario Douglas", position: "WR", team: "NE", adp: 85.8 },
+      { name: "Adonai Mitchell", position: "WR", team: "IND", adp: 86.2 },
+      { name: "Jameson Williams", position: "WR", team: "DET", adp: 86.9 },
+      { name: "Ray-Ray McCloud", position: "WR", team: "ATL", adp: 87.3 },
+      { name: "Jahan Dotson", position: "WR", team: "PHI", adp: 87.7 },
+      { name: "Tutu Atwell", position: "WR", team: "LAR", adp: 88.1 },
+      { name: "Cedric Tillman", position: "WR", team: "CLE", adp: 88.6 },
+      { name: "Bo Nix", position: "QB", team: "DEN", adp: 89.2 },
+      { name: "Ty Chandler", position: "RB", team: "MIN", adp: 89.8 },
+      { name: "Jordan Mason", position: "RB", team: "SF", adp: 90.3 },
+      { name: "Tyler Huntley", position: "QB", team: "MIA", adp: 90.9 }
+    ],
+    9: [
+      { name: "Jalen Coker", position: "WR", team: "CAR", adp: 97.1 },
+      { name: "DeAndre Washington", position: "RB", team: "KC", adp: 97.8 },
+      { name: "Wandale Robinson", position: "WR", team: "NYG", adp: 98.2 },
+      { name: "Raheem Mostert", position: "RB", team: "MIA", adp: 98.9 },
+      { name: "Elijah Higgins", position: "WR", team: "ARI", adp: 99.3 },
+      { name: "Jaxon Smith-Njigba", position: "WR", team: "SEA", adp: 99.7 },
+      { name: "Romeo Doubs", position: "WR", team: "GB", adp: 100.1 },
+      { name: "Joshua Palmer", position: "WR", team: "LAC", adp: 100.6 },
+      { name: "Drake Maye", position: "QB", team: "NE", adp: 101.2 },
+      { name: "Devin Singletary", position: "RB", team: "NYG", adp: 101.8 },
+      { name: "Cam Akers", position: "RB", team: "HOU", adp: 102.3 },
+      { name: "Will Levis", position: "QB", team: "TEN", adp: 102.9 }
+    ],
+    10: [
+      { name: "Quentin Johnston", position: "WR", team: "LAC", adp: 109.1 },
+      { name: "Deon Jackson", position: "RB", team: "NYG", adp: 109.8 },
+      { name: "Rondale Moore", position: "WR", team: "ARI", adp: 110.2 },
+      { name: "Tyjae Spears", position: "RB", team: "TEN", adp: 110.9 },
+      { name: "Jalen Reagor", position: "WR", team: "LAC", adp: 111.3 },
+      { name: "Tyler Allgeier", position: "RB", team: "ATL", adp: 111.7 },
+      { name: "Mike Williams", position: "WR", team: "NYJ", adp: 112.1 },
+      { name: "Chuba Hubbard", position: "RB", team: "CAR", adp: 112.6 },
+      { name: "Jaylen Wright", position: "RB", team: "MIA", adp: 113.2 },
+      { name: "Tucker Kraft", position: "TE", team: "GB", adp: 113.8 },
+      { name: "Alexander Mattison", position: "RB", team: "LV", adp: 114.3 },
+      { name: "Gardner Minshew", position: "QB", team: "LV", adp: 114.9 }
     ]
   };
 
-  // Get available players for current round
-  const availablePlayers = draftBoard[currentRound] || draftBoard[4] || draftBoard[3];
+  // Get available players for current round - adjust pick number to realistic ranges
+  let playerPool;
+  const adjustedPick = pickNumber;
+  
+  if (adjustedPick <= 12) playerPool = draftBoard[1];
+  else if (adjustedPick <= 24) playerPool = draftBoard[2];
+  else if (adjustedPick <= 36) playerPool = draftBoard[3];
+  else if (adjustedPick <= 48) playerPool = draftBoard[4];
+  else if (adjustedPick <= 60) playerPool = draftBoard[5];
+  else if (adjustedPick <= 72) playerPool = draftBoard[6];
+  else if (adjustedPick <= 84) playerPool = draftBoard[7];
+  else if (adjustedPick <= 96) playerPool = draftBoard[8];
+  else if (adjustedPick <= 108) playerPool = draftBoard[9];
+  else playerPool = draftBoard[10];
+  
+  const availablePlayers = playerPool || draftBoard[10];
   
   // Score players based on league needs and settings
   const scoredPlayers = availablePlayers.map(player => {
