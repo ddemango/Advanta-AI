@@ -427,26 +427,42 @@ async function generateCustomDraftAnalysis(draftData: {
       { name: "Breece Hall", position: "RB", team: "NYJ", adp: 17.4 },
       { name: "George Kittle", position: "TE", team: "SF", adp: 18.1 },
       { name: "Josh Jacobs", position: "RB", team: "GB", adp: 18.7 },
-      { name: "DeAndre Hopkins", position: "WR", team: "TEN", adp: 19.3 }
+      { name: "DeAndre Hopkins", position: "WR", team: "TEN", adp: 19.3 },
+      { name: "Tua Tagovailoa", position: "QB", team: "MIA", adp: 20.1 },
+      { name: "Calvin Ridley", position: "WR", team: "TEN", adp: 20.8 }
     ],
     3: [
       { name: "Aaron Jones", position: "RB", team: "MIN", adp: 25.1 },
       { name: "Joe Mixon", position: "RB", team: "HOU", adp: 25.8 },
       { name: "Mike Evans", position: "WR", team: "TB", adp: 26.2 },
       { name: "DK Metcalf", position: "WR", team: "SEA", adp: 26.9 },
-      { name: "Calvin Ridley", position: "WR", team: "TEN", adp: 27.4 },
       { name: "Jalen Hurts", position: "QB", team: "PHI", adp: 27.8 },
       { name: "De'Von Achane", position: "RB", team: "MIA", adp: 28.3 },
       { name: "Chris Godwin", position: "WR", team: "TB", adp: 28.7 },
       { name: "Jahmyr Gibbs", position: "RB", team: "DET", adp: 29.2 },
       { name: "Garrett Wilson", position: "WR", team: "NYJ", adp: 29.6 },
       { name: "Kyle Pitts", position: "TE", team: "ATL", adp: 30.1 },
-      { name: "Rachaad White", position: "RB", team: "TB", adp: 30.7 }
+      { name: "Rachaad White", position: "RB", team: "TB", adp: 30.7 },
+      { name: "Terry McLaurin", position: "WR", team: "WAS", adp: 31.2 }
+    ],
+    4: [
+      { name: "Amari Cooper", position: "WR", team: "CLE", adp: 37.1 },
+      { name: "DJ Moore", position: "WR", team: "CHI", adp: 37.8 },
+      { name: "Keenan Allen", position: "WR", team: "CHI", adp: 38.2 },
+      { name: "Tee Higgins", position: "WR", team: "CIN", adp: 38.9 },
+      { name: "Dallas Goedert", position: "TE", team: "PHI", adp: 39.3 },
+      { name: "James Cook", position: "RB", team: "BUF", adp: 39.7 },
+      { name: "Courtland Sutton", position: "WR", team: "DEN", adp: 40.1 },
+      { name: "Tyler Lockett", position: "WR", team: "SEA", adp: 40.6 },
+      { name: "Rhamondre Stevenson", position: "RB", team: "NE", adp: 41.2 },
+      { name: "Russell Wilson", position: "QB", team: "PIT", adp: 41.8 },
+      { name: "Kenneth Walker III", position: "RB", team: "SEA", adp: 42.3 },
+      { name: "Jordan Love", position: "QB", team: "GB", adp: 42.9 }
     ]
   };
 
   // Get available players for current round
-  const availablePlayers = draftBoard[currentRound] || draftBoard[3];
+  const availablePlayers = draftBoard[currentRound] || draftBoard[4] || draftBoard[3];
   
   // Score players based on league needs and settings
   const scoredPlayers = availablePlayers.map(player => {
@@ -3972,72 +3988,15 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(400).json({ message: 'League type and current round are required' });
       }
 
-      const draftPrompt = `You are a fantasy football draft expert analyzing a ${leagueType} league draft situation.
-
-League Settings:
-- League Type: ${leagueType}
-- Scoring: ${scoringSettings}
-- Current Round: ${currentRound}
-- Pick Number: ${pickNumber}
-- Roster Needs: ${rosterNeeds.join(', ')}
-
-Based on this draft situation, provide expert analysis in this JSON format:
-
-{
-  "bestPick": {
-    "name": "[Player Name]",
-    "position": "[Position]", 
-    "team": "[NFL Team]",
-    "analysis": "[Detailed reasoning for this pick]",
-    "confidence": [confidence percentage as number]
-  },
-  "alternatives": [
-    {
-      "name": "[Alternative Player]",
-      "position": "[Position]",
-      "team": "[Team]", 
-      "reason": "[Why this is a good alternative]"
-    }
-  ],
-  "strategyTips": [
-    "[Strategy tip 1]",
-    "[Strategy tip 2]"
-  ],
-  "positionalScarcity": [
-    "[Scarcity warning if applicable]"
-  ]
-}
-
-Consider:
-- Current ADP (Average Draft Position) for round ${currentRound}
-- Positional value and scarcity
-- League format impact (${leagueType})
-- Team offensive schemes and target distribution
-- Upcoming schedule strength
-- Injury concerns and depth charts`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: "You are a fantasy football expert providing draft advice based on current NFL data and league settings."
-          },
-          {
-            role: "user",
-            content: draftPrompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3
+      // Use custom draft analysis engine directly
+      const draftAnalysis = await generateCustomDraftAnalysis({
+        leagueType,
+        rosterNeeds,
+        currentRound: parseInt(currentRound),
+        pickNumber: parseInt(pickNumber),
+        scoringSettings
       });
 
-      const messageContent = response.choices[0].message.content;
-      if (!messageContent) {
-        throw new Error('No response from AI');
-      }
-
-      const draftAnalysis = JSON.parse(messageContent);
       res.json(draftAnalysis);
     } catch (error) {
       console.error('Error generating draft analysis:', error);
