@@ -151,34 +151,54 @@ export default function FantasyFootballTools() {
     return `https://a.espncdn.com/i/headshots/nfl/players/full/${formattedName}.png`;
   };
 
-  const searchPlayers = (query: string, position?: string): string[] => {
+  const searchPlayers = async (query: string, position?: string): Promise<string[]> => {
     if (!query || query.length < 2) return [];
     
-    const uniquePlayers = nflPlayers.filter((player: any, index: number, self: any[]) => 
-      index === self.findIndex((p: any) => p.name === player.name)
-    );
-    
-    return uniquePlayers
-      .filter((player: any) => {
-        const nameMatch = player.name.toLowerCase().includes(query.toLowerCase());
-        const positionMatch = !position || player.position === position;
-        return nameMatch && positionMatch;
-      })
-      .slice(0, 15)
-      .map((player: any) => player.name);
+    try {
+      const params = new URLSearchParams({ query });
+      if (position) params.append('position', position);
+      
+      console.log('Searching for players with query:', query, 'position:', position);
+      const response = await fetch(`/api/nfl-players?${params}`);
+      if (!response.ok) {
+        console.error('API response not ok:', response.status);
+        return [];
+      }
+      
+      const players = await response.json();
+      console.log('API returned players:', players);
+      const playerNames = players.map((player: any) => player.name);
+      console.log('Player names:', playerNames);
+      return playerNames;
+    } catch (error) {
+      console.error('Error searching players:', error);
+      return [];
+    }
   };
 
   // Event handlers
-  const handlePlayer1Change = (value: string) => {
+  const handlePlayer1Change = async (value: string) => {
     setStartSitData(prev => ({ ...prev, player1: value }));
-    setPlayer1Suggestions(searchPlayers(value, startSitData.position));
-    setShowPlayer1Dropdown(value.length >= 2);
+    if (value.length >= 2) {
+      const suggestions = await searchPlayers(value, startSitData.position);
+      setPlayer1Suggestions(suggestions);
+      setShowPlayer1Dropdown(true);
+    } else {
+      setPlayer1Suggestions([]);
+      setShowPlayer1Dropdown(false);
+    }
   };
 
-  const handlePlayer2Change = (value: string) => {
+  const handlePlayer2Change = async (value: string) => {
     setStartSitData(prev => ({ ...prev, player2: value }));
-    setPlayer2Suggestions(searchPlayers(value, startSitData.position));
-    setShowPlayer2Dropdown(value.length >= 2);
+    if (value.length >= 2) {
+      const suggestions = await searchPlayers(value, startSitData.position);
+      setPlayer2Suggestions(suggestions);
+      setShowPlayer2Dropdown(true);
+    } else {
+      setPlayer2Suggestions([]);
+      setShowPlayer2Dropdown(false);
+    }
   };
 
   const handlePlayerSelect = (playerName: string, field: 'player1' | 'player2') => {
