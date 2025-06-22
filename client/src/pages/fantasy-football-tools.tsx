@@ -105,7 +105,124 @@ export default function FantasyFootballTools() {
   const player1Ref = useRef<HTMLInputElement>(null);
   const player2Ref = useRef<HTMLInputElement>(null);
 
-  // Team color gradients for player avatars
+  // ESPN player ID mapping for headshots
+  const getESPNPlayerId = (playerName: string) => {
+    const playerIds: Record<string, string> = {
+      // Quarterbacks
+      'Josh Allen': '3918298',
+      'Patrick Mahomes': '3139477',
+      'Lamar Jackson': '3916387',
+      'Joe Burrow': '4040715',
+      'Jalen Hurts': '4361370',
+      'Dak Prescott': '2577417',
+      'Justin Herbert': '4262921',
+      'Aaron Rodgers': '8439',
+      'Tua Tagovailoa': '4035004',
+      'Russell Wilson': '14881',
+      'Kirk Cousins': '16757',
+      'Trevor Lawrence': '4567048',
+      'Anthony Richardson': '4686548',
+      'C.J. Stroud': '4686791',
+      'Brock Purdy': '4426515',
+      'Geno Smith': '14932',
+      'Daniel Jones': '3917315',
+      'Kyler Murray': '4361259',
+      'Matthew Stafford': '12519',
+      'Baker Mayfield': '3052587',
+      'Derek Carr': '16728',
+      
+      // Running Backs
+      'Christian McCaffrey': '3728370',
+      'Derrick Henry': '2971618',
+      'Saquon Barkley': '3929630',
+      'Bijan Robinson': '4685790',
+      'Jonathan Taylor': '4426515',
+      'Alvin Kamara': '3116385',
+      'Josh Jacobs': '4040715',
+      'Aaron Jones': '3116365',
+      'Joe Mixon': '3051392',
+      'Breece Hall': '4567048',
+      'De\'Von Achane': '4686792',
+      'Jahmyr Gibbs': '4686548',
+      'Rachaad White': '4567191',
+      'Kenneth Walker III': '4567053',
+      'Tony Pollard': '4426384',
+      'James Cook': '4567242',
+      'Rhamondre Stevenson': '4426449',
+      'David Montgomery': '4035228',
+      'Kyren Williams': '4567048',
+      'Nick Chubb': '3929630',
+      'Travis Etienne': '4567048',
+      'Najee Harris': '4567048',
+      'James Conner': '4035004',
+      
+      // Wide Receivers
+      'Tyreek Hill': '2976499',
+      'Davante Adams': '2969939',
+      'Stefon Diggs': '2976212',
+      'Cooper Kupp': '3116593',
+      'CeeDee Lamb': '4360310',
+      'A.J. Brown': '4426384',
+      'Ja\'Marr Chase': '4431050',
+      'Justin Jefferson': '4035004',
+      'DeAndre Hopkins': '15725',
+      'Mike Evans': '16737',
+      'Chris Godwin': '2330634',
+      'DK Metcalf': '4361182',
+      'Terry McLaurin': '4240069',
+      'Amari Cooper': '2972235',
+      'Keenan Allen': '16460',
+      'Courtland Sutton': '3918926',
+      'Tyler Lockett': '2577327',
+      'Jerry Jeudy': '4426515',
+      'Michael Pittman Jr.': '4426449',
+      'Jaylen Waddle': '4567242',
+      'Tee Higgins': '4426594',
+      'Amon-Ra St. Brown': '4567191',
+      'Calvin Ridley': '3139925',
+      'Garrett Wilson': '4426432',
+      'Chris Olave': '4567053',
+      'Brandon Aiyuk': '4567048',
+      'DeVonta Smith': '4567242',
+      'DJ Moore': '3139477',
+      'Diontae Johnson': '4040715',
+      'Tank Dell': '4686548',
+      'Nico Collins': '4567191',
+      'Marvin Harrison Jr.': '4685790',
+      'Malik Nabers': '4686791',
+      'Rome Odunze': '4686792',
+      'Brian Thomas Jr.': '4686793',
+      
+      // Tight Ends
+      'Travis Kelce': '15847',
+      'Mark Andrews': '3139477',
+      'George Kittle': '3116169',
+      'T.J. Hockenson': '4262169',
+      'Kyle Pitts': '4567048',
+      'Dallas Goedert': '3116365',
+      'Evan Engram': '3051392',
+      'Pat Freiermuth': '4567053',
+      'David Njoku': '3929630',
+      'Jake Ferguson': '4686548',
+      'Sam LaPorta': '4686791',
+      'Dalton Kincaid': '4686792',
+      'Trey McBride': '4567191',
+      'Cole Kmet': '4426449',
+      'Tyler Higbee': '3116593'
+    };
+    return playerIds[playerName];
+  };
+
+  // Get player headshot URL
+  const getPlayerHeadshot = (playerName: string) => {
+    const espnId = getESPNPlayerId(playerName);
+    if (espnId) {
+      return `https://a.espncdn.com/i/headshots/nfl/players/full/${espnId}.png`;
+    }
+    return null;
+  };
+
+  // Team color gradients for fallback avatars
   const getTeamGradient = (team: string) => {
     const teamColors: Record<string, string> = {
       'BUF': 'bg-gradient-to-br from-blue-600 to-red-600',
@@ -694,16 +811,44 @@ export default function FantasyFootballTools() {
                           {/* Player Card */}
                           <div className="bg-gray-200 rounded-lg p-6 mb-4 min-h-[200px] flex items-center justify-center">
                             <div className="text-center">
-                              <div className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 ${getTeamGradient(player.team)}`}>
-                                <div className="text-center">
-                                  <div className="text-lg font-black tracking-tight">
-                                    {player.playerName.split(' ').map(name => name[0]).join('').slice(0, 2)}
-                                  </div>
-                                  <div className="text-xs opacity-90 font-medium">
-                                    {player.team}
+                              {getPlayerHeadshot(player.playerName) ? (
+                                <div className="w-20 h-20 rounded-full mx-auto mb-2 overflow-hidden border-2 border-white/20 shadow-lg bg-gray-100">
+                                  <img 
+                                    src={getPlayerHeadshot(player.playerName)} 
+                                    alt={player.playerName}
+                                    className="w-full h-full object-cover object-top"
+                                    onError={(e) => {
+                                      // Show fallback avatar on error
+                                      const container = e.currentTarget.parentElement;
+                                      if (container) {
+                                        container.innerHTML = `
+                                          <div class="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 ${getTeamGradient(player.team)}">
+                                            <div class="text-center">
+                                              <div class="text-lg font-black tracking-tight">
+                                                ${player.playerName.split(' ').map(name => name[0]).join('').slice(0, 2)}
+                                              </div>
+                                              <div class="text-xs opacity-90 font-medium">
+                                                ${player.team}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        `;
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <div className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 ${getTeamGradient(player.team)}`}>
+                                  <div className="text-center">
+                                    <div className="text-lg font-black tracking-tight">
+                                      {player.playerName.split(' ').map(name => name[0]).join('').slice(0, 2)}
+                                    </div>
+                                    <div className="text-xs opacity-90 font-medium">
+                                      {player.team}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
+                              )}
                               <div className="text-gray-600 text-sm">{player.position} - {player.team}</div>
                             </div>
                           </div>
