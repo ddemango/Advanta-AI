@@ -4594,6 +4594,11 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         { imdbId: 'tt1877830', title: 'The Batman', year: 2022, genres: ['Action', 'Crime', 'Drama'], rating: 7.8, runtime: 176 },
         { imdbId: 'tt9376612', title: 'Shang-Chi and the Legend of the Ten Rings', year: 2021, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.4, runtime: 132 },
         { imdbId: 'tt9032400', title: 'Eternals', year: 2021, genres: ['Action', 'Adventure', 'Drama'], rating: 6.3, runtime: 156 },
+        { imdbId: 'tt15398776', title: 'Oppenheimer', year: 2023, genres: ['Biography', 'Drama', 'History'], rating: 8.3, runtime: 180 },
+        { imdbId: 'tt6806448', title: 'Fast X', year: 2023, genres: ['Action', 'Adventure', 'Crime'], rating: 5.8, runtime: 141 },
+        { imdbId: 'tt1462764', title: 'Indiana Jones and the Dial of Destiny', year: 2023, genres: ['Action', 'Adventure'], rating: 6.5, runtime: 154 },
+        { imdbId: 'tt15239678', title: 'Dune: Part Two', year: 2024, genres: ['Action', 'Adventure', 'Drama'], rating: 8.5, runtime: 166 },
+        { imdbId: 'tt6263850', title: 'Super Mario Bros. Movie', year: 2023, genres: ['Animation', 'Adventure', 'Comedy'], rating: 7.0, runtime: 92 },
         
         // 2010s Movies
         { imdbId: 'tt0816692', title: 'Interstellar', year: 2014, genres: ['Sci-Fi', 'Drama', 'Adventure'], rating: 8.6, runtime: 169 },
@@ -4601,6 +4606,11 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         { imdbId: 'tt4154756', title: 'Avengers: Endgame', year: 2019, genres: ['Action', 'Adventure', 'Drama'], rating: 8.4, runtime: 181 },
         { imdbId: 'tt1345836', title: 'The Dark Knight Rises', year: 2012, genres: ['Action', 'Crime', 'Drama'], rating: 8.4, runtime: 164 },
         { imdbId: 'tt2582802', title: 'Whiplash', year: 2014, genres: ['Drama', 'Music'], rating: 8.5, runtime: 106 },
+        { imdbId: 'tt1853728', title: 'Django Unchained', year: 2012, genres: ['Drama', 'Western'], rating: 8.4, runtime: 165 },
+        { imdbId: 'tt2084970', title: 'The Imitation Game', year: 2014, genres: ['Biography', 'Drama', 'Thriller'], rating: 8.0, runtime: 114 },
+        { imdbId: 'tt2267998', title: 'Gone Girl', year: 2014, genres: ['Drama', 'Mystery', 'Thriller'], rating: 8.1, runtime: 149 },
+        { imdbId: 'tt2096673', title: 'Inside Out', year: 2015, genres: ['Animation', 'Adventure', 'Comedy'], rating: 8.2, runtime: 95 },
+        { imdbId: 'tt2488496', title: 'Star Wars: The Force Awakens', year: 2015, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.8, runtime: 138 },
         
         // 2000s Movies
         { imdbId: 'tt0468569', title: 'The Dark Knight', year: 2008, genres: ['Action', 'Crime', 'Drama'], rating: 9.0, runtime: 152 },
@@ -4636,10 +4646,10 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         filteredMovies = filteredMovies.filter(movie => movie.runtime <= preferences.maxRuntime);
       }
       
-      // Genre filtering
+      // Genre filtering - ALL selected genres must be present
       if (preferences.genres.length > 0) {
         filteredMovies = filteredMovies.filter(movie => 
-          movie.genres.some(g => preferences.genres.includes(g))
+          preferences.genres.every(selectedGenre => movie.genres.includes(selectedGenre))
         );
       }
       
