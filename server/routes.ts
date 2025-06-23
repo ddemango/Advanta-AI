@@ -4586,53 +4586,101 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
     try {
       const preferences = req.body;
       
-      // Test TMDB ID lookup for multiple movies
-      const testMovies = [
-        { imdbId: 'tt0816692', title: 'Interstellar', year: 2014, genres: ['Sci-Fi', 'Drama'], rating: 8.6, runtime: 169 },
+      // Comprehensive movie database with decade-appropriate selections
+      const allMovies = [
+        // 2020s Movies
+        { imdbId: 'tt6751668', title: 'Parasite', year: 2019, genres: ['Comedy', 'Drama', 'Thriller'], rating: 8.6, runtime: 132 },
+        { imdbId: 'tt10872600', title: 'Spider-Man: No Way Home', year: 2021, genres: ['Action', 'Adventure', 'Sci-Fi'], rating: 8.2, runtime: 148 },
+        { imdbId: 'tt1877830', title: 'The Batman', year: 2022, genres: ['Action', 'Crime', 'Drama'], rating: 7.8, runtime: 176 },
+        { imdbId: 'tt9376612', title: 'Shang-Chi and the Legend of the Ten Rings', year: 2021, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.4, runtime: 132 },
+        { imdbId: 'tt9032400', title: 'Eternals', year: 2021, genres: ['Action', 'Adventure', 'Drama'], rating: 6.3, runtime: 156 },
+        
+        // 2010s Movies
+        { imdbId: 'tt0816692', title: 'Interstellar', year: 2014, genres: ['Sci-Fi', 'Drama', 'Adventure'], rating: 8.6, runtime: 169 },
+        { imdbId: 'tt1375666', title: 'Inception', year: 2010, genres: ['Action', 'Sci-Fi', 'Thriller'], rating: 8.8, runtime: 148 },
+        { imdbId: 'tt4154756', title: 'Avengers: Endgame', year: 2019, genres: ['Action', 'Adventure', 'Drama'], rating: 8.4, runtime: 181 },
+        { imdbId: 'tt1345836', title: 'The Dark Knight Rises', year: 2012, genres: ['Action', 'Crime', 'Drama'], rating: 8.4, runtime: 164 },
+        { imdbId: 'tt2582802', title: 'Whiplash', year: 2014, genres: ['Drama', 'Music'], rating: 8.5, runtime: 106 },
+        
+        // 2000s Movies
+        { imdbId: 'tt0468569', title: 'The Dark Knight', year: 2008, genres: ['Action', 'Crime', 'Drama'], rating: 9.0, runtime: 152 },
+        { imdbId: 'tt0137523', title: 'Fight Club', year: 1999, genres: ['Drama'], rating: 8.8, runtime: 139 },
+        { imdbId: 'tt0167260', title: 'The Lord of the Rings: The Return of the King', year: 2003, genres: ['Action', 'Adventure', 'Drama'], rating: 9.0, runtime: 201 },
+        { imdbId: 'tt0133093', title: 'The Matrix', year: 1999, genres: ['Action', 'Sci-Fi'], rating: 8.7, runtime: 136 },
+        { imdbId: 'tt0910970', title: 'WALL-E', year: 2008, genres: ['Animation', 'Adventure', 'Family'], rating: 8.4, runtime: 98 },
+        
+        // 1990s Movies
         { imdbId: 'tt0111161', title: 'The Shawshank Redemption', year: 1994, genres: ['Drama'], rating: 9.3, runtime: 142 },
-        { imdbId: 'tt1375666', title: 'Inception', year: 2010, genres: ['Action', 'Sci-Fi'], rating: 8.8, runtime: 148 }
+        { imdbId: 'tt0110912', title: 'Pulp Fiction', year: 1994, genres: ['Crime', 'Drama'], rating: 8.9, runtime: 154 },
+        { imdbId: 'tt0109830', title: 'Forrest Gump', year: 1994, genres: ['Drama', 'Romance'], rating: 8.8, runtime: 142 },
+        { imdbId: 'tt0120737', title: 'The Lord of the Rings: The Fellowship of the Ring', year: 2001, genres: ['Action', 'Adventure', 'Drama'], rating: 8.8, runtime: 178 },
+        { imdbId: 'tt0114369', title: 'Se7en', year: 1995, genres: ['Crime', 'Drama', 'Mystery'], rating: 8.6, runtime: 127 },
+        
+        // 1980s Movies
+        { imdbId: 'tt0080684', title: 'Star Wars: The Empire Strikes Back', year: 1980, genres: ['Action', 'Adventure', 'Fantasy'], rating: 8.7, runtime: 124 },
+        { imdbId: 'tt0088763', title: 'Back to the Future', year: 1985, genres: ['Adventure', 'Comedy', 'Sci-Fi'], rating: 8.5, runtime: 116 },
+        { imdbId: 'tt0082971', title: 'Raiders of the Lost Ark', year: 1981, genres: ['Action', 'Adventure'], rating: 8.4, runtime: 115 },
+        { imdbId: 'tt0086190', title: 'Star Wars: Return of the Jedi', year: 1983, genres: ['Action', 'Adventure', 'Fantasy'], rating: 8.3, runtime: 131 },
+        { imdbId: 'tt0087843', title: 'The Terminator', year: 1984, genres: ['Action', 'Sci-Fi'], rating: 8.0, runtime: 107 }
       ];
+
+      // Filter movies based on preferences
+      let filteredMovies = allMovies;
+
+      // Apply preference filters
+      if (preferences.minRating > 0) {
+        filteredMovies = filteredMovies.filter(movie => movie.rating >= preferences.minRating);
+      }
+      
+      if (preferences.maxRuntime < 999) {
+        filteredMovies = filteredMovies.filter(movie => movie.runtime <= preferences.maxRuntime);
+      }
+      
+      // Genre filtering
+      if (preferences.genres.length > 0) {
+        filteredMovies = filteredMovies.filter(movie => 
+          movie.genres.some(g => preferences.genres.includes(g))
+        );
+      }
+      
+      // Decade filtering - Fixed logic
+      if (preferences.decadePreference !== 'any') {
+        filteredMovies = filteredMovies.filter(movie => {
+          switch (preferences.decadePreference) {
+            case '2020s': return movie.year >= 2020;
+            case '2010s': return movie.year >= 2010 && movie.year < 2020;
+            case '2000s': return movie.year >= 2000 && movie.year < 2010;
+            case '1990s': return movie.year >= 1990 && movie.year < 2000;
+            case '1980s': return movie.year >= 1980 && movie.year < 1990;
+            case '1970s': return movie.year >= 1970 && movie.year < 1980;
+            case 'classic': return movie.year < 1970;
+            default: return true;
+          }
+        });
+      }
 
       let recommendations = [];
 
-      for (const movie of testMovies) {
+      // Process filtered movies (limit to 8 results)
+      for (const movie of filteredMovies.slice(0, 8)) {
         try {
-          // Get TMDB ID for each movie
-          const tmdbResponse = await fetch(`https://imdb236.p.rapidapi.com/imdb/${movie.imdbId}/tmdb-id`, {
-            method: 'GET',
-            headers: {
-              'X-Rapidapi-Key': '30642379c3msh6eec99f59873683p150d3djsn8bfe456fdd2b',
-              'X-Rapidapi-Host': 'imdb236.p.rapidapi.com'
-            }
-          });
-
+          // Get TMDB ID for poster images
           let tmdbId = null;
-          if (tmdbResponse.ok) {
-            const tmdbData = await tmdbResponse.json();
-            tmdbId = tmdbData.tmdb_id;
-          }
+          try {
+            const tmdbResponse = await fetch(`https://imdb236.p.rapidapi.com/imdb/${movie.imdbId}/tmdb-id`, {
+              method: 'GET',
+              headers: {
+                'X-Rapidapi-Key': '30642379c3msh6eec99f59873683p150d3djsn8bfe456fdd2b',
+                'X-Rapidapi-Host': 'imdb236.p.rapidapi.com'
+              }
+            });
 
-          // Filter based on preferences
-          if (movie.rating < preferences.minRating) continue;
-          if (movie.runtime > preferences.maxRuntime) continue;
-          
-          // Genre filtering
-          if (preferences.genres.length > 0) {
-            const hasMatchingGenre = movie.genres.some(g => preferences.genres.includes(g));
-            if (!hasMatchingGenre) continue;
-          }
-          
-          // Decade filtering
-          if (preferences.decadePreference !== 'any' && movie.year) {
-            switch (preferences.decadePreference) {
-              case '2020s': if (movie.year < 2020) continue; break;
-              case '2010s': if (movie.year < 2010 || movie.year >= 2020) continue; break;
-              case '2000s': if (movie.year < 2000 || movie.year >= 2010) continue; break;
-              case '1990s': if (movie.year < 1990 || movie.year >= 2000) continue; break;
-              case '1980s': if (movie.year < 1980 || movie.year >= 1990) continue; break;
-              case '1970s': if (movie.year < 1970 || movie.year >= 1980) continue; break;
-              case 'classic': if (movie.year >= 1970) continue; break;
+            if (tmdbResponse.ok) {
+              const tmdbData = await tmdbResponse.json();
+              tmdbId = tmdbData.tmdb_id;
             }
+          } catch (error) {
+            console.log(`Could not fetch TMDB ID for ${movie.title}`);
           }
 
           recommendations.push({
@@ -4644,7 +4692,7 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
             plot: getMoviePlot(movie.title),
             director: getMovieDirector(movie.title),
             cast: getMovieCast(movie.title),
-            poster: "/api/placeholder/300/450",
+            poster: getMoviePoster(movie.title),
             imdbId: movie.imdbId,
             tmdbId: tmdbId,
             matchScore: Math.floor(Math.random() * 25) + 75,
@@ -4709,7 +4757,14 @@ function getMoviePlot(title: string): string {
   const plots = {
     'Interstellar': 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
     'The Shawshank Redemption': 'Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.',
-    'Inception': 'A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.'
+    'Inception': 'A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+    'Parasite': 'A poor family schemes to become employed by a wealthy family and infiltrate their household by posing as unrelated, highly qualified individuals.',
+    'Spider-Man: No Way Home': 'With Spider-Man\'s identity now revealed, Peter asks Doctor Strange for help. When a spell goes wrong, dangerous foes from other worlds start to appear.',
+    'The Batman': 'When a sadistic serial killer begins murdering key political figures in Gotham, Batman is forced to investigate the city\'s hidden corruption.',
+    'The Dark Knight': 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.',
+    'Avengers: Endgame': 'After the devastating events of Infinity War, the Avengers assemble once more to reverse Thanos\' actions and restore balance to the universe.',
+    'Pulp Fiction': 'The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption.',
+    'Back to the Future': 'Marty McFly, a 17-year-old high school student, is accidentally sent 30 years into the past in a time-traveling DeLorean.'
   };
   return plots[title] || 'A compelling story that will captivate audiences.';
 }
@@ -4718,7 +4773,14 @@ function getMovieDirector(title: string): string {
   const directors = {
     'Interstellar': 'Christopher Nolan',
     'The Shawshank Redemption': 'Frank Darabont',
-    'Inception': 'Christopher Nolan'
+    'Inception': 'Christopher Nolan',
+    'Parasite': 'Bong Joon Ho',
+    'Spider-Man: No Way Home': 'Jon Watts',
+    'The Batman': 'Matt Reeves',
+    'The Dark Knight': 'Christopher Nolan',
+    'Avengers: Endgame': 'Anthony Russo, Joe Russo',
+    'Pulp Fiction': 'Quentin Tarantino',
+    'Back to the Future': 'Robert Zemeckis'
   };
   return directors[title] || 'Acclaimed Director';
 }
@@ -4727,9 +4789,32 @@ function getMovieCast(title: string): string[] {
   const casts = {
     'Interstellar': ['Matthew McConaughey', 'Anne Hathaway', 'Jessica Chastain'],
     'The Shawshank Redemption': ['Tim Robbins', 'Morgan Freeman'],
-    'Inception': ['Leonardo DiCaprio', 'Marion Cotillard', 'Tom Hardy']
+    'Inception': ['Leonardo DiCaprio', 'Marion Cotillard', 'Tom Hardy'],
+    'Parasite': ['Song Kang-ho', 'Lee Sun-kyun', 'Cho Yeo-jeong'],
+    'Spider-Man: No Way Home': ['Tom Holland', 'Zendaya', 'Benedict Cumberbatch'],
+    'The Batman': ['Robert Pattinson', 'Zoë Kravitz', 'Paul Dano'],
+    'The Dark Knight': ['Christian Bale', 'Heath Ledger', 'Aaron Eckhart'],
+    'Avengers: Endgame': ['Robert Downey Jr.', 'Chris Evans', 'Mark Ruffalo'],
+    'Pulp Fiction': ['John Travolta', 'Uma Thurman', 'Samuel L. Jackson'],
+    'Back to the Future': ['Michael J. Fox', 'Christopher Lloyd', 'Lea Thompson']
   };
   return casts[title] || ['Talented Cast'];
+}
+
+function getMoviePoster(title: string): string {
+  const posters = {
+    'Interstellar': 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+    'The Shawshank Redemption': 'https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflyCy3FlaBA7VaY.jpg',
+    'Inception': 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
+    'Parasite': 'https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',
+    'Spider-Man: No Way Home': 'https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',
+    'The Batman': 'https://image.tmdb.org/t/p/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg',
+    'The Dark Knight': 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
+    'Avengers: Endgame': 'https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg',
+    'Pulp Fiction': 'https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg',
+    'Back to the Future': 'https://image.tmdb.org/t/p/w500/fNOH9f1aA7XRTzl1sAOx9iF553Q.jpg'
+  };
+  return posters[title] || 'https://image.tmdb.org/t/p/w500/placeholder.jpg';
 }
 
 function getCuratedRecommendations(preferences: any) {
