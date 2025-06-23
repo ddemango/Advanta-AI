@@ -383,12 +383,12 @@ export default function MovieMatchmaker() {
                           {/* Movie Poster */}
                           <div className="flex-shrink-0">
                             <img
-                              src={movie.poster || '/api/placeholder/200/300'}
+                              src={movie.poster}
                               alt={movie.title}
                               className="w-32 h-48 object-cover rounded-lg border border-white/20"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = '/api/placeholder/200/300';
+                                target.src = 'https://via.placeholder.com/200x300/333/fff?text=No+Image';
                               }}
                             />
                           </div>

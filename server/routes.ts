@@ -4588,8 +4588,8 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
       
       // Comprehensive movie database with decade-appropriate selections
       const allMovies = [
-        // 2020s Movies
-        { imdbId: 'tt6751668', title: 'Parasite', year: 2019, genres: ['Comedy', 'Drama', 'Thriller'], rating: 8.6, runtime: 132 },
+        // 2020s Movies  
+        { imdbId: 'tt6751668', title: 'Parasite', year: 2019, genres: ['Drama', 'Thriller'], rating: 8.6, runtime: 132 },
         { imdbId: 'tt10872600', title: 'Spider-Man: No Way Home', year: 2021, genres: ['Action', 'Adventure', 'Sci-Fi'], rating: 8.2, runtime: 148 },
         { imdbId: 'tt1877830', title: 'The Batman', year: 2022, genres: ['Action', 'Crime', 'Drama'], rating: 7.8, runtime: 176 },
         { imdbId: 'tt9376612', title: 'Shang-Chi and the Legend of the Ten Rings', year: 2021, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.4, runtime: 132 },
