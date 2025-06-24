@@ -4610,6 +4610,8 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         { imdbId: 'tt2084970', title: 'The Imitation Game', year: 2014, genres: ['Biography', 'Drama', 'Thriller'], rating: 8.0, runtime: 114 },
         { imdbId: 'tt2267998', title: 'Gone Girl', year: 2014, genres: ['Drama', 'Mystery', 'Thriller'], rating: 8.1, runtime: 149 },
         { imdbId: 'tt2096673', title: 'Inside Out', year: 2015, genres: ['Animation', 'Adventure', 'Comedy'], rating: 8.2, runtime: 95 },
+        { imdbId: 'tt1431045', title: 'Deadpool', year: 2016, genres: ['Action', 'Adventure', 'Comedy'], rating: 8.0, runtime: 108 },
+        { imdbId: 'tt0478970', title: 'Ant-Man', year: 2015, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.3, runtime: 117 },
         { imdbId: 'tt2488496', title: 'Star Wars: The Force Awakens', year: 2015, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.8, runtime: 138 },
         
         // 2000s Movies
@@ -4648,9 +4650,13 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
       
       // Genre filtering - ALL selected genres must be present
       if (preferences.genres.length > 0) {
-        filteredMovies = filteredMovies.filter(movie => 
-          preferences.genres.every(selectedGenre => movie.genres.includes(selectedGenre))
-        );
+        console.log('Selected genres:', preferences.genres);
+        filteredMovies = filteredMovies.filter(movie => {
+          const hasAllGenres = preferences.genres.every(selectedGenre => movie.genres.includes(selectedGenre));
+          console.log(`${movie.title} genres:`, movie.genres, 'Has all selected genres:', hasAllGenres);
+          return hasAllGenres;
+        });
+        console.log('Filtered movies count after genre filter:', filteredMovies.length);
       }
       
       // Decade filtering - Fixed logic
