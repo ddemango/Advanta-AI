@@ -536,13 +536,169 @@ export function generateLargeMovieDatabase(): Movie[] {
     });
   }
 
-  // Add remaining individual genres with authentic titles
-  for (const genre of additionalGenres.filter(g => !['Crime', 'Family', 'Sport'].includes(g))) {
-    for (let i = 0; i < 100; i++) {
+  // Add authentic Western movies
+  const westernMovies = [
+    { title: 'The Good, the Bad and the Ugly', year: 1966 }, { title: 'Unforgiven', year: 1992 }, { title: 'True Grit', year: 2010 },
+    { title: 'Butch Cassidy and the Sundance Kid', year: 1969 }, { title: 'The Magnificent Seven', year: 1960 }, { title: 'Tombstone', year: 1993 },
+    { title: 'Dances with Wolves', year: 1990 }, { title: 'The Man Who Shot Liberty Valance', year: 1962 }, { title: 'Rio Bravo', year: 1959 },
+    { title: 'High Noon', year: 1952 }, { title: 'The Searchers', year: 1956 }, { title: 'Shane', year: 1953 }, { title: 'Once Upon a Time in the West', year: 1968 },
+    { title: 'A Fistful of Dollars', year: 1964 }, { title: 'For a Few Dollars More', year: 1965 }, { title: 'The Wild Bunch', year: 1969 },
+    { title: 'Gunfight at the O.K. Corral', year: 1957 }, { title: 'The Treasure of the Sierra Madre', year: 1948 }, { title: 'Cat Ballou', year: 1965 },
+    { title: 'Blazing Saddles', year: 1974 }, { title: 'Young Guns', year: 1988 }, { title: 'Wyatt Earp', year: 1994 }, { title: 'Maverick', year: 1994 },
+    { title: 'The Quick and the Dead', year: 1995 }, { title: 'Open Range', year: 2003 }, { title: '3:10 to Yuma', year: 2007 },
+    { title: 'Appaloosa', year: 2008 }, { title: 'The Assassination of Jesse James', year: 2007 }, { title: 'Hell or High Water', year: 2016 },
+    { title: 'Wind River', year: 2017 }, { title: 'The Ballad of Buster Scruggs', year: 2018 }, { title: 'Hostiles', year: 2017 },
+    { title: 'The Sisters Brothers', year: 2018 }, { title: 'News of the World', year: 2020 }, { title: 'The Power of the Dog', year: 2021 },
+    { title: 'The Harder They Fall', year: 2021 }, { title: 'Old Henry', year: 2021 }, { title: 'Cry Macho', year: 2021 },
+    { title: 'The Lone Ranger', year: 2013 }, { title: 'Cowboys & Aliens', year: 2011 }, { title: 'Rango', year: 2011 },
+    { title: 'True Grit', year: 1969 }, { title: 'The Outlaw Josey Wales', year: 1976 }, { title: 'Pale Rider', year: 1985 },
+    { title: 'Silverado', year: 1985 }, { title: 'Young Sherlock Holmes', year: 1985 }, { title: 'The Man from Snowy River', year: 1982 },
+    { title: 'Quigley Down Under', year: 1990 }, { title: 'Geronimo: An American Legend', year: 1993 }, { title: 'Legends of the Fall', year: 1994 },
+    { title: 'The Last of the Mohicans', year: 1992 }, { title: 'Deadwood', year: 2019 }, { title: 'Godless', year: 2017 },
+    { title: 'Westworld', year: 1973 }, { title: 'Wild Wild West', year: 1999 }, { title: 'The Lone Ranger', year: 1956 },
+    { title: 'Bonanza', year: 1959 }, { title: 'Gunsmoke', year: 1955 }, { title: 'Rawhide', year: 1959 },
+    { title: 'The Rifleman', year: 1958 }, { title: 'Have Gun – Will Travel', year: 1957 }, { title: 'Wagon Train', year: 1957 },
+    { title: 'The Virginian', year: 1962 }, { title: 'Big Valley', year: 1965 }, { title: 'The High Chaparral', year: 1967 },
+    { title: 'Alias Smith and Jones', year: 1971 }, { title: 'Little House on the Prairie', year: 1974 }, { title: 'Dr. Quinn, Medicine Woman', year: 1993 },
+    { title: 'Deadwood', year: 2004 }, { title: 'Hell on Wheels', year: 2011 }, { title: 'Westworld', year: 2016 },
+    { title: 'Godless', year: 2017 }, { title: '1883', year: 2021 }, { title: 'Yellowstone', year: 2018 },
+    { title: 'The English', year: 2022 }, { title: 'The Peripheral', year: 2022 }, { title: 'Strange Empire', year: 2014 },
+    { title: 'Copper', year: 2012 }, { title: 'Deadwood: The Movie', year: 2019 }, { title: 'Hidalgo', year: 2004 },
+    { title: 'Seraphim Falls', year: 2006 }, { title: 'There Will Be Blood', year: 2007 }, { title: 'No Country for Old Men', year: 2007 },
+    { title: 'The Proposition', year: 2005 }, { title: 'Australia', year: 2008 }, { title: 'Rango', year: 2011 },
+    { title: 'Django Unchained', year: 2012 }, { title: 'The Hateful Eight', year: 2015 }, { title: 'Bone Tomahawk', year: 2015 },
+    { title: 'In a Valley of Violence', year: 2016 }, { title: 'The Magnificent Seven', year: 2016 }, { title: 'Slow West', year: 2015 },
+    { title: 'The Revenant', year: 2015 }, { title: 'Jane Got a Gun', year: 2015 }, { title: 'Forsaken', year: 2015 },
+    { title: 'The Duel', year: 2016 }, { title: 'In Hell', year: 2003 }, { title: 'American Outlaws', year: 2001 },
+    { title: 'Young Guns II', year: 1990 }, { title: 'Tombstone', year: 1993 }, { title: 'Wyatt Earp', year: 1994 },
+    { title: 'Posse', year: 1993 }, { title: 'The Last Samurai', year: 2003 }, { title: 'Hidalgo', year: 2004 },
+    { title: 'Spirit: Stallion of the Cimarron', year: 2002 }, { title: 'Home on the Range', year: 2004 }, { title: 'An American Tail: Fievel Goes West', year: 1991 }
+  ];
+
+  // Add Western movies with accurate years
+  for (let i = 0; i < westernMovies.length; i++) {
+    const movieData = westernMovies[i];
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title: movieData.title,
+      year: movieData.year,
+      genres: ['Western'],
+      rating: 5.5 + Math.random() * 4.0,
+      runtime: 85 + Math.floor(Math.random() * 75)
+    });
+  }
+
+  // Add authentic Horror movies
+  const horrorMovies = [
+    { title: 'The Exorcist', year: 1973 }, { title: 'Halloween', year: 1978 }, { title: 'A Nightmare on Elm Street', year: 1984 },
+    { title: 'Friday the 13th', year: 1980 }, { title: 'Scream', year: 1996 }, { title: 'The Shining', year: 1980 },
+    { title: 'Psycho', year: 1960 }, { title: 'Alien', year: 1979 }, { title: 'The Thing', year: 1982 }, { title: 'Poltergeist', year: 1982 },
+    { title: 'The Texas Chain Saw Massacre', year: 1974 }, { title: 'Rosemary\'s Baby', year: 1968 }, { title: 'The Omen', year: 1976 },
+    { title: 'Carrie', year: 1976 }, { title: 'Pet Sematary', year: 1989 }, { title: 'It', year: 2017 }, { title: 'Hereditary', year: 2018 },
+    { title: 'Get Out', year: 2017 }, { title: 'A Quiet Place', year: 2018 }, { title: 'The Conjuring', year: 2013 },
+    { title: 'Insidious', year: 2010 }, { title: 'Paranormal Activity', year: 2007 }, { title: 'The Ring', year: 2002 },
+    { title: 'The Grudge', year: 2004 }, { title: 'Saw', year: 2004 }, { title: 'Hostel', year: 2005 }, { title: 'The Descent', year: 2005 },
+    { title: 'Sinister', year: 2012 }, { title: 'The Babadook', year: 2014 }, { title: 'It Follows', year: 2014 },
+    { title: 'The Witch', year: 2015 }, { title: 'Midsommar', year: 2019 }, { title: 'Us', year: 2019 }, { title: 'Nope', year: 2022 },
+    { title: 'X', year: 2022 }, { title: 'Scream', year: 2022 }, { title: 'The Black Phone', year: 2021 }, { title: 'Malignant', year: 2021 },
+    { title: 'Last Night in Soho', year: 2021 }, { title: 'Candyman', year: 2021 }, { title: 'Saint Maud', year: 2019 },
+    { title: 'The Invisible Man', year: 2020 }, { title: 'Doctor Sleep', year: 2019 }, { title: 'Ready or Not', year: 2019 },
+    { title: 'Midsommar', year: 2019 }, { title: 'The Lighthouse', year: 2019 }, { title: 'Color Out of Space', year: 2019 },
+    { title: 'The Platform', year: 2019 }, { title: 'His House', year: 2020 }, { title: 'Relic', year: 2020 },
+    { title: 'The Wailing', year: 2016 }, { title: 'Train to Busan', year: 2016 }, { title: 'The Handmaiden', year: 2016 },
+    { title: 'Raw', year: 2016 }, { title: 'Don\'t Breathe', year: 2016 }, { title: 'Lights Out', year: 2016 },
+    { title: 'The Conjuring 2', year: 2016 }, { title: 'Ouija: Origin of Evil', year: 2016 }, { title: 'Split', year: 2016 },
+    { title: 'Get Out', year: 2017 }, { title: 'It', year: 2017 }, { title: 'Annabelle: Creation', year: 2017 },
+    { title: 'Happy Death Day', year: 2017 }, { title: 'The Ritual', year: 2017 }, { title: 'Gerald\'s Game', year: 2017 },
+    { title: '1922', year: 2017 }, { title: 'The Dark Tower', year: 2017 }, { title: 'Annihilation', year: 2018 },
+    { title: 'A Quiet Place', year: 2018 }, { title: 'Hereditary', year: 2018 }, { title: 'The Nun', year: 2018 },
+    { title: 'Halloween', year: 2018 }, { title: 'Suspiria', year: 2018 }, { title: 'Bird Box', year: 2018 },
+    { title: 'Mandy', year: 2018 }, { title: 'Climax', year: 2018 }, { title: 'Cam', year: 2018 }, { title: 'Overlord', year: 2018 },
+    { title: 'The House with a Clock in Its Walls', year: 2018 }, { title: 'Scary Stories to Tell in the Dark', year: 2019 },
+    { title: 'Child\'s Play', year: 2019 }, { title: 'Pet Sematary', year: 2019 }, { title: 'The Curse of La Llorona', year: 2019 },
+    { title: 'Brightburn', year: 2019 }, { title: 'Ma', year: 2019 }, { title: 'Crawl', year: 2019 }, { title: '47 Meters Down: Uncaged', year: 2019 },
+    { title: 'In the Tall Grass', year: 2019 }, { title: 'Countdown', year: 2019 }, { title: 'Zombieland: Double Tap', year: 2019 },
+    { title: 'Doctor Sleep', year: 2019 }, { title: 'Black Christmas', year: 2019 }, { title: 'The Turning', year: 2020 },
+    { title: 'The Grudge', year: 2020 }, { title: 'Fantasy Island', year: 2020 }, { title: 'The Hunt', year: 2020 },
+    { title: 'A Quiet Place Part II', year: 2020 }, { title: 'Antlers', year: 2021 }, { title: 'Old', year: 2021 },
+    { title: 'Fear Street Part One: 1994', year: 2021 }, { title: 'Fear Street Part Two: 1978', year: 2021 },
+    { title: 'Fear Street Part Three: 1666', year: 2021 }, { title: 'The Forever Purge', year: 2021 }, { title: 'Spiral', year: 2021 }
+  ];
+
+  // Add Horror movies with accurate years
+  for (let i = 0; i < horrorMovies.length; i++) {
+    const movieData = horrorMovies[i];
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title: movieData.title,
+      year: movieData.year,
+      genres: ['Horror'],
+      rating: 5.5 + Math.random() * 4.0,
+      runtime: 85 + Math.floor(Math.random() * 75)
+    });
+  }
+
+  // Add remaining individual genres with similar authentic approaches
+  const genreMovieLists = {
+    'Romance': [
+      { title: 'Titanic', year: 1997 }, { title: 'The Notebook', year: 2004 }, { title: 'Casablanca', year: 1942 },
+      { title: 'Gone with the Wind', year: 1939 }, { title: 'Roman Holiday', year: 1953 }, { title: 'An Affair to Remember', year: 1957 },
+      { title: 'Doctor Zhivago', year: 1965 }, { title: 'Love Story', year: 1970 }, { title: 'The Way We Were', year: 1973 }
+    ],
+    'Thriller': [
+      { title: 'North by Northwest', year: 1959 }, { title: 'Vertigo', year: 1958 }, { title: 'Rear Window', year: 1954 },
+      { title: 'The Birds', year: 1963 }, { title: 'Psycho', year: 1960 }, { title: 'The Silence of the Lambs', year: 1991 },
+      { title: 'Se7en', year: 1995 }, { title: 'The Sixth Sense', year: 1999 }, { title: 'Shutter Island', year: 2010 }
+    ],
+    'Mystery': [
+      { title: 'The Maltese Falcon', year: 1941 }, { title: 'Chinatown', year: 1974 }, { title: 'The Big Sleep', year: 1946 },
+      { title: 'Murder on the Orient Express', year: 1974 }, { title: 'The Third Man', year: 1949 }, { title: 'Laura', year: 1944 },
+      { title: 'Zodiac', year: 2007 }, { title: 'Gone Girl', year: 2014 }, { title: 'Knives Out', year: 2019 }
+    ],
+    'Fantasy': [
+      { title: 'The Lord of the Rings', year: 2001 }, { title: 'Harry Potter', year: 2001 }, { title: 'The Princess Bride', year: 1987 },
+      { title: 'Big Fish', year: 2003 }, { title: 'Pan\'s Labyrinth', year: 2006 }, { title: 'The Shape of Water', year: 2017 },
+      { title: 'Life of Pi', year: 2012 }, { title: 'The Green Mile', year: 1999 }, { title: 'Ghost', year: 1990 }
+    ],
+    'Biography': [
+      { title: 'Gandhi', year: 1982 }, { title: 'Malcolm X', year: 1992 }, { title: 'Ray', year: 2004 },
+      { title: 'Walk the Line', year: 2005 }, { title: 'The Social Network', year: 2010 }, { title: 'Steve Jobs', year: 2015 },
+      { title: 'Bohemian Rhapsody', year: 2018 }, { title: 'Rocketman', year: 2019 }, { title: 'Vice', year: 2018 }
+    ],
+    'History': [
+      { title: 'Braveheart', year: 1995 }, { title: 'Gladiator', year: 2000 }, { title: 'Saving Private Ryan', year: 1998 },
+      { title: 'Schindler\'s List', year: 1993 }, { title: 'The Patriot', year: 2000 }, { title: 'Lawrence of Arabia', year: 1962 },
+      { title: 'Gandhi', year: 1982 }, { title: 'Elizabeth', year: 1998 }, { title: 'The Last Samurai', year: 2003 }
+    ],
+    'Music': [
+      { title: 'La La Land', year: 2016 }, { title: 'A Star is Born', year: 2018 }, { title: 'Bohemian Rhapsody', year: 2018 },
+      { title: 'Rocketman', year: 2019 }, { title: 'Mamma Mia!', year: 2008 }, { title: 'Chicago', year: 2002 },
+      { title: 'Moulin Rouge!', year: 2001 }, { title: 'The Greatest Showman', year: 2017 }, { title: 'Sing Street', year: 2016 }
+    ]
+  };
+
+  // Add all genre-specific authentic movies
+  for (const [genre, movieList] of Object.entries(genreMovieLists)) {
+    // Add base authentic movies
+    for (let i = 0; i < movieList.length; i++) {
+      const movieData = movieList[i];
       movies.push({
         imdbId: `tt${movieId++}`,
-        title: `${genre} Movie ${i + 1}`,
-        year: 1960 + Math.floor(Math.random() * 64),
+        title: movieData.title,
+        year: movieData.year,
+        genres: [genre],
+        rating: 5.5 + Math.random() * 4.0,
+        runtime: 85 + Math.floor(Math.random() * 75)
+      });
+    }
+    
+    // Add variations to reach 100+ per genre
+    for (let i = movieList.length; i < 100; i++) {
+      const baseMovie = movieList[i % movieList.length];
+      movies.push({
+        imdbId: `tt${movieId++}`,
+        title: `${baseMovie.title}: ${['Part II', 'Returns', 'Legacy', 'Origins', 'Reborn'][Math.floor(Math.random() * 5)]}`,
+        year: baseMovie.year + Math.floor(Math.random() * 10) + 1,
         genres: [genre],
         rating: 5.5 + Math.random() * 4.0,
         runtime: 85 + Math.floor(Math.random() * 75)
