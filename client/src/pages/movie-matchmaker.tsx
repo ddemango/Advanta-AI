@@ -26,6 +26,7 @@ interface MovieRecommendation {
   tmdbId?: string;
   matchScore: number;
   reasoning: string[];
+  streamingPlatforms?: string[];
 }
 
 interface MoviePreferences {
@@ -441,6 +442,25 @@ export default function MovieMatchmaker() {
                               <p><strong>Director:</strong> {movie.director}</p>
                               <p><strong>Cast:</strong> {movie.cast.slice(0, 3).join(', ')}</p>
                             </div>
+
+                            {/* Streaming Platforms */}
+                            {movie.streamingPlatforms && movie.streamingPlatforms.length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-sm font-semibold text-gray-300 mb-2 flex items-center">
+                                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                                  </svg>
+                                  Watch on:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {movie.streamingPlatforms.map((platform, pIndex) => (
+                                    <Badge key={pIndex} className="bg-green-600/80 text-white text-xs px-2 py-1">
+                                      {platform}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Reasoning */}
                             {movie.reasoning && movie.reasoning.length > 0 && (

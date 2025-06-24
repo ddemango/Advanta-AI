@@ -4849,6 +4849,39 @@ function getMovieDirector(title: string): string {
   return directors[title] || 'Acclaimed Director';
 }
 
+function getStreamingPlatforms(title: string): string[] {
+  const streaming = {
+    'Deadpool': ['Disney+', 'Hulu'],
+    'Ant-Man': ['Disney+'],
+    'Deadpool 2': ['Disney+', 'Hulu'],
+    'Ant-Man and the Wasp': ['Disney+'],
+    'Furious 7': ['Netflix', 'Peacock'],
+    'Pineapple Express': ['Netflix', 'Hulu'],
+    '21 Jump Street': ['Netflix', 'Sony Pictures'],
+    '22 Jump Street': ['Netflix', 'Sony Pictures'],
+    'Fast Five': ['Netflix', 'Peacock'],
+    'Fast & Furious 6': ['Netflix', 'Peacock'],
+    'Thor': ['Disney+'],
+    'Iron Man 2': ['Disney+'],
+    'Iron Man': ['Disney+'],
+    'Spider-Man: No Way Home': ['Starz', 'Sony Pictures'],
+    'The Batman': ['HBO Max'],
+    'Oppenheimer': ['Peacock', 'Amazon Prime'],
+    'Dune: Part Two': ['HBO Max'],
+    'Inception': ['HBO Max', 'Netflix'],
+    'Interstellar': ['Paramount+', 'Amazon Prime'],
+    'The Dark Knight': ['HBO Max'],
+    'Avengers: Endgame': ['Disney+'],
+    'Parasite': ['Hulu', 'Amazon Prime'],
+    'Back to the Future': ['Netflix', 'Peacock'],
+    'Pulp Fiction': ['Netflix', 'Amazon Prime'],
+    'The Shawshank Redemption': ['Netflix', 'Hulu'],
+    'Inside Out': ['Disney+'],
+    'Star Wars: The Force Awakens': ['Disney+']
+  };
+  return streaming[title] || ['Available for Rent'];
+}
+
 function getMovieCast(title: string): string[] {
   const casts = {
     'Interstellar': ['Matthew McConaughey', 'Anne Hathaway', 'Jessica Chastain'],
