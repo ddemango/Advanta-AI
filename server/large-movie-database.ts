@@ -274,16 +274,53 @@ export function generateLargeMovieDatabase(): Movie[] {
     'The Parent Trap', 'Freaky Friday', 'School of Rock', 'Cheaper by the Dozen', 'Night at the Museum'
   ];
 
-  // Add family movies
-  for (let i = 0; i < 150; i++) {
-    const baseTitle = familyMovies[i % familyMovies.length];
-    const title = i < familyMovies.length ? baseTitle : `${baseTitle}: ${['The Adventure', 'Returns', 'New Beginning', 'Holiday Special', 'The Journey'][Math.floor(Math.random() * 5)]}`;
+  // Add family movies with accurate release years
+  const familyMovieData = [
+    { title: 'Toy Story', year: 1995 }, { title: 'Toy Story 2', year: 1999 }, { title: 'Toy Story 3', year: 2010 }, { title: 'Toy Story 4', year: 2019 },
+    { title: 'Finding Nemo', year: 2003 }, { title: 'Finding Dory', year: 2016 }, { title: 'The Incredibles', year: 2004 }, { title: 'Incredibles 2', year: 2018 },
+    { title: 'Monsters, Inc.', year: 2001 }, { title: 'Monsters University', year: 2013 }, { title: 'Up', year: 2009 }, { title: 'WALL-E', year: 2008 },
+    { title: 'Inside Out', year: 2015 }, { title: 'Coco', year: 2017 }, { title: 'Moana', year: 2016 }, { title: 'Frozen', year: 2013 }, { title: 'Frozen II', year: 2019 },
+    { title: 'Tangled', year: 2010 }, { title: 'Zootopia', year: 2016 }, { title: 'Big Hero 6', year: 2014 }, { title: 'The Lion King', year: 1994 },
+    { title: 'Aladdin', year: 1992 }, { title: 'Beauty and the Beast', year: 1991 }, { title: 'The Little Mermaid', year: 1989 }, { title: 'Mulan', year: 1998 },
+    { title: 'Pocahontas', year: 1995 }, { title: 'The Jungle Book', year: 1967 }, { title: 'Bambi', year: 1942 }, { title: 'Dumbo', year: 1941 },
+    { title: 'Cinderella', year: 1950 }, { title: 'Snow White and the Seven Dwarfs', year: 1937 }, { title: 'Shrek', year: 2001 }, { title: 'Shrek 2', year: 2004 },
+    { title: 'Shrek the Third', year: 2007 }, { title: 'Shrek Forever After', year: 2010 }, { title: 'Madagascar', year: 2005 }, { title: 'Madagascar 2', year: 2008 },
+    { title: 'Madagascar 3', year: 2012 }, { title: 'Kung Fu Panda', year: 2008 }, { title: 'Kung Fu Panda 2', year: 2011 }, { title: 'Kung Fu Panda 3', year: 2016 },
+    { title: 'How to Train Your Dragon', year: 2010 }, { title: 'How to Train Your Dragon 2', year: 2014 }, { title: 'How to Train Your Dragon: The Hidden World', year: 2019 },
+    { title: 'The Croods', year: 2013 }, { title: 'Despicable Me', year: 2010 }, { title: 'Despicable Me 2', year: 2013 }, { title: 'Despicable Me 3', year: 2017 },
+    { title: 'Minions', year: 2015 }, { title: 'The Secret Life of Pets', year: 2016 }, { title: 'The Secret Life of Pets 2', year: 2019 },
+    { title: 'Sing', year: 2016 }, { title: 'Sing 2', year: 2021 }, { title: 'The Boss Baby', year: 2017 }, { title: 'Trolls', year: 2016 }, { title: 'Trolls World Tour', year: 2020 },
+    { title: 'The Sandlot', year: 1993 }, { title: 'The Mighty Ducks', year: 1992 }, { title: 'Cool Runnings', year: 1993 }, { title: 'Remember the Titans', year: 2000 },
+    { title: 'The Karate Kid', year: 1984 }, { title: 'Space Jam', year: 1996 }, { title: 'Air Bud', year: 1997 }, { title: 'Beethoven', year: 1992 },
+    { title: 'Home Alone', year: 1990 }, { title: 'Home Alone 2', year: 1992 }, { title: 'The Santa Clause', year: 1994 }, { title: 'Elf', year: 2003 },
+    { title: 'The Polar Express', year: 2004 }, { title: 'A Christmas Story', year: 1983 }, { title: 'Hook', year: 1991 }, { title: 'The Goonies', year: 1985 },
+    { title: 'E.T.', year: 1982 }, { title: 'Back to the Future', year: 1985 }, { title: 'The Princess Bride', year: 1987 }, { title: 'The NeverEnding Story', year: 1984 },
+    { title: 'Matilda', year: 1996 }, { title: 'Mrs. Doubtfire', year: 1993 }, { title: 'Jumanji', year: 1995 }, { title: 'The Parent Trap', year: 1998 },
+    { title: 'Freaky Friday', year: 2003 }, { title: 'School of Rock', year: 2003 }, { title: 'Cheaper by the Dozen', year: 2003 }, { title: 'Night at the Museum', year: 2006 }
+  ];
+
+  // Add family movies with accurate years
+  for (let i = 0; i < familyMovieData.length; i++) {
+    const movieData = familyMovieData[i];
     movies.push({
       imdbId: `tt${movieId++}`,
-      title,
-      year: 1937 + Math.floor(Math.random() * 87),
+      title: movieData.title,
+      year: movieData.year,
       genres: ['Family'],
       rating: 6.5 + Math.random() * 3.0,
+      runtime: 80 + Math.floor(Math.random() * 60)
+    });
+  }
+
+  // Add additional family movie variations
+  for (let i = familyMovieData.length; i < 150; i++) {
+    const baseMovie = familyMovieData[i % familyMovieData.length];
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title: `${baseMovie.title}: ${['The Adventure', 'Returns', 'New Beginning', 'Holiday Special', 'The Journey'][Math.floor(Math.random() * 5)]}`,
+      year: baseMovie.year + Math.floor(Math.random() * 5) + 1,
+      genres: ['Family'],
+      rating: 6.0 + Math.random() * 3.0,
       runtime: 80 + Math.floor(Math.random() * 60)
     });
   }
@@ -303,31 +340,68 @@ export function generateLargeMovieDatabase(): Movie[] {
     'Warrior', 'Here Comes the Boom', 'The Wrestler', 'Vision Quest', 'Foxcatcher', 'I, Tonya'
   ];
 
-  // Add sport movies
-  for (let i = 0; i < 120; i++) {
-    const baseTitle = sportMovies[i % sportMovies.length];
-    const title = i < sportMovies.length ? baseTitle : `${baseTitle}: ${['Championship', 'The Final Round', 'Training Day', 'Victory', 'Legacy'][Math.floor(Math.random() * 5)]}`;
+  // Add sport movies with accurate release years
+  const sportMovieData = [
+    { title: 'Rocky', year: 1976 }, { title: 'Rocky II', year: 1979 }, { title: 'Rocky III', year: 1982 }, { title: 'Rocky IV', year: 1985 },
+    { title: 'Rocky V', year: 1990 }, { title: 'Rocky Balboa', year: 2006 }, { title: 'Creed', year: 2015 }, { title: 'Creed II', year: 2018 }, { title: 'Creed III', year: 2023 },
+    { title: 'The Karate Kid', year: 1984 }, { title: 'The Karate Kid Part II', year: 1986 }, { title: 'The Karate Kid Part III', year: 1989 },
+    { title: 'The Next Karate Kid', year: 1994 }, { title: 'Remember the Titans', year: 2000 }, { title: 'The Blind Side', year: 2009 },
+    { title: 'Rudy', year: 1993 }, { title: 'The Sandlot', year: 1993 }, { title: 'Field of Dreams', year: 1989 }, { title: 'Moneyball', year: 2011 },
+    { title: 'Draft Day', year: 2014 }, { title: 'Any Given Sunday', year: 1999 }, { title: 'The Longest Yard', year: 2005 }, { title: 'Varsity Blues', year: 1999 },
+    { title: 'Friday Night Lights', year: 2004 }, { title: 'We Are Marshall', year: 2006 }, { title: 'The Express', year: 2008 }, { title: 'Invincible', year: 2006 },
+    { title: 'The Replacements', year: 2000 }, { title: 'Radio', year: 2003 }, { title: 'Coach Carter', year: 2005 }, { title: 'Hoosiers', year: 1986 },
+    { title: 'Space Jam', year: 1996 }, { title: 'Air Bud', year: 1997 }, { title: 'The Mighty Ducks', year: 1992 }, { title: 'Cool Runnings', year: 1993 },
+    { title: 'Rush', year: 2013 }, { title: 'Ford v Ferrari', year: 2019 }, { title: 'Days of Thunder', year: 1990 }, { title: 'Talladega Nights', year: 2006 },
+    { title: 'The Waterboy', year: 1998 }, { title: 'Happy Gilmore', year: 1996 }, { title: 'Caddyshack', year: 1980 }, { title: 'Tin Cup', year: 1996 },
+    { title: 'The Greatest Game Ever Played', year: 2005 }, { title: 'Miracle', year: 2004 }, { title: 'Slap Shot', year: 1977 }, { title: 'Mystery, Alaska', year: 1999 },
+    { title: 'The Cutting Edge', year: 1992 }, { title: 'Blades of Glory', year: 2007 }, { title: 'Dodgeball', year: 2004 }, { title: 'Best of the Best', year: 1989 },
+    { title: 'Bloodsport', year: 1988 }, { title: 'Kickboxer', year: 1989 }, { title: 'Enter the Dragon', year: 1973 }, { title: 'The Fighter', year: 2010 },
+    { title: 'Raging Bull', year: 1980 }, { title: 'Ali', year: 2001 }, { title: 'The Hurricane', year: 1999 }, { title: 'Million Dollar Baby', year: 2004 },
+    { title: 'Cinderella Man', year: 2005 }, { title: 'Warrior', year: 2011 }, { title: 'Here Comes the Boom', year: 2012 }, { title: 'The Wrestler', year: 2008 },
+    { title: 'Vision Quest', year: 1985 }, { title: 'Foxcatcher', year: 2014 }, { title: 'I, Tonya', year: 2017 }
+  ];
+
+  // Add sport movies with accurate years
+  for (let i = 0; i < sportMovieData.length; i++) {
+    const movieData = sportMovieData[i];
     movies.push({
       imdbId: `tt${movieId++}`,
-      title,
-      year: 1976 + Math.floor(Math.random() * 48),
+      title: movieData.title,
+      year: movieData.year,
       genres: ['Sport'],
       rating: 6.0 + Math.random() * 3.5,
       runtime: 90 + Math.floor(Math.random() * 60)
     });
   }
 
-  // Now add comprehensive AUTHENTIC genre combinations
+  // Add additional sport movie variations
+  for (let i = sportMovieData.length; i < 120; i++) {
+    const baseMovie = sportMovieData[i % sportMovieData.length];
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title: `${baseMovie.title}: ${['Championship', 'The Final Round', 'Training Day', 'Victory', 'Legacy'][Math.floor(Math.random() * 5)]}`,
+      year: baseMovie.year + Math.floor(Math.random() * 5) + 1,
+      genres: ['Sport'],
+      rating: 6.0 + Math.random() * 3.5,
+      runtime: 90 + Math.floor(Math.random() * 60)
+    });
+  }
+
+  // Now add comprehensive AUTHENTIC genre combinations with accurate years
   const genreCombos = {
     'Sport,Documentary': [
-      'The Last Dance', 'Free Solo', 'Icarus', 'Senna', 'Rush', 'Ford v Ferrari',
-      'When We Were Kings', 'Tyson', 'Hoop Dreams', 'The Battered Bastards of Baseball',
-      'Pumping Iron', 'Touching the Void', 'Meru', 'Valley Uprising', 'The Dawn Wall'
+      { title: 'The Last Dance', year: 2020 }, { title: 'Free Solo', year: 2018 }, { title: 'Icarus', year: 2017 }, 
+      { title: 'Senna', year: 2010 }, { title: 'When We Were Kings', year: 1996 }, { title: 'Tyson', year: 2008 }, 
+      { title: 'Hoop Dreams', year: 1994 }, { title: 'The Battered Bastards of Baseball', year: 2014 },
+      { title: 'Pumping Iron', year: 1977 }, { title: 'Touching the Void', year: 2003 }, { title: 'Meru', year: 2015 }, 
+      { title: 'Valley Uprising', year: 2014 }, { title: 'The Dawn Wall', year: 2017 }
     ],
     'Documentary,Sport': [
-      'The Last Dance', 'Free Solo', 'Icarus', 'Senna', 'Rush', 'Ford v Ferrari',
-      'When We Were Kings', 'Tyson', 'Hoop Dreams', 'The Battered Bastards of Baseball',
-      'Pumping Iron', 'Touching the Void', 'Meru', 'Valley Uprising', 'The Dawn Wall'
+      { title: 'The Last Dance', year: 2020 }, { title: 'Free Solo', year: 2018 }, { title: 'Icarus', year: 2017 }, 
+      { title: 'Senna', year: 2010 }, { title: 'When We Were Kings', year: 1996 }, { title: 'Tyson', year: 2008 }, 
+      { title: 'Hoop Dreams', year: 1994 }, { title: 'The Battered Bastards of Baseball', year: 2014 },
+      { title: 'Pumping Iron', year: 1977 }, { title: 'Touching the Void', year: 2003 }, { title: 'Meru', year: 2015 }, 
+      { title: 'Valley Uprising', year: 2014 }, { title: 'The Dawn Wall', year: 2017 }
     ],
     'Sport,Family': [
       'The Sandlot', 'The Mighty Ducks', 'Cool Runnings', 'Remember the Titans', 'The Karate Kid',
@@ -377,14 +451,15 @@ export function generateLargeMovieDatabase(): Movie[] {
     ]
   };
 
-  // Add all authentic genre combination movies
-  for (const [comboKey, titles] of Object.entries(genreCombos)) {
+  // Add all authentic genre combination movies with accurate years
+  for (const [comboKey, movieDataArray] of Object.entries(genreCombos)) {
     const genres = comboKey.split(',');
-    for (let i = 0; i < titles.length; i++) {
+    for (let i = 0; i < movieDataArray.length; i++) {
+      const movieData = movieDataArray[i];
       movies.push({
         imdbId: `tt${movieId++}`,
-        title: titles[i],
-        year: 1970 + Math.floor(Math.random() * 54),
+        title: typeof movieData === 'string' ? movieData : movieData.title,
+        year: typeof movieData === 'string' ? 1990 + Math.floor(Math.random() * 34) : movieData.year,
         genres: genres,
         rating: 6.5 + Math.random() * 3.0,
         runtime: 90 + Math.floor(Math.random() * 60)
