@@ -4586,8 +4586,14 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
     try {
       const preferences = req.body;
       
-      // Comprehensive movie database with decade-appropriate selections
+      // Import large movie database
+      const { generateLargeMovieDatabase } = await import('./large-movie-database');
+      const largeMovieDatabase = generateLargeMovieDatabase();
+      
+      // Comprehensive movie database with 5000+ movies
       const allMovies = [
+        // Keep existing curated movies for quality
+        ...largeMovieDatabase,
         // 2020s Movies  
         { imdbId: 'tt6751668', title: 'Parasite', year: 2019, genres: ['Drama', 'Thriller'], rating: 8.6, runtime: 132 },
         { imdbId: 'tt10872600', title: 'Spider-Man: No Way Home', year: 2021, genres: ['Action', 'Adventure', 'Sci-Fi'], rating: 8.2, runtime: 148 },
@@ -4805,21 +4811,26 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
             console.log(`Could not fetch TMDB ID for ${movie.title}`);
           }
 
+          // Import helper functions from large database
+          const { getMoviePlot: getLargeDbPlot, getMovieDirector: getLargeDbDirector, 
+                  getMovieCast: getLargeDbCast, getMoviePoster: getLargeDbPoster,
+                  getStreamingPlatforms: getLargeDbStreaming } = await import('./large-movie-database');
+          
           recommendations.push({
             title: movie.title,
             year: movie.year,
             genre: movie.genres,
             rating: movie.rating,
             runtime: movie.runtime,
-            plot: getMoviePlot(movie.title),
-            director: getMovieDirector(movie.title),
-            cast: getMovieCast(movie.title),
-            poster: getMoviePoster(movie.title),
+            plot: getMoviePlot(movie.title) || getLargeDbPlot(movie.title),
+            director: getMovieDirector(movie.title) || getLargeDbDirector(movie.title),
+            cast: getMovieCast(movie.title) || getLargeDbCast(movie.title),
+            poster: getMoviePoster(movie.title) || getLargeDbPoster(movie.title),
             imdbId: movie.imdbId,
             tmdbId: tmdbId,
             matchScore: Math.floor(Math.random() * 25) + 75,
             reasoning: generateMovieReasoning(movie, preferences),
-            streamingPlatforms: getStreamingPlatforms(movie.title)
+            streamingPlatforms: getStreamingPlatforms(movie.title) || getLargeDbStreaming(movie.title)
           });
         } catch (error) {
           console.error(`Error processing movie ${movie.title}:`, error);
