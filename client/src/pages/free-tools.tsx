@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/layout/Header';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
@@ -30,7 +33,12 @@ import {
   Lightbulb,
   Video,
   Workflow,
-  Plane
+  Plane,
+  Search as SearchIcon,
+  Grid3X3,
+  List,
+  Star,
+  Clock
 } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
@@ -46,6 +54,9 @@ interface Tool {
 
 export default function FreeTools() {
   const [, setLocation] = useLocation();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const tools: Tool[] = [
     {
@@ -274,6 +285,82 @@ export default function FreeTools() {
   const categories = Array.from(new Set(tools.map(tool => tool.category)));
   const featuredTools = tools.filter(tool => tool.featured);
 
+  // Filter tools based on search and category
+  const filteredTools = tools.filter(tool => {
+    const matchesSearch = tool.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         tool.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         tool.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || tool.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Quick access tools (most popular/useful)
+  const quickAccessTools = [
+    tools.find(t => t.id === 'build-ai-stack'),
+    tools.find(t => t.id === 'trending-content-generator'),
+    tools.find(t => t.id === 'competitor-intel-scanner'),
+    tools.find(t => t.id === 'movie-matchmaker'),
+    tools.find(t => t.id === 'travel-hacker-ai'),
+    tools.find(t => t.id === 'ai-tool-quiz')
+  ].filter(Boolean);
+
+  const ToolCard = ({ tool, compact = false }: { tool: Tool; compact?: boolean }) => {
+    if (compact) {
+      return (
+        <Card 
+          className="border-muted/20 hover:border-primary/20 transition-all duration-200 hover:shadow-md group cursor-pointer p-4"
+          onClick={() => setLocation(tool.route)}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+              <tool.icon className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">
+                {tool.name}
+              </h3>
+              <p className="text-xs text-muted-foreground truncate">
+                {tool.description}
+              </p>
+            </div>
+            <Badge variant="outline" className="text-xs shrink-0">
+              {tool.category}
+            </Badge>
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <Card 
+        className="h-full border-muted/20 hover:border-primary/20 transition-all duration-300 hover:shadow-lg group cursor-pointer"
+        onClick={() => setLocation(tool.route)}
+      >
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between mb-4">
+            <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+              <tool.icon className="w-6 h-6 text-primary" />
+            </div>
+            <Badge variant="secondary" className="text-xs">
+              {tool.category}
+            </Badge>
+          </div>
+          <CardTitle className="text-xl group-hover:text-primary transition-colors">
+            {tool.name}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-muted-foreground mb-4">
+            {tool.description}
+          </CardDescription>
+          <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-white transition-colors">
+            Launch Tool
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -286,7 +373,7 @@ export default function FreeTools() {
       <Header />
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
+      <section className="pt-20 pb-8 bg-gradient-to-br from-background via-background/95 to-primary/5">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
@@ -299,128 +386,132 @@ export default function FreeTools() {
                 <Zap className="w-4 h-4 mr-2" />
                 24+ Free AI Tools
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              <h1 className="text-3xl md:text-5xl font-bold mb-4">
                 Professional AI Tools
                 <span className="block text-primary">Completely Free</span>
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-                Access our complete suite of AI-powered tools designed to accelerate your business growth, 
-                streamline workflows, and unlock new opportunities. No credit card required.
+              <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Access our complete suite of AI-powered tools. No credit card required.
               </p>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Featured Tools */}
-      <section className="py-16">
+      {/* Quick Access Section */}
+      <section className="py-8 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="mb-12"
+            animate="show"
           >
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-center mb-4">
-              Featured Tools
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">
-              Our most popular AI tools that deliver immediate value for businesses of all sizes.
-            </motion.p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {featuredTools.map((tool, index) => (
-                <motion.div key={tool.id} variants={fadeIn} custom={index}>
-                  <Card className="h-full border-muted/20 hover:border-primary/20 transition-all duration-300 hover:shadow-lg group cursor-pointer"
-                        onClick={() => setLocation(tool.route)}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                          <tool.icon className="w-6 h-6 text-primary" />
-                        </div>
-                        <Badge variant="secondary" className="text-xs">
-                          {tool.category}
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-xl group-hover:text-primary transition-colors">
-                        {tool.name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-muted-foreground mb-4">
-                        {tool.description}
-                      </CardDescription>
-                      <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-white transition-colors">
-                        Try Tool Free
-                      </Button>
-                    </CardContent>
-                  </Card>
+            <motion.div variants={fadeInUp} className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Star className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-bold">Quick Access</h2>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setSelectedCategory('all')}
+              >
+                View All →
+              </Button>
+            </motion.div>
+            
+            <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {quickAccessTools.slice(0, 6).map((tool, index) => (
+                <motion.div key={tool?.id} variants={fadeIn} custom={index}>
+                  <ToolCard tool={tool!} compact={true} />
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* All Tools by Category */}
-      <section className="py-16 bg-muted/30">
+      {/* Search and Filter Section */}
+      <section className="py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
+            animate="show"
           >
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-center mb-12">
-              All AI Tools
-            </motion.h2>
-
-            {categories.map((category, categoryIndex) => {
-              const categoryTools = tools.filter(tool => tool.category === category);
-              
-              return (
-                <motion.div 
-                  key={category} 
-                  variants={fadeInUp}
-                  custom={categoryIndex}
-                  className="mb-12"
+            <motion.div variants={fadeInUp} className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="flex-1 relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search tools by name, description, or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
                 >
-                  <h3 className="text-2xl font-semibold mb-6 text-primary">
-                    {category}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {categoryTools.map((tool, index) => (
-                      <Card key={tool.id} 
-                            className="border-muted/20 hover:border-primary/20 transition-all duration-300 hover:shadow-md group cursor-pointer"
-                            onClick={() => setLocation(tool.route)}>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                              <tool.icon className="w-5 h-5 text-primary" />
-                            </div>
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                              {tool.name}
-                            </CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <CardDescription className="text-sm text-muted-foreground mb-3">
-                            {tool.description}
-                          </CardDescription>
-                          <Button variant="ghost" size="sm" className="w-full group-hover:bg-primary/10 transition-colors">
-                            Launch Tool →
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+                <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6">
+                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                  {categories.slice(0, 7).map(category => (
+                    <TabsTrigger key={category} value={category} className="text-xs">
+                      {category.split(' ')[0]}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                <TabsContent value={selectedCategory} className="mt-0">
+                  {filteredTools.length === 0 ? (
+                    <div className="text-center py-12">
+                      <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No tools found</h3>
+                      <p className="text-muted-foreground">Try adjusting your search or category filter.</p>
+                    </div>
+                  ) : (
+                    <div className={
+                      viewMode === 'grid' 
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        : "space-y-3"
+                    }>
+                      {filteredTools.map((tool, index) => (
+                        <motion.div 
+                          key={tool.id} 
+                          variants={fadeIn} 
+                          custom={index}
+                          initial="hidden"
+                          animate="show"
+                        >
+                          <ToolCard tool={tool} compact={viewMode === 'list'} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </motion.div>
           </motion.div>
         </div>
       </section>
+
+
 
       {/* CTA Section */}
       <section className="py-16">
