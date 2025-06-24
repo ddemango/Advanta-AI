@@ -4975,7 +4975,7 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         filteredMovies = filteredMovies.filter(movie => movie.runtime <= preferences.maxRuntime);
       }
       
-      // Genre filtering - Fixed logic
+      // Genre filtering - Fixed logic for all combinations
       if (preferences.genres && preferences.genres.length > 0) {
         console.log(`Filtering for genres: ${preferences.genres.join(', ')}`);
         console.log(`Total movies before genre filter: ${filteredMovies.length}`);
@@ -4992,11 +4992,19 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
           }
           
           // For multiple genres, movie must contain ALL selected genres
+          // This handles cases like ['Sport', 'Documentary'] and ['Documentary', 'Sport']
           const hasAllGenres = preferences.genres.every(genre => movie.genres.includes(genre));
           return hasAllGenres;
         });
         
         console.log(`Movies after genre filter: ${filteredMovies.length}`);
+        
+        // Debug: Show some example movies that match
+        if (filteredMovies.length > 0) {
+          console.log(`Sample matching movies:`, filteredMovies.slice(0, 3).map(m => ({ title: m.title, genres: m.genres })));
+        } else {
+          console.log(`No movies found. Sample movies from database:`, allMovies.slice(0, 5).map(m => ({ title: m.title, genres: m.genres })));
+        }
       }
       
       // Decade filtering - Fixed logic
