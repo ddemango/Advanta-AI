@@ -404,50 +404,92 @@ export function generateLargeMovieDatabase(): Movie[] {
       { title: 'Valley Uprising', year: 2014 }, { title: 'The Dawn Wall', year: 2017 }
     ],
     'Sport,Family': [
-      'The Sandlot', 'The Mighty Ducks', 'Cool Runnings', 'Remember the Titans', 'The Karate Kid',
-      'Space Jam', 'Air Bud', 'Angels in the Outfield', 'The Bad News Bears', 'Little Giants',
-      'Rookie of the Year', 'The Big Green', 'Hardball', 'Like Mike', 'The Game Plan'
+      { title: 'The Sandlot', year: 1993 }, { title: 'The Mighty Ducks', year: 1992 }, { title: 'Cool Runnings', year: 1993 }, 
+      { title: 'Remember the Titans', year: 2000 }, { title: 'The Karate Kid', year: 1984 }, { title: 'Space Jam', year: 1996 }, 
+      { title: 'Air Bud', year: 1997 }, { title: 'Angels in the Outfield', year: 1994 }, { title: 'The Bad News Bears', year: 1976 }, 
+      { title: 'Little Giants', year: 1994 }, { title: 'Rookie of the Year', year: 1993 }, { title: 'The Big Green', year: 1995 }, 
+      { title: 'Hardball', year: 2001 }, { title: 'Like Mike', year: 2002 }, { title: 'The Game Plan', year: 2007 }
     ],
     'Family,Sport': [
-      'The Sandlot', 'The Mighty Ducks', 'Cool Runnings', 'Remember the Titans', 'The Karate Kid',
-      'Space Jam', 'Air Bud', 'Angels in the Outfield', 'The Bad News Bears', 'Little Giants',
-      'Rookie of the Year', 'The Big Green', 'Hardball', 'Like Mike', 'The Game Plan'
+      { title: 'The Sandlot', year: 1993 }, { title: 'The Mighty Ducks', year: 1992 }, { title: 'Cool Runnings', year: 1993 }, 
+      { title: 'Remember the Titans', year: 2000 }, { title: 'The Karate Kid', year: 1984 }, { title: 'Space Jam', year: 1996 }, 
+      { title: 'Air Bud', year: 1997 }, { title: 'Angels in the Outfield', year: 1994 }, { title: 'The Bad News Bears', year: 1976 }, 
+      { title: 'Little Giants', year: 1994 }, { title: 'Rookie of the Year', year: 1993 }, { title: 'The Big Green', year: 1995 }, 
+      { title: 'Hardball', year: 2001 }, { title: 'Like Mike', year: 2002 }, { title: 'The Game Plan', year: 2007 }
     ],
     'Crime,Drama': [
-      'The Godfather', 'The Godfather Part II', 'Goodfellas', 'Scarface', 'The Departed',
-      'Casino', 'Heat', 'L.A. Confidential', 'Chinatown', 'The French Connection',
-      'Serpico', 'Mean Streets', 'Mystic River', 'Gone Baby Gone', 'Training Day'
+      { title: 'The Godfather', year: 1972 }, { title: 'The Godfather Part II', year: 1974 }, { title: 'Goodfellas', year: 1990 }, 
+      { title: 'Scarface', year: 1983 }, { title: 'The Departed', year: 2006 }, { title: 'Casino', year: 1995 }, 
+      { title: 'Heat', year: 1995 }, { title: 'L.A. Confidential', year: 1997 }, { title: 'Chinatown', year: 1974 }, 
+      { title: 'The French Connection', year: 1971 }, { title: 'Serpico', year: 1973 }, { title: 'Mean Streets', year: 1973 }, 
+      { title: 'Mystic River', year: 2003 }, { title: 'Gone Baby Gone', year: 2007 }, { title: 'Training Day', year: 2001 }
     ],
     'Drama,Crime': [
-      'The Godfather', 'The Godfather Part II', 'Goodfellas', 'Scarface', 'The Departed',
-      'Casino', 'Heat', 'L.A. Confidential', 'Chinatown', 'The French Connection',
-      'Serpico', 'Mean Streets', 'Mystic River', 'Gone Baby Gone', 'Training Day'
+      { title: 'The Godfather', year: 1972 }, { title: 'The Godfather Part II', year: 1974 }, { title: 'Goodfellas', year: 1990 }, 
+      { title: 'Scarface', year: 1983 }, { title: 'The Departed', year: 2006 }, { title: 'Casino', year: 1995 }, 
+      { title: 'Heat', year: 1995 }, { title: 'L.A. Confidential', year: 1997 }, { title: 'Chinatown', year: 1974 }, 
+      { title: 'The French Connection', year: 1971 }, { title: 'Serpico', year: 1973 }, { title: 'Mean Streets', year: 1973 }, 
+      { title: 'Mystic River', year: 2003 }, { title: 'Gone Baby Gone', year: 2007 }, { title: 'Training Day', year: 2001 }
+    ],
+    'Drama,Fantasy': [
+      { title: 'The Shape of Water', year: 2017 }, { title: 'Life of Pi', year: 2012 }, { title: 'Big Fish', year: 2003 }, 
+      { title: 'The Green Mile', year: 1999 }, { title: 'Ghost', year: 1990 }, { title: 'Field of Dreams', year: 1989 }, 
+      { title: 'It\'s a Wonderful Life', year: 1946 }, { title: 'The Curious Case of Benjamin Button', year: 2008 }, 
+      { title: 'Being John Malkovich', year: 1999 }, { title: 'Eternal Sunshine of the Spotless Mind', year: 2004 }
+    ],
+    'Fantasy,Drama': [
+      { title: 'The Shape of Water', year: 2017 }, { title: 'Life of Pi', year: 2012 }, { title: 'Big Fish', year: 2003 }, 
+      { title: 'The Green Mile', year: 1999 }, { title: 'Ghost', year: 1990 }, { title: 'Field of Dreams', year: 1989 }, 
+      { title: 'It\'s a Wonderful Life', year: 1946 }, { title: 'The Curious Case of Benjamin Button', year: 2008 }, 
+      { title: 'Being John Malkovich', year: 1999 }, { title: 'Eternal Sunshine of the Spotless Mind', year: 2004 }
+    ],
+    'Sci-Fi,Horror': [
+      { title: 'Alien', year: 1979 }, { title: 'Aliens', year: 1986 }, { title: 'The Thing', year: 1982 }, 
+      { title: 'Event Horizon', year: 1997 }, { title: 'Dead Space: Downfall', year: 2008 }, { title: 'Life', year: 2017 }, 
+      { title: 'Pandorum', year: 2009 }, { title: 'The Fly', year: 1986 }, { title: 'Invasion of the Body Snatchers', year: 1978 }, 
+      { title: 'Annihilation', year: 2018 }
+    ],
+    'Horror,Sci-Fi': [
+      { title: 'Alien', year: 1979 }, { title: 'Aliens', year: 1986 }, { title: 'The Thing', year: 1982 }, 
+      { title: 'Event Horizon', year: 1997 }, { title: 'Dead Space: Downfall', year: 2008 }, { title: 'Life', year: 2017 }, 
+      { title: 'Pandorum', year: 2009 }, { title: 'The Fly', year: 1986 }, { title: 'Invasion of the Body Snatchers', year: 1978 }, 
+      { title: 'Annihilation', year: 2018 }
     ],
     'Action,Comedy': [
-      'Rush Hour', 'Bad Boys', 'Beverly Hills Cop', 'Lethal Weapon', 'The Other Guys',
-      'Tropic Thunder', 'Hot Fuzz', 'Pineapple Express', '21 Jump Street', 'Deadpool'
+      { title: 'Rush Hour', year: 1998 }, { title: 'Bad Boys', year: 1995 }, { title: 'Beverly Hills Cop', year: 1984 }, 
+      { title: 'Lethal Weapon', year: 1987 }, { title: 'The Other Guys', year: 2010 }, { title: 'Tropic Thunder', year: 2008 }, 
+      { title: 'Hot Fuzz', year: 2007 }, { title: 'Pineapple Express', year: 2008 }, { title: '21 Jump Street', year: 2012 }, 
+      { title: 'Deadpool', year: 2016 }
     ],
     'Comedy,Action': [
-      'Rush Hour', 'Bad Boys', 'Beverly Hills Cop', 'Lethal Weapon', 'The Other Guys',
-      'Tropic Thunder', 'Hot Fuzz', 'Pineapple Express', '21 Jump Street', 'Deadpool'
+      { title: 'Rush Hour', year: 1998 }, { title: 'Bad Boys', year: 1995 }, { title: 'Beverly Hills Cop', year: 1984 }, 
+      { title: 'Lethal Weapon', year: 1987 }, { title: 'The Other Guys', year: 2010 }, { title: 'Tropic Thunder', year: 2008 }, 
+      { title: 'Hot Fuzz', year: 2007 }, { title: 'Pineapple Express', year: 2008 }, { title: '21 Jump Street', year: 2012 }, 
+      { title: 'Deadpool', year: 2016 }
     ],
     'Horror,Thriller': [
-      'The Silence of the Lambs', 'Psycho', 'The Shining', 'Halloween', 'Scream',
-      'A Nightmare on Elm Street', 'Friday the 13th', 'Get Out', 'Hereditary', 'The Conjuring'
+      { title: 'The Silence of the Lambs', year: 1991 }, { title: 'Psycho', year: 1960 }, { title: 'The Shining', year: 1980 }, 
+      { title: 'Halloween', year: 1978 }, { title: 'Scream', year: 1996 }, { title: 'A Nightmare on Elm Street', year: 1984 }, 
+      { title: 'Friday the 13th', year: 1980 }, { title: 'Get Out', year: 2017 }, { title: 'Hereditary', year: 2018 }, 
+      { title: 'The Conjuring', year: 2013 }
     ],
     'Thriller,Horror': [
-      'The Silence of the Lambs', 'Psycho', 'The Shining', 'Halloween', 'Scream',
-      'A Nightmare on Elm Street', 'Friday the 13th', 'Get Out', 'Hereditary', 'The Conjuring'
+      { title: 'The Silence of the Lambs', year: 1991 }, { title: 'Psycho', year: 1960 }, { title: 'The Shining', year: 1980 }, 
+      { title: 'Halloween', year: 1978 }, { title: 'Scream', year: 1996 }, { title: 'A Nightmare on Elm Street', year: 1984 }, 
+      { title: 'Friday the 13th', year: 1980 }, { title: 'Get Out', year: 2017 }, { title: 'Hereditary', year: 2018 }, 
+      { title: 'The Conjuring', year: 2013 }
     ],
     'Romance,Comedy': [
-      'When Harry Met Sally', 'The Princess Bride', 'Pretty Woman', 'Sleepless in Seattle',
-      'You\'ve Got Mail', 'Notting Hill', 'Four Weddings and a Funeral', 'Love Actually',
-      'The Holiday', 'Crazy, Stupid, Love', '50 First Dates', 'The Wedding Singer'
+      { title: 'When Harry Met Sally', year: 1989 }, { title: 'The Princess Bride', year: 1987 }, { title: 'Pretty Woman', year: 1990 }, 
+      { title: 'Sleepless in Seattle', year: 1993 }, { title: 'You\'ve Got Mail', year: 1998 }, { title: 'Notting Hill', year: 1999 }, 
+      { title: 'Four Weddings and a Funeral', year: 1994 }, { title: 'Love Actually', year: 2003 }, { title: 'The Holiday', year: 2006 }, 
+      { title: 'Crazy, Stupid, Love', year: 2011 }, { title: '50 First Dates', year: 2004 }, { title: 'The Wedding Singer', year: 1998 }
     ],
     'Comedy,Romance': [
-      'When Harry Met Sally', 'The Princess Bride', 'Pretty Woman', 'Sleepless in Seattle',
-      'You\'ve Got Mail', 'Notting Hill', 'Four Weddings and a Funeral', 'Love Actually',
-      'The Holiday', 'Crazy, Stupid, Love', '50 First Dates', 'The Wedding Singer'
+      { title: 'When Harry Met Sally', year: 1989 }, { title: 'The Princess Bride', year: 1987 }, { title: 'Pretty Woman', year: 1990 }, 
+      { title: 'Sleepless in Seattle', year: 1993 }, { title: 'You\'ve Got Mail', year: 1998 }, { title: 'Notting Hill', year: 1999 }, 
+      { title: 'Four Weddings and a Funeral', year: 1994 }, { title: 'Love Actually', year: 2003 }, { title: 'The Holiday', year: 2006 }, 
+      { title: 'Crazy, Stupid, Love', year: 2011 }, { title: '50 First Dates', year: 2004 }, { title: 'The Wedding Singer', year: 1998 }
     ]
   };
 
