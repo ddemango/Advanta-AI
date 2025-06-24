@@ -4760,21 +4760,28 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         filteredMovies = filteredMovies.filter(movie => movie.runtime <= preferences.maxRuntime);
       }
       
-      // Genre filtering - movies must have EXACTLY the selected genres (no more, no less)
-      if (preferences.genres.length > 0) {
+      // Genre filtering - Fixed logic
+      if (preferences.genres && preferences.genres.length > 0) {
+        console.log(`Filtering for genres: ${preferences.genres.join(', ')}`);
+        console.log(`Total movies before genre filter: ${filteredMovies.length}`);
+        
         filteredMovies = filteredMovies.filter(movie => {
-          // Check if the movie has exactly the same genres as selected
-          const movieGenres = movie.genres.sort();
-          const selectedGenres = preferences.genres.sort();
+          if (!movie.genres || !Array.isArray(movie.genres)) {
+            return false;
+          }
           
-          // For single genre selection, movie must contain that genre but can have others
-          if (selectedGenres.length === 1) {
-            return movieGenres.includes(selectedGenres[0]);
+          // For single genre selection, movie must contain that genre
+          if (preferences.genres.length === 1) {
+            const hasGenre = movie.genres.includes(preferences.genres[0]);
+            return hasGenre;
           }
           
           // For multiple genres, movie must contain ALL selected genres
-          return selectedGenres.every(genre => movieGenres.includes(genre));
+          const hasAllGenres = preferences.genres.every(genre => movie.genres.includes(genre));
+          return hasAllGenres;
         });
+        
+        console.log(`Movies after genre filter: ${filteredMovies.length}`);
       }
       
       // Decade filtering - Fixed logic

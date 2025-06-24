@@ -212,7 +212,50 @@ export function generateLargeMovieDatabase(): Movie[] {
   // Add more genre combinations and additional categories
   const additionalGenres = ['Adventure', 'Biography', 'Crime', 'Family', 'Fantasy', 'History', 'Music', 'Mystery', 'Sport', 'War', 'Western'];
   
-  for (const genre of additionalGenres) {
+  // Add authentic crime movies
+  const crimeMovies = [
+    'The Godfather', 'Goodfellas', 'Scarface', 'Casino', 'Donnie Brasco', 'The Departed', 
+    'Heat', 'Pulp Fiction', 'Reservoir Dogs', 'The Usual Suspects', 'L.A. Confidential',
+    'Chinatown', 'The French Connection', 'Serpico', 'Dog Day Afternoon', 'Taxi Driver'
+  ];
+  
+  // Add crime movies specifically
+  for (let i = 0; i < 200; i++) {
+    const baseTitle = crimeMovies[i % crimeMovies.length];
+    const title = i < crimeMovies.length ? baseTitle : `${baseTitle} ${Math.floor(i / crimeMovies.length) + 1}`;
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title,
+      year: 1970 + Math.floor(Math.random() * 54),
+      genres: ['Crime'],
+      rating: 6.5 + Math.random() * 3.0,
+      runtime: 100 + Math.floor(Math.random() * 60)
+    });
+  }
+  
+  // Add authentic documentary-crime crossover movies
+  const trueCrimeDocumentaries = [
+    'Making a Murderer', 'The Staircase', 'Serial', 'The Jinx', 'Wild Wild Country',
+    'Evil Genius', 'The Keepers', 'Abducted in Plain Sight', 'Conversations with a Killer',
+    'The Ted Bundy Tapes', 'Don\'t F**k with Cats', 'Tiger King', 'The Disappearance of Madeleine McCann',
+    'American Crime Story', 'Mindhunter', 'The People v. O.J. Simpson', 'Zodiac',
+    'Paradise Lost', 'West of Memphis', 'Dear Zachary'
+  ];
+  
+  for (let i = 0; i < 100; i++) {
+    const baseTitle = trueCrimeDocumentaries[i % trueCrimeDocumentaries.length];
+    const title = i < trueCrimeDocumentaries.length ? baseTitle : `${baseTitle}: ${['Part II', 'The Investigation', 'New Evidence', 'The Trial', 'Aftermath'][Math.floor(Math.random() * 5)]}`;
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title,
+      year: 2000 + Math.floor(Math.random() * 24),
+      genres: ['Documentary', 'Crime'],
+      rating: 7.0 + Math.random() * 2.5,
+      runtime: 90 + Math.floor(Math.random() * 60)
+    });
+  }
+  
+  for (const genre of additionalGenres.filter(g => g !== 'Crime')) {
     for (let i = 0; i < 100; i++) {
       movies.push({
         imdbId: `tt${movieId++}`,
