@@ -4780,7 +4780,18 @@ function getMoviePlot(title: string): string {
     'The Dark Knight': 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.',
     'Avengers: Endgame': 'After the devastating events of Infinity War, the Avengers assemble once more to reverse Thanos\' actions and restore balance to the universe.',
     'Pulp Fiction': 'The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption.',
-    'Back to the Future': 'Marty McFly, a 17-year-old high school student, is accidentally sent 30 years into the past in a time-traveling DeLorean.'
+    'Back to the Future': 'Marty McFly, a 17-year-old high school student, is accidentally sent 30 years into the past in a time-traveling DeLorean.',
+    'Deadpool': 'A wisecracking mercenary gets experimented on and becomes immortal but ugly, and sets out to track down the man who ruined his looks.',
+    'Ant-Man': 'Armed with a super-suit with the astonishing ability to shrink in scale but increase in strength, cat burglar Scott Lang must embrace his inner hero.',
+    'Super Mario Bros. Movie': 'A Brooklyn plumber named Mario travels through the Mushroom Kingdom with a princess named Peach and an anthropomorphic mushroom retainer named Toad.',
+    'Oppenheimer': 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.',
+    'Dune: Part Two': 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',
+    'Fast X': 'Dom Toretto and his family are targeted by the vengeful son of drug kingpin Hernan Reyes.',
+    'Indiana Jones and the Dial of Destiny': 'Archaeologist Indiana Jones races against time to retrieve a legendary artifact that can change the course of history.',
+    'Shang-Chi and the Legend of the Ten Rings': 'Shang-Chi must confront the past he thought he left behind when he is drawn into the web of the mysterious Ten Rings organization.',
+    'Eternals': 'The saga of the Eternals, a race of immortal beings who lived on Earth and shaped its history and civilizations.',
+    'Inside Out': 'After young Riley is uprooted from her Midwest life and moved to San Francisco, her emotions - Joy, Fear, Anger, Disgust and Sadness - conflict on how best to navigate a new city.',
+    'Star Wars: The Force Awakens': 'As a new threat to the galaxy rises, Rey, a desert scavenger, and Finn, an ex-stormtrooper, must join Han Solo and Cheia to search for the one hope of restoring peace.'
   };
   return plots[title] || 'A compelling story that will captivate audiences.';
 }
@@ -4796,7 +4807,18 @@ function getMovieDirector(title: string): string {
     'The Dark Knight': 'Christopher Nolan',
     'Avengers: Endgame': 'Anthony Russo, Joe Russo',
     'Pulp Fiction': 'Quentin Tarantino',
-    'Back to the Future': 'Robert Zemeckis'
+    'Back to the Future': 'Robert Zemeckis',
+    'Deadpool': 'Tim Miller',
+    'Ant-Man': 'Peyton Reed',
+    'Super Mario Bros. Movie': 'Aaron Horvath, Michael Jelenic',
+    'Oppenheimer': 'Christopher Nolan',
+    'Dune: Part Two': 'Denis Villeneuve',
+    'Fast X': 'Louis Leterrier',
+    'Indiana Jones and the Dial of Destiny': 'James Mangold',
+    'Shang-Chi and the Legend of the Ten Rings': 'Destin Daniel Cretton',
+    'Eternals': 'Chloé Zhao',
+    'Inside Out': 'Pete Docter',
+    'Star Wars: The Force Awakens': 'J.J. Abrams'
   };
   return directors[title] || 'Acclaimed Director';
 }
@@ -4812,7 +4834,18 @@ function getMovieCast(title: string): string[] {
     'The Dark Knight': ['Christian Bale', 'Heath Ledger', 'Aaron Eckhart'],
     'Avengers: Endgame': ['Robert Downey Jr.', 'Chris Evans', 'Mark Ruffalo'],
     'Pulp Fiction': ['John Travolta', 'Uma Thurman', 'Samuel L. Jackson'],
-    'Back to the Future': ['Michael J. Fox', 'Christopher Lloyd', 'Lea Thompson']
+    'Back to the Future': ['Michael J. Fox', 'Christopher Lloyd', 'Lea Thompson'],
+    'Deadpool': ['Ryan Reynolds', 'Morena Baccarin', 'T.J. Miller'],
+    'Ant-Man': ['Paul Rudd', 'Evangeline Lilly', 'Michael Douglas'],
+    'Super Mario Bros. Movie': ['Chris Pratt', 'Anya Taylor-Joy', 'Charlie Day'],
+    'Oppenheimer': ['Cillian Murphy', 'Emily Blunt', 'Matt Damon'],
+    'Dune: Part Two': ['Timothée Chalamet', 'Zendaya', 'Rebecca Ferguson'],
+    'Fast X': ['Vin Diesel', 'Michelle Rodriguez', 'Tyrese Gibson'],
+    'Indiana Jones and the Dial of Destiny': ['Harrison Ford', 'Phoebe Waller-Bridge', 'Antonio Banderas'],
+    'Shang-Chi and the Legend of the Ten Rings': ['Simu Liu', 'Awkwafina', 'Tony Leung'],
+    'Eternals': ['Gemma Chan', 'Richard Madden', 'Angelina Jolie'],
+    'Inside Out': ['Amy Poehler', 'Phyllis Smith', 'Richard Kind'],
+    'Star Wars: The Force Awakens': ['Harrison Ford', 'Mark Hamill', 'Carrie Fisher']
   };
   return casts[title] || ['Talented Cast'];
 }
@@ -4828,9 +4861,20 @@ function getMoviePoster(title: string): string {
     'The Dark Knight': 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
     'Avengers: Endgame': 'https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg',
     'Pulp Fiction': 'https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg',
-    'Back to the Future': 'https://image.tmdb.org/t/p/w500/fNOH9f1aA7XRTzl1sAOx9iF553Q.jpg'
+    'Back to the Future': 'https://image.tmdb.org/t/p/w500/fNOH9f1aA7XRTzl1sAOx9iF553Q.jpg',
+    'Deadpool': 'https://image.tmdb.org/t/p/w500/9X7YweCJw3q8Mcf6GadxReFEksM.jpg',
+    'Ant-Man': 'https://image.tmdb.org/t/p/w500/rQRnQfUl3kfp78nCWq8Ks04vnq1.jpg',
+    'Super Mario Bros. Movie': 'https://image.tmdb.org/t/p/w500/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg',
+    'Oppenheimer': 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+    'Dune: Part Two': 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
+    'Fast X': 'https://image.tmdb.org/t/p/w500/fiVW06jE7z9YnO4trhaMEdclSiC.jpg',
+    'Indiana Jones and the Dial of Destiny': 'https://image.tmdb.org/t/p/w500/Af4bXE63pVsb2FtbW8uYIyPBadD.jpg',
+    'Shang-Chi and the Legend of the Ten Rings': 'https://image.tmdb.org/t/p/w500/1BIoJGKbXjdFDAqUEiA2VHqkK1Z.jpg',
+    'Eternals': 'https://image.tmdb.org/t/p/w500/lFByFSLV5WDJEv3KabbdAF959F2.jpg',
+    'Inside Out': 'https://image.tmdb.org/t/p/w500/2H1TmgdfNtsKlU9jKdeNyYL5y8T.jpg',
+    'Star Wars: The Force Awakens': 'https://image.tmdb.org/t/p/w500/wqnLdwVXoBjKibFRR5U3y0aDUhs.jpg'
   };
-  return posters[title] || 'https://image.tmdb.org/t/p/w500/placeholder.jpg';
+  return posters[title] || 'https://via.placeholder.com/300x450/333/fff?text=No+Poster';
 }
 
 function getCuratedRecommendations(preferences: any) {
