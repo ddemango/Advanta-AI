@@ -4625,6 +4625,91 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         { imdbId: 'tt0208092', title: 'Snatch', year: 2000, genres: ['Crime'], rating: 8.2, runtime: 104 },
         { imdbId: 'tt0361748', title: 'Inglourious Basterds', year: 2009, genres: ['Crime'], rating: 8.3, runtime: 153 },
         { imdbId: 'tt1853728', title: 'Django Unchained', year: 2012, genres: ['Crime'], rating: 8.4, runtime: 165 },
+        
+        // Documentary Movies
+        { imdbId: 'tt1049413', title: 'Free Solo', year: 2018, genres: ['Documentary'], rating: 8.1, runtime: 100 },
+        { imdbId: 'tt4846232', title: 'My Octopus Teacher', year: 2020, genres: ['Documentary'], rating: 8.1, runtime: 85 },
+        { imdbId: 'tt1291584', title: 'Won\'t You Be My Neighbor?', year: 2018, genres: ['Documentary'], rating: 8.4, runtime: 94 },
+        { imdbId: 'tt6794060', title: 'The Social Dilemma', year: 2020, genres: ['Documentary'], rating: 7.6, runtime: 94 },
+        { imdbId: 'tt5813916', title: 'Icarus', year: 2017, genres: ['Documentary'], rating: 7.9, runtime: 121 },
+        { imdbId: 'tt6857112', title: 'RBG', year: 2018, genres: ['Documentary'], rating: 7.5, runtime: 98 },
+        { imdbId: 'tt8912936', title: 'Tiger King', year: 2020, genres: ['Documentary'], rating: 7.5, runtime: 47 },
+        { imdbId: 'tt7768848', title: 'Seaspiracy', year: 2021, genres: ['Documentary'], rating: 8.1, runtime: 90 },
+        
+        // Animation Movies
+        { imdbId: 'tt0317219', title: 'Cars', year: 2006, genres: ['Animation'], rating: 7.2, runtime: 117 },
+        { imdbId: 'tt2294629', title: 'Frozen', year: 2013, genres: ['Animation'], rating: 7.4, runtime: 102 },
+        { imdbId: 'tt1049413', title: 'Coco', year: 2017, genres: ['Animation'], rating: 8.4, runtime: 105 },
+        
+        // Biography Movies
+        { imdbId: 'tt1477834', title: 'Bohemian Rhapsody', year: 2018, genres: ['Biography'], rating: 7.9, runtime: 134 },
+        { imdbId: 'tt0268978', title: 'A Beautiful Mind', year: 2001, genres: ['Biography'], rating: 8.2, runtime: 135 },
+        { imdbId: 'tt1302006', title: 'The Imitation Game', year: 2014, genres: ['Biography'], rating: 8.0, runtime: 114 },
+        
+        // Adventure Movies
+        { imdbId: 'tt0325980', title: 'Pirates of the Caribbean', year: 2003, genres: ['Adventure'], rating: 8.1, runtime: 143 },
+        { imdbId: 'tt0167260', title: 'The Lord of the Rings: The Return of the King', year: 2003, genres: ['Adventure'], rating: 9.0, runtime: 201 },
+        { imdbId: 'tt0120737', title: 'The Lord of the Rings: The Fellowship of the Ring', year: 2001, genres: ['Adventure'], rating: 8.8, runtime: 178 },
+        
+        // Drama Movies  
+        { imdbId: 'tt0111161', title: 'The Shawshank Redemption', year: 1994, genres: ['Drama'], rating: 9.3, runtime: 142 },
+        { imdbId: 'tt0109830', title: 'Forrest Gump', year: 1994, genres: ['Drama'], rating: 8.8, runtime: 142 },
+        { imdbId: 'tt0993846', title: 'The Wolf of Wall Street', year: 2013, genres: ['Drama'], rating: 8.2, runtime: 180 },
+        
+        // Family Movies
+        { imdbId: 'tt0317705', title: 'The Incredibles', year: 2004, genres: ['Family'], rating: 8.0, runtime: 125 },
+        { imdbId: 'tt0435761', title: 'Toy Story 3', year: 2010, genres: ['Family'], rating: 8.3, runtime: 103 },
+        { imdbId: 'tt0114709', title: 'Toy Story', year: 1995, genres: ['Family'], rating: 8.3, runtime: 81 },
+        
+        // Fantasy Movies
+        { imdbId: 'tt0241527', title: 'Harry Potter and the Sorcerer\'s Stone', year: 2001, genres: ['Fantasy'], rating: 7.6, runtime: 152 },
+        { imdbId: 'tt0295297', title: 'Harry Potter and the Chamber of Secrets', year: 2002, genres: ['Fantasy'], rating: 7.4, runtime: 161 },
+        { imdbId: 'tt0304141', title: 'Harry Potter and the Prisoner of Azkaban', year: 2004, genres: ['Fantasy'], rating: 7.9, runtime: 142 },
+        
+        // Horror Movies
+        { imdbId: 'tt0816692', title: 'Get Out', year: 2017, genres: ['Horror'], rating: 7.7, runtime: 104 },
+        { imdbId: 'tt1396484', title: 'It', year: 2017, genres: ['Horror'], rating: 7.3, runtime: 135 },
+        { imdbId: 'tt0083658', title: 'The Thing', year: 1982, genres: ['Horror'], rating: 8.2, runtime: 109 },
+        
+        // Music Movies
+        { imdbId: 'tt3783958', title: 'La La Land', year: 2016, genres: ['Music'], rating: 8.0, runtime: 128 },
+        { imdbId: 'tt0758758', title: 'Into the Wild', year: 2007, genres: ['Music'], rating: 8.1, runtime: 148 },
+        { imdbId: 'tt2582802', title: 'Whiplash', year: 2014, genres: ['Music'], rating: 8.5, runtime: 106 },
+        
+        // Mystery Movies
+        { imdbId: 'tt0338013', title: 'Zodiac', year: 2007, genres: ['Mystery'], rating: 7.7, runtime: 157 },
+        { imdbId: 'tt0111495', title: 'The Usual Suspects', year: 1995, genres: ['Mystery'], rating: 8.5, runtime: 106 },
+        { imdbId: 'tt0114814', title: 'Se7en', year: 1995, genres: ['Mystery'], rating: 8.6, runtime: 127 },
+        
+        // Romance Movies
+        { imdbId: 'tt0107290', title: 'Groundhog Day', year: 1993, genres: ['Romance'], rating: 8.0, runtime: 101 },
+        { imdbId: 'tt0088763', title: 'Back to the Future', year: 1985, genres: ['Romance'], rating: 8.5, runtime: 116 },
+        { imdbId: 'tt0113497', title: 'Clueless', year: 1995, genres: ['Romance'], rating: 6.9, runtime: 97 },
+        
+        // Sci-Fi Movies
+        { imdbId: 'tt0133093', title: 'The Matrix', year: 1999, genres: ['Sci-Fi'], rating: 8.7, runtime: 136 },
+        { imdbId: 'tt0816692', title: 'Interstellar', year: 2014, genres: ['Sci-Fi'], rating: 8.6, runtime: 169 },
+        { imdbId: 'tt0083658', title: 'Blade Runner', year: 1982, genres: ['Sci-Fi'], rating: 8.1, runtime: 117 },
+        
+        // Sport Movies
+        { imdbId: 'tt0110632', title: 'The Lion King', year: 1994, genres: ['Sport'], rating: 8.5, runtime: 88 },
+        { imdbId: 'tt0405159', title: 'Million Dollar Baby', year: 2004, genres: ['Sport'], rating: 8.1, runtime: 132 },
+        { imdbId: 'tt0089881', title: 'Rocky IV', year: 1985, genres: ['Sport'], rating: 6.9, runtime: 91 },
+        
+        // Thriller Movies
+        { imdbId: 'tt1375666', title: 'Inception', year: 2010, genres: ['Thriller'], rating: 8.8, runtime: 148 },
+        { imdbId: 'tt0137523', title: 'Fight Club', year: 1999, genres: ['Thriller'], rating: 8.8, runtime: 139 },
+        { imdbId: 'tt0482571', title: 'The Prestige', year: 2006, genres: ['Thriller'], rating: 8.5, runtime: 130 },
+        
+        // War Movies
+        { imdbId: 'tt0120815', title: 'Saving Private Ryan', year: 1998, genres: ['War'], rating: 8.6, runtime: 169 },
+        { imdbId: 'tt0172495', title: 'Gladiator', year: 2000, genres: ['War'], rating: 8.5, runtime: 155 },
+        { imdbId: 'tt0993846', title: 'Dunkirk', year: 2017, genres: ['War'], rating: 7.8, runtime: 106 },
+        
+        // Western Movies
+        { imdbId: 'tt0060196', title: 'The Good, the Bad and the Ugly', year: 1966, genres: ['Western'], rating: 8.8, runtime: 178 },
+        { imdbId: 'tt0088167', title: 'Once Upon a Time in the West', year: 1968, genres: ['Western'], rating: 8.5, runtime: 165 },
+        { imdbId: 'tt1853728', title: 'Django Unchained', year: 2012, genres: ['Western'], rating: 8.4, runtime: 165 },
         { imdbId: 'tt1905041', title: 'Fast Five', year: 2011, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.3, runtime: 130 },
         { imdbId: 'tt1013752', title: 'Fast & Furious 6', year: 2013, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.0, runtime: 130 },
         { imdbId: 'tt2488496', title: 'Star Wars: The Force Awakens', year: 2015, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.8, runtime: 138 },
@@ -4824,7 +4909,52 @@ function getMoviePlot(title: string): string {
     'Shang-Chi and the Legend of the Ten Rings': 'Shang-Chi must confront the past he thought he left behind when he is drawn into the web of the mysterious Ten Rings organization.',
     'Eternals': 'The saga of the Eternals, a race of immortal beings who lived on Earth and shaped its history and civilizations.',
     'Inside Out': 'After young Riley is uprooted from her Midwest life and moved to San Francisco, her emotions - Joy, Fear, Anger, Disgust and Sadness - conflict on how best to navigate a new city.',
-    'Star Wars: The Force Awakens': 'As a new threat to the galaxy rises, Rey, a desert scavenger, and Finn, an ex-stormtrooper, must join Han Solo and Cheia to search for the one hope of restoring peace.'
+    'Star Wars: The Force Awakens': 'As a new threat to the galaxy rises, Rey, a desert scavenger, and Finn, an ex-stormtrooper, must join Han Solo and Cheia to search for the one hope of restoring peace.',
+    'Heat': 'A group of professional bank robbers start to feel the heat from police when they unknowingly leave a clue at their latest heist.',
+    'Lock, Stock and Two Smoking Barrels': 'A botched card game in London triggers four friends, thugs, weed-growers, hard gangsters, loan sharks and debt collectors to collide with each other in a series of unexpected events.',
+    'Snatch': 'Unscrupulous boxing promoters, violent bookmakers, a Russian gangster, incompetent amateur robbers and supposedly Jewish jewelers fight to track down a priceless stolen diamond.',
+    'Inglourious Basterds': 'In Nazi-occupied France during World War II, a plan to assassinate Nazi leaders by a group of Jewish U.S. soldiers coincides with a theatre owner\'s vengeful plans for the same.',
+    'Free Solo': 'Follow Alex Honnold as he attempts to become the first person to ever free solo climb Yosemite\'s 3,200-foot El Capitan wall.',
+    'My Octopus Teacher': 'A filmmaker forges an unusual friendship with an octopus living in a South African kelp forest, learning as the animal shares the mysteries of her world.',
+    'Won\'t You Be My Neighbor?': 'An exploration of the life, lessons, and legacy of iconic children\'s television host Fred Rogers.',
+    'The Social Dilemma': 'Explores the dangerous human impact of social networking, with tech experts sounding the alarm on their own creations.',
+    'Icarus': 'When filmmaker Bryan Fogel sets out to uncover the truth about doping in sports, a chance meeting with a Russian scientist transforms his story into a geopolitical thriller.',
+    'RBG': 'A look at the life and work of Justice Ruth Bader Ginsburg, focusing on her early career and landmark cases.',
+    'Tiger King': 'A rivalry between big cat eccentrics takes a dark turn when one of them is accused of hiring a hitman to kill his chief rival.',
+    'Seaspiracy': 'Filmmaker Ali Tabrizi uncovers alarming truths about the impact of commercial fishing on marine ecosystems.',
+    'Cars': 'A hot-shot race-car named Lightning McQueen gets waylaid in Radiator Springs, where he finds the true meaning of friendship and family.',
+    'Frozen': 'When the newly crowned Queen Elsa accidentally uses her power to turn things into ice to curse her home in infinite winter, her sister Anna teams up with a mountain man, his playful reindeer, and a snowman to change the weather condition.',
+    'Coco': 'Aspiring musician Miguel, confronted with his family\'s ancestral ban on music, enters the Land of the Dead to find his great-great-grandfather, a legendary singer.',
+    'Bohemian Rhapsody': 'The story of the legendary British rock band Queen and lead singer Freddie Mercury, leading up to their famous performance at Live Aid.',
+    'A Beautiful Mind': 'After John Nash, a brilliant but asocial mathematician, accepts secret work in cryptography, his life takes a turn for the nightmarish.',
+    'Pirates of the Caribbean': 'Blacksmith Will Turner teams up with eccentric pirate Captain Jack Sparrow to save his love, the governor\'s daughter, from Jack\'s former pirate allies.',
+    'The Lord of the Rings: The Return of the King': 'Gandalf and Aragorn lead the World of Men against Sauron\'s army to draw his gaze from Frodo and Sam as they approach Mount Doom with the One Ring.',
+    'The Lord of the Rings: The Fellowship of the Ring': 'A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring and save Middle-earth from the Dark Lord Sauron.',
+    'The Incredibles': 'A family of undercover superheroes, while trying to live the quiet suburban life, are forced into action to save the world.',
+    'Toy Story 3': 'The toys are mistakenly delivered to a day-care center instead of the attic right before Andy leaves for college, and it\'s up to Woody to convince the other toys that they weren\'t abandoned.',
+    'Toy Story': 'A cowboy doll is profoundly threatened and jealous when a new spaceman figure supplants him as top toy in a boy\'s room.',
+    'Harry Potter and the Sorcerer\'s Stone': 'An orphaned boy enrolls in a school of wizardry, where he learns the truth about himself, his family and the terrible evil that haunts the magical world.',
+    'Harry Potter and the Chamber of Secrets': 'An ancient prophecy seems to be coming true when a mysterious presence begins stalking the corridors of a school of magic and leaving its victims paralyzed.',
+    'Harry Potter and the Prisoner of Azkaban': 'Harry Potter, Ron and Hermione return to Hogwarts School of Witchcraft and Wizardry for their third year of study, where they delve into the mystery surrounding an escaped prisoner.',
+    'Get Out': 'A young African-American visits his white girlfriend\'s parents for the weekend, where his simmering uneasiness about their reception of him eventually reaches a boiling point.',
+    'It': 'In the summer of 1989, a group of bullied kids band together to destroy a shape-shifting monster, which disguises itself as a clown and preys on the children of Derry.',
+    'The Thing': 'A research team in Antarctica is hunted by a shape-shifting alien that assumes the appearance of its victims.',
+    'La La Land': 'While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.',
+    'Into the Wild': 'After graduating from Emory University, top student and athlete Christopher McCandless abandons his possessions, gives his entire savings account to charity and hitchhikes to Alaska.',
+    'Zodiac': 'In the late 1960s/early 1970s, a San Francisco cartoonist becomes an amateur detective obsessed with tracking down the Zodiac Killer.',
+    'The Usual Suspects': 'A sole survivor tells of the twisty events leading up to a horrific gun battle on a boat, which began when five criminals met at a seemingly random police lineup.',
+    'Se7en': 'Two detectives, a rookie and a veteran, hunt a serial killer who uses the seven deadly sins as his motives.',
+    'Groundhog Day': 'A narcissistic TV weatherman finds himself trapped in a time loop, reliving the same day over and over again.',
+    'Clueless': 'A rich high school student tries to boost a new pupil\'s popularity, but reckons without affairs of the heart getting in the way.',
+    'Blade Runner': 'A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to the earth seeking their creator.',
+    'Million Dollar Baby': 'A hardened trainer/manager works with a determined woman in her attempt to establish herself as a boxer.',
+    'Rocky IV': 'Rocky Balboa proudly holds the world heavyweight boxing championship, but a new challenger has stepped forward: Drago.',
+    'The Prestige': 'After a tragic accident, two stage magicians engage in a battle to create the ultimate illusion while sacrificing everything they have to outwit each other.',
+    'Saving Private Ryan': 'Following the Normandy Landings, a group of U.S. soldiers go behind enemy lines to retrieve a paratrooper whose brothers have been killed in action.',
+    'Gladiator': 'A former Roman General sets out to exact vengeance against the corrupt emperor who murdered his family and sent him into slavery.',
+    'Dunkirk': 'Allied soldiers from Belgium, the British Commonwealth and Empire, and France are surrounded by the German Army and evacuated during a fierce battle in World War II.',
+    'The Good, the Bad and the Ugly': 'A bounty hunting scam joins two men in an uneasy alliance against a third in a race to find a fortune in gold buried in a remote cemetery.',
+    'Once Upon a Time in the West': 'A mysterious stranger with a harmonica joins forces with a notorious desperado to protect a beautiful widow from a ruthless assassin working for the railroad.'
   };
   return plots[title] || 'A compelling story that will captivate audiences.';
 }
@@ -4971,7 +5101,52 @@ function getMoviePoster(title: string): string {
     'Shang-Chi and the Legend of the Ten Rings': 'https://image.tmdb.org/t/p/w500/1BIoJGKbXjdFDAqUEiA2VHqkK1Z.jpg',
     'Eternals': 'https://image.tmdb.org/t/p/w500/lFByFSLV5WDJEv3KabbdAF959F2.jpg',
     'Inside Out': 'https://image.tmdb.org/t/p/w500/2H1TmgdfNtsKlU9jKdeNyYL5y8T.jpg',
-    'Star Wars: The Force Awakens': 'https://image.tmdb.org/t/p/w500/wqnLdwVXoBjKibFRR5U3y0aDUhs.jpg'
+    'Star Wars: The Force Awakens': 'https://image.tmdb.org/t/p/w500/wqnLdwVXoBjKibFRR5U3y0aDUhs.jpg',
+    'Heat': 'https://image.tmdb.org/t/p/w500/zMyfPUelumio3tiDKPffaUpsQTD.jpg',
+    'Lock, Stock and Two Smoking Barrels': 'https://image.tmdb.org/t/p/w500/tWVmJe5xWpG8XUoEfmMZOQZuqPT.jpg',
+    'Snatch': 'https://image.tmdb.org/t/p/w500/56mOJth6DJ6JhgoE2jtpilVqJO.jpg',
+    'Inglourious Basterds': 'https://image.tmdb.org/t/p/w500/7sfbEnaARXDDhKm0CZ7D7uc2sbo.jpg',
+    'Free Solo': 'https://image.tmdb.org/t/p/w500/yj4lUHnHZSYBm7dQVRH7MPC5R3Z.jpg',
+    'My Octopus Teacher': 'https://image.tmdb.org/t/p/w500/jOlEgUcW7lEWAhBL4s1lx9fJCeI.jpg',
+    'Won\'t You Be My Neighbor?': 'https://image.tmdb.org/t/p/w500/gWEe0F0IkNO7Y9y7OBUgOXFJhMO.jpg',
+    'The Social Dilemma': 'https://image.tmdb.org/t/p/w500/uE9k0Z5ooysfmJMvNg2jAEn8y3t.jpg',
+    'Icarus': 'https://image.tmdb.org/t/p/w500/eFdNkykpFBKKHdEfDwPn8ebNNYO.jpg',
+    'RBG': 'https://image.tmdb.org/t/p/w500/4gYFrxmF86WxhlQIReBe7d9wJUz.jpg',
+    'Tiger King': 'https://image.tmdb.org/t/p/w500/cROF84KCp6dCRNl7nXnJwRp2D6l.jpg',
+    'Seaspiracy': 'https://image.tmdb.org/t/p/w500/5kWvCKAn9QdlTBq3vBGiRu7ADSM.jpg',
+    'Cars': 'https://image.tmdb.org/t/p/w500/a1MlbLBk5Sy6YvMbSuKfwGlDVlb.jpg',
+    'Frozen': 'https://image.tmdb.org/t/p/w500/kgwjIb2JDHRhNk13lGVHqn4cWK8.jpg',
+    'Coco': 'https://image.tmdb.org/t/p/w500/gGEsBPAijhVUFoiNpgZXqRVWJt2.jpg',
+    'Bohemian Rhapsody': 'https://image.tmdb.org/t/p/w500/lHu1wtNaczFPGFDTrjCSzeLPTKN.jpg',
+    'A Beautiful Mind': 'https://image.tmdb.org/t/p/w500/4SFqHDZ1NvWdysucWbgnYlobdxC.jpg',
+    'Pirates of the Caribbean': 'https://image.tmdb.org/t/p/w500/z8onk7LV9Mmw6zKz4hT6pzzvmvl.jpg',
+    'The Lord of the Rings: The Return of the King': 'https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg',
+    'The Lord of the Rings: The Fellowship of the Ring': 'https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg',
+    'The Incredibles': 'https://image.tmdb.org/t/p/w500/2LqaLgk4Z226KkgPJuiOQ58wvrm.jpg',
+    'Toy Story 3': 'https://image.tmdb.org/t/p/w500/AbbXspMOwdvwWZgVN0nabZq03Ec.jpg',
+    'Toy Story': 'https://image.tmdb.org/t/p/w500/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg',
+    'Harry Potter and the Sorcerer\'s Stone': 'https://image.tmdb.org/t/p/w500/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg',
+    'Harry Potter and the Chamber of Secrets': 'https://image.tmdb.org/t/p/w500/sdEOH0992YZ0QSxgXNIGLq1ToUi.jpg',
+    'Harry Potter and the Prisoner of Azkaban': 'https://image.tmdb.org/t/p/w500/aWxwnYoe8p2d2fcxOqtvAtJ72Rw.jpg',
+    'Get Out': 'https://image.tmdb.org/t/p/w500/tFXcEccSQMf3lfhfXKSU9iRBpa3.jpg',
+    'It': 'https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg',
+    'The Thing': 'https://image.tmdb.org/t/p/w500/tzGY49kseSE9QAKk47uuDGwnSCu.jpg',
+    'La La Land': 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg',
+    'Into the Wild': 'https://image.tmdb.org/t/p/w500/2MSGZEE6XZd2r4ODNziwAw7Hpw0.jpg',
+    'Zodiac': 'https://image.tmdb.org/t/p/w500/6W72NCHVVWhHOD2Q3NLrZJnNgGo.jpg',
+    'The Usual Suspects': 'https://image.tmdb.org/t/p/w500/bUPmtQzrRhzqYySeiMpv7GurAfm.jpg',
+    'Se7en': 'https://image.tmdb.org/t/p/w500/6yoghtyTpznpBik8EngEmJskVUO.jpg',
+    'Groundhog Day': 'https://image.tmdb.org/t/p/w500/gCgt1WARPZaXnq523ySQEUKinCs.jpg',
+    'Clueless': 'https://image.tmdb.org/t/p/w500/8AwVTcgpTnmeOs4TdTWqcFDXEsA.jpg',
+    'Blade Runner': 'https://image.tmdb.org/t/p/w500/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg',
+    'Million Dollar Baby': 'https://image.tmdb.org/t/p/w500/2ig2sMnPGid53iBAz6SY2kNY8MM.jpg',
+    'Rocky IV': 'https://image.tmdb.org/t/p/w500/dTJNdH9zQq8rTnj0ZhCQPNKmWws.jpg',
+    'The Prestige': 'https://image.tmdb.org/t/p/w500/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg',
+    'Saving Private Ryan': 'https://image.tmdb.org/t/p/w500/uqx37cS8cpHg8U35f9U5IBlrCV3.jpg',
+    'Gladiator': 'https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg',
+    'Dunkirk': 'https://image.tmdb.org/t/p/w500/f7AFsI7EndC2DbKXNjBphDPKYQ8.jpg',
+    'The Good, the Bad and the Ugly': 'https://image.tmdb.org/t/p/w500/bX2xnavhMYjWDoZp1VM6VnU1xwe.jpg',
+    'Once Upon a Time in the West': 'https://image.tmdb.org/t/p/w500/qbYgqOczabWNn2XKwgMtKrte6Af.jpg'
   };
   return posters[title] || 'https://via.placeholder.com/300x450/333/fff?text=No+Poster';
 }
