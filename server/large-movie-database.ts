@@ -509,6 +509,33 @@ export function generateLargeMovieDatabase(): Movie[] {
     }
   }
 
+  // Add authentic Comedy+Family combination movies
+  const comedyFamilyMovies = [
+    { title: 'The Incredibles', year: 2004 }, { title: 'Shrek', year: 2001 }, { title: 'Toy Story', year: 1995 },
+    { title: 'Finding Nemo', year: 2003 }, { title: 'Monsters, Inc.', year: 2001 }, { title: 'Up', year: 2009 },
+    { title: 'WALL-E', year: 2008 }, { title: 'Inside Out', year: 2015 }, { title: 'Coco', year: 2017 },
+    { title: 'Moana', year: 2016 }, { title: 'Frozen', year: 2013 }, { title: 'Zootopia', year: 2016 },
+    { title: 'Big Hero 6', year: 2014 }, { title: 'The Lion King', year: 1994 }, { title: 'Aladdin', year: 1992 },
+    { title: 'Beauty and the Beast', year: 1991 }, { title: 'Mrs. Doubtfire', year: 1993 }, { title: 'Home Alone', year: 1990 },
+    { title: 'The Santa Clause', year: 1994 }, { title: 'Elf', year: 2003 }, { title: 'School of Rock', year: 2003 },
+    { title: 'The Princess Bride', year: 1987 }, { title: 'The Goonies', year: 1985 }, { title: 'Hook', year: 1991 },
+    { title: 'Matilda', year: 1996 }, { title: 'Jumanji', year: 1995 }, { title: 'The Parent Trap', year: 1998 },
+    { title: 'Freaky Friday', year: 2003 }, { title: 'Cheaper by the Dozen', year: 2003 }, { title: 'Night at the Museum', year: 2006 }
+  ];
+
+  // Add Comedy+Family movies
+  for (let i = 0; i < comedyFamilyMovies.length; i++) {
+    const movieData = comedyFamilyMovies[i];
+    movies.push({
+      imdbId: `tt${movieId++}`,
+      title: movieData.title,
+      year: movieData.year,
+      genres: ['Comedy', 'Family'],
+      rating: 6.5 + Math.random() * 3.0,
+      runtime: 80 + Math.floor(Math.random() * 60)
+    });
+  }
+
   // Add remaining individual genres with authentic titles
   for (const genre of additionalGenres.filter(g => !['Crime', 'Family', 'Sport'].includes(g))) {
     for (let i = 0; i < 100; i++) {
