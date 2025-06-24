@@ -4587,12 +4587,18 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
       const preferences = req.body;
       
       // Import large movie database
-      const { generateLargeMovieDatabase } = await import('./large-movie-database');
-      const largeMovieDatabase = generateLargeMovieDatabase();
+      let largeMovieDatabase: any[] = [];
+      try {
+        const { generateLargeMovieDatabase } = await import('./large-movie-database');
+        largeMovieDatabase = generateLargeMovieDatabase();
+        console.log(`Loaded ${largeMovieDatabase.length} movies from large database`);
+      } catch (error) {
+        console.error('Error loading large movie database:', error);
+      }
       
       // Comprehensive movie database with 5000+ movies
       const allMovies = [
-        // Keep existing curated movies for quality
+        // Keep existing curated movies for quality first
         ...largeMovieDatabase,
         // 2020s Movies  
         { imdbId: 'tt6751668', title: 'Parasite', year: 2019, genres: ['Drama', 'Thriller'], rating: 8.6, runtime: 132 },
@@ -4811,10 +4817,27 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
             console.log(`Could not fetch TMDB ID for ${movie.title}`);
           }
 
-          // Import helper functions from large database
+          // Import helper functions from large database and streaming API
           const { getMoviePlot: getLargeDbPlot, getMovieDirector: getLargeDbDirector, 
                   getMovieCast: getLargeDbCast, getMoviePoster: getLargeDbPoster,
                   getStreamingPlatforms: getLargeDbStreaming } = await import('./large-movie-database');
+          
+          const { getMovieStreamingPlatforms } = await import('./streaming-availability');
+          
+          // Get streaming data with fallback
+          let streamingPlatforms: string[] = [];
+          try {
+            // First try the API
+            streamingPlatforms = await getMovieStreamingPlatforms(movie.title, movie.year);
+            
+            // If API returns empty, use fallback
+            if (streamingPlatforms.length === 0) {
+              streamingPlatforms = getStreamingPlatforms(movie.title) || getLargeDbStreaming(movie.title);
+            }
+          } catch (error) {
+            // If API completely fails, use fallback
+            streamingPlatforms = getStreamingPlatforms(movie.title) || getLargeDbStreaming(movie.title);
+          }
           
           recommendations.push({
             title: movie.title,
@@ -4830,7 +4853,7 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
             tmdbId: tmdbId,
             matchScore: Math.floor(Math.random() * 25) + 75,
             reasoning: generateMovieReasoning(movie, preferences),
-            streamingPlatforms: getStreamingPlatforms(movie.title) || getLargeDbStreaming(movie.title)
+            streamingPlatforms: streamingPlatforms
           });
         } catch (error) {
           console.error(`Error processing movie ${movie.title}:`, error);
