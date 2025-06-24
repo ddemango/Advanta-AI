@@ -4611,7 +4611,15 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         { imdbId: 'tt2267998', title: 'Gone Girl', year: 2014, genres: ['Drama', 'Mystery', 'Thriller'], rating: 8.1, runtime: 149 },
         { imdbId: 'tt2096673', title: 'Inside Out', year: 2015, genres: ['Animation', 'Adventure', 'Comedy'], rating: 8.2, runtime: 95 },
         { imdbId: 'tt1431045', title: 'Deadpool', year: 2016, genres: ['Action', 'Adventure', 'Comedy'], rating: 8.0, runtime: 108 },
-        { imdbId: 'tt0478970', title: 'Ant-Man', year: 2015, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.3, runtime: 117 },
+        { imdbId: 'tt0478970', title: 'Ant-Man', year: 2015, genres: ['Action', 'Adventure', 'Comedy'], runtime: 117 },
+        { imdbId: 'tt6263850', title: 'Deadpool 2', year: 2018, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.7, runtime: 119 },
+        { imdbId: 'tt5095030', title: 'Ant-Man and the Wasp', year: 2018, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.0, runtime: 118 },
+        { imdbId: 'tt2820852', title: 'Furious 7', year: 2015, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.1, runtime: 137 },
+        { imdbId: 'tt0443706', title: 'Pineapple Express', year: 2008, genres: ['Action', 'Adventure', 'Comedy'], rating: 6.9, runtime: 111 },
+        { imdbId: 'tt1213663', title: '21 Jump Street', year: 2012, genres: ['Action', 'Comedy', 'Crime'], rating: 7.2, runtime: 109 },
+        { imdbId: 'tt2294449', title: '22 Jump Street', year: 2014, genres: ['Action', 'Comedy', 'Crime'], rating: 7.0, runtime: 112 },
+        { imdbId: 'tt1905041', title: 'Fast Five', year: 2011, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.3, runtime: 130 },
+        { imdbId: 'tt1013752', title: 'Fast & Furious 6', year: 2013, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.0, runtime: 130 },
         { imdbId: 'tt2488496', title: 'Star Wars: The Force Awakens', year: 2015, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.8, runtime: 138 },
         
         // 2000s Movies
@@ -4650,13 +4658,9 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
       
       // Genre filtering - ALL selected genres must be present
       if (preferences.genres.length > 0) {
-        console.log('Selected genres:', preferences.genres);
-        filteredMovies = filteredMovies.filter(movie => {
-          const hasAllGenres = preferences.genres.every(selectedGenre => movie.genres.includes(selectedGenre));
-          console.log(`${movie.title} genres:`, movie.genres, 'Has all selected genres:', hasAllGenres);
-          return hasAllGenres;
-        });
-        console.log('Filtered movies count after genre filter:', filteredMovies.length);
+        filteredMovies = filteredMovies.filter(movie => 
+          preferences.genres.every(selectedGenre => movie.genres.includes(selectedGenre))
+        );
       }
       
       // Decade filtering - Fixed logic
@@ -4783,6 +4787,17 @@ function getMoviePlot(title: string): string {
     'Back to the Future': 'Marty McFly, a 17-year-old high school student, is accidentally sent 30 years into the past in a time-traveling DeLorean.',
     'Deadpool': 'A wisecracking mercenary gets experimented on and becomes immortal but ugly, and sets out to track down the man who ruined his looks.',
     'Ant-Man': 'Armed with a super-suit with the astonishing ability to shrink in scale but increase in strength, cat burglar Scott Lang must embrace his inner hero.',
+    'Deadpool 2': 'Foul-mouthed mutant mercenary Wade Wilson forms a team of fellow mutant rogues to protect a young boy with supernatural abilities from the brutal time-traveling cyborg Cable.',
+    'Ant-Man and the Wasp': 'As Scott Lang balances being both a superhero and a father, Hope van Dyne and Dr. Hank Pym present an urgent new mission that finds the Ant-Man fighting alongside The Wasp.',
+    'Furious 7': 'Deckard Shaw seeks revenge against Dominic Toretto and his family for his comatose brother.',
+    'Pineapple Express': 'A process server and his marijuana dealer wind up on the run from hitmen and a corrupt police officer after he witnesses his dealer\'s boss murder a competitor.',
+    '21 Jump Street': 'A pair of underachieving cops are sent back to a local high school to blend in and bring down a synthetic drug ring.',
+    '22 Jump Street': 'After making their way through high school, big changes are in store for officers Schmidt and Jenko when they go deep undercover at a local college.',
+    'Fast Five': 'Dominic Toretto and his crew of street racers plan a massive heist to buy their freedom while in the sights of a powerful Brazilian drug lord.',
+    'Fast & Furious 6': 'Hobbs has Dominic and Brian reassemble their crew to take down a team of mercenaries, but Dominic unexpectedly gets sidetracked with facing his presumed deceased girlfriend.',
+    'Thor': 'The powerful but arrogant god Thor is cast out of Asgard to live amongst humans in Midgard, where he soon becomes one of their finest defenders.',
+    'Iron Man 2': 'With the world now aware of his identity as Iron Man, Tony Stark must contend with both his declining health and a vengeful mad man with ties to his father\'s legacy.',
+    'Iron Man': 'After being held captive in an Afghan cave, billionaire engineer Tony Stark creates a unique weaponized suit to fight evil.',
     'Super Mario Bros. Movie': 'A Brooklyn plumber named Mario travels through the Mushroom Kingdom with a princess named Peach and an anthropomorphic mushroom retainer named Toad.',
     'Oppenheimer': 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.',
     'Dune: Part Two': 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',
@@ -4810,6 +4825,17 @@ function getMovieDirector(title: string): string {
     'Back to the Future': 'Robert Zemeckis',
     'Deadpool': 'Tim Miller',
     'Ant-Man': 'Peyton Reed',
+    'Deadpool 2': 'David Leitch',
+    'Ant-Man and the Wasp': 'Peyton Reed',
+    'Furious 7': 'James Wan',
+    'Pineapple Express': 'David Gordon Green',
+    '21 Jump Street': 'Phil Lord, Christopher Miller',
+    '22 Jump Street': 'Phil Lord, Christopher Miller',
+    'Fast Five': 'Justin Lin',
+    'Fast & Furious 6': 'Justin Lin',
+    'Thor': 'Kenneth Branagh',
+    'Iron Man 2': 'Jon Favreau',
+    'Iron Man': 'Jon Favreau',
     'Super Mario Bros. Movie': 'Aaron Horvath, Michael Jelenic',
     'Oppenheimer': 'Christopher Nolan',
     'Dune: Part Two': 'Denis Villeneuve',
@@ -4837,6 +4863,17 @@ function getMovieCast(title: string): string[] {
     'Back to the Future': ['Michael J. Fox', 'Christopher Lloyd', 'Lea Thompson'],
     'Deadpool': ['Ryan Reynolds', 'Morena Baccarin', 'T.J. Miller'],
     'Ant-Man': ['Paul Rudd', 'Evangeline Lilly', 'Michael Douglas'],
+    'Deadpool 2': ['Ryan Reynolds', 'Josh Brolin', 'Morena Baccarin'],
+    'Ant-Man and the Wasp': ['Paul Rudd', 'Evangeline Lilly', 'Michael Peña'],
+    'Furious 7': ['Vin Diesel', 'Paul Walker', 'Dwayne Johnson'],
+    'Pineapple Express': ['Seth Rogen', 'James Franco', 'Gary Cole'],
+    '21 Jump Street': ['Jonah Hill', 'Channing Tatum', 'Brie Larson'],
+    '22 Jump Street': ['Jonah Hill', 'Channing Tatum', 'Peter Stormare'],
+    'Fast Five': ['Vin Diesel', 'Paul Walker', 'Dwayne Johnson'],
+    'Fast & Furious 6': ['Vin Diesel', 'Paul Walker', 'Dwayne Johnson'],
+    'Thor': ['Chris Hemsworth', 'Natalie Portman', 'Tom Hiddleston'],
+    'Iron Man 2': ['Robert Downey Jr.', 'Gwyneth Paltrow', 'Don Cheadle'],
+    'Iron Man': ['Robert Downey Jr.', 'Terrence Howard', 'Jeff Bridges'],
     'Super Mario Bros. Movie': ['Chris Pratt', 'Anya Taylor-Joy', 'Charlie Day'],
     'Oppenheimer': ['Cillian Murphy', 'Emily Blunt', 'Matt Damon'],
     'Dune: Part Two': ['Timothée Chalamet', 'Zendaya', 'Rebecca Ferguson'],
@@ -4864,6 +4901,17 @@ function getMoviePoster(title: string): string {
     'Back to the Future': 'https://image.tmdb.org/t/p/w500/fNOH9f1aA7XRTzl1sAOx9iF553Q.jpg',
     'Deadpool': 'https://image.tmdb.org/t/p/w500/9X7YweCJw3q8Mcf6GadxReFEksM.jpg',
     'Ant-Man': 'https://image.tmdb.org/t/p/w500/rQRnQfUl3kfp78nCWq8Ks04vnq1.jpg',
+    'Deadpool 2': 'https://image.tmdb.org/t/p/w500/to0spRl1CMDvyUbOnbb4fTk3VAd.jpg',
+    'Ant-Man and the Wasp': 'https://image.tmdb.org/t/p/w500/rv1AWImgx386ULjcf62VYaW8zSt.jpg',
+    'Furious 7': 'https://image.tmdb.org/t/p/w500/dCgm7efXDmiABSdWDHBDBx2jwmn.jpg',
+    'Pineapple Express': 'https://image.tmdb.org/t/p/w500/6E50WjeOYyVZjuEiJVNlpNZyhtc.jpg',
+    '21 Jump Street': 'https://image.tmdb.org/t/p/w500/8v3Sqv9UcIUC4ebmpKWROqPBINZ.jpg',
+    '22 Jump Street': 'https://image.tmdb.org/t/p/w500/850chzYHYbT3IISl6Q7dbBuFP2B.jpg',
+    'Fast Five': 'https://image.tmdb.org/t/p/w500/626bdqoSzR5HCAQP4bV2UPiBjMp.jpg',
+    'Fast & Furious 6': 'https://image.tmdb.org/t/p/w500/b9gTJKLdSbwcQRKzmqMq3dMfRwI.jpg',
+    'Thor': 'https://image.tmdb.org/t/p/w500/bIuOWTtyFPjsFDevqvF3QrD1aun.jpg',
+    'Iron Man 2': 'https://image.tmdb.org/t/p/w500/6WBeq4fCfn7AN0o21W9qNcRF2l9.jpg',
+    'Iron Man': 'https://image.tmdb.org/t/p/w500/78lPtwv72eTNqFW9COBYI0dWDJa.jpg',
     'Super Mario Bros. Movie': 'https://image.tmdb.org/t/p/w500/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg',
     'Oppenheimer': 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
     'Dune: Part Two': 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
