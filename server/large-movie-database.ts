@@ -249,7 +249,7 @@ export function generateLargeMovieDatabase(): Movie[] {
     });
   }
 
-  // Add authentic Drama movies
+  // Add authentic Drama movies (100+ titles)
   const dramaMovies = [
     { title: 'The Shawshank Redemption', year: 1994 }, { title: 'The Godfather', year: 1972 }, { title: 'The Godfather Part II', year: 1974 },
     { title: 'Schindler\'s List', year: 1993 }, { title: 'Forrest Gump', year: 1994 }, { title: 'One Flew Over the Cuckoo\'s Nest', year: 1975 },
@@ -260,7 +260,35 @@ export function generateLargeMovieDatabase(): Movie[] {
     { title: 'Rain Man', year: 1988 }, { title: 'Good Will Hunting', year: 1997 }, { title: 'Dead Poets Society', year: 1989 },
     { title: 'Philadelphia', year: 1993 }, { title: 'The Pursuit of Happyness', year: 2006 }, { title: 'Million Dollar Baby', year: 2004 },
     { title: 'Crash', year: 2004 }, { title: 'Mystic River', year: 2003 }, { title: 'Manchester by the Sea', year: 2016 },
-    { title: 'Moonlight', year: 2016 }, { title: 'Parasite', year: 2019 }, { title: 'Nomadland', year: 2020 }
+    { title: 'Moonlight', year: 2016 }, { title: 'Nomadland', year: 2020 }, { title: 'The Social Network', year: 2010 },
+    { title: 'Birdman', year: 2014 }, { title: 'Whiplash', year: 2014 }, { title: 'Her', year: 2013 }, { title: 'Lost in Translation', year: 2003 },
+    { title: 'The Royal Tenenbaums', year: 2001 }, { title: 'Magnolia', year: 1999 }, { title: 'Boogie Nights', year: 1997 },
+    { title: 'The Truman Show', year: 1998 }, { title: 'Being John Malkovich', year: 1999 }, { title: 'Adaptation', year: 2002 },
+    { title: 'Eternal Sunshine of the Spotless Mind', year: 2004 }, { title: 'Mulholland Drive', year: 2001 }, { title: 'Blue Velvet', year: 1986 },
+    { title: 'The Elephant Man', year: 1980 }, { title: 'Eraserhead', year: 1977 }, { title: 'The Straight Story', year: 1999 },
+    { title: 'Wild at Heart', year: 1990 }, { title: 'Lost Highway', year: 1997 }, { title: 'Inland Empire', year: 2006 },
+    { title: 'Twin Peaks: Fire Walk with Me', year: 1992 }, { title: 'The Master', year: 2012 }, { title: 'Punch-Drunk Love', year: 2002 },
+    { title: 'Hard Eight', year: 1996 }, { title: 'Phantom Thread', year: 2017 }, { title: 'Licorice Pizza', year: 2021 },
+    { title: 'Moonrise Kingdom', year: 2012 }, { title: 'The Grand Budapest Hotel', year: 2014 }, { title: 'Rushmore', year: 1998 },
+    { title: 'Bottle Rocket', year: 1996 }, { title: 'The Life Aquatic with Steve Zissou', year: 2004 }, { title: 'The Darjeeling Limited', year: 2007 },
+    { title: 'Fantastic Mr. Fox', year: 2009 }, { title: 'Isle of Dogs', year: 2018 }, { title: 'The French Dispatch', year: 2021 },
+    { title: 'Asteroid City', year: 2023 }, { title: 'Call Me by Your Name', year: 2017 }, { title: 'Lady Bird', year: 2017 },
+    { title: 'Little Women', year: 2019 }, { title: 'Frances Ha', year: 2012 }, { title: 'Marriage Story', year: 2019 },
+    { title: 'The Squid and the Whale', year: 2005 }, { title: 'Margot at the Wedding', year: 2007 }, { title: 'Greenberg', year: 2010 },
+    { title: 'While We\'re Young', year: 2014 }, { title: 'Mistress America', year: 2015 }, { title: 'The Meyerowitz Stories', year: 2017 },
+    { title: 'White Noise', year: 2022 }, { title: 'Everything Everywhere All at Once', year: 2022 }, { title: 'The Banshees of Inisherin', year: 2022 },
+    { title: 'Tár', year: 2022 }, { title: 'The Fabelmans', year: 2022 }, { title: 'Women Talking', year: 2022 },
+    { title: 'Aftersun', year: 2022 }, { title: 'The Whale', year: 2022 }, { title: 'Triangle of Sadness', year: 2022 },
+    { title: 'Decision to Leave', year: 2022 }, { title: 'RRR', year: 2022 }, { title: 'All Quiet on the Western Front', year: 2022 },
+    { title: 'The Power of the Dog', year: 2021 }, { title: 'Drive My Car', year: 2021 }, { title: 'The Worst Person in the World', year: 2021 },
+    { title: 'Parallel Mothers', year: 2021 }, { title: 'The Hand of God', year: 2021 }, { title: 'A Hero', year: 2021 },
+    { title: 'The Lost Daughter', year: 2021 }, { title: 'Spencer', year: 2021 }, { title: 'Mass', year: 2021 },
+    { title: 'C\'mon C\'mon', year: 2021 }, { title: 'Red Rocket', year: 2021 }, { title: 'The Card Counter', year: 2021 },
+    { title: 'Minari', year: 2020 }, { title: 'The Father', year: 2020 }, { title: 'Sound of Metal', year: 2019 },
+    { title: 'Judas and the Black Messiah', year: 2021 }, { title: 'One Night in Miami', year: 2020 }, { title: 'Ma Rainey\'s Black Bottom', year: 2020 },
+    { title: 'Mank', year: 2020 }, { title: 'News of the World', year: 2020 }, { title: 'Hillbilly Elegy', year: 2020 },
+    { title: 'The Trial of the Chicago 7', year: 2020 }, { title: 'Pieces of a Woman', year: 2020 }, { title: 'Another Round', year: 2020 },
+    { title: 'Quo Vadis, Aida?', year: 2020 }, { title: 'Collective', year: 2019 }, { title: 'Two Distant Strangers', year: 2020 }
   ];
 
   for (const movieData of dramaMovies) {
@@ -274,18 +302,45 @@ export function generateLargeMovieDatabase(): Movie[] {
     });
   }
 
-  // Add authentic Romance movies
+  // Add authentic Romance movies (100+ titles)
   const romanceMovies = [
     { title: 'Titanic', year: 1997 }, { title: 'The Notebook', year: 2004 }, { title: 'Casablanca', year: 1942 },
     { title: 'Gone with the Wind', year: 1939 }, { title: 'Ghost', year: 1990 }, { title: 'Pretty Woman', year: 1990 },
     { title: 'Dirty Dancing', year: 1987 }, { title: 'When Harry Met Sally', year: 1989 }, { title: 'Sleepless in Seattle', year: 1993 },
-    { title: 'You\'ve Got Mail', year: 1998 }, { title: 'The Princess Bride', year: 1987 }, { title: 'Roman Holiday', year: 1953 },
-    { title: 'An Affair to Remember', year: 1957 }, { title: 'Love Actually', year: 2003 }, { title: 'The Holiday', year: 2006 },
-    { title: 'Eternal Sunshine of the Spotless Mind', year: 2004 }, { title: 'Her', year: 2013 }, { title: 'La La Land', year: 2016 },
+    { title: 'You\'ve Got Mail', year: 1998 }, { title: 'Roman Holiday', year: 1953 }, { title: 'An Affair to Remember', year: 1957 },
+    { title: 'Love Actually', year: 2003 }, { title: 'The Holiday', year: 2006 }, { title: 'La La Land', year: 2016 },
     { title: 'Before Sunrise', year: 1995 }, { title: 'Before Sunset', year: 2004 }, { title: 'Before Midnight', year: 2013 },
     { title: 'The Fault in Our Stars', year: 2014 }, { title: 'A Walk to Remember', year: 2002 }, { title: 'Dear John', year: 2010 },
     { title: 'The Vow', year: 2012 }, { title: 'Safe Haven', year: 2013 }, { title: 'Me Before You', year: 2016 },
-    { title: 'Call Me by Your Name', year: 2017 }, { title: 'The Shape of Water', year: 2017 }, { title: 'Marriage Story', year: 2019 }
+    { title: 'Call Me by Your Name', year: 2017 }, { title: 'The Shape of Water', year: 2017 }, { title: 'Pride and Prejudice', year: 2005 },
+    { title: 'Sense and Sensibility', year: 1995 }, { title: 'Emma', year: 1996 }, { title: 'Mansfield Park', year: 1999 },
+    { title: 'Persuasion', year: 1995 }, { title: 'Northanger Abbey', year: 2007 }, { title: 'Jane Eyre', year: 2011 },
+    { title: 'Wuthering Heights', year: 2011 }, { title: 'Anna Karenina', year: 2012 }, { title: 'Doctor Zhivago', year: 1965 },
+    { title: 'Out of Africa', year: 1985 }, { title: 'The English Patient', year: 1996 }, { title: 'Cold Mountain', year: 2003 },
+    { title: 'Atonement', year: 2007 }, { title: 'The Time Traveler\'s Wife', year: 2009 }, { title: 'Dear John', year: 2010 },
+    { title: 'The Last Song', year: 2010 }, { title: 'The Lucky One', year: 2012 }, { title: 'The Best of Me', year: 2014 },
+    { title: 'The Longest Ride', year: 2015 }, { title: 'The Choice', year: 2016 }, { title: 'A Dog\'s Purpose', year: 2017 },
+    { title: 'Every Day', year: 2018 }, { title: 'Love, Simon', year: 2018 }, { title: 'To All the Boys I\'ve Loved Before', year: 2018 },
+    { title: 'The Kissing Booth', year: 2018 }, { title: 'Set It Up', year: 2018 }, { title: 'Sierra Burgess Is a Loser', year: 2018 },
+    { title: 'Someone Great', year: 2019 }, { title: 'The Perfect Date', year: 2019 }, { title: 'The Last Summer', year: 2019 },
+    { title: 'After', year: 2019 }, { title: 'Five Feet Apart', year: 2019 }, { title: 'The Sun Is Also a Star', year: 2019 },
+    { title: 'To All the Boys: P.S. I Still Love You', year: 2020 }, { title: 'All the Bright Places', year: 2020 }, { title: 'The Half of It', year: 2020 },
+    { title: 'The Kissing Booth 2', year: 2020 }, { title: 'Chemical Hearts', year: 2020 }, { title: 'Holidate', year: 2020 },
+    { title: 'To All the Boys: Always and Forever', year: 2021 }, { title: 'The Kissing Booth 3', year: 2021 }, { title: 'After We Collided', year: 2020 },
+    { title: 'After We Fell', year: 2021 }, { title: 'After Ever Happy', year: 2022 }, { title: 'Purple Hearts', year: 2022 },
+    { title: 'The Summer I Turned Pretty', year: 2022 }, { title: 'My Policeman', year: 2022 }, { title: 'The Gray Man', year: 2022 },
+    { title: 'Red, White & Royal Blue', year: 2023 }, { title: 'Your Place or Mine', year: 2023 }, { title: 'A Good Person', year: 2023 },
+    { title: 'Book Club: The Next Chapter', year: 2023 }, { title: 'Anyone But You', year: 2023 }, { title: 'The Idea of You', year: 2024 },
+    { title: 'My Big Fat Greek Wedding', year: 2002 }, { title: 'My Big Fat Greek Wedding 2', year: 2016 }, { title: 'My Big Fat Greek Wedding 3', year: 2023 },
+    { title: 'Mamma Mia!', year: 2008 }, { title: 'Mamma Mia! Here We Go Again', year: 2018 }, { title: 'The Proposal', year: 2009 },
+    { title: 'The Ugly Truth', year: 2009 }, { title: 'Letters to Juliet', year: 2010 }, { title: 'Eat Pray Love', year: 2010 },
+    { title: 'Valentine\'s Day', year: 2010 }, { title: 'New Year\'s Eve', year: 2011 }, { title: 'Crazy, Stupid, Love', year: 2011 },
+    { title: 'Friends with Benefits', year: 2011 }, { title: 'No Strings Attached', year: 2011 }, { title: 'The Vow', year: 2012 },
+    { title: 'Think Like a Man', year: 2012 }, { title: 'Think Like a Man Too', year: 2014 }, { title: 'What to Expect When You\'re Expecting', year: 2012 },
+    { title: 'Hope Springs', year: 2012 }, { title: 'Silver Linings Playbook', year: 2012 }, { title: 'About Time', year: 2013 },
+    { title: 'The Other Woman', year: 2014 }, { title: 'Blended', year: 2014 }, { title: 'The Fault in Our Stars', year: 2014 },
+    { title: 'If I Stay', year: 2014 }, { title: 'The DUFF', year: 2015 }, { title: 'Paper Towns', year: 2015 },
+    { title: 'The Age of Adaline', year: 2015 }, { title: 'Trainwreck', year: 2015 }, { title: 'How to Be Single', year: 2016 }
   ];
 
   for (const movieData of romanceMovies) {
