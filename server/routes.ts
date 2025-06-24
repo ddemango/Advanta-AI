@@ -4618,6 +4618,13 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         { imdbId: 'tt0443706', title: 'Pineapple Express', year: 2008, genres: ['Action', 'Adventure', 'Comedy'], rating: 6.9, runtime: 111 },
         { imdbId: 'tt1213663', title: '21 Jump Street', year: 2012, genres: ['Action', 'Comedy', 'Crime'], rating: 7.2, runtime: 109 },
         { imdbId: 'tt2294449', title: '22 Jump Street', year: 2014, genres: ['Action', 'Comedy', 'Crime'], rating: 7.0, runtime: 112 },
+        
+        // Pure Crime Movies
+        { imdbId: 'tt0114814', title: 'Heat', year: 1995, genres: ['Crime'], rating: 8.3, runtime: 170 },
+        { imdbId: 'tt0120735', title: 'Lock, Stock and Two Smoking Barrels', year: 1998, genres: ['Crime'], rating: 8.2, runtime: 107 },
+        { imdbId: 'tt0208092', title: 'Snatch', year: 2000, genres: ['Crime'], rating: 8.2, runtime: 104 },
+        { imdbId: 'tt0361748', title: 'Inglourious Basterds', year: 2009, genres: ['Crime'], rating: 8.3, runtime: 153 },
+        { imdbId: 'tt1853728', title: 'Django Unchained', year: 2012, genres: ['Crime'], rating: 8.4, runtime: 165 },
         { imdbId: 'tt1905041', title: 'Fast Five', year: 2011, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.3, runtime: 130 },
         { imdbId: 'tt1013752', title: 'Fast & Furious 6', year: 2013, genres: ['Action', 'Adventure', 'Comedy'], rating: 7.0, runtime: 130 },
         { imdbId: 'tt2488496', title: 'Star Wars: The Force Awakens', year: 2015, genres: ['Action', 'Adventure', 'Fantasy'], rating: 7.8, runtime: 138 },
@@ -4656,11 +4663,21 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
         filteredMovies = filteredMovies.filter(movie => movie.runtime <= preferences.maxRuntime);
       }
       
-      // Genre filtering - ALL selected genres must be present
+      // Genre filtering - movies must have EXACTLY the selected genres (no more, no less)
       if (preferences.genres.length > 0) {
-        filteredMovies = filteredMovies.filter(movie => 
-          preferences.genres.every(selectedGenre => movie.genres.includes(selectedGenre))
-        );
+        filteredMovies = filteredMovies.filter(movie => {
+          // Check if the movie has exactly the same genres as selected
+          const movieGenres = movie.genres.sort();
+          const selectedGenres = preferences.genres.sort();
+          
+          // For single genre selection, movie must contain that genre but can have others
+          if (selectedGenres.length === 1) {
+            return movieGenres.includes(selectedGenres[0]);
+          }
+          
+          // For multiple genres, movie must contain ALL selected genres
+          return selectedGenres.every(genre => movieGenres.includes(genre));
+        });
       }
       
       // Decade filtering - Fixed logic
@@ -4716,7 +4733,8 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
             imdbId: movie.imdbId,
             tmdbId: tmdbId,
             matchScore: Math.floor(Math.random() * 25) + 75,
-            reasoning: generateMovieReasoning(movie, preferences)
+            reasoning: generateMovieReasoning(movie, preferences),
+            streamingPlatforms: getStreamingPlatforms(movie.title)
           });
         } catch (error) {
           console.error(`Error processing movie ${movie.title}:`, error);
