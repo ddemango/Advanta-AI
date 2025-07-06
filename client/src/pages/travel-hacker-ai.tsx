@@ -80,15 +80,31 @@ export default function TravelHackerAI() {
     setIsGenerating(true);
 
     try {
-      const dateInfo = formData.datePreset === 'spontaneous' 
-        ? 'I am completely flexible with dates - find the cheapest possible times to travel'
-        : formData.datePreset === 'this-month'
-        ? 'I want to travel this month - any dates work'
-        : formData.datePreset === 'next-month'
-        ? 'I want to travel next month - any dates work'
-        : formData.datePreset === 'this-year'
-        ? 'I want to travel sometime this year - very flexible on dates'
-        : `between ${formData.startDate} and ${formData.endDate}`;
+      // Build date information with actual dates when available
+      let dateInfo = '';
+      if (formData.datePreset === 'spontaneous') {
+        dateInfo = 'I am completely flexible with dates - find the cheapest possible times to travel';
+      } else if (formData.startDate && formData.endDate) {
+        dateInfo = `from ${formData.startDate} to ${formData.endDate}`;
+      } else if (formData.startDate) {
+        dateInfo = `departing ${formData.startDate}`;
+      } else {
+        // Fallback for presets without specific dates
+        const now = new Date();
+        if (formData.datePreset === 'this-month') {
+          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          dateInfo = `from ${now.toISOString().split('T')[0]} to ${endOfMonth.toISOString().split('T')[0]}`;
+        } else if (formData.datePreset === 'next-month') {
+          const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+          dateInfo = `from ${nextMonth.toISOString().split('T')[0]} to ${endOfNextMonth.toISOString().split('T')[0]}`;
+        } else if (formData.datePreset === 'this-year') {
+          const endOfYear = new Date(now.getFullYear(), 11, 31);
+          dateInfo = `from ${now.toISOString().split('T')[0]} to ${endOfYear.toISOString().split('T')[0]}`;
+        } else {
+          dateInfo = 'I am flexible with dates';
+        }
+      }
 
       const prompt = `Find cheap flights from ${formData.departureCity} to ${formData.destinationCity || 'anywhere flexible'} 
         ${dateInfo}. 
