@@ -4592,29 +4592,14 @@ SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
 - Show the most relevant mistake fares first (closest to departure city)
 - Include at least 1-2 mistake fares when available`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are a travel hacking expert. Respond with comprehensive travel deal recommendations in JSON format."
-          },
-          {
-            role: "user",
-            content: travelPrompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3
+      // Return real travel data directly instead of generating with AI
+      res.json({
+        flightDeals: realDeals.cheapestFlights,
+        mistakeFares: realDeals.mistakeFares,
+        dateOptimization: realDeals.dateOptimization,
+        bonusHacks: realDeals.bonusHacks,
+        helpfulLinks: realDeals.helpfulLinks
       });
-
-      const messageContent = response.choices[0].message.content;
-      if (!messageContent) {
-        throw new Error('No response from AI');
-      }
-
-      const travelData = JSON.parse(messageContent);
-      res.json(travelData);
     } catch (error) {
       console.error('Error generating travel hack:', error);
       res.status(500).json({ message: 'Failed to generate travel recommendations' });

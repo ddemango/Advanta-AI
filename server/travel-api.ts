@@ -179,7 +179,7 @@ function parseFlightDeals(flightData: any, from: string, to: string, departDate:
   }
 
   if (!itineraries || !Array.isArray(itineraries) || itineraries.length === 0) {
-    console.log('No flight data found in API response structure');
+    console.log('No flight data found. API Response structure:', JSON.stringify(Object.keys(flightData)));
     return [];
   }
 
