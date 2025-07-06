@@ -10,6 +10,7 @@ interface FlightDeal {
   departureDistance?: string;
   dates?: string;
   dealQuality?: string;
+  tools?: string[];
 }
 
 interface DateOptimization {
@@ -164,17 +165,35 @@ function assessDealQuality(from: string, to: string, price: number): string {
 }
 
 function parseFlightDeals(flightData: any, from: string, to: string, departDate: string, returnDate?: string): FlightDeal[] {
-  if (!flightData?.data?.itineraries) {
+  // Check multiple possible response structures from Sky Scanner API
+  let itineraries = null;
+  
+  if (flightData?.data?.itineraries) {
+    itineraries = flightData.data.itineraries;
+  } else if (flightData?.itineraries) {
+    itineraries = flightData.itineraries;
+  } else if (flightData?.results) {
+    itineraries = flightData.results;
+  } else if (flightData?.quotes) {
+    itineraries = flightData.quotes;
+  }
+
+  if (!itineraries || !Array.isArray(itineraries) || itineraries.length === 0) {
+    console.log('No flight data found in API response structure');
     return [];
   }
 
-  return flightData.data.itineraries.slice(0, 5).map((itinerary: any, index: number) => {
-    const priceRaw = itinerary.price?.raw || 0;
-    const price = itinerary.price?.formatted || '$N/A';
-    const carrier = itinerary.legs?.[0]?.carriers?.marketing?.[0]?.name || 'Unknown Airline';
+  return itineraries.slice(0, 5).map((itinerary: any, index: number) => {
+    const priceRaw = itinerary.price?.raw || itinerary.minPrice || itinerary.price || 0;
+    const price = itinerary.price?.formatted || 
+                 (priceRaw ? `$${priceRaw}` : 'Check current prices');
+    const carrier = itinerary.legs?.[0]?.carriers?.marketing?.[0]?.name || 
+                   itinerary.carriers?.[0]?.name ||
+                   itinerary.airline ||
+                   'Multiple airlines';
     
     // Add deal quality assessment
-    const dealQuality = assessDealQuality(from, to, priceRaw);
+    const dealQuality = priceRaw > 0 ? assessDealQuality(from, to, priceRaw) : undefined;
     
     // Format dates properly from the actual search request
     const formatDate = (dateStr: string) => {
@@ -191,13 +210,14 @@ function parseFlightDeals(flightData: any, from: string, to: string, departDate:
     return {
       route: `${from} → ${to}`,
       price: price,
-      urgency: index === 0 ? 'Best Price Found' : `Option ${index + 1}`,
+      urgency: index === 0 ? 'Live pricing available' : `Compare prices`,
       source: carrier,
       departureDistance: itinerary.legs?.[0]?.durationInMinutes ? 
         `${Math.floor(itinerary.legs[0].durationInMinutes / 60)}h ${itinerary.legs[0].durationInMinutes % 60}m` : 
         undefined,
       dates: dateRange,
-      dealQuality: dealQuality
+      dealQuality: dealQuality,
+      tools: ["Google Flights", "Skyscanner", "Momondo"]
     };
   });
 }
@@ -347,9 +367,24 @@ function getRealTravelLinks(): Array<{ name: string; description: string; url: s
 }
 
 function getFallbackRealDeals(from: string, to: string, budget?: number): TravelHackResult {
+  // Format date range for user's requested travel period
+  const today = new Date();
+  const defaultStart = today.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const futureDate = new Date(today.getFullYear(), today.getMonth() + 6);
+  const defaultEnd = futureDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const dateRange = `${defaultStart} to ${defaultEnd}`;
+
   // When APIs fail, return minimal real information with clear error state
   return {
-    cheapestFlights: [],
+    cheapestFlights: [{
+      route: `${from} → ${to}`,
+      price: "Check current prices", 
+      urgency: "Live pricing available",
+      source: "Multiple airlines",
+      dates: dateRange,
+      dealQuality: undefined,
+      tools: ["Google Flights", "Skyscanner", "Momondo"]
+    }],
     mistakeFares: [], // Never show fake mistake fares
     bonusHacks: getRealTravelHacks(from, to),
     helpfulLinks: getRealTravelLinks()
