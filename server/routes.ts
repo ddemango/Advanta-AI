@@ -4416,8 +4416,8 @@ Analysis factors:
         return res.status(400).json({ message: 'Prompt is required' });
       }
 
-      // Import real travel API
-      const { searchRealFlightDeals } = await import('./travel-api.js');
+      // Import unified travel API
+      const { fetchUnifiedTravelData } = await import('./travel-api.js');
       
       // Use structured data when available, otherwise parse from prompt
       const fromCity = from || 'New York';
@@ -4459,9 +4459,6 @@ Analysis factors:
         }
       } else {
         // Fallback to parsing from prompt
-        const fromMatch = prompt.match(/from\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
-        const toMatch = prompt.match(/to\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
-        
         const specificDateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
         if (specificDateMatch) {
           departDate = specificDateMatch[1];
@@ -4485,120 +4482,58 @@ Analysis factors:
         }
       }
 
-      // Get real flight deals
-      const realDeals = await searchRealFlightDeals(fromCity, toCity, departDate, undefined, userBudget);
+      // Get unified travel data from all sources
+      const travelData = await fetchUnifiedTravelData(fromCity, toCity, departDate, returnDate, userBudget);
 
-      // Helper function for date parsing
-      const parseDate = (dateStr: string) => {
-        if (dateStr.includes('/')) {
-          const [month, day, year] = dateStr.split('/');
-          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        }
-        return dateStr;
-      };
-      
-      // Format date range for display
-      let dateRange = '';
-      if (startDate && endDate && startDate !== endDate) {
-        const startDateFormatted = new Date(parseDate(startDate)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        const endDateFormatted = new Date(parseDate(endDate)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        dateRange = `${startDateFormatted} to ${endDateFormatted}`;
-      } else {
-        dateRange = new Date(departDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      }
-      
-      const travelPrompt = `You are Travel Hacker GPT — a world-class budget travel assistant.
+      // Convert unified data format to match frontend expectations
+      const flightDeals = travelData.flights.map(flight => ({
+        route: flight.route,
+        price: flight.price,
+        dates: `${new Date(departDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        airline: flight.airline,
+        tools: ['Google Flights', 'Skyscanner', 'Momondo']
+      }));
 
-Based on REAL FLIGHT DATA, provide accurate travel recommendations:
+      const hotels = travelData.hotels.map(hotel => ({
+        location: hotel.location,
+        price: hotel.price,
+        hotel: hotel.name,
+        rating: `${hotel.rating}★`,
+        tips: ['Book directly for perks', 'Compare rates on multiple sites']
+      }));
 
-AUTHENTIC FLIGHT DATA:
-- Route: ${fromCity} to ${toCity}
-- Travel Period: ${dateRange}
-- Budget: ${userBudget ? `$${userBudget}` : 'Flexible'}
-- Real flight prices: ${realDeals.cheapestFlights.map(f => f.price).join(', ') || 'Not available'}
-- Mistake fares: ${realDeals.mistakeFares.length > 0 ? 'Available' : 'None found'}
+      const carRentals = travelData.carRentals.map(rental => ({
+        location: rental.location,
+        price: rental.price,
+        company: rental.company,
+        vehicleType: rental.vehicleType,
+        tips: rental.features
+      }));
 
-Use this real data in your response. Do not use mock prices.
-
-Always follow this output format in JSON:
-
-{
-  "flightDeals": [
-    {
-      "route": "[City A] → [City B]",
-      "price": "$[price]",
-      "dates": "[date range]",
-      "airline": "[airline name]",
-      "tools": ["Google Flights", "Skyscanner", "etc"]
-    }
-  ],
-  "hotels": [
-    {
-      "location": "[City/Area]",
-      "price": "$[price]/night",
-      "hotel": "[Hotel name]",
-      "rating": "[X.X★]",
-      "tips": ["Book directly for perks", "HotelTonight last-minute deals"]
-    }
-  ],
-  "carRentals": [
-    {
-      "location": "[City/Airport]",
-      "price": "$[price]/day",
-      "company": "[Rental company]",
-      "vehicleType": "[Economy/Compact/etc]",
-      "tips": ["Book through Costco Travel for discounts", "Use Priceline bidding"]
-    }
-  ],
-  "mistakeFares": [
-    {
-      "route": "[Departure City or nearby] → [Destination]",
-      "price": "$[price] RT",
-      "source": "SecretFlying",
-      "urgency": "limited dates",
-      "departureDistance": "[0 miles | 25 miles from departure city]"
-    }
-  ],
-  "dateOptimization": {
-    "suggestion": "Flying out [date] instead of [date]",
-    "savings": "$[amount]"
-  },
-  "bonusHacks": [
-    "Consider flying into [cheaper nearby city] and bus/train to destination",
-    "Use Rome2Rio for ground transport options",
-    "Book car rentals off-airport for 30-50% savings"
-  ],
-  "helpfulLinks": [
-    {
-      "name": "Google Flights Search",
-      "url": "https://flights.google.com",
-      "description": "Real-time flight comparison"
-    },
-    {
-      "name": "Kayak Car Rentals",
-      "url": "https://www.kayak.com/cars",
-      "description": "Compare car rental prices"
-    }
-  ]
-}
-
-User request: ${prompt}
-
-SPECIAL INSTRUCTIONS FOR MISTAKE FARES:
-- Always prioritize mistake fares departing from the user's departure city or nearby airports within 100 miles
-- For each mistake fare, include a "departureDistance" field:
-  * "0 miles" if departing from the exact departure city mentioned by user
-  * "[X] miles from [departure city]" if departing from nearby airports
-- Show the most relevant mistake fares first (closest to departure city)
-- Include at least 1-2 mistake fares when available`;
-
-      // Return real travel data directly instead of generating with AI
+      // Return unified travel data in expected format
       res.json({
-        flightDeals: realDeals.cheapestFlights,
-        mistakeFares: realDeals.mistakeFares,
-        dateOptimization: realDeals.dateOptimization,
-        bonusHacks: realDeals.bonusHacks,
-        helpfulLinks: realDeals.helpfulLinks
+        flights: travelData.flights,
+        hotels: travelData.hotels,
+        carRentals: travelData.carRentals,
+        mistakeFares: travelData.mistakeFares,
+        flightDeals: flightDeals,
+        bonusHacks: [
+          'Consider flying into nearby airports for potential savings',
+          'Book Tuesday-Thursday departures for better rates', 
+          'Use incognito mode when searching to avoid price tracking'
+        ],
+        helpfulLinks: [
+          {
+            name: 'Google Flights',
+            url: 'https://flights.google.com',
+            description: 'Compare flight prices across airlines'
+          },
+          {
+            name: 'Booking.com',
+            url: 'https://booking.com',
+            description: 'Hotel and accommodation booking'
+          }
+        ]
       });
     } catch (error) {
       console.error('Error generating travel hack:', error);
