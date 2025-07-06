@@ -8,6 +8,7 @@ interface FlightDeal {
   urgency: string;
   source: string;
   departureDistance?: string;
+  dates?: string;
 }
 
 interface DateOptimization {
@@ -57,7 +58,7 @@ export async function searchRealFlightDeals(
     const flightData = await searchResponse.json();
     
     // Parse real flight deals
-    const cheapestFlights = parseFlightDeals(flightData, from, to);
+    const cheapestFlights = parseFlightDeals(flightData, from, to, departDate, returnDate);
     
     // Get real mistake fares from multiple sources
     const mistakeFares = await getRealMistakeFares(from, to);
@@ -129,7 +130,7 @@ async function getAirportCode(location: string): Promise<string> {
   return airportMap[location.toLowerCase()] || location.toUpperCase();
 }
 
-function parseFlightDeals(flightData: any, from: string, to: string): FlightDeal[] {
+function parseFlightDeals(flightData: any, from: string, to: string, departDate: string, returnDate?: string): FlightDeal[] {
   if (!flightData?.data?.itineraries) {
     return [];
   }
@@ -138,6 +139,18 @@ function parseFlightDeals(flightData: any, from: string, to: string): FlightDeal
     const price = itinerary.price?.formatted || '$N/A';
     const carrier = itinerary.legs?.[0]?.carriers?.marketing?.[0]?.name || 'Unknown Airline';
     
+    // Format dates properly from the actual search request
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const departureFormatted = departDate ? formatDate(departDate) : 'Flexible';
+    const returnFormatted = returnDate ? formatDate(returnDate) : null;
+    const dateRange = returnFormatted ? 
+      `${departureFormatted} - ${returnFormatted}` : 
+      `${departureFormatted}`;
+    
     return {
       route: `${from} → ${to}`,
       price: price,
@@ -145,7 +158,8 @@ function parseFlightDeals(flightData: any, from: string, to: string): FlightDeal
       source: carrier,
       departureDistance: itinerary.legs?.[0]?.durationInMinutes ? 
         `${Math.floor(itinerary.legs[0].durationInMinutes / 60)}h ${itinerary.legs[0].durationInMinutes % 60}m` : 
-        undefined
+        undefined,
+      dates: dateRange
     };
   });
 }

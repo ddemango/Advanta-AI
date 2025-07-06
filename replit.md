@@ -117,6 +117,9 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 6, 2025. Fixed Travel Hacker AI date accuracy issue - now correctly processes requested travel dates instead of defaulting to February
+- July 6, 2025. Enhanced date parsing logic to handle month names (e.g., "July 2025") and specific date formats
+- July 6, 2025. Improved authentic mistake fare detection - only shows real pricing errors or clear "none found" message
 - June 24, 2025. Improved /free-tools page UX with Quick Access section, search, and category filtering
 - June 24, 2025. Created TV Show Matchmaker with 5000+ authentic shows and streaming integration
 - June 24, 2025. Expanded Movie Matchmaker to 5000+ authentic movies with real streaming data

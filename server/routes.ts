@@ -4422,12 +4422,39 @@ Analysis factors:
       // Parse travel details from prompt
       const fromMatch = prompt.match(/from\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
       const toMatch = prompt.match(/to\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
-      const dateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|january|february|march|april|may|june|july|august|september|october|november|december)/i);
+      
+      // Enhanced date parsing to properly extract requested dates
+      let departDate = '2025-07-06'; // Default to July 2025 (current date)
+      
+      // Look for specific dates first (YYYY-MM-DD or MM/DD/YYYY format)
+      const specificDateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
+      if (specificDateMatch) {
+        departDate = specificDateMatch[1];
+        // Convert MM/DD/YYYY to YYYY-MM-DD if needed
+        if (departDate.includes('/')) {
+          const [month, day, year] = departDate.split('/');
+          departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+      } else {
+        // Look for month names with year
+        const monthMatch = prompt.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{4})?/i);
+        if (monthMatch) {
+          const monthName = monthMatch[1].toLowerCase();
+          const year = monthMatch[2] || '2025';
+          const monthMap = {
+            january: '01', february: '02', march: '03', april: '04',
+            may: '05', june: '06', july: '07', august: '08',
+            september: '09', october: '10', november: '11', december: '12'
+          };
+          const month = monthMap[monthName as keyof typeof monthMap];
+          departDate = `${year}-${month}-15`; // Default to mid-month
+        }
+      }
+      
       const budgetMatch = prompt.match(/\$?(\d+)/);
 
       const from = fromMatch?.[1] || 'New York';
       const to = toMatch?.[1] || 'London';
-      const departDate = dateMatch?.[0] || '2025-02-15';
       const budget = budgetMatch ? parseInt(budgetMatch[1]) : undefined;
 
       // Get real flight deals
