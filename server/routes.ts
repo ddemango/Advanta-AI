@@ -4416,14 +4416,35 @@ Analysis factors:
         return res.status(400).json({ message: 'Prompt is required' });
       }
 
+      // Import real travel API
+      const { searchRealFlightDeals } = await import('./travel-api.js');
+      
+      // Parse travel details from prompt
+      const fromMatch = prompt.match(/from\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
+      const toMatch = prompt.match(/to\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
+      const dateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|january|february|march|april|may|june|july|august|september|october|november|december)/i);
+      const budgetMatch = prompt.match(/\$?(\d+)/);
+
+      const from = fromMatch?.[1] || 'New York';
+      const to = toMatch?.[1] || 'London';
+      const departDate = dateMatch?.[0] || '2025-02-15';
+      const budget = budgetMatch ? parseInt(budgetMatch[1]) : undefined;
+
+      // Get real flight deals
+      const realDeals = await searchRealFlightDeals(from, to, departDate, undefined, budget);
+
       const travelPrompt = `You are Travel Hacker GPT — a world-class budget travel assistant.
 
-Your job is to help the user:
-- Find the cheapest flights possible based on their input
-- Spot budget airline options, low-cost routes, mistake fares, and travel hacks
-- Prioritize mistake fares from the departure city or nearby airports within 100 miles
-- Offer links, tools, and date recommendations
-- Never sell. Just help save money.
+Based on REAL FLIGHT DATA, provide accurate travel recommendations:
+
+AUTHENTIC FLIGHT DATA:
+- Route: ${from} to ${to}
+- Date: ${departDate}
+- Budget: ${budget ? `$${budget}` : 'Flexible'}
+- Real flight prices: ${realDeals.cheapestFlights.map(f => f.price).join(', ') || 'Not available'}
+- Mistake fares: ${realDeals.mistakeFares.length > 0 ? 'Available' : 'None found'}
+
+Use this real data in your response. Do not use mock prices.
 
 Always follow this output format in JSON:
 

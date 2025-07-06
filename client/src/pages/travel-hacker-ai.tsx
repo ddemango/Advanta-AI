@@ -603,7 +603,7 @@ export default function TravelHackerAI() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {mockResult.mistakeFares.map((fare, index) => (
+                      {(result?.mistakeFares || mockResult.mistakeFares || []).map((fare, index) => (
                         <div key={index} className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
                           <div className="font-semibold text-orange-300 text-lg">🚨 {fare.route}: {fare.price}</div>
                           <div className="text-gray-300 text-sm">{fare.urgency} via {fare.source}</div>
@@ -619,7 +619,7 @@ export default function TravelHackerAI() {
                   </Card>
 
                   {/* Date Optimization */}
-                  {mockResult.dateOptimization && (
+                  {(result?.dateOptimization || mockResult.dateOptimization) && (
                     <Card className="bg-white/10 backdrop-blur-md border-white/20">
                       <CardHeader>
                         <CardTitle className="text-white flex items-center">
@@ -629,7 +629,7 @@ export default function TravelHackerAI() {
                       <CardContent>
                         <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
                           <div className="text-green-300 font-medium">
-                            💡 {mockResult.dateOptimization.suggestion} drops fare by {mockResult.dateOptimization.savings}
+                            💡 {(result?.dateOptimization || mockResult.dateOptimization)?.suggestion} drops fare by {(result?.dateOptimization || mockResult.dateOptimization)?.savings}
                           </div>
                         </div>
                       </CardContent>
@@ -645,7 +645,7 @@ export default function TravelHackerAI() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {mockResult.bonusHacks.map((hack, index) => (
+                        {(result?.bonusHacks || mockResult.bonusHacks || []).map((hack, index) => (
                           <div key={index} className="p-3 bg-white/5 rounded-lg border border-white/10">
                             <div className="text-gray-300">{hack}</div>
                           </div>
@@ -663,7 +663,7 @@ export default function TravelHackerAI() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {mockResult.helpfulLinks.map((link, index) => (
+                        {(result?.helpfulLinks || mockResult.helpfulLinks || []).map((link, index) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                             <div>
                               <div className="text-white font-medium">{link.name}</div>
