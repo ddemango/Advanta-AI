@@ -22,6 +22,8 @@ interface TravelHackResult {
     dates: string;
     airline: string;
     tools: string[];
+    dealQuality?: string;
+    source?: string;
   }>;
   hotels?: Array<{
     location: string;
@@ -541,7 +543,7 @@ export default function TravelHackerAI() {
               animate="show"
               transition={{ delay: 0.4 }}
             >
-              {result || (formData.departureCity && !isGenerating) ? (
+              {result ? (
                 <div className="space-y-6">
                   {/* Flight Deals */}
                   <Card className="bg-white/10 backdrop-blur-md border-white/20">
@@ -551,7 +553,7 @@ export default function TravelHackerAI() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {(result?.flightDeals || mockResult.flightDeals).map((deal, index) => (
+                      {result.flightDeals && result.flightDeals.length > 0 ? result.flightDeals.map((deal, index) => (
                         <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
                           <div className="flex justify-between items-start">
                             <div className="font-semibold text-white text-lg">{deal.route}: {deal.price}</div>
@@ -579,7 +581,11 @@ export default function TravelHackerAI() {
                             ))}
                           </div>
                         </div>
-                      ))}
+                      )) : (
+                        <div className="text-center text-gray-300 py-8">
+                          <p>No flight deals found for this search.</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
