@@ -130,27 +130,47 @@ async function fetchSkyscannerFlights(from: string, to: string, departDate: stri
     // Parse flight data from Skyscanner response structure
     let itineraries = data?.data?.itineraries || data?.itineraries || data?.results || [];
     
+    // Check if we have the specific Skyscanner response structure
+    if (data?.data && !Array.isArray(itineraries) && Object.keys(data.data).length > 0) {
+      // Convert Skyscanner response object to array
+      itineraries = Object.values(data.data).filter(item => Array.isArray(item));
+      console.log('Parsed itineraries from Skyscanner data:', itineraries.length);
+    }
+    
     if (!Array.isArray(itineraries) || itineraries.length === 0) {
       console.log('No flight data found. Response keys:', Object.keys(data));
       return [];
     }
 
-    return itineraries.slice(0, 10).map((flight: any) => {
-      const priceRaw = flight.price?.raw || flight.minPrice || flight.price || 0;
-      const price = flight.price?.formatted || (priceRaw ? `$${priceRaw}` : 'Check prices');
-      
-      return {
-        airline: flight.legs?.[0]?.carriers?.marketing?.[0]?.name || 'Multiple Airlines',
-        price: price,
-        departureTime: flight.legs?.[0]?.departure || 'Various times',
-        arrivalTime: flight.legs?.[0]?.arrival || 'Various times',
-        duration: flight.legs?.[0]?.durationInMinutes ? 
-          `${Math.floor(flight.legs[0].durationInMinutes / 60)}h ${flight.legs[0].durationInMinutes % 60}m` : 
-          'Various durations',
-        stops: flight.legs?.[0]?.stopCount || 0,
-        route: `${from} → ${to}`
-      };
-    });
+    // Process flight data from Skyscanner API structure
+    const flights: Flight[] = [];
+    
+    for (const itinerary of itineraries.slice(0, 10)) {
+      if (Array.isArray(itinerary) && itinerary.length >= 3) {
+        // Extract flight segments, price, and stops
+        const [segments, price, stops] = itinerary;
+        
+        if (Array.isArray(segments) && segments.length > 0) {
+          const firstSegment = segments[0];
+          const lastSegment = segments[segments.length - 1];
+          
+          const flight: Flight = {
+            airline: firstSegment[0] || 'Multiple Airlines', // Flight code like "AA519"
+            price: price ? `$${price}` : 'Check prices',
+            departureTime: firstSegment[2] || 'Various times', // Departure time
+            arrivalTime: lastSegment[4] || 'Various times', // Arrival time
+            duration: segments.length > 1 ? `${segments.length} segments` : 'Direct',
+            stops: stops || 0,
+            route: `${from} → ${to}`
+          };
+          
+          flights.push(flight);
+        }
+      }
+    }
+    
+    console.log('Parsed flights:', flights.length);
+    return flights;
   } catch (error) {
     console.error('Skyscanner API error:', error);
     return [];

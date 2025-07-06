@@ -3967,6 +3967,7 @@ Please provide analysis in this exact JSON format (no additional text):
         { name: "Brock Purdy", position: "QB", team: "SF" },
         { name: "Jared Goff", position: "QB", team: "DET" },
         { name: "Daniel Jones", position: "QB", team: "NYG" },
+        { name: "Jayden Daniels", position: "QB", team: "WAS" },
         { name: "Kyler Murray", position: "QB", team: "ARI" },
         { name: "Baker Mayfield", position: "QB", team: "TB" },
         { name: "Derek Carr", position: "QB", team: "NO" },
