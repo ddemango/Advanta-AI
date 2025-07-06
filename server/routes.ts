@@ -4410,7 +4410,7 @@ Analysis factors:
 
   app.post('/api/travel-hack', async (req: Request, res: Response) => {
     try {
-      const { prompt } = req.body;
+      const { prompt, from, to, startDate, endDate, budget, preferences } = req.body;
       
       if (!prompt) {
         return res.status(400).json({ message: 'Prompt is required' });
@@ -4419,55 +4419,61 @@ Analysis factors:
       // Import real travel API
       const { searchRealFlightDeals } = await import('./travel-api.js');
       
-      // Parse travel details from prompt
-      const fromMatch = prompt.match(/from\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
-      const toMatch = prompt.match(/to\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
+      // Use structured data when available, otherwise parse from prompt
+      const fromCity = from || 'New York';
+      const toCity = to || 'London';
+      const userBudget = budget || undefined;
       
-      // Enhanced date parsing to properly extract requested dates
-      let departDate = '2025-07-06'; // Default to July 2025 (current date)
+      // Use structured dates when available
+      let departDate = '2025-07-06'; // Default fallback
       
-      // Look for specific dates first (YYYY-MM-DD or MM/DD/YYYY format)
-      const specificDateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
-      if (specificDateMatch) {
-        departDate = specificDateMatch[1];
+      if (startDate) {
         // Convert MM/DD/YYYY to YYYY-MM-DD if needed
-        if (departDate.includes('/')) {
-          const [month, day, year] = departDate.split('/');
+        if (startDate.includes('/')) {
+          const [month, day, year] = startDate.split('/');
           departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        } else {
+          departDate = startDate;
         }
       } else {
-        // Look for month names with year
-        const monthMatch = prompt.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{4})?/i);
-        if (monthMatch) {
-          const monthName = monthMatch[1].toLowerCase();
-          const year = monthMatch[2] || '2025';
-          const monthMap = {
-            january: '01', february: '02', march: '03', april: '04',
-            may: '05', june: '06', july: '07', august: '08',
-            september: '09', october: '10', november: '11', december: '12'
-          };
-          const month = monthMap[monthName as keyof typeof monthMap];
-          departDate = `${year}-${month}-15`; // Default to mid-month
+        // Fallback to parsing from prompt
+        const fromMatch = prompt.match(/from\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
+        const toMatch = prompt.match(/to\s+([^,\s]+(?:\s+[^,\s]+)*)/i);
+        
+        const specificDateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
+        if (specificDateMatch) {
+          departDate = specificDateMatch[1];
+          if (departDate.includes('/')) {
+            const [month, day, year] = departDate.split('/');
+            departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+        } else {
+          const monthMatch = prompt.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{4})?/i);
+          if (monthMatch) {
+            const monthName = monthMatch[1].toLowerCase();
+            const year = monthMatch[2] || '2025';
+            const monthMap = {
+              january: '01', february: '02', march: '03', april: '04',
+              may: '05', june: '06', july: '07', august: '08',
+              september: '09', october: '10', november: '11', december: '12'
+            };
+            const month = monthMap[monthName as keyof typeof monthMap];
+            departDate = `${year}-${month}-15`;
+          }
         }
       }
-      
-      const budgetMatch = prompt.match(/\$?(\d+)/);
-
-      const from = fromMatch?.[1] || 'New York';
-      const to = toMatch?.[1] || 'London';
-      const budget = budgetMatch ? parseInt(budgetMatch[1]) : undefined;
 
       // Get real flight deals
-      const realDeals = await searchRealFlightDeals(from, to, departDate, undefined, budget);
+      const realDeals = await searchRealFlightDeals(fromCity, toCity, departDate, undefined, userBudget);
 
       const travelPrompt = `You are Travel Hacker GPT — a world-class budget travel assistant.
 
 Based on REAL FLIGHT DATA, provide accurate travel recommendations:
 
 AUTHENTIC FLIGHT DATA:
-- Route: ${from} to ${to}
+- Route: ${fromCity} to ${toCity}
 - Date: ${departDate}
-- Budget: ${budget ? `$${budget}` : 'Flexible'}
+- Budget: ${userBudget ? `$${userBudget}` : 'Flexible'}
 - Real flight prices: ${realDeals.cheapestFlights.map(f => f.price).join(', ') || 'Not available'}
 - Mistake fares: ${realDeals.mistakeFares.length > 0 ? 'Available' : 'None found'}
 

@@ -117,7 +117,15 @@ export default function TravelHackerAI() {
       const response = await fetch('/api/travel-hack', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ 
+          prompt,
+          from: formData.departureCity,
+          to: formData.destinationCity,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          budget: formData.budget,
+          preferences: formData.preferences
+        })
       });
 
       if (!response.ok) throw new Error('Failed to generate travel hack');
