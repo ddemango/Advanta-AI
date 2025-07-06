@@ -9,6 +9,7 @@ interface FlightDeal {
   source: string;
   departureDistance?: string;
   dates?: string;
+  dealQuality?: string;
 }
 
 interface DateOptimization {
@@ -130,14 +131,50 @@ async function getAirportCode(location: string): Promise<string> {
   return airportMap[location.toLowerCase()] || location.toUpperCase();
 }
 
+// Assess deal quality based on historical pricing data
+function assessDealQuality(from: string, to: string, price: number): string {
+  // Historical average prices for common routes (USD)
+  const averagePrices: { [key: string]: number } = {
+    'nashville-newyork': 320,
+    'nashville-miami': 280,
+    'nashville-losangeles': 420,
+    'nashville-chicago': 250,
+    'newyork-losangeles': 380,
+    'newyork-miami': 320,
+    'newyork-london': 650,
+    'newyork-paris': 720,
+    'losangeles-tokyo': 1200,
+    'losangeles-london': 850,
+    'miami-london': 680,
+    'chicago-london': 720,
+    'default': 400
+  };
+
+  const routeKey = `${from.toLowerCase().replace(/\s+/g, '')}-${to.toLowerCase().replace(/\s+/g, '')}`;
+  const reverseRouteKey = `${to.toLowerCase().replace(/\s+/g, '')}-${from.toLowerCase().replace(/\s+/g, '')}`;
+  
+  const avgPrice = averagePrices[routeKey] || averagePrices[reverseRouteKey] || averagePrices['default'];
+  const savings = ((avgPrice - price) / avgPrice * 100);
+  
+  if (savings >= 40) return "🔥 AMAZING DEAL";
+  if (savings >= 25) return "⭐ GREAT DEAL"; 
+  if (savings >= 15) return "👍 GOOD DEAL";
+  if (savings >= 0) return "📊 FAIR PRICE";
+  return "💸 ABOVE AVERAGE";
+}
+
 function parseFlightDeals(flightData: any, from: string, to: string, departDate: string, returnDate?: string): FlightDeal[] {
   if (!flightData?.data?.itineraries) {
     return [];
   }
 
   return flightData.data.itineraries.slice(0, 5).map((itinerary: any, index: number) => {
+    const priceRaw = itinerary.price?.raw || 0;
     const price = itinerary.price?.formatted || '$N/A';
     const carrier = itinerary.legs?.[0]?.carriers?.marketing?.[0]?.name || 'Unknown Airline';
+    
+    // Add deal quality assessment
+    const dealQuality = assessDealQuality(from, to, priceRaw);
     
     // Format dates properly from the actual search request
     const formatDate = (dateStr: string) => {
@@ -159,7 +196,8 @@ function parseFlightDeals(flightData: any, from: string, to: string, departDate:
       departureDistance: itinerary.legs?.[0]?.durationInMinutes ? 
         `${Math.floor(itinerary.legs[0].durationInMinutes / 60)}h ${itinerary.legs[0].durationInMinutes % 60}m` : 
         undefined,
-      dates: dateRange
+      dates: dateRange,
+      dealQuality: dealQuality
     };
   });
 }

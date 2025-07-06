@@ -545,10 +545,26 @@ export default function TravelHackerAI() {
                     <CardContent className="space-y-4">
                       {(result?.flightDeals || mockResult.flightDeals).map((deal, index) => (
                         <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
-                          <div className="font-semibold text-white text-lg">{deal.route}: {deal.price}</div>
-                          <div className="text-gray-300 text-sm">Dates: {deal.dates} • {deal.airline}</div>
+                          <div className="flex justify-between items-start">
+                            <div className="font-semibold text-white text-lg">{deal.route}: {deal.price}</div>
+                            {deal.dealQuality && (
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  deal.dealQuality.includes('AMAZING') ? 'text-green-300 border-green-300/50 bg-green-500/10' :
+                                  deal.dealQuality.includes('GREAT') ? 'text-blue-300 border-blue-300/50 bg-blue-500/10' :
+                                  deal.dealQuality.includes('GOOD') ? 'text-yellow-300 border-yellow-300/50 bg-yellow-500/10' :
+                                  deal.dealQuality.includes('FAIR') ? 'text-gray-300 border-gray-300/50 bg-gray-500/10' :
+                                  'text-orange-300 border-orange-300/50 bg-orange-500/10'
+                                }`}
+                              >
+                                {deal.dealQuality}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-gray-300 text-sm">Dates: {deal.dates} • {deal.airline || deal.source}</div>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {deal.tools.map((tool, i) => (
+                            {(deal.tools || ['Skyscanner', 'Google Flights']).map((tool, i) => (
                               <Badge key={i} variant="outline" className="text-xs text-blue-300 border-blue-300/50">
                                 {tool}
                               </Badge>
