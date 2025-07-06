@@ -4426,9 +4426,31 @@ Analysis factors:
       
       // Use structured dates when available
       let departDate = '2025-07-06'; // Default fallback
+      let returnDate = '';
       
-      if (startDate) {
+      if (startDate && endDate) {
         // Convert MM/DD/YYYY to YYYY-MM-DD if needed
+        const parseDate = (dateStr: string) => {
+          if (dateStr.includes('/')) {
+            const [month, day, year] = dateStr.split('/');
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          return dateStr;
+        };
+        
+        departDate = parseDate(startDate);
+        returnDate = parseDate(endDate);
+        
+        // For date ranges, find the best departure date within the range
+        if (departDate !== returnDate) {
+          // Use mid-point of range for flexible search
+          const startDateObj = new Date(departDate);
+          const endDateObj = new Date(returnDate);
+          const midPoint = new Date(startDateObj.getTime() + (endDateObj.getTime() - startDateObj.getTime()) / 2);
+          departDate = midPoint.toISOString().split('T')[0];
+        }
+      } else if (startDate) {
+        // Single date
         if (startDate.includes('/')) {
           const [month, day, year] = startDate.split('/');
           departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -4466,13 +4488,32 @@ Analysis factors:
       // Get real flight deals
       const realDeals = await searchRealFlightDeals(fromCity, toCity, departDate, undefined, userBudget);
 
+      // Helper function for date parsing
+      const parseDate = (dateStr: string) => {
+        if (dateStr.includes('/')) {
+          const [month, day, year] = dateStr.split('/');
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        return dateStr;
+      };
+      
+      // Format date range for display
+      let dateRange = '';
+      if (startDate && endDate && startDate !== endDate) {
+        const startDateFormatted = new Date(parseDate(startDate)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const endDateFormatted = new Date(parseDate(endDate)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        dateRange = `${startDateFormatted} to ${endDateFormatted}`;
+      } else {
+        dateRange = new Date(departDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      
       const travelPrompt = `You are Travel Hacker GPT — a world-class budget travel assistant.
 
 Based on REAL FLIGHT DATA, provide accurate travel recommendations:
 
 AUTHENTIC FLIGHT DATA:
 - Route: ${fromCity} to ${toCity}
-- Date: ${departDate}
+- Travel Period: ${dateRange}
 - Budget: ${userBudget ? `$${userBudget}` : 'Flexible'}
 - Real flight prices: ${realDeals.cheapestFlights.map(f => f.price).join(', ') || 'Not available'}
 - Mistake fares: ${realDeals.mistakeFares.length > 0 ? 'Available' : 'None found'}

@@ -117,6 +117,8 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 6, 2025. FIXED: Travel Hacker AI date accuracy - backend now uses structured date data from form fields instead of parsing from text
+- July 6, 2025. Enhanced date range handling - properly displays travel periods (e.g., "Jul 2025 to Dec 2025") and calculates optimal search dates
 - July 6, 2025. Fixed Travel Hacker AI date accuracy issue - now correctly processes requested travel dates instead of defaulting to February
 - July 6, 2025. Enhanced date parsing logic to handle month names (e.g., "July 2025") and specific date formats
 - July 6, 2025. Improved authentic mistake fare detection - only shows real pricing errors or clear "none found" message
