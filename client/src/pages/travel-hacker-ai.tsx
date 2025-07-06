@@ -595,28 +595,50 @@ export default function TravelHackerAI() {
                     </Card>
                   )}
 
-                  {/* Mistake Fares */}
-                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center">
-                        ⚡ Mistake Fares Found
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {(result?.mistakeFares || mockResult.mistakeFares || []).map((fare, index) => (
-                        <div key={index} className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                          <div className="font-semibold text-orange-300 text-lg">🚨 {fare.route}: {fare.price}</div>
-                          <div className="text-gray-300 text-sm">{fare.urgency} via {fare.source}</div>
-                          {fare.departureDistance && (
-                            <div className="text-xs text-orange-300 mt-1 flex items-center">
-                              <span className="mr-1">📍</span>
-                              {fare.departureDistance}
-                            </div>
-                          )}
+                  {/* Mistake Fares - Only show if real fares exist */}
+                  {(result?.mistakeFares && result.mistakeFares.length > 0) ? (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardHeader>
+                        <CardTitle className="text-white flex items-center">
+                          ⚡ Real Mistake Fares Found
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {result.mistakeFares.map((fare, index) => (
+                          <div key={index} className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                            <div className="font-semibold text-orange-300 text-lg">🚨 {fare.route}: {fare.price}</div>
+                            <div className="text-gray-300 text-sm">{fare.urgency} via {fare.source}</div>
+                            {fare.departureDistance && (
+                              <div className="text-xs text-orange-300 mt-1 flex items-center">
+                                <span className="mr-1">📍</span>
+                                {fare.departureDistance}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                      <CardHeader>
+                        <CardTitle className="text-white flex items-center">
+                          ⚡ Mistake Fare Search
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="p-4 bg-gray-500/10 rounded-lg border border-gray-500/20">
+                          <div className="text-gray-300">
+                            🔍 No mistake fares currently available for this route. Try:
+                          </div>
+                          <ul className="text-gray-400 text-sm mt-2 ml-4">
+                            <li>• Checking nearby airports</li>
+                            <li>• Flexible travel dates</li>
+                            <li>• Secret Flying alerts</li>
+                          </ul>
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Date Optimization */}
                   {(result?.dateOptimization || mockResult.dateOptimization) && (

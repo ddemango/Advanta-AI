@@ -151,19 +151,90 @@ function parseFlightDeals(flightData: any, from: string, to: string): FlightDeal
 }
 
 async function getRealMistakeFares(from: string, to: string): Promise<FlightDeal[]> {
-  // This would integrate with mistake fare APIs or scraping services
-  // For now, return real-looking but limited mistake fares
-  const realMistakeFares = [
-    {
-      route: `${from} → ${to}`,
-      price: '$299',
-      urgency: 'URGENT: Expires in 2 hours',
-      source: 'Secret Flying',
-      departureDistance: '24 hours from now'
+  try {
+    // Use multiple real mistake fare sources
+    const mistakeFares: FlightDeal[] = [];
+    
+    // Check Skiplagged for hidden city fares
+    try {
+      const skiplaggedResponse = await fetch(`https://skiplagged.com/api/search.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&depart=${new Date().toISOString().split('T')[0]}&format=json`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (skiplaggedResponse.ok) {
+        const skiplaggedData = await skiplaggedResponse.json();
+        if (skiplaggedData.flights && skiplaggedData.flights.length > 0) {
+          const cheapestSkiplagged = skiplaggedData.flights[0];
+          mistakeFares.push({
+            route: `${from} → ${to}`,
+            price: `$${cheapestSkiplagged.price}`,
+            urgency: 'Hidden city deal - Book carefully',
+            source: 'Skiplagged',
+            departureDistance: '0 miles'
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Skiplagged API unavailable');
     }
-  ];
-  
-  return realMistakeFares;
+
+    // Check Google Flights for error fares using real API
+    if (process.env.RAPIDAPI_KEY) {
+      try {
+        const flightResponse = await fetch(`https://sky-scanner3.p.rapidapi.com/flights/search-one-way`, {
+          method: 'POST',
+          headers: {
+            'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+            'X-RapidAPI-Host': 'sky-scanner3.p.rapidapi.com',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fromEntityId: await getAirportCode(from),
+            toEntityId: await getAirportCode(to),
+            departDate: new Date().toISOString().split('T')[0],
+            adults: 1,
+            currency: 'USD'
+          })
+        });
+
+        if (flightResponse.ok) {
+          const flightData = await flightResponse.json();
+          const flights = flightData?.data?.itineraries || [];
+          
+          // Find suspiciously cheap flights (potential mistake fares)
+          const averagePrice = flights.reduce((sum: number, flight: any) => {
+            const price = parseFloat(flight.price?.raw || '0');
+            return sum + price;
+          }, 0) / flights.length;
+
+          flights.forEach((flight: any) => {
+            const price = parseFloat(flight.price?.raw || '0');
+            if (price < averagePrice * 0.3 && price > 0) { // 70% below average = potential mistake
+              mistakeFares.push({
+                route: `${from} → ${to}`,
+                price: flight.price?.formatted || `$${price}`,
+                urgency: 'URGENT: Possible mistake fare - expires soon',
+                source: flight.legs?.[0]?.carriers?.marketing?.[0]?.name || 'Airline Error',
+                departureDistance: '0 miles'
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Flight API error for mistake fares');
+      }
+    }
+
+    // If no real mistake fares found, return empty array (no fake data)
+    return mistakeFares.slice(0, 3); // Limit to top 3 real deals
+    
+  } catch (error) {
+    console.error('Error fetching mistake fares:', error);
+    return []; // Return empty array instead of fake data
+  }
 }
 
 async function getDateOptimization(from: string, to: string, departDate: string): Promise<DateOptimization | undefined> {
@@ -224,18 +295,10 @@ function getRealTravelLinks(): Array<{ name: string; description: string; url: s
 }
 
 function getFallbackRealDeals(from: string, to: string, budget?: number): TravelHackResult {
-  // Fallback with realistic but limited data when API fails
+  // When APIs fail, return minimal real information with clear error state
   return {
-    cheapestFlights: [
-      {
-        route: `${from} → ${to}`,
-        price: budget ? `$${Math.floor(budget * 0.8)}` : '$387',
-        urgency: 'Current Best Price',
-        source: 'Multiple Airlines',
-        departureDistance: '14 hours flight time'
-      }
-    ],
-    mistakeFares: [],
+    cheapestFlights: [],
+    mistakeFares: [], // Never show fake mistake fares
     bonusHacks: getRealTravelHacks(from, to),
     helpfulLinks: getRealTravelLinks()
   };
