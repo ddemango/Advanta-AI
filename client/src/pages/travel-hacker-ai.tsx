@@ -141,89 +141,7 @@ export default function TravelHackerAI() {
     }
   };
 
-  const mockResult: TravelHackResult = {
-    flightDeals: [
-      {
-        route: "Nashville → Tampa",
-        price: "$98",
-        dates: "Aug 12-16",
-        airline: "Spirit Airlines",
-        tools: ["Google Flights", "Hopper"]
-      },
-      {
-        route: "Nashville → Orlando",
-        price: "$72",
-        dates: "Aug 13-17",
-        airline: "Frontier",
-        tools: ["Skyscanner", "Kayak"]
-      }
-    ],
-    hotels: [
-      {
-        location: "Tampa Downtown",
-        price: "$89/night",
-        hotel: "Hampton Inn & Suites",
-        rating: "4.2★",
-        tips: ["Book directly for perks", "HotelTonight last-minute deals"]
-      },
-      {
-        location: "Tampa Bay Area",
-        price: "$67/night",
-        hotel: "Holiday Inn Express",
-        rating: "4.0★",
-        tips: ["Priceline Express Deals", "AAA discounts"]
-      }
-    ],
-    carRentals: [
-      {
-        location: "Tampa Airport",
-        price: "$23/day",
-        company: "Budget",
-        vehicleType: "Economy",
-        tips: ["Costco Travel", "Off-airport savings"]
-      },
-      {
-        location: "Downtown Tampa",
-        price: "$18/day",
-        company: "Enterprise",
-        vehicleType: "Compact",
-        tips: ["Priceline bidding", "Weekend rates"]
-      }
-    ],
-    mistakeFares: [
-      {
-        route: "Nashville → Barcelona",
-        price: "$289 RT",
-        source: "SecretFlying",
-        urgency: "Limited dates",
-        departureDistance: "0 miles"
-      },
-      {
-        route: "Memphis → London",
-        price: "$345 RT",
-        source: "Scott's Cheap Flights",
-        urgency: "Book by tonight",
-        departureDistance: "210 miles from Nashville"
-      }
-    ],
-    dateOptimization: {
-      suggestion: "Flying out Aug 13 instead of 12",
-      savings: "$40"
-    },
-    bonusHacks: [
-      "Consider flying into Orlando ($72) and taking a $20 FlixBus to Tampa (~2 hrs)",
-      "Book Tuesday departures for 15% average savings",
-      "Use ITA Matrix to find hidden low-fare combinations",
-      "Book car rentals off-airport for 30-50% savings"
-    ],
-    helpfulLinks: [
-      { name: "Google Flights Search", url: "https://flights.google.com", description: "Real-time flight comparison" },
-      { name: "Skyscanner", url: "https://skyscanner.com", description: "Global flight search engine" },
-      { name: "SecretFlying", url: "https://secretflying.com", description: "Mistake fares and deals" },
-      { name: "Rome2Rio", url: "https://rome2rio.com", description: "Multi-modal transport options" },
-      { name: "Kayak Car Rentals", url: "https://www.kayak.com/cars", description: "Compare car rental prices" }
-    ]
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
@@ -598,7 +516,7 @@ export default function TravelHackerAI() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {(result?.hotels || mockResult.hotels || []).map((hotel, index) => (
+                        {result?.hotels && result.hotels.length > 0 ? result.hotels.map((hotel, index) => (
                           <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
                             <div className="font-semibold text-white text-lg">{hotel.location}: {hotel.price}</div>
                             <div className="text-gray-300 text-sm">{hotel.hotel} • {hotel.rating}</div>
@@ -610,7 +528,11 @@ export default function TravelHackerAI() {
                               ))}
                             </div>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center text-gray-300 py-8">
+                            <p>No hotel deals available from real-time sources.</p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   )}
@@ -624,7 +546,7 @@ export default function TravelHackerAI() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {(result?.carRentals || mockResult.carRentals || []).map((rental, index) => (
+                        {result?.carRentals && result.carRentals.length > 0 ? result.carRentals.map((rental, index) => (
                           <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
                             <div className="font-semibold text-white text-lg">{rental.location}: {rental.price}</div>
                             <div className="text-gray-300 text-sm">{rental.vehicleType} • {rental.company}</div>
@@ -636,7 +558,11 @@ export default function TravelHackerAI() {
                               ))}
                             </div>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center text-gray-300 py-8">
+                            <p>No car rental deals available from real-time sources.</p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   )}
@@ -687,7 +613,7 @@ export default function TravelHackerAI() {
                   )}
 
                   {/* Date Optimization */}
-                  {(result?.dateOptimization || mockResult.dateOptimization) && (
+                  {result?.dateOptimization && (
                     <Card className="bg-white/10 backdrop-blur-md border-white/20">
                       <CardHeader>
                         <CardTitle className="text-white flex items-center">
@@ -697,7 +623,7 @@ export default function TravelHackerAI() {
                       <CardContent>
                         <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
                           <div className="text-green-300 font-medium">
-                            💡 {(result?.dateOptimization || mockResult.dateOptimization)?.suggestion} drops fare by {(result?.dateOptimization || mockResult.dateOptimization)?.savings}
+                            💡 {result.dateOptimization.suggestion} drops fare by {result.dateOptimization.savings}
                           </div>
                         </div>
                       </CardContent>
@@ -713,11 +639,15 @@ export default function TravelHackerAI() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {(result?.bonusHacks || mockResult.bonusHacks || []).map((hack, index) => (
+                        {result?.bonusHacks && result.bonusHacks.length > 0 ? result.bonusHacks.map((hack, index) => (
                           <div key={index} className="p-3 bg-white/5 rounded-lg border border-white/10">
                             <div className="text-gray-300">{hack}</div>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center text-gray-300 py-8">
+                            <p>No bonus travel hacks available from real-time sources.</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -731,7 +661,7 @@ export default function TravelHackerAI() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {(result?.helpfulLinks || mockResult.helpfulLinks || []).map((link, index) => (
+                        {result?.helpfulLinks && result.helpfulLinks.length > 0 ? result.helpfulLinks.map((link, index) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                             <div>
                               <div className="text-white font-medium">{link.name}</div>
@@ -746,7 +676,11 @@ export default function TravelHackerAI() {
                               <ExternalLink className="w-4 h-4" />
                             </Button>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="text-center text-gray-300 py-8">
+                            <p>No helpful links available from real-time sources.</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
