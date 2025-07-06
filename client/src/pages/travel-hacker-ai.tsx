@@ -501,7 +501,9 @@ export default function TravelHackerAI() {
                         </div>
                       )) : (
                         <div className="text-center text-gray-300 py-8">
-                          <p>No flight deals found for this search.</p>
+                          <div className="mb-2">⚠️ Flight API Access Required</div>
+                          <p className="text-sm">To display live flight data, valid API access is needed for flight search services.</p>
+                          <p className="text-xs mt-2 text-gray-400">Contact support to configure flight API credentials.</p>
                         </div>
                       )}
                     </CardContent>

@@ -1,7 +1,8 @@
 // Unified travel API consolidating flights, hotels, car rentals, and mistake fares
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const RAPIDAPI_HOST_FLIGHTS = 'sky-scanner3.p.rapidapi.com';
+const RAPIDAPI_HOST_FLIGHTS = 'skyscanner-skyscanner-flight-search-v1.p.rapidapi.com';
 const RAPIDAPI_HOST_HOTELS = 'hotels-com-provider.p.rapidapi.com';
+const RAPIDAPI_HOST_AMADEUS = 'amadeus-travelhackutility.p.rapidapi.com';
 
 interface Flight {
   airline: string;
@@ -93,9 +94,12 @@ export async function fetchUnifiedTravelData(
   }
 }
 
-// Skyscanner flights API integration
+// Skyscanner Flight API integration
 async function fetchSkyscannerFlights(from: string, to: string, departDate: string): Promise<Flight[]> {
   try {
+    const fromEntityId = await getAirportCode(from);
+    const toEntityId = await getAirportCode(to);
+    
     const response = await fetch(`https://${RAPIDAPI_HOST_FLIGHTS}/flights/search-one-way`, {
       method: 'POST',
       headers: {
@@ -104,8 +108,8 @@ async function fetchSkyscannerFlights(from: string, to: string, departDate: stri
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        fromEntityId: await getAirportCode(from),
-        toEntityId: await getAirportCode(to),
+        fromEntityId: fromEntityId,
+        toEntityId: toEntityId,
         departDate: departDate,
         adults: 1,
         currency: 'USD',
@@ -115,12 +119,19 @@ async function fetchSkyscannerFlights(from: string, to: string, departDate: stri
     });
 
     const data = await response.json();
+    console.log('Skyscanner API Response:', JSON.stringify(data, null, 2));
     
-    // Parse flight data from multiple possible response structures
-    let itineraries = data?.data?.itineraries || data?.itineraries || data?.results || data?.quotes || [];
+    // Check if API access is available
+    if (data?.message?.includes('not subscribed') || data?.message?.includes("doesn't exists")) {
+      console.log('Flight API access not available:', data.message);
+      return [];
+    }
+    
+    // Parse flight data from Skyscanner response structure
+    let itineraries = data?.data?.itineraries || data?.itineraries || data?.results || [];
     
     if (!Array.isArray(itineraries) || itineraries.length === 0) {
-      console.log('No flight data found. API Response keys:', Object.keys(data));
+      console.log('No flight data found. Response keys:', Object.keys(data));
       return [];
     }
 
@@ -152,22 +163,23 @@ async function fetchHotelsData(destination: string, checkIn: string, checkOut?: 
     const destinationId = await getDestinationId(destination);
     const checkOutDate = checkOut || getDatePlusWeek(checkIn);
     
-    const response = await fetch(`https://${RAPIDAPI_HOST_HOTELS}/properties/list`, {
+    const params = new URLSearchParams({
+      destinationId: destinationId,
+      pageNumber: '1',
+      checkIn: checkIn,
+      checkOut: checkOutDate,
+      adults1: '1',
+      sortOrder: 'PRICE',
+      currency: 'USD',
+      locale: 'en_US'
+    });
+
+    const response = await fetch(`https://${RAPIDAPI_HOST_HOTELS}/properties/list?${params}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': RAPIDAPI_KEY!,
         'X-RapidAPI-Host': RAPIDAPI_HOST_HOTELS
-      },
-      body: JSON.stringify({
-        destinationId: destinationId,
-        pageNumber: '1',
-        checkIn: checkIn,
-        checkOut: checkOutDate,
-        adults1: '1',
-        sortOrder: 'PRICE',
-        currency: 'USD',
-        locale: 'en_US'
-      })
+      }
     });
 
     const data = await response.json();
@@ -187,56 +199,55 @@ async function fetchHotelsData(destination: string, checkIn: string, checkOut?: 
   }
 }
 
-// Car rentals data fetching
+// Amadeus Car Rental API integration
 async function fetchCarRentalsData(location: string, pickupDate: string, returnDate?: string): Promise<CarRental[]> {
   try {
     const returnDateFinal = returnDate || getDatePlusWeek(pickupDate);
+    const airportCode = await getAirportCode(location);
     
-    // Using a real car rental API endpoint
-    const response = await fetch(`https://booking-com.p.rapidapi.com/v1/car-rental/search`, {
+    const params = new URLSearchParams({
+      pickupLocationCode: airportCode,
+      dropoffLocationCode: airportCode,
+      pickupDate: pickupDate,
+      pickupTime: '10:00:00',
+      dropoffDate: returnDateFinal,
+      dropoffTime: '10:00:00',
+      currency: 'USD'
+    });
+
+    const response = await fetch(`https://${RAPIDAPI_HOST_AMADEUS}/v1/shopping/car-rental-offers?${params}`, {
       method: 'GET',
       headers: {
         'X-RapidAPI-Key': RAPIDAPI_KEY!,
-        'X-RapidAPI-Host': 'booking-com.p.rapidapi.com'
-      },
-      body: JSON.stringify({
-        pick_up_place_id: await getLocationId(location),
-        pick_up_datetime: `${pickupDate} 10:00:00`,
-        drop_off_datetime: `${returnDateFinal} 10:00:00`,
-        currency: 'USD',
-        locale: 'en-gb'
-      })
+        'X-RapidAPI-Host': RAPIDAPI_HOST_AMADEUS
+      }
     });
 
     const data = await response.json();
-    const rentals = data?.search_results || [];
+    console.log('Amadeus Car Rental Response:', JSON.stringify(data, null, 2));
+    
+    // Check if API access is available
+    if (data?.message?.includes('not subscribed') || data?.message?.includes("doesn't exists")) {
+      console.log('Car rental API access not available:', data.message);
+      return [];
+    }
 
-    return rentals.slice(0, 6).map((rental: any) => ({
-      company: rental.supplier?.name || 'Car Rental Company',
-      vehicleType: rental.vehicle_info?.v_type || 'Economy',
-      price: rental.price?.display || 'Check rates',
+    const offers = data?.data || [];
+    if (!Array.isArray(offers) || offers.length === 0) {
+      console.log('No car rental data found');
+      return [];
+    }
+
+    return offers.slice(0, 6).map((rental: any) => ({
+      company: rental.vendor?.name || 'Car Rental Company',
+      vehicleType: rental.vehicle?.category || 'Economy',
+      price: rental.price?.total || 'Check rates',
       location: `${location} Airport`,
-      features: rental.vehicle_info?.amenities || ['Air conditioning', 'Manual transmission']
+      features: rental.vehicle?.acrissCode ? ['Air conditioning', 'Manual transmission'] : ['Standard features']
     }));
   } catch (error) {
     console.error('Car rentals API error:', error);
-    // Return realistic fallback data with clear labeling
-    return [
-      {
-        company: 'Enterprise',
-        vehicleType: 'Economy',
-        price: '$35/day',
-        location: `${location} Airport`,
-        features: ['Air conditioning', 'Manual transmission', 'Unlimited mileage']
-      },
-      {
-        company: 'Hertz',
-        vehicleType: 'Compact',
-        price: '$42/day',
-        location: `${location} Downtown`,
-        features: ['Automatic transmission', 'GPS navigation', 'Fuel efficient']
-      }
-    ];
+    return [];
   }
 }
 
@@ -245,8 +256,16 @@ async function fetchMistakeFares(from: string, to: string, departDate: string): 
   try {
     const mistakeFares: MistakeFare[] = [];
     
-    // Try Skiplagged API for hidden city fares
-    const skiplaggedUrl = `https://skiplagged.com/api/search.php?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&depart=${departDate}&format=json`;
+    // Try Skiplagged API for hidden city fares with correct parameters
+    const fromCode = await getAirportCode(from);
+    const toCode = await getAirportCode(to);
+    const skiplaggedParams = new URLSearchParams({
+      from: fromCode,
+      to: toCode,
+      depart: departDate
+    });
+    
+    const skiplaggedUrl = `https://skiplagged.com/api/search.php?${skiplaggedParams}`;
     
     const skiplaggedResponse = await fetch(skiplaggedUrl, {
       headers: {
@@ -257,17 +276,25 @@ async function fetchMistakeFares(from: string, to: string, departDate: string): 
     
     if (skiplaggedResponse.ok) {
       const skiplaggedData = await skiplaggedResponse.json();
-      if (skiplaggedData.flights && skiplaggedData.flights.length > 0) {
-        skiplaggedData.flights.slice(0, 3).forEach((flight: any) => {
-          mistakeFares.push({
-            route: `${from} → ${to}`,
-            price: `$${flight.price}`,
-            source: 'Skiplagged',
-            urgency: 'Hidden city deal - Book carefully',
-            departureDistance: '0 miles'
-          });
+      console.log('Skiplagged Response:', JSON.stringify(skiplaggedData, null, 2));
+      
+      const flights = skiplaggedData.flights || skiplaggedData.trips || skiplaggedData.results || [];
+      if (Array.isArray(flights) && flights.length > 0) {
+        flights.slice(0, 2).forEach((flight: any) => {
+          const price = flight.price || flight.cost || 0;
+          if (price > 0 && price < 400) { // Only show actual mistake fares
+            mistakeFares.push({
+              route: `${from} → ${to}`,
+              price: `$${price}`,
+              source: 'Skiplagged',
+              urgency: 'Hidden city deal - Book carefully',
+              departureDistance: '0 miles'
+            });
+          }
         });
       }
+    } else {
+      console.log('Skiplagged API not accessible, status:', skiplaggedResponse.status);
     }
 
     // Check for pricing anomalies using main flight API
