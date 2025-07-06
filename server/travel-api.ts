@@ -130,15 +130,16 @@ async function fetchSkyscannerFlights(from: string, to: string, departDate: stri
     // Parse flight data from Skyscanner response structure
     let itineraries = data?.data?.itineraries || data?.itineraries || data?.results || [];
     
-    // Check if we have the specific Skyscanner response structure
-    if (data?.data && !Array.isArray(itineraries) && Object.keys(data.data).length > 0) {
-      // Convert Skyscanner response object to array
-      itineraries = Object.values(data.data).filter(item => Array.isArray(item));
+    // Handle Skyscanner's specific response structure
+    if (data?.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+      // Skyscanner returns flights as an object with flight IDs as keys
+      itineraries = Object.values(data.data).filter((item: any) => Array.isArray(item) && item.length >= 3);
       console.log('Parsed itineraries from Skyscanner data:', itineraries.length);
     }
     
     if (!Array.isArray(itineraries) || itineraries.length === 0) {
-      console.log('No flight data found. Response keys:', Object.keys(data));
+      console.log('No flight data found. Response structure:', Object.keys(data));
+      console.log('Data sample:', JSON.stringify(data, null, 2).slice(0, 500));
       return [];
     }
 
