@@ -185,7 +185,25 @@ Please create a professional resume with proper formatting, strong action verbs,
 
       if (response.ok) {
         const data = await response.json();
-        setGeneratedResume(data.response);
+        console.log('Raw API response:', data.response);
+        
+        // Clean up markdown formatting if present
+        let cleanedResume = data.response;
+        if (cleanedResume.startsWith('```plaintext\n')) {
+          cleanedResume = cleanedResume.replace(/^```plaintext\n/, '');
+        }
+        if (cleanedResume.startsWith('```\n')) {
+          cleanedResume = cleanedResume.replace(/^```\n/, '');
+        }
+        if (cleanedResume.endsWith('\n```')) {
+          cleanedResume = cleanedResume.replace(/\n```$/, '');
+        }
+        if (cleanedResume.endsWith('```')) {
+          cleanedResume = cleanedResume.replace(/```$/, '');
+        }
+        
+        console.log('Cleaned resume:', cleanedResume);
+        setGeneratedResume(cleanedResume);
         setCurrentStep(4);
       } else {
         throw new Error('Failed to generate resume');

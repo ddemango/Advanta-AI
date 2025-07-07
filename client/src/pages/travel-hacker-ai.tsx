@@ -133,6 +133,7 @@ export default function TravelHackerAI() {
       if (!response.ok) throw new Error('Failed to generate travel hack');
       
       const data = await response.json();
+      console.log('Travel API response:', data);
       setResult(data);
     } catch (error) {
       console.error('Error generating travel hack:', error);
