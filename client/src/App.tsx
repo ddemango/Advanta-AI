@@ -16,6 +16,7 @@ import MarketingCopyGenerator from "@/pages/marketing-copy-generator";
 import AIToolQuiz from "@/pages/ai-tool-quiz";
 import BusinessNameGenerator from "@/pages/business-name-generator";
 import ResumeOptimizer from "@/pages/resume-optimizer";
+import ResumeGenerator from "@/pages/resume-generator";
 import AIToolsComparison from "@/pages/ai-tools-comparison";
 import CompetitorIntelligence from "@/pages/competitor-intelligence";
 import VoiceoverScriptGenerator from "@/pages/voiceover-script-generator";
@@ -161,6 +162,7 @@ function Router() {
       <Route path="/ai-tool-quiz" component={AIToolQuiz} />
       <Route path="/business-name-generator" component={BusinessNameGenerator} />
       <Route path="/resume-optimizer" component={ResumeOptimizer} />
+      <Route path="/resume-generator" component={ResumeGenerator} />
       <Route path="/ai-tools-comparison" component={AIToolsComparison} />
       <Route path="/competitor-intelligence" component={CompetitorIntelligence} />
       <Route path="/voiceover-script-generator" component={VoiceoverScriptGenerator} />

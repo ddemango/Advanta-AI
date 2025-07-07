@@ -4542,6 +4542,64 @@ Analysis factors:
     }
   });
 
+  // AI Assistant endpoint for various AI-powered tasks
+  app.post('/api/ai-assistant', async (req: Request, res: Response) => {
+    try {
+      const { prompt, type } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: 'Prompt is required' });
+      }
+
+      // Import OpenAI client
+      const { openai } = await import('./ai-workflow-engine.js');
+      
+      let systemPrompt = '';
+      let responseFormat: any = undefined;
+      
+      // Handle different types of AI requests
+      switch (type) {
+        case 'resume_generation':
+          systemPrompt = `You are a professional resume writer and career coach. Generate ATS-optimized resumes that:
+1. Use strong action verbs and quantified achievements
+2. Include relevant keywords for the target role
+3. Follow proper formatting and structure
+4. Highlight transferable skills and accomplishments
+5. Are tailored to modern hiring practices
+
+Format the resume professionally with clear sections and consistent formatting.`;
+          break;
+          
+        case 'travel_hack':
+          systemPrompt = `You are a travel expert specializing in finding deals, optimizing itineraries, and budget travel strategies. Provide practical, actionable travel advice.`;
+          break;
+          
+        default:
+          systemPrompt = `You are a helpful AI assistant. Provide accurate, detailed, and professional responses to user queries.`;
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
+        ],
+        response_format: responseFormat,
+        temperature: 0.7
+      });
+
+      const content = response.choices[0].message.content;
+      if (!content) {
+        throw new Error('No response generated');
+      }
+
+      res.json({ response: content });
+    } catch (error) {
+      console.error('Error in AI assistant:', error);
+      res.status(500).json({ message: 'Failed to generate AI response' });
+    }
+  });
+
   // Movie Search endpoint with TMDB ID lookup
   app.get('/api/movie-search', async (req: Request, res: Response) => {
     try {
