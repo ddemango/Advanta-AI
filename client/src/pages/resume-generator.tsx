@@ -203,6 +203,7 @@ Please create a professional resume with proper formatting, strong action verbs,
         }
         
         console.log('Cleaned resume:', cleanedResume);
+        console.log('Setting current step to 4');
         setGeneratedResume(cleanedResume);
         setCurrentStep(4);
       } else {
@@ -470,6 +471,8 @@ Please create a professional resume with proper formatting, strong action verbs,
         );
 
       case 4:
+        console.log('Rendering step 4, generatedResume length:', generatedResume.length);
+        console.log('Resume content preview:', generatedResume.substring(0, 100));
         return (
           <Card>
             <CardHeader>
@@ -479,9 +482,9 @@ Please create a professional resume with proper formatting, strong action verbs,
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg mb-6">
-                <pre className="whitespace-pre-wrap text-sm font-mono">
-                  {generatedResume}
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 min-h-[400px] border">
+                <pre className="whitespace-pre-wrap text-sm font-mono text-black dark:text-white">
+                  {generatedResume || 'No resume content available'}
                 </pre>
               </div>
               <div className="flex gap-4">
