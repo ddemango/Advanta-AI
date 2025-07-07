@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import bcrypt from "bcrypt";
+import OpenAI from "openai";
 
 // Extend session interface
 declare module 'express-session' {
@@ -4551,8 +4552,7 @@ Analysis factors:
         return res.status(400).json({ message: 'Prompt is required' });
       }
 
-      // Import OpenAI client
-      const { openai } = await import('./ai-workflow-engine.js');
+      // Use global OpenAI client (already initialized at module level)
       
       let systemPrompt = '';
       let responseFormat: any = undefined;
