@@ -4207,10 +4207,18 @@ Analysis factors:
       // Parse locations from prompt if not provided in structured format
       if (!fromCity || !toCity) {
         const fromMatch = prompt.match(/from\s+([a-zA-Z\s]+?)(?:\s+to|\s+in|\s*→|\s*->)/i);
-        const toMatch = prompt.match(/to\s+([a-zA-Z\s]+?)(?:\s+in|\s+on|\s*$|\s+for)/i);
+        
+        // Check for global search keywords
+        const globalKeywords = ['anywhere', 'any destination', 'best deals', 'cheapest flights', 'global'];
+        const isGlobalSearch = globalKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+        
+        let toMatch;
+        if (!isGlobalSearch) {
+          toMatch = prompt.match(/to\s+([a-zA-Z\s]+?)(?:\s+in|\s+on|\s*$|\s+for)/i);
+        }
         
         fromCity = fromCity || (fromMatch ? fromMatch[1].trim() : 'Nashville');
-        toCity = toCity || (toMatch ? toMatch[1].trim() : 'London');
+        toCity = toCity || (toMatch ? toMatch[1].trim() : (isGlobalSearch ? '' : 'London'));
       }
       const userBudget = budget || undefined;
       
@@ -4275,13 +4283,20 @@ Analysis factors:
       // Get unified travel data from all sources
       const travelData = await fetchUnifiedTravelData(fromCity, toCity, departDate, returnDate, userBudget);
 
-      // Convert unified data format to match frontend expectations
+      // Convert unified data format to match frontend expectations with enhanced flight details
       const flightDeals = travelData.flights.map(flight => ({
         route: flight.route,
         price: flight.price,
         dates: `${new Date(departDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
         airline: flight.airline,
-        tools: ['Google Flights', 'Skyscanner', 'Momondo']
+        departureTime: flight.departureTime,
+        duration: flight.duration,
+        stops: flight.stops,
+        links: flight.links || {
+          googleFlights: 'https://flights.google.com',
+          skyscanner: 'https://www.skyscanner.com',
+          momondo: 'https://www.momondo.com'
+        }
       }));
 
       const hotels = travelData.hotels.map(hotel => ({
