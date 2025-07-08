@@ -141,12 +141,17 @@ export class DatabaseStorage implements IStorage {
           id: 1,
           title: "Transforming Business with AI Automation",
           slug: "transforming-business-with-ai-automation",
+          summary: "How AI automation is creating unprecedented efficiencies in modern enterprises.",
           excerpt: "How AI automation is creating unprecedented efficiencies in modern enterprises.",
           content: "Content about AI automation in business...",
           authorId: 1,
           category: "business_strategy",
           tags: ["automation", "efficiency", "digital transformation"],
+          imageUrl: null,
+          featuredImage: null,
+          readingTime: 5,
           published: true,
+          featured: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           viewCount: 120
@@ -155,12 +160,17 @@ export class DatabaseStorage implements IStorage {
           id: 2,
           title: "The Future of Conversational AI",
           slug: "future-of-conversational-ai",
+          summary: "Exploring how conversational AI is evolving and its implications for customer service.",
           excerpt: "Exploring how conversational AI is evolving and its implications for customer service.",
           content: "Content about conversational AI...",
           authorId: 1,
           category: "ai_technology",
           tags: ["chatbots", "customer service", "NLP"],
+          imageUrl: null,
+          featuredImage: null,
+          readingTime: 4,
           published: true,
+          featured: true,
           createdAt: new Date(),
           updatedAt: new Date(),
           viewCount: 85
@@ -169,12 +179,17 @@ export class DatabaseStorage implements IStorage {
           id: 3,
           title: "AI Implementation: A Case Study",
           slug: "ai-implementation-case-study",
+          summary: "A real-world case study showing measurable results from AI implementation.",
           excerpt: "A real-world case study showing measurable results from AI implementation.",
           content: "Content about AI case study...",
           authorId: 1,
           category: "case_studies",
           tags: ["ROI", "implementation", "success story"],
+          imageUrl: null,
+          featuredImage: null,
+          readingTime: 7,
           published: true,
+          featured: false,
           createdAt: new Date(),
           updatedAt: new Date(),
           viewCount: 210
@@ -254,32 +269,28 @@ export class DatabaseStorage implements IStorage {
   async getResources(options?: { limit?: number, offset?: number, category?: string, type?: string, published?: boolean }): Promise<Resource[]> {
     let query = db.select().from(resources);
     
-    // Apply filters
     if (options?.category) {
-      query = query.where(eq(resources.category, options.category));
+      query = query.where(eq(resources.category, options.category)) as any;
     }
     
     if (options?.type) {
-      query = query.where(eq(resources.type, options.type));
+      query = query.where(eq(resources.type, options.type)) as any;
     }
     
     if (options?.published !== undefined) {
-      query = query.where(eq(resources.published, options.published));
+      query = query.where(eq(resources.published, options.published)) as any;
     }
     
-    // Apply pagination
     if (options?.limit) {
-      query = query.limit(options.limit);
+      query = query.limit(options.limit) as any;
     }
     
     if (options?.offset) {
-      query = query.offset(options.offset);
+      query = query.offset(options.offset) as any;
     }
     
-    // By default, sort by created date descending (newest first)
-    query = query.orderBy(resources.createdAt);
-    
-    return await query;
+    const result = await query.orderBy(resources.createdAt);
+    return result;
   }
 
   async getResourceBySlug(slug: string): Promise<Resource | undefined> {

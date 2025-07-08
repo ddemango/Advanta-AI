@@ -235,17 +235,16 @@ async function generateBlogPost(category: keyof typeof blogTopics): Promise<Inse
     const blogPost: InsertBlogPost = {
       title,
       slug,
-      summary,
+      summary: summary || 'A comprehensive guide to AI solutions for enterprise clients.',
       content,
-      author_id: authorId,
+      authorId: authorId,
       category: category,
       tags,
-      image_url: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
-      featured_image: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
-      reading_time: readingTime,
+      imageUrl: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
+      featuredImage: `https://source.unsplash.com/random/1200x630/?${encodeURIComponent(category + "," + title.split(" ")[0])}`,
+      readingTime: readingTime,
       published: true,
       featured: Math.random() > 0.7, // 30% chance of being featured
-      view_count: Math.floor(Math.random() * 100) // Random initial view count
     };
     
     return blogPost;

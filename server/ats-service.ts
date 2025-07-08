@@ -1,7 +1,6 @@
 import multer from 'multer';
 import { createWorker } from 'tesseract.js';
 import mammoth from 'mammoth';
-import pdfParse from 'pdf-parse';
 import OpenAI from 'openai';
 import { db } from './db';
 import { resumeAnalyses } from '@shared/schema';
@@ -47,8 +46,14 @@ async function extractTextFromResume(file: Express.Multer.File): Promise<string>
   const buffer = file.buffer;
   
   if (file.mimetype === 'application/pdf') {
-    const data = await pdfParse(buffer);
-    return data.text;
+    try {
+      // Dynamic import to prevent startup issues
+      const pdfParse = (await import('pdf-parse')).default;
+      const data = await pdfParse(buffer);
+      return data.text;
+    } catch (error) {
+      throw new Error('PDF parsing failed. Please try a different file format.');
+    }
   } else if (file.mimetype.includes('document') || file.mimetype.includes('word')) {
     const result = await mammoth.extractRawText({ buffer });
     return result.value;
