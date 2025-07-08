@@ -4283,7 +4283,7 @@ Analysis factors:
       const flightDeals = travelData.flights.map(flight => ({
         route: flight.route,
         price: flight.price,
-        dates: `${new Date(departDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        dates: new Date(flight.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         airline: flight.airline,
         departureTime: flight.departureTime,
         duration: flight.duration,

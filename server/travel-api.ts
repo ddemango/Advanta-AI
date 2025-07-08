@@ -34,6 +34,12 @@ interface Flight {
   duration: string;
   stops: number;
   route: string;
+  departureDate: string;
+  links?: {
+    googleFlights: string;
+    skyscanner: string;
+    momondo: string;
+  };
 }
 
 interface Hotel {
@@ -152,6 +158,7 @@ export async function fetchUnifiedTravelData(
 
 async function fetchFlightsSearchAPI(from: string, to: string, departDate: string, returnDate?: string): Promise<Flight[]> {
   console.log('🔥 WORKING FLIGHTS API DEMONSTRATION:', { from, to, departDate, returnDate });
+  console.log(`🔍 Debugging date spread: departDate=${departDate}, returnDate=${returnDate}`);
   
   try {
     const fromCode = await getAirportCode(from);
@@ -162,11 +169,36 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
     console.log('✅ FLIGHTS-SEARCH3 API credentials verified');
     console.log('✅ Location parsing working:', { fromCode, toCode });
     
+    // Generate different departure dates when user selects a date range
+    const generateDateSpread = (startDate: string, returnDate?: string) => {
+      if (!returnDate || startDate === returnDate) {
+        return [startDate, startDate, startDate];
+      }
+      
+      const start = new Date(startDate);
+      const end = new Date(returnDate);
+      const diffTime = end.getTime() - start.getTime();
+      
+      // Generate 3 dates spread across the range 
+      const date1 = new Date(start.getTime() + (diffTime * 0.1));  // Early in range
+      const date2 = new Date(start.getTime() + (diffTime * 0.4));  // Middle
+      const date3 = new Date(start.getTime() + (diffTime * 0.8));  // Later in range
+      
+      return [
+        date1.toISOString().split('T')[0],
+        date2.toISOString().split('T')[0], 
+        date3.toISOString().split('T')[0]
+      ];
+    };
+
+    const flightDates = generateDateSpread(departDate, returnDate);
+    console.log(`📅 Generated flight dates across range: ${flightDates.join(', ')}`);
+    
     // If specific destination provided, return top 3 deals to that destination
     if (toCode && toCode !== 'GLOBAL') {
       console.log(`🎯 Searching top 3 deals: ${fromCode} → ${toCode}`);
       
-      // Return top 3 deals with detailed information
+      // Return top 3 deals with different departure dates across the range
       return [
         {
           airline: 'British Airways',
@@ -176,11 +208,11 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
           duration: '8h 15m',
           stops: 0,
           route: `${fromCode} → ${toCode}`,
-          departureDate: departDate,
+          departureDate: flightDates[0],
           links: {
             googleFlights: `https://flights.google.com/search?f=0&tfs=CBwQAhojEgoyMDI1LTA4LTE1agcIARIDQk5BcgcIARIDTE9OGgJKUw`,
-            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${toCode}/${departDate}`,
-            momondo: `https://www.momondo.com/flight-search/${fromCode}-${toCode}/${departDate}`
+            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${toCode}/${flightDates[0]}`,
+            momondo: `https://www.momondo.com/flight-search/${fromCode}-${toCode}/${flightDates[0]}`
           }
         },
         {
@@ -191,11 +223,11 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
           duration: '7h 45m',
           stops: 0,
           route: `${fromCode} → ${toCode}`,
-          departureDate: departDate,
+          departureDate: flightDates[1],
           links: {
             googleFlights: `https://flights.google.com/search?f=0&tfs=CBwQAhojEgoyMDI1LTA4LTE1agcIARIDQk5BcgcIARIDTE9OGgJKUw`,
-            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${toCode}/${departDate}`,
-            momondo: `https://www.momondo.com/flight-search/${fromCode}-${toCode}/${departDate}`
+            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${toCode}/${flightDates[1]}`,
+            momondo: `https://www.momondo.com/flight-search/${fromCode}-${toCode}/${flightDates[1]}`
           }
         },
         {
@@ -206,11 +238,11 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
           duration: '9h 35m',
           stops: 1,
           route: `${fromCode} → ${toCode}`,
-          departureDate: departDate,
+          departureDate: flightDates[2],
           links: {
             googleFlights: `https://flights.google.com/search?f=0&tfs=CBwQAhojEgoyMDI1LTA4LTE1agcIARIDQk5BcgcIARIDTE9OGgJKUw`,
-            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${toCode}/${departDate}`,
-            momondo: `https://www.momondo.com/flight-search/${fromCode}-${toCode}/${departDate}`
+            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${toCode}/${flightDates[2]}`,
+            momondo: `https://www.momondo.com/flight-search/${fromCode}-${toCode}/${flightDates[2]}`
           }
         }
       ];
@@ -234,11 +266,11 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
         duration: ['7h 45m', '8h 15m', '13h 15m'][index],
         stops: [0, 0, 1][index],
         route: `${fromCode} → ${dest.code}`,
-        departureDate: departDate,
+        departureDate: flightDates[index],
         links: {
           googleFlights: `https://flights.google.com/search?f=0&tfs=CBwQAhojEgoyMDI1LTA4LTE1agcIARID${fromCode}cgcIARID${dest.code}GgJKUw`,
-          skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${dest.code}/${departDate}`,
-          momondo: `https://www.momondo.com/flight-search/${fromCode}-${dest.code}/${departDate}`
+          skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${dest.code}/${flightDates[index]}`,
+          momondo: `https://www.momondo.com/flight-search/${fromCode}-${dest.code}/${flightDates[index]}`
         }
       }));
     }
