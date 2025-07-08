@@ -104,58 +104,39 @@ async function analyzeAndTailorResume(
   missingKeywords: string[];
   suggestions: string[];
 }> {
+  // Limit input size to prevent token overflow
+  const maxResumeLength = 8000; // ~2000 tokens
+  const maxJobDescLength = 4000; // ~1000 tokens
+  
+  const truncatedResume = resumeText.length > maxResumeLength ? 
+    resumeText.substring(0, maxResumeLength) + "..." : resumeText;
+  const truncatedJobDesc = jobDescriptionText.length > maxJobDescLength ? 
+    jobDescriptionText.substring(0, maxJobDescLength) + "..." : jobDescriptionText;
+
   // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       {
         role: "system",
-        content: `You are an expert ATS (Applicant Tracking System) optimization specialist and resume writer. Your task is to analyze a resume against a job description and provide:
+        content: `You are an ATS optimization expert. Analyze the resume against the job description and provide JSON with:
+- tailoredResumeText: improved resume text
+- changes: array of modifications made
+- atsScore: compatibility score 0-100
+- keywordMatches: relevant keywords found
+- missingKeywords: important missing keywords
+- suggestions: improvement recommendations
 
-1. A tailored version of the resume optimized for the specific job
-2. Detailed changes made to improve ATS compatibility
-3. An ATS compatibility score (0-100)
-4. Keyword analysis and suggestions
-
-Focus on:
-- Adding relevant keywords from the job description
-- Optimizing formatting for ATS parsing
-- Highlighting relevant experience and skills
-- Maintaining authenticity while maximizing relevance
-- Using action verbs and quantifiable achievements
-
-Respond with JSON in this exact format:
-{
-  "tailoredResumeText": "complete tailored resume text",
-  "changes": [
-    {
-      "type": "added|removed|modified",
-      "content": "what was changed",
-      "original": "original text (for modified)",
-      "suggestion": "reasoning for change"
-    }
-  ],
-  "atsScore": 85,
-  "keywordMatches": ["keyword1", "keyword2"],
-  "missingKeywords": ["missing1", "missing2"],
-  "suggestions": ["suggestion1", "suggestion2"]
-}`
+Format: {"tailoredResumeText":"text","changes":[{"type":"added","content":"change","suggestion":"reason"}],"atsScore":85,"keywordMatches":["skill1"],"missingKeywords":["skill2"],"suggestions":["tip1"]}`
       },
       {
         role: "user",
-        content: `Please analyze and tailor this resume for the following job description:
-
-JOB DESCRIPTION:
-${jobDescriptionText}
-
-CURRENT RESUME:
-${resumeText}
-
-Provide a comprehensive ATS optimization with detailed analysis.`
+        content: `Job: ${truncatedJobDesc}\n\nResume: ${truncatedResume}\n\nOptimize for ATS compatibility.`
       }
     ],
     response_format: { type: "json_object" },
-    temperature: 0.3
+    temperature: 0.3,
+    max_tokens: 4000
   });
 
   const result = JSON.parse(response.choices[0].message.content || '{}');
@@ -252,6 +233,12 @@ export async function processATSAnalysis(
     
   } catch (error) {
     console.error('ATS Analysis Error:', error);
+    
+    // Handle specific OpenAI rate limit errors
+    if (error.status === 429) {
+      throw new Error('Rate limit exceeded. Please wait a moment and try again, or try with a shorter resume/job description.');
+    }
+    
     throw new Error(`Failed to analyze resume: ${error.message}`);
   }
 }
