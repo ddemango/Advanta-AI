@@ -409,24 +409,144 @@ async function generateCustomDraftAnalysis(draftData: {
   // Draft board by round (realistic ADP values)
   const draftBoard = {
     1: [
+      { name: 'Christian McCaffrey', position: 'RB', team: 'SF', adp: 1 },
+      { name: 'Tyreek Hill', position: 'WR', team: 'MIA', adp: 2 },
+      { name: 'Josh Allen', position: 'QB', team: 'BUF', adp: 3 },
+      { name: 'Austin Ekeler', position: 'RB', team: 'WAS', adp: 4 },
+      { name: 'Cooper Kupp', position: 'WR', team: 'LAR', adp: 5 },
+      { name: 'Stefon Diggs', position: 'WR', team: 'HOU', adp: 6 },
+      { name: 'Saquon Barkley', position: 'RB', team: 'PHI', adp: 7 },
+      { name: 'Ja\'Marr Chase', position: 'WR', team: 'CIN', adp: 8 },
+      { name: 'Jonathan Taylor', position: 'RB', team: 'IND', adp: 9 },
+      { name: 'Davante Adams', position: 'WR', team: 'LV', adp: 10 },
+      { name: 'Nick Chubb', position: 'RB', team: 'CLE', adp: 11 },
+      { name: 'Travis Kelce', position: 'TE', team: 'KC', adp: 12 }
     ],
     2: [
+      { name: 'Lamar Jackson', position: 'QB', team: 'BAL', adp: 13 },
+      { name: 'DeAndre Hopkins', position: 'WR', team: 'TEN', adp: 14 },
+      { name: 'Derrick Henry', position: 'RB', team: 'BAL', adp: 15 },
+      { name: 'CeeDee Lamb', position: 'WR', team: 'DAL', adp: 16 },
+      { name: 'A.J. Brown', position: 'WR', team: 'PHI', adp: 17 },
+      { name: 'Alvin Kamara', position: 'RB', team: 'NO', adp: 18 },
+      { name: 'Puka Nacua', position: 'WR', team: 'LAR', adp: 19 },
+      { name: 'Mark Andrews', position: 'TE', team: 'BAL', adp: 20 },
+      { name: 'Amon-Ra St. Brown', position: 'WR', team: 'DET', adp: 21 },
+      { name: 'Josh Jacobs', position: 'RB', team: 'GB', adp: 22 },
+      { name: 'DK Metcalf', position: 'WR', team: 'SEA', adp: 23 },
+      { name: 'Isiah Pacheco', position: 'RB', team: 'KC', adp: 24 }
     ],
     3: [
+      { name: 'Patrick Mahomes', position: 'QB', team: 'KC', adp: 25 },
+      { name: 'Tua Tagovailoa', position: 'QB', team: 'MIA', adp: 26 },
+      { name: 'Mike Evans', position: 'WR', team: 'TB', adp: 27 },
+      { name: 'Garrett Wilson', position: 'WR', team: 'NYJ', adp: 28 },
+      { name: 'Jaylen Waddle', position: 'WR', team: 'MIA', adp: 29 },
+      { name: 'James Cook', position: 'RB', team: 'BUF', adp: 30 },
+      { name: 'Chris Olave', position: 'WR', team: 'NO', adp: 31 },
+      { name: 'George Kittle', position: 'TE', team: 'SF', adp: 32 },
+      { name: 'Jahmyr Gibbs', position: 'RB', team: 'DET', adp: 33 },
+      { name: 'Calvin Ridley', position: 'WR', team: 'TEN', adp: 34 },
+      { name: 'Breece Hall', position: 'RB', team: 'NYJ', adp: 35 },
+      { name: 'Evan Engram', position: 'TE', team: 'JAC', adp: 36 }
     ],
     4: [
+      { name: 'Joe Burrow', position: 'QB', team: 'CIN', adp: 37 },
+      { name: 'Dak Prescott', position: 'QB', team: 'DAL', adp: 38 },
+      { name: 'Drake London', position: 'WR', team: 'ATL', adp: 39 },
+      { name: 'Keenan Allen', position: 'WR', team: 'CHI', adp: 40 },
+      { name: 'Deebo Samuel', position: 'WR', team: 'SF', adp: 41 },
+      { name: 'Kyle Pitts', position: 'TE', team: 'ATL', adp: 42 },
+      { name: 'Javonte Williams', position: 'RB', team: 'DAL', adp: 43 },
+      { name: 'DJ Moore', position: 'WR', team: 'CHI', adp: 44 },
+      { name: 'Tee Higgins', position: 'WR', team: 'CIN', adp: 45 },
+      { name: 'David Montgomery', position: 'RB', team: 'DET', adp: 46 },
+      { name: 'Dallas Goedert', position: 'TE', team: 'PHI', adp: 47 },
+      { name: 'Jaylen Warren', position: 'RB', team: 'PIT', adp: 48 }
     ],
     5: [
+      { name: 'Jalen Hurts', position: 'QB', team: 'PHI', adp: 49 },
+      { name: 'Justin Herbert', position: 'QB', team: 'LAC', adp: 50 },
+      { name: 'Amari Cooper', position: 'WR', team: 'CLE', adp: 51 },
+      { name: 'Rachaad White', position: 'RB', team: 'TB', adp: 52 },
+      { name: 'Terry McLaurin', position: 'WR', team: 'WAS', adp: 53 },
+      { name: 'Diontae Johnson', position: 'WR', team: 'CAR', adp: 54 },
+      { name: 'T.J. Hockenson', position: 'TE', team: 'MIN', adp: 55 },
+      { name: 'Najee Harris', position: 'RB', team: 'PIT', adp: 56 },
+      { name: 'Christian Kirk', position: 'WR', team: 'JAC', adp: 57 },
+      { name: 'Courtland Sutton', position: 'WR', team: 'DEN', adp: 58 },
+      { name: 'Kenneth Walker III', position: 'RB', team: 'SEA', adp: 59 },
+      { name: 'Sam LaPorta', position: 'TE', team: 'DET', adp: 60 }
     ],
     6: [
+      { name: 'Russell Wilson', position: 'QB', team: 'PIT', adp: 61 },
+      { name: 'Jordan Love', position: 'QB', team: 'GB', adp: 62 },
+      { name: 'Mike Williams', position: 'WR', team: 'NYJ', adp: 63 },
+      { name: 'Tony Pollard', position: 'RB', team: 'TEN', adp: 64 },
+      { name: 'Marquise Brown', position: 'WR', team: 'KC', adp: 65 },
+      { name: 'Tyler Lockett', position: 'WR', team: 'SEA', adp: 66 },
+      { name: 'Pat Freiermuth', position: 'TE', team: 'PIT', adp: 67 },
+      { name: 'Rhamondre Stevenson', position: 'RB', team: 'NE', adp: 68 },
+      { name: 'Brandin Cooks', position: 'WR', team: 'DAL', adp: 69 },
+      { name: 'Josh Palmer', position: 'WR', team: 'LAC', adp: 70 },
+      { name: 'Zay Flowers', position: 'WR', team: 'BAL', adp: 71 },
+      { name: 'Cole Kmet', position: 'TE', team: 'CHI', adp: 72 }
     ],
     7: [
+      { name: 'Geno Smith', position: 'QB', team: 'SEA', adp: 73 },
+      { name: 'Aaron Rodgers', position: 'QB', team: 'NYJ', adp: 74 },
+      { name: 'Jerry Jeudy', position: 'WR', team: 'CLE', adp: 75 },
+      { name: 'Bijan Robinson', position: 'RB', team: 'ATL', adp: 76 },
+      { name: 'Romeo Doubs', position: 'WR', team: 'GB', adp: 77 },
+      { name: 'Chuba Hubbard', position: 'RB', team: 'CAR', adp: 78 },
+      { name: 'Jake Ferguson', position: 'TE', team: 'DAL', adp: 79 },
+      { name: 'Jaxon Smith-Njigba', position: 'WR', team: 'SEA', adp: 80 },
+      { name: 'DeVonta Smith', position: 'WR', team: 'PHI', adp: 81 },
+      { name: 'Raheem Mostert', position: 'RB', team: 'MIA', adp: 82 },
+      { name: 'Darnell Mooney', position: 'WR', team: 'ATL', adp: 83 },
+      { name: 'Hunter Henry', position: 'TE', team: 'NE', adp: 84 }
     ],
     8: [
+      { name: 'Kyler Murray', position: 'QB', team: 'ARI', adp: 85 },
+      { name: 'Kirk Cousins', position: 'QB', team: 'ATL', adp: 86 },
+      { name: 'Khalil Herbert', position: 'RB', team: 'CHI', adp: 87 },
+      { name: 'Rashee Rice', position: 'WR', team: 'KC', adp: 88 },
+      { name: 'Tank Dell', position: 'WR', team: 'HOU', adp: 89 },
+      { name: 'Jayden Reed', position: 'WR', team: 'GB', adp: 90 },
+      { name: 'Tyler Higbee', position: 'TE', team: 'LAR', adp: 91 },
+      { name: 'Elijah Mitchell', position: 'RB', team: 'KC', adp: 92 },
+      { name: 'Jordan Addison', position: 'WR', team: 'MIN', adp: 93 },
+      { name: 'Adam Thielen', position: 'WR', team: 'CAR', adp: 94 },
+      { name: 'Gus Edwards', position: 'RB', team: 'LAC', adp: 95 },
+      { name: 'Noah Fant', position: 'TE', team: 'SEA', adp: 96 }
     ],
     9: [
+      { name: 'Daniel Jones', position: 'QB', team: 'NYG', adp: 97 },
+      { name: 'Deshaun Watson', position: 'QB', team: 'CLE', adp: 98 },
+      { name: 'Samaje Perine', position: 'RB', team: 'CIN', adp: 99 },
+      { name: 'Quentin Johnston', position: 'WR', team: 'LAC', adp: 100 },
+      { name: 'Michael Pittman Jr.', position: 'WR', team: 'IND', adp: 101 },
+      { name: 'Marvin Harrison Jr.', position: 'WR', team: 'ARI', adp: 102 },
+      { name: 'Dalton Schultz', position: 'TE', team: 'HOU', adp: 103 },
+      { name: 'Miles Sanders', position: 'RB', team: 'DAL', adp: 104 },
+      { name: 'Wan\'Dale Robinson', position: 'WR', team: 'NYG', adp: 105 },
+      { name: 'Josh Downs', position: 'WR', team: 'IND', adp: 106 },
+      { name: 'Jerome Ford', position: 'RB', team: 'CLE', adp: 107 },
+      { name: 'Cade Otton', position: 'TE', team: 'TB', adp: 108 }
     ],
     10: [
+      { name: 'Derek Carr', position: 'QB', team: 'NO', adp: 109 },
+      { name: 'Gardner Minshew', position: 'QB', team: 'LV', adp: 110 },
+      { name: 'Clyde Edwards-Helaire', position: 'RB', team: 'NO', adp: 111 },
+      { name: 'Demarcus Robinson', position: 'WR', team: 'LAR', adp: 112 },
+      { name: 'Cedric Tillman', position: 'WR', team: 'CLE', adp: 113 },
+      { name: 'Xavier Worthy', position: 'WR', team: 'KC', adp: 114 },
+      { name: 'Daniel Bellinger', position: 'TE', team: 'NYG', adp: 115 },
+      { name: 'Ezekiel Elliott', position: 'RB', team: 'DAL', adp: 116 },
+      { name: 'Darius Slayton', position: 'WR', team: 'NYG', adp: 117 },
+      { name: 'Rome Odunze', position: 'WR', team: 'CHI', adp: 118 },
+      { name: 'Antonio Gibson', position: 'RB', team: 'NE', adp: 119 },
+      { name: 'Juwan Johnson', position: 'TE', team: 'NO', adp: 120 }
     ]
   };
 
@@ -534,6 +654,23 @@ async function generateCustomDraftAnalysis(draftData: {
     
     return analysis;
   };
+
+  // Ensure we have a valid bestPick before proceeding
+  if (!bestPick || !bestPick.name) {
+    return {
+      bestPick: {
+        name: 'No recommendation available',
+        position: 'Unknown',
+        team: 'UNK',
+        analysis: 'Unable to generate recommendation for this round and pick combination.',
+        confidence: 50
+      },
+      alternatives: [],
+      strategyTips: ['Consider available players based on your league needs'],
+      positionalScarcity: [],
+      pickContext: `Round ${currentRound}, Pick ${pickNumber}`
+    };
+  }
 
   return {
     bestPick: {
