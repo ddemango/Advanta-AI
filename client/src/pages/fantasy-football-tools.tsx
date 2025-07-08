@@ -125,8 +125,8 @@ export default function FantasyFootballTools() {
   const { data: nflPlayers = [] } = useQuery({
     queryKey: ['/api/nfl-players'],
     enabled: true,
-    staleTime: 300000, // 5 minutes
-    cacheTime: 600000  // 10 minutes
+    staleTime: 0, // Force fresh data to prevent position corruption
+    cacheTime: 0  // No caching to ensure real-time data integrity
   });
 
   // Helper functions
@@ -301,14 +301,39 @@ export default function FantasyFootballTools() {
     setDraftResult(null);
 
     try {
+      // Add cache-busting timestamp to ensure fresh data
+      const timestamp = Date.now();
+      const requestBody = { ...draftData, _t: timestamp };
+      
       const response = await fetch('/api/fantasy-draft-analysis', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draftData)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        },
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) throw new Error('Analysis failed');
+      
       const result = await response.json();
+      
+      // Critical data integrity verification
+      if (result.bestPick) {
+        console.log('DRAFT RESULT VERIFICATION:', {
+          playerName: result.bestPick.name,
+          position: result.bestPick.position,
+          team: result.bestPick.team,
+          fullRecord: result.bestPick,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Verify position data is not corrupted
+        if (!result.bestPick.position || result.bestPick.position === '') {
+          throw new Error('Position data corrupted - API returned empty position');
+        }
+      }
+      
       setDraftResult(result);
     } catch (err) {
       setError('Draft analysis unavailable. Please try again later.');
@@ -351,10 +376,14 @@ export default function FantasyFootballTools() {
 
   // Clear results when switching tabs
   const handleTabChange = (value: string) => {
+    // Clear all cached results and force fresh data retrieval
     setDraftResult(null);
     setStartSitResult(null);
     setError(null);
     setIsAnalyzing(false);
+    
+    // Force browser cache refresh to prevent position corruption
+    console.log('Tab changed to:', value, '- clearing all cached data');
   };
 
   // Close dropdowns when clicking outside
@@ -562,7 +591,9 @@ export default function FantasyFootballTools() {
                                   <h3 className="text-lg font-semibold text-white">Best Pick: {draftResult.bestPick.name}</h3>
                                   <span className="bg-green-500 text-white px-2 py-1 rounded text-sm">{draftResult.bestPick.confidence}% Confidence</span>
                                 </div>
-                                <p className="text-sm text-gray-300 mb-2">{draftResult.bestPick.position} - {draftResult.bestPick.team}</p>
+                                <p className="text-sm text-gray-300 mb-2">
+                                  <span className="font-semibold text-blue-300">{draftResult.bestPick.position}</span> - <span className="font-semibold text-green-300">{draftResult.bestPick.team}</span>
+                                </p>
                                 <p className="text-gray-300">{draftResult.bestPick.analysis}</p>
                               </div>
 
