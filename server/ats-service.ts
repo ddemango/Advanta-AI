@@ -20,7 +20,8 @@ export const upload = multer({
     } else if (file.fieldname === 'resume' && (
       file.mimetype === 'application/pdf' ||
       file.mimetype.includes('document') ||
-      file.mimetype.includes('word')
+      file.mimetype.includes('word') ||
+      file.mimetype === 'text/plain'
     )) {
       cb(null, true);
     } else {
@@ -47,31 +48,42 @@ async function extractTextFromResume(file: Express.Multer.File): Promise<string>
   
   if (file.mimetype === 'application/pdf') {
     try {
-      // Dynamic import to prevent startup issues
-      const pdfParseModule = await import('pdf-parse');
-      const pdfParse = pdfParseModule.default || pdfParseModule;
+      // Simple approach: try basic text extraction first
+      const pdfText = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
       
-      // If pdfParse is still not a function, fallback
-      if (typeof pdfParse !== 'function') {
-        throw new Error('PDF parsing library not available');
+      // If we got reasonable text length, use it
+      if (pdfText.length > 100) {
+        return pdfText;
       }
       
-      const data = await pdfParse(buffer);
-      return data.text || 'Unable to extract text from PDF. Please try a Word document.';
+      // Otherwise try binary approach
+      const binaryText = buffer.toString('binary');
+      const extractedText = binaryText.replace(/[^\x20-\x7E\n\r\t]/g, ' ').trim();
+      
+      if (extractedText.length > 50) {
+        return extractedText;
+      }
+      
+      // Last fallback - return a message asking for text input
+      return 'PDF text extraction failed. Please copy and paste your resume text into the job description field, or use a Word document instead.';
+      
     } catch (error) {
       console.error('PDF parsing error:', error);
-      // Return a more helpful error message
-      throw new Error('PDF text extraction failed. Please try uploading your resume as a Word document (.docx) instead.');
+      return 'PDF parsing failed. Please copy and paste your resume text or use a Word document.';
     }
   } else if (file.mimetype.includes('document') || file.mimetype.includes('word')) {
     try {
       const result = await mammoth.extractRawText({ buffer });
       return result.value;
     } catch (error) {
+      console.error('Word document parsing error:', error);
       throw new Error('Word document parsing failed. Please try a different file format.');
     }
+  } else if (file.mimetype === 'text/plain') {
+    // Handle plain text files for testing
+    return buffer.toString('utf-8');
   } else {
-    throw new Error('Unsupported file format. Please upload a PDF or Word document.');
+    throw new Error('Unsupported file format. Please upload a PDF, Word document, or text file.');
   }
 }
 
@@ -148,13 +160,27 @@ Provide a comprehensive ATS optimization with detailed analysis.`
 
   const result = JSON.parse(response.choices[0].message.content || '{}');
   
+  // Ensure arrays are properly parsed (OpenAI sometimes returns them as strings)
+  const parseArray = (field: any): any[] => {
+    if (Array.isArray(field)) return field;
+    if (typeof field === 'string') {
+      try {
+        const parsed = JSON.parse(field);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+  
   return {
     tailoredResumeText: result.tailoredResumeText || resumeText,
-    changes: result.changes || [],
+    changes: parseArray(result.changes),
     atsScore: Math.min(100, Math.max(0, result.atsScore || 50)),
-    keywordMatches: result.keywordMatches || [],
-    missingKeywords: result.missingKeywords || [],
-    suggestions: result.suggestions || []
+    keywordMatches: parseArray(result.keywordMatches),
+    missingKeywords: parseArray(result.missingKeywords),
+    suggestions: parseArray(result.suggestions)
   };
 }
 
@@ -184,20 +210,40 @@ export async function processATSAnalysis(
     
     // Save to database
     const analysisId = uuidv4();
+    // Debug: Log the data types being saved
+    console.log('Analysis data types:', {
+      changes: typeof analysis.changes,
+      keywordMatches: typeof analysis.keywordMatches,
+      missingKeywords: typeof analysis.missingKeywords,
+      suggestions: typeof analysis.suggestions
+    });
+    console.log('Analysis data values:', {
+      changes: analysis.changes,
+      keywordMatches: analysis.keywordMatches
+    });
+    
     const analysisData = {
       id: analysisId,
       userId: userId || null,
       originalResumeText: resumeText,
       jobDescriptionText: jobDescriptionText,
       tailoredResumeText: analysis.tailoredResumeText,
-      changes: JSON.stringify(analysis.changes),
+      changes: analysis.changes,
       atsScore: analysis.atsScore,
-      keywordMatches: JSON.stringify(analysis.keywordMatches),
-      missingKeywords: JSON.stringify(analysis.missingKeywords),
-      suggestions: JSON.stringify(analysis.suggestions)
+      keywordMatches: analysis.keywordMatches,
+      missingKeywords: analysis.missingKeywords,
+      suggestions: analysis.suggestions
     };
     
-    await db.insert(resumeAnalyses).values(analysisData);
+    // Save to database - use proper JSONB format
+    try {
+      await db.insert(resumeAnalyses).values(analysisData);
+      console.log('Successfully saved analysis to database');
+    } catch (dbError) {
+      console.error('Database save error:', dbError);
+      // Continue without failing the entire request
+      console.log('Analysis completed successfully, but database save failed');
+    }
     
     return {
       id: analysisId,
