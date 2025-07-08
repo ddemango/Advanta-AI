@@ -194,14 +194,69 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
     const flightDates = generateDateSpread(departDate, returnDate);
     console.log(`📅 Generated flight dates across range: ${flightDates.join(', ')}`);
     
-    // CRITICAL: All our flight pricing APIs are currently returning 404 errors
-    // Following zero tolerance policy - showing clear error states instead of mock data
+    // Get real flight prices using RapidAPI
     const getRealFlightPrices = async (from: string, to: string, dates: string[]) => {
-      console.log(`🚨 PRICING API STATUS: All flight pricing APIs currently unavailable (404 errors)`);
-      console.log(`🔍 Attempted to get real prices for ${dates.length} dates: ${dates.join(', ')}`);
+      console.log(`🔍 Getting real flight prices for ${dates.length} dates using RapidAPI`);
+      const prices = [];
       
-      // Return honest error states - no mock data per zero tolerance policy
-      return dates.map(date => 'Real-time pricing unavailable - API connection needed');
+      for (const date of dates) {
+        try {
+          // Use RapidAPI's SkyScanner endpoint for real pricing
+          const response = await fetch(`https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchFlights?originSkyId=${from}&destinationSkyId=${to}&originEntityId=27544008&destinationEntityId=27537542&date=${date}&cabinClass=economy&adults=1&sortBy=best&currency=USD&market=US&countryCode=US`, {
+            method: 'GET',
+            headers: {
+              'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
+              'X-RapidAPI-Host': 'sky-scrapper.p.rapidapi.com'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.data && data.data.itineraries && data.data.itineraries.length > 0) {
+              const flight = data.data.itineraries[0];
+              const price = flight.price?.formatted || flight.price?.raw;
+              if (price) {
+                prices.push(`$${price}`);
+                console.log(`✅ Real price for ${date}: $${price}`);
+                continue;
+              }
+            }
+          }
+        } catch (error) {
+          console.log(`⚠️ API error for ${date}: ${error}`);
+        }
+        
+        // If this specific date fails, try alternative endpoint
+        try {
+          const altResponse = await fetch(`https://booking-com15.p.rapidapi.com/api/v1/flights/searchFlights?fromId=${from}&toId=${to}&departDate=${date}&pageNo=1&adults=1&children=0,17&sort=PRICE&cabinClass=ECONOMY&currency_code=USD`, {
+            method: 'GET',
+            headers: {
+              'X-RapidAPI-Key': process.env.RAPIDAPI_KEY!,
+              'X-RapidAPI-Host': 'booking-com15.p.rapidapi.com'
+            }
+          });
+          
+          if (altResponse.ok) {
+            const altData = await altResponse.json();
+            if (altData.data && altData.data.flights && altData.data.flights.length > 0) {
+              const flight = altData.data.flights[0];
+              const price = flight.priceBreakdown?.total?.units || flight.price;
+              if (price) {
+                prices.push(`$${price}`);
+                console.log(`✅ Alternative API real price for ${date}: $${price}`);
+                continue;
+              }
+            }
+          }
+        } catch (error) {
+          console.log(`⚠️ Alternative API error for ${date}: ${error}`);
+        }
+        
+        // Only if both APIs fail completely
+        prices.push('Price unavailable');
+      }
+      
+      return prices;
     };
     
     // If specific destination provided, return top 3 deals to that destination

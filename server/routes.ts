@@ -4189,6 +4189,37 @@ Analysis factors:
     }
   });
 
+  // New Flight Search API endpoint using flights-search3
+  app.post('/api/flights/search', async (req: Request, res: Response) => {
+    try {
+      const { origin, destination, departureDate, returnDate, passengers } = req.body;
+      
+      if (!origin || !destination || !departureDate) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: origin, destination, departureDate' 
+        });
+      }
+
+      const { searchFlights } = await import('./flight-search-api.js');
+      
+      const results = await searchFlights({
+        origin,
+        destination,
+        departureDate,
+        returnDate,
+        passengers: passengers || 1
+      });
+
+      res.json(results);
+    } catch (error: any) {
+      console.error('Flight search API error:', error);
+      res.status(500).json({ 
+        error: error.message || 'Failed to search flights',
+        details: 'Unable to retrieve flight data from external APIs'
+      });
+    }
+  });
+
   app.post('/api/travel-hack', async (req: Request, res: Response) => {
     try {
       const { prompt, from, to, startDate, endDate, budget, preferences } = req.body;
