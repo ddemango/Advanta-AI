@@ -282,6 +282,16 @@ export default function ATSResumeTailor() {
                 className="hidden"
               />
 
+              {/* Helper text for requirements */}
+              {(!resumeFile || (!jobDescription && !jobImageFile)) && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    {!resumeFile ? "Please upload your resume file above." : 
+                     "Please go back and upload a job description image or enter job description text."}
+                  </p>
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <Button
                   variant="outline"
@@ -291,7 +301,7 @@ export default function ATSResumeTailor() {
                 </Button>
                 <Button
                   onClick={processATSAnalysis}
-                  disabled={!resumeFile || isProcessing}
+                  disabled={!resumeFile || (!jobDescription && !jobImageFile) || isProcessing}
                   className="flex items-center gap-2"
                 >
                   {isProcessing ? (

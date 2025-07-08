@@ -48,17 +48,30 @@ async function extractTextFromResume(file: Express.Multer.File): Promise<string>
   if (file.mimetype === 'application/pdf') {
     try {
       // Dynamic import to prevent startup issues
-      const pdfParse = (await import('pdf-parse')).default;
+      const pdfParseModule = await import('pdf-parse');
+      const pdfParse = pdfParseModule.default || pdfParseModule;
+      
+      // If pdfParse is still not a function, fallback
+      if (typeof pdfParse !== 'function') {
+        throw new Error('PDF parsing library not available');
+      }
+      
       const data = await pdfParse(buffer);
-      return data.text;
+      return data.text || 'Unable to extract text from PDF. Please try a Word document.';
     } catch (error) {
-      throw new Error('PDF parsing failed. Please try a different file format.');
+      console.error('PDF parsing error:', error);
+      // Return a more helpful error message
+      throw new Error('PDF text extraction failed. Please try uploading your resume as a Word document (.docx) instead.');
     }
   } else if (file.mimetype.includes('document') || file.mimetype.includes('word')) {
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value;
+    } catch (error) {
+      throw new Error('Word document parsing failed. Please try a different file format.');
+    }
   } else {
-    throw new Error('Unsupported file format');
+    throw new Error('Unsupported file format. Please upload a PDF or Word document.');
   }
 }
 
