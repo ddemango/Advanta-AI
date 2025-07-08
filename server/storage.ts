@@ -129,7 +129,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getQuotesByUserId(userId: number): Promise<Quote[]> {
-    return await db.select().from(quotes).where(eq(quotes.user_id, userId));
+    return await db.select().from(quotes).where(eq(quotes.userId, userId));
   }
 
   // Blog operations
@@ -141,55 +141,43 @@ export class DatabaseStorage implements IStorage {
           id: 1,
           title: "Transforming Business with AI Automation",
           slug: "transforming-business-with-ai-automation",
-          summary: "How AI automation is creating unprecedented efficiencies in modern enterprises.",
+          excerpt: "How AI automation is creating unprecedented efficiencies in modern enterprises.",
           content: "Content about AI automation in business...",
-          author_id: 1,
+          authorId: 1,
           category: "business_strategy",
           tags: ["automation", "efficiency", "digital transformation"],
           published: true,
-          featured: true,
-          created_at: new Date(),
-          updated_at: new Date(),
-          reading_time: 5,
-          view_count: 120,
-          image_url: "https://images.unsplash.com/photo-1677442135136-760c813dce9b?q=80&w=1932&auto=format&fit=crop",
-          featured_image: "https://images.unsplash.com/photo-1677442135136-760c813dce9b?q=80&w=1932&auto=format&fit=crop"
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          viewCount: 120
         },
         {
           id: 2,
           title: "The Future of Conversational AI",
           slug: "future-of-conversational-ai",
-          summary: "Exploring how conversational AI is evolving and its implications for customer service.",
+          excerpt: "Exploring how conversational AI is evolving and its implications for customer service.",
           content: "Content about conversational AI...",
-          author_id: 1,
+          authorId: 1,
           category: "ai_technology",
           tags: ["chatbots", "customer service", "NLP"],
           published: true,
-          featured: false,
-          created_at: new Date(),
-          updated_at: new Date(),
-          reading_time: 7,
-          view_count: 85,
-          image_url: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2006&auto=format&fit=crop",
-          featured_image: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?q=80&w=2006&auto=format&fit=crop"
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          viewCount: 85
         },
         {
           id: 3,
           title: "AI Implementation: A Case Study",
           slug: "ai-implementation-case-study",
-          summary: "A real-world case study showing measurable results from AI implementation.",
+          excerpt: "A real-world case study showing measurable results from AI implementation.",
           content: "Content about AI case study...",
-          author_id: 1,
+          authorId: 1,
           category: "case_studies",
           tags: ["ROI", "implementation", "success story"],
           published: true,
-          featured: true,
-          created_at: new Date(),
-          updated_at: new Date(),
-          reading_time: 10,
-          view_count: 210,
-          image_url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=2070&auto=format&fit=crop",
-          featured_image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=2070&auto=format&fit=crop"
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          viewCount: 210
         }
       ];
       
@@ -239,7 +227,7 @@ export class DatabaseStorage implements IStorage {
       .update(blogPosts)
       .set({
         ...post,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(blogPosts.id, id))
       .returning();
@@ -250,14 +238,14 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(blogPosts)
       .where(eq(blogPosts.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async incrementBlogPostViewCount(id: number): Promise<void> {
     await db
       .update(blogPosts)
       .set({
-        view_count: sql`${blogPosts.view_count} + 1`
+        viewCount: sql`${blogPosts.viewCount} + 1`
       })
       .where(eq(blogPosts.id, id));
   }
@@ -272,11 +260,11 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (options?.type) {
-      query = query.where(eq(resources.resource_type, options.type));
+      query = query.where(eq(resources.type, options.type));
     }
     
     if (options?.published !== undefined) {
-      query = query.where(eq(resources.is_published, options.published));
+      query = query.where(eq(resources.published, options.published));
     }
     
     // Apply pagination
@@ -288,8 +276,8 @@ export class DatabaseStorage implements IStorage {
       query = query.offset(options.offset);
     }
     
-    // By default, sort by publish date descending (newest first)
-    query = query.orderBy(resources.publish_date);
+    // By default, sort by created date descending (newest first)
+    query = query.orderBy(resources.createdAt);
     
     return await query;
   }
@@ -317,7 +305,7 @@ export class DatabaseStorage implements IStorage {
       .update(resources)
       .set({
         ...resource,
-        updated_at: new Date()
+        updatedAt: new Date()
       })
       .where(eq(resources.id, id))
       .returning();
@@ -328,7 +316,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(resources)
       .where(eq(resources.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async incrementResourceDownloadCount(id: number): Promise<void> {

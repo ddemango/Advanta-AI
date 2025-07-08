@@ -5179,7 +5179,16 @@ Format the resume professionally with clear sections and consistent formatting.`
   // ATS Resume Tailoring API endpoint
   app.post('/api/ats/analyze', async (req: Request, res: Response) => {
     try {
-      const { processATSAnalysis, upload } = await import('./ats-service');
+      // Conditional import to prevent startup crashes
+      let processATSAnalysis, upload;
+      try {
+        const atsModule = await import('./ats-service');
+        processATSAnalysis = atsModule.processATSAnalysis;
+        upload = atsModule.upload;
+      } catch (importError) {
+        console.error('ATS service import error:', importError);
+        return res.status(500).json({ message: 'ATS service temporarily unavailable' });
+      }
       
       // Use multer middleware for file upload handling
       upload.fields([
