@@ -75,62 +75,34 @@ export async function fetchUnifiedTravelData(
   console.log('Fetching unified travel data:', { from, to, departDate, returnDate });
 
   try {
-    // Try all available APIs in parallel for maximum coverage
-    const [kiwiFlights, travelHackDeals, skyScrapperFlights, pricelineHotels, bookingV15Hotels, hotelApiHotels, googleHotels, skyFlights, googleFlights, travelpayoutsFlights, travelpayoutsDeals, bookingHotels] = await Promise.all([
-      fetchKiwiFlights(from, to, departDate, returnDate).catch((err: any) => {
-        console.error('Kiwi.com API error:', err);
-        return [];
-      }),
-      fetchTravelHackDeals(from, to, departDate).catch((err: any) => {
-        console.error('Travel Hacking Tool API error:', err);
-        return [];
-      }),
-      fetchSkyScrapperFlights(from, to, departDate, returnDate).catch((err: any) => {
-        console.error('Sky Scrapper API error:', err);
-        return [];
-      }),
-      fetchPricelineHotels(to, departDate, returnDate).catch((err: any) => {
-        console.error('Priceline API error:', err);
-        return [];
-      }),
-      fetchBookingV15Hotels(to, departDate, returnDate).catch((err: any) => {
-        console.error('Booking.com v15 API error:', err);
-        return [];
-      }),
-      fetchHotelApiHotels(to, departDate, returnDate).catch((err: any) => {
-        console.error('Hotel API error:', err);
-        return [];
-      }),
-      fetchGoogleHotels(to, departDate, returnDate).catch((err: any) => {
-        console.error('Google Hotels API error:', err);
-        return [];
-      }),
-      fetchSkyFlights(from, to, departDate, returnDate).catch((err: any) => {
-        console.error('Sky API error:', err);
-        return [];
-      }),
-      fetchGoogleFlights(from, to, departDate, returnDate).catch((err: any) => {
-        console.error('Google Flights API error:', err);
-        return [];
-      }),
-      fetchTravelpayoutsFlights(from, to, departDate, returnDate).catch((err: any) => {
-        console.error('Travelpayouts flights API error:', err);
-        return [];
-      }),
-      fetchTravelpayoutsCheapFlights(from, to, departDate).catch((err: any) => {
-        console.error('Travelpayouts cheap flights API error:', err);
-        return [];
-      }),
-      fetchBookingHotels(to, departDate, returnDate).catch((err: any) => {
-        console.error('Booking.com hotels API error:', err);
-        return [];
-      })
-    ]);
+    // Flight APIs in priority order - try each one until we get results
+    const flightAPIs = [
+      () => fetchSkyScrapperFlights(from, to, departDate, returnDate),
+      () => fetchKiwiFlights(from, to, departDate, returnDate),
+      () => fetchSkyFlights(from, to, departDate, returnDate),
+      () => fetchGoogleFlights(from, to, departDate, returnDate),
+      () => fetchTravelpayoutsFlights(from, to, departDate, returnDate)
+    ];
 
-    // Combine all flight data sources
-    const allFlights = [...kiwiFlights, ...skyScrapperFlights, ...skyFlights, ...googleFlights, ...travelpayoutsFlights];
-    const allHotels = [...pricelineHotels, ...bookingV15Hotels, ...hotelApiHotels, ...googleHotels, ...bookingHotels];
-    const allDeals = [...travelHackDeals, ...travelpayoutsDeals];
+    // Hotel APIs in priority order
+    const hotelAPIs = [
+      () => fetchPricelineHotels(to, departDate, returnDate),
+      () => fetchBookingV15Hotels(to, departDate, returnDate),
+      () => fetchHotelApiHotels(to, departDate, returnDate),
+      () => fetchGoogleHotels(to, departDate, returnDate),
+      () => fetchBookingHotels(to, departDate, returnDate)
+    ];
+
+    // Deal APIs in priority order
+    const dealAPIs = [
+      () => fetchTravelHackDeals(from, to, departDate),
+      () => fetchTravelpayoutsCheapFlights(from, to, departDate)
+    ];
+
+    // Try each API in sequence until we get results
+    const allFlights = await tryAPIsSequentially(flightAPIs, 'flight');
+    const allHotels = await tryAPIsSequentially(hotelAPIs, 'hotel');
+    const allDeals = await tryAPIsSequentially(dealAPIs, 'deal');
     
     return {
       flights: allFlights,
@@ -386,6 +358,28 @@ async function getAirportCode(location: string): Promise<string> {
   const generated = location.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase();
   console.log(`Generated IATA code for ${location}: ${generated}`);
   return generated;
+}
+
+async function tryAPIsSequentially(apis: (() => Promise<any[]>)[], type: string): Promise<any[]> {
+  for (let i = 0; i < apis.length; i++) {
+    try {
+      console.log(`Trying ${type} API ${i + 1}/${apis.length}`);
+      const results = await apis[i]();
+      if (results && results.length > 0) {
+        console.log(`✓ ${type} API ${i + 1} succeeded with ${results.length} results`);
+        return results;
+      } else {
+        console.log(`${type} API ${i + 1} returned no results, trying next...`);
+      }
+    } catch (error) {
+      console.error(`${type} API ${i + 1} failed:`, error);
+      if (i === apis.length - 1) {
+        console.log(`All ${type} APIs failed, returning empty array`);
+        return [];
+      }
+    }
+  }
+  return [];
 }
 
 async function fetchSkyScrapperFlights(from: string, to: string, departDate: string, returnDate?: string): Promise<Flight[]> {
