@@ -4223,7 +4223,7 @@ Analysis factors:
       const userBudget = budget || undefined;
       
       // Use structured dates when available
-      let departDate = '2025-07-06'; // Default fallback
+      let departDate = '2025-07-08'; // Today's date as fallback
       let returnDate = '';
       
       if (startDate && endDate) {
@@ -4239,14 +4239,9 @@ Analysis factors:
         departDate = parseDate(startDate);
         returnDate = parseDate(endDate);
         
-        // For date ranges, find the best departure date within the range
-        if (departDate !== returnDate) {
-          // Use mid-point of range for flexible search
-          const startDateObj = new Date(departDate);
-          const endDateObj = new Date(returnDate);
-          const midPoint = new Date(startDateObj.getTime() + (endDateObj.getTime() - startDateObj.getTime()) / 2);
-          departDate = midPoint.toISOString().split('T')[0];
-        }
+        // For flexible date ranges, use the actual start date selected by user
+        // This preserves the user's preferred departure timeframe  
+        console.log(`📅 Date range parsed: start=${startDate} end=${endDate} → departDate=${departDate} returnDate=${returnDate}`);
       } else if (startDate) {
         // Single date
         if (startDate.includes('/')) {
@@ -4281,6 +4276,7 @@ Analysis factors:
       }
 
       // Get unified travel data from all sources
+      console.log(`🚀 Calling fetchUnifiedTravelData with: from=${fromCity}, to=${toCity}, departDate=${departDate}, returnDate=${returnDate}`);
       const travelData = await fetchUnifiedTravelData(fromCity, toCity, departDate, returnDate, userBudget);
 
       // Convert unified data format to match frontend expectations with enhanced flight details
