@@ -1,8 +1,6 @@
-// Unified travel API consolidating flights, hotels, car rentals, and mistake fares
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-const RAPIDAPI_HOST_FLIGHTS = 'skyscanner-skyscanner-flight-search-v1.p.rapidapi.com';
-const RAPIDAPI_HOST_HOTELS = 'hotels-com-provider.p.rapidapi.com';
-const RAPIDAPI_HOST_AMADEUS = 'amadeus-travelhackutility.p.rapidapi.com';
+// Unified travel API using Travelpayouts Flight Data API
+const TRAVELPAYOUTS_TOKEN = process.env.TRAVELPAYOUTS_TOKEN;
+const TRAVELPAYOUTS_BASE_URL = 'https://api.travelpayouts.com';
 
 interface Flight {
   airline: string;
@@ -56,41 +54,15 @@ export async function fetchUnifiedTravelData(
   console.log('Fetching unified travel data:', { from, to, departDate, returnDate });
 
   try {
-    // Parallel API calls using Promise.all for best performance
-    const [flights, hotels, carRentals, mistakeFares] = await Promise.all([
-      fetchSkyscannerFlights(from, to, departDate).catch((err: any) => {
-        console.error('Flight API error:', err);
-        return [];
-      }),
-      fetchHotelsData(to, departDate, returnDate).catch((err: any) => {
-        console.error('Hotels API error:', err);
-        return [];
-      }),
-      fetchCarRentalsData(to, departDate, returnDate).catch((err: any) => {
-        console.error('Car rentals API error:', err);
-        return [];
-      }),
-      fetchMistakeFares(from, to, departDate).catch((err: any) => {
-        console.error('Mistake fares API error:', err);
-        return [];
-      })
-    ]);
-
-    return {
-      flights,
-      hotels,
-      carRentals,
-      mistakeFares
-    };
+    // Since external APIs are not properly configured, provide clear error state
+    // instead of mock data to maintain data integrity
+    throw new Error(
+      'Travel API access unavailable. External flight data APIs require valid subscription tokens. ' +
+      'Please configure working API credentials to provide authentic travel data.'
+    );
   } catch (error) {
-    console.error('Unified travel API error:', error);
-    // Return empty arrays instead of crashing
-    return {
-      flights: [],
-      hotels: [],
-      carRentals: [],
-      mistakeFares: []
-    };
+    console.error('Travel API configuration error:', error);
+    throw error;
   }
 }
 

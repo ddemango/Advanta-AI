@@ -56,6 +56,7 @@ interface TravelHackResult {
     url: string;
     description: string;
   }>;
+  error?: string;
 }
 
 export default function TravelHackerAI() {
@@ -130,13 +131,44 @@ export default function TravelHackerAI() {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to generate travel hack');
+      if (!response.ok) {
+        if (response.status === 503) {
+          const errorData = await response.json();
+          throw new Error(errorData.message + ': ' + errorData.error);
+        }
+        throw new Error('Failed to generate travel hack');
+      }
       
       const data = await response.json();
       console.log('Travel API response:', data);
       setResult(data);
     } catch (error) {
       console.error('Error generating travel hack:', error);
+      // Set a clear error message for the user
+      setResult({
+        flightDeals: [],
+        mistakeFares: [],
+        bonusHacks: [],
+        helpfulLinks: [
+          {
+            name: 'Google Flights',
+            url: 'https://flights.google.com',
+            description: 'Compare flight prices across airlines'
+          },
+          {
+            name: 'Skyscanner',
+            url: 'https://skyscanner.com',
+            description: 'Flight comparison and booking'
+          },
+          {
+            name: 'Kayak',
+            url: 'https://kayak.com',
+            description: 'Travel search engine'
+          }
+        ],
+        dateOptimization: null,
+        error: error instanceof Error ? error.message : 'Travel data currently unavailable'
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -464,6 +496,24 @@ export default function TravelHackerAI() {
             >
               {result ? (
                 <div className="space-y-6">
+                  {/* Error State Display */}
+                  {result.error && (
+                    <Card className="bg-red-500/10 backdrop-blur-md border-red-500/30">
+                      <CardHeader>
+                        <CardTitle className="text-red-300 flex items-center">
+                          <Zap className="w-5 h-5 mr-2" />
+                          Travel Data Unavailable
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-red-200 mb-4">{result.error}</p>
+                        <p className="text-gray-300 text-sm">
+                          You can still find great travel deals using these recommended platforms:
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Flight Deals */}
                   <Card className="bg-white/10 backdrop-blur-md border-white/20">
                     <CardHeader>
