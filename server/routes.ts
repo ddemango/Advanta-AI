@@ -251,8 +251,8 @@ async function generateFantasyAnalysis(
 
   const player1Analysis: PlayerAnalysis = {
     playerName: playerToStart,
-    position: getPlayerPosition(playerToStart),
-    team: getPlayerTeam(playerToStart),
+    position: await getPlayerPosition(playerToStart),
+    team: await getPlayerTeam(playerToStart),
     projectedPoints: Math.round((player1Profile.avgPoints + player1DefenseAdjustment + weatherAdjustment) * 10) / 10,
     confidence: Math.round(player1Profile.consistency * 100),
     matchupRating: getMatchupRating(player1DefenseData, player1Profile),
@@ -263,8 +263,8 @@ async function generateFantasyAnalysis(
 
   const player2Analysis: PlayerAnalysis = {
     playerName: playerToCompare,
-    position: getPlayerPosition(playerToCompare),
-    team: getPlayerTeam(playerToCompare),
+    position: await getPlayerPosition(playerToCompare),
+    team: await getPlayerTeam(playerToCompare),
     projectedPoints: Math.round((player2Profile.avgPoints + player2DefenseAdjustment + weatherAdjustment) * 10) / 10,
     confidence: Math.round(player2Profile.consistency * 100),
     matchupRating: getMatchupRating(player2DefenseData, player2Profile),
@@ -317,30 +317,83 @@ async function generateFantasyAnalysis(
   };
 }
 
-function getPlayerPosition(playerName: string): string {
-  // Use consistent position lookup that matches the API database
-  const playerDatabase = [
-    // QB
-    // RB  
-    // WR
-    // TE
-  ];
+// Cache for Sleeper API data to avoid multiple calls
+let sleeperPlayersCache: any = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+async function getSleeperPlayers() {
+  const now = Date.now();
+  if (sleeperPlayersCache && (now - cacheTimestamp) < CACHE_DURATION) {
+    return sleeperPlayersCache;
+  }
   
-  const player = playerDatabase.find(p => p.name === playerName);
+  try {
+    const response = await fetch('https://api.sleeper.app/v1/players/nfl');
+    if (response.ok) {
+      sleeperPlayersCache = await response.json();
+      cacheTimestamp = now;
+      return sleeperPlayersCache;
+    }
+  } catch (error) {
+    console.error('Failed to fetch Sleeper API data:', error);
+  }
+  
+  return null;
+}
+
+async function findPlayerInSleeper(playerName: string, preferredPosition?: string) {
+  const allPlayers = await getSleeperPlayers();
+  if (!allPlayers) return null;
+  
+  // Find all matching players - be more flexible with name matching
+  const matches = Object.values(allPlayers).filter((p: any) => {
+    const fullName = p.full_name?.toLowerCase() || '';
+    const constructedName = `${p.first_name || ''} ${p.last_name || ''}`.trim().toLowerCase();
+    const searchName = playerName.toLowerCase();
+    
+    return fullName === searchName || 
+           constructedName === searchName ||
+           fullName.includes(searchName) ||
+           constructedName.includes(searchName);
+  });
+  
+  if (matches.length === 0) {
+    console.log(`Player "${playerName}" not found in Sleeper API`);
+    return null;
+  }
+  
+  if (matches.length === 1) {
+    return matches[0];
+  }
+  
+  // Multiple matches - prioritize by position and fantasy relevance
+  console.log(`Multiple matches for "${playerName}":`, matches.map((p: any) => `${p.full_name} (${p.position}) Team: ${p.team}`));
+  
+  // Prioritize fantasy-relevant positions in order of importance
+  const fantasyPositions = ['QB', 'RB', 'WR', 'TE'];
+  
+  // Find the best fantasy match by position priority
+  for (const position of fantasyPositions) {
+    const positionMatch = matches.find((p: any) => p.position === position);
+    if (positionMatch) {
+      console.log(`Selected ${position} player: ${positionMatch.full_name} (${positionMatch.position}) Team: ${positionMatch.team}`);
+      return positionMatch;
+    }
+  }
+  
+  // If no fantasy positions, return first match
+  return matches[0];
+}
+
+async function getPlayerPosition(playerName: string): Promise<string> {
+  const player = await findPlayerInSleeper(playerName);
   return player?.position || 'WR';
 }
 
-function getPlayerTeam(playerName: string): string {
-  // Use the same database from the API endpoint to ensure consistency
-  const playerDatabase = [
-    // QB
-    // RB
-    // WR
-    // TE
-  ];
-  
-  const player = playerDatabase.find(p => p.name === playerName);
-  return player?.team || 'UNK';
+async function getPlayerTeam(playerName: string): Promise<string> {
+  const player = await findPlayerInSleeper(playerName);
+  return player?.team || 'FA';
 }
 
 // Custom draft analysis engine
@@ -3969,7 +4022,7 @@ Analysis factors:
           confidenceLevel: confidence,
           player1Analysis: {
             playerName: actualPlayer1,
-            position: getPlayerPosition(actualPlayer1),
+            position: await getPlayerPosition(actualPlayer1),
             team: playerTeam,
             projectedPoints,
             confidence,
@@ -3980,7 +4033,7 @@ Analysis factors:
           },
           player2Analysis: {
             playerName: 'Bench Option',
-            position: getPlayerPosition(actualPlayer1),
+            position: await getPlayerPosition(actualPlayer1),
             team: 'BEN',
             projectedPoints: 8.5,
             confidence: 45,
