@@ -253,6 +253,22 @@ Provide specific improvements in JSON format with these exact fields:
     };
   }
   
+  // Convert string arrays to proper change objects for frontend compatibility
+  const formatChanges = (changes: any[]): any[] => {
+    if (!Array.isArray(changes)) return [];
+    
+    return changes.map((change, index) => {
+      if (typeof change === 'string') {
+        return {
+          type: 'added',
+          content: change,
+          suggestion: 'This improvement enhances ATS compatibility'
+        };
+      }
+      return change;
+    });
+  };
+  
   // Process valid OpenAI response
   const parseArray = (field: any): any[] => {
     if (Array.isArray(field)) return field;
@@ -267,9 +283,12 @@ Provide specific improvements in JSON format with these exact fields:
     return [];
   };
   
+  const formattedChanges = formatChanges(parseArray(result.changes));
+  console.log('Formatted changes for frontend:', formattedChanges);
+  
   return {
     tailoredResumeText: result.tailoredResumeText || resumeText,
-    changes: parseArray(result.changes),
+    changes: formattedChanges,
     atsScore: Math.min(100, Math.max(0, result.atsScore || 50)),
     keywordMatches: parseArray(result.keywordMatches),
     missingKeywords: parseArray(result.missingKeywords),
@@ -315,13 +334,25 @@ export async function processATSAnalysis(
       keywordMatches: analysis.keywordMatches
     });
     
+    // Ensure changes are properly formatted as objects for frontend
+    const formattedChanges = analysis.changes.map((change: any) => {
+      if (typeof change === 'string') {
+        return {
+          type: 'added',
+          content: change,
+          suggestion: 'This improvement enhances ATS compatibility'
+        };
+      }
+      return change;
+    });
+
     const analysisData = {
       id: analysisId,
       userId: userId || null,
       originalResumeText: resumeText,
       jobDescriptionText: jobDescriptionText,
       tailoredResumeText: analysis.tailoredResumeText,
-      changes: analysis.changes,
+      changes: formattedChanges,
       atsScore: analysis.atsScore,
       keywordMatches: analysis.keywordMatches,
       missingKeywords: analysis.missingKeywords,
@@ -334,7 +365,14 @@ export async function processATSAnalysis(
     
     return {
       id: analysisId,
-      ...analysis
+      originalResumeText: resumeText || '',
+      jobDescriptionText: jobDescriptionText || '', 
+      tailoredResumeText: analysis.tailoredResumeText,
+      changes: formattedChanges,
+      atsScore: analysis.atsScore,
+      keywordMatches: analysis.keywordMatches,
+      missingKeywords: analysis.missingKeywords,
+      suggestions: analysis.suggestions
     };
     
   } catch (error) {
