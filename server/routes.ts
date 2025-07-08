@@ -4201,8 +4201,17 @@ Analysis factors:
       const { fetchUnifiedTravelData } = await import('./travel-api.js');
       
       // Use structured data when available, otherwise parse from prompt
-      const fromCity = from || 'New York';
-      const toCity = to || 'London';
+      let fromCity = from;
+      let toCity = to;
+      
+      // Parse locations from prompt if not provided in structured format
+      if (!fromCity || !toCity) {
+        const fromMatch = prompt.match(/from\s+([a-zA-Z\s]+?)(?:\s+to|\s+in|\s*→|\s*->)/i);
+        const toMatch = prompt.match(/to\s+([a-zA-Z\s]+?)(?:\s+in|\s+on|\s*$|\s+for)/i);
+        
+        fromCity = fromCity || (fromMatch ? fromMatch[1].trim() : 'Nashville');
+        toCity = toCity || (toMatch ? toMatch[1].trim() : 'London');
+      }
       const userBudget = budget || undefined;
       
       // Use structured dates when available
