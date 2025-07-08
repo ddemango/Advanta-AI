@@ -145,6 +145,15 @@ export default function FreeTools() {
       route: '/resume-generator'
     },
     {
+      id: 'ats-resume-tailor',
+      name: 'ATS Resume Tailor',
+      description: 'Upload job description screenshots and resumes for AI-powered ATS optimization and tailoring.',
+      icon: Target,
+      category: 'Career Tools',
+      route: '/ats-resume-tailor',
+      featured: true
+    },
+    {
       id: 'linkedin-generator',
       name: 'LinkedIn Generator',
       description: 'Optimize your LinkedIn profile with AI-generated content and professional copy.',

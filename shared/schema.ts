@@ -244,3 +244,32 @@ export type Connection = typeof connections.$inferSelect;
 
 export type InsertWorkflowLog = z.infer<typeof insertWorkflowLogSchema>;
 export type WorkflowLog = typeof workflowLogs.$inferSelect;
+
+// ATS Resume Analysis Tables
+export const resumeAnalyses = pgTable("resume_analyses", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: integer("user_id").references(() => users.id),
+  originalResumeText: text("original_resume_text").notNull(),
+  jobDescriptionText: text("job_description_text").notNull(),
+  tailoredResumeText: text("tailored_resume_text").notNull(),
+  changes: jsonb("changes").notNull(), // Array of change objects
+  atsScore: integer("ats_score").notNull(),
+  keywordMatches: jsonb("keyword_matches").notNull(),
+  missingKeywords: jsonb("missing_keywords").notNull(),
+  suggestions: jsonb("suggestions").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertResumeAnalysisSchema = createInsertSchema(resumeAnalyses).omit({
+  createdAt: true,
+});
+
+export const resumeAnalysesRelations = relations(resumeAnalyses, ({ one }) => ({
+  user: one(users, {
+    fields: [resumeAnalyses.userId],
+    references: [users.id],
+  }),
+}));
+
+export type InsertResumeAnalysis = z.infer<typeof insertResumeAnalysisSchema>;
+export type ResumeAnalysis = typeof resumeAnalyses.$inferSelect;

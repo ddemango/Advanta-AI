@@ -1,0 +1,98 @@
+PROJECT BRIEF: Resume Tailoring + ATS Scoring App (via Screenshot of Job Description)
+
+Goal:
+Build a web app that lets a user upload a screenshot of a job description + their current resume, and automatically tailors the resume to the job using AI, highlights the changes, and returns an ATS score.
+
+📌 CORE FEATURES (Must-Haves)
+Upload Job Description Screenshot
+
+Extract text using OCR.
+
+Use Tesseract.js or Google Cloud Vision API to read job description from image.
+
+Upload Resume (PDF or .docx)
+
+Parse resume into text: sections like Work Experience, Skills, Education, etc.
+
+Use PDF.js or Mammoth.js for parsing.
+
+Job-to-Resume Comparison
+
+Identify missing or weakly represented keywords (skills, job title, industry terms).
+
+Use simple keyword overlap + GPT enhancement.
+
+AI Resume Rewriting
+
+Modify user’s resume to better match the job description.
+
+Inject missing keywords naturally.
+
+Use GPT-4 (OpenAI API) to rewrite resume bullets or summary to reflect job requirements.
+
+Preserve original format and tone.
+
+Highlight Changes
+
+Before/after version comparison.
+
+Highlight:
+
+Added content in bold green
+
+Removed content in strikethrough red
+
+GPT-generated suggestions in italic blue (optional)
+
+ATS Score
+
+Calculate a score out of 100 based on:
+
+Keyword match %
+
+Skill match %
+
+ATS-compliant formatting
+
+Example: Match Score: 72/100
+
+Export Options
+
+Download the optimized resume as PDF and .docx.
+
+Show “Changes View” as a separate PDF or HTML pane.
+
+🧱 TECH STACK (Required)
+Frontend: Next.js (React + Tailwind)
+
+OCR: Tesseract.js (or Google Vision API)
+
+File Parsing: PDF.js for .pdf, Mammoth.js for .docx
+
+AI: OpenAI GPT-4 (text completion + resume generation)
+
+Resume Scoring: Custom scoring logic (based on keyword + section structure)
+
+Storage (optional): Supabase or Firebase
+
+⚙️ Example User Flow
+User uploads screenshot of job description.
+
+User uploads their resume (.pdf or .docx).
+
+AI analyzes both:
+
+Extracts job requirements
+
+Compares with resume
+
+Highlights gaps and rewrites accordingly
+
+Output:
+
+Tailored resume (with changes highlighted)
+
+ATS score
+
+Download button for new resume
+

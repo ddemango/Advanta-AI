@@ -5176,6 +5176,70 @@ Format the resume professionally with clear sections and consistent formatting.`
     }
   });
 
+  // ATS Resume Tailoring API endpoint
+  app.post('/api/ats/analyze', async (req: Request, res: Response) => {
+    try {
+      const { processATSAnalysis, upload } = await import('./ats-service');
+      
+      // Use multer middleware for file upload handling
+      upload.fields([
+        { name: 'resume', maxCount: 1 },
+        { name: 'jobImage', maxCount: 1 }
+      ])(req, res, async (err: any) => {
+        if (err) {
+          console.error('File upload error:', err);
+          return res.status(400).json({ message: 'File upload failed: ' + err.message });
+        }
+
+        try {
+          const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+          const resumeFile = files?.resume?.[0];
+          const jobImageFile = files?.jobImage?.[0];
+          const { jobDescription } = req.body;
+          const userId = req.session?.userId;
+
+          if (!resumeFile) {
+            return res.status(400).json({ message: 'Resume file is required' });
+          }
+
+          if (!jobDescription && !jobImageFile) {
+            return res.status(400).json({ message: 'Either job description text or job description image is required' });
+          }
+
+          const analysis = await processATSAnalysis(
+            resumeFile,
+            jobDescription,
+            jobImageFile,
+            userId
+          );
+
+          res.json({
+            success: true,
+            data: {
+              id: analysis.id,
+              originalResumeText: analysis.originalResumeText || '',
+              jobDescriptionText: analysis.jobDescriptionText || '',
+              tailoredResumeText: analysis.tailoredResumeText,
+              changes: analysis.changes,
+              atsScore: analysis.atsScore,
+              keywordMatches: analysis.keywordMatches,
+              missingKeywords: analysis.missingKeywords,
+              suggestions: analysis.suggestions
+            }
+          });
+        } catch (analysisError) {
+          console.error('ATS analysis error:', analysisError);
+          res.status(500).json({ 
+            message: 'Failed to analyze resume: ' + (analysisError as Error).message 
+          });
+        }
+      });
+    } catch (error) {
+      console.error('ATS endpoint error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
