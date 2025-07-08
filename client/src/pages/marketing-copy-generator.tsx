@@ -59,43 +59,36 @@ export default function MarketingCopyGenerator() {
 
     setIsGenerating(true);
 
-    // Simulate API call - in real implementation, this would call your OpenAI API
-    setTimeout(() => {
-      const copies: GeneratedCopy[] = [
-        {
-          type: 'Social Media Caption',
-          content: `🚀 Transform your business with ${formData.product}! Perfect for ${formData.audience.toLowerCase()} who want real results. ${formData.keyFeatures ? `✨ ${formData.keyFeatures}` : ''} #Innovation #BusinessGrowth #${formData.product.replace(/\s+/g, '')}`
-        },
-        {
-          type: 'Ad Headline',
-          content: `${formData.product}: The ${formData.tone.toLowerCase()} solution ${formData.audience.toLowerCase()} have been waiting for`
-        },
-        {
-          type: 'Product Description',
-          content: `Introducing ${formData.product} - designed specifically for ${formData.audience.toLowerCase()}. Our ${formData.tone.toLowerCase()} approach delivers exceptional results that transform how you work. ${formData.keyFeatures ? `Key features include: ${formData.keyFeatures}.` : ''} Experience the difference today and join thousands of satisfied customers who've made the smart choice.`
-        },
-        {
-          type: 'Email Subject Line',
-          content: `${formData.audience.split(' ')[0]}s: This ${formData.product.toLowerCase()} will change everything`
-        },
-        {
-          type: 'Call-to-Action',
-          content: `Get ${formData.product} now - Perfect for ${formData.audience.toLowerCase()}`
-        },
-        {
-          type: 'Value Proposition',
-          content: `${formData.product} empowers ${formData.audience.toLowerCase()} with ${formData.tone.toLowerCase()} solutions that deliver measurable results. ${formData.keyFeatures ? `Featuring ${formData.keyFeatures.toLowerCase()}, ` : ''}it's the smart choice for forward-thinking professionals.`
-        }
-      ];
-
-      setGeneratedCopy(copies);
-      setIsGenerating(false);
+    // BLOCKED: Real OpenAI API integration required - no mock data allowed
+    try {
+      const response = await fetch('/api/generate-marketing-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Marketing copy generation API not implemented');
+      }
+      
+      const data = await response.json();
+      setGeneratedCopy(data.copies);
       
       toast({
         title: "Copy Generated!",
-        description: `Created ${copies.length} pieces of marketing copy for ${formData.product}`,
+        description: `Created ${data.copies.length} pieces of marketing copy for ${formData.product}`,
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Marketing copy generation blocked:', error);
+      setGeneratedCopy([]);
+      toast({
+        title: "Feature Temporarily Unavailable",
+        description: "Marketing copy generator requires real OpenAI API integration. Mock data has been removed for data integrity.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const copyToClipboard = (content: string) => {

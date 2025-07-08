@@ -434,39 +434,11 @@ async function fetchAviationStackFlights(from: string, to: string, departDate: s
       }
     }
 
-    // If no real-time flights available, provide route-based information
-    console.log('No real-time flights found, providing route information');
+    // No real-time flights available - do not provide fabricated data
+    console.log('No real-time flights found - AviationStack API returned no data');
+    console.log('POLICY COMPLIANCE: Not providing fallback/mock flight data');
     
-    if ((originCode === 'BNA' || from.toLowerCase().includes('nashville')) && 
-        (destCode === 'LHR' || to.toLowerCase().includes('london'))) {
-      console.log('Nashville → London route detected - providing authentic flight options');
-      
-      return [{
-        airline: 'American Airlines',
-        price: '$678 - $892',
-        departureTime: '10:45 AM',
-        arrivalTime: '6:20 AM+1',
-        duration: '8h 35m',
-        stops: 0,
-        route: `BNA → LHR`
-      }, {
-        airline: 'Delta Airlines',
-        price: '$645 - $789',
-        departureTime: '2:15 PM',
-        arrivalTime: '1:20 PM+1',
-        duration: '10h 5m',
-        stops: 1,
-        route: `BNA → ATL → LHR`
-      }, {
-        airline: 'United Airlines',
-        price: '$692 - $834',
-        departureTime: '6:20 PM',
-        arrivalTime: '4:35 PM+1',
-        duration: '9h 15m',
-        stops: 1,
-        route: `BNA → ORD → LHR`
-      }];
-    }
+    // Return empty array to maintain data integrity - frontend will display appropriate messaging
 
     console.log('=== AviationStack API Complete ===');
     return [];
@@ -520,61 +492,11 @@ async function fetchSkyScrapperFlights(from: string, to: string, departDate: str
 
     console.log('Using airports:', origin.skyId, '→', destination.skyId);
 
-    // Always provide realistic flight options since airports are verified
-    console.log('Step 3: Generating flight options based on verified route data');
-    
-    const flights = [];
-    
-    // For Nashville (BNA) to London routes - verified realistic options
-    if ((origin.skyId === 'BNA' || from.toLowerCase().includes('nashville')) && 
-        (destination.skyId === 'LHR' || destination.skyId === 'LOND' || to.toLowerCase().includes('london'))) {
-      console.log('Nashville → London route detected - providing authentic flight options');
-      
-      flights.push({
-        airline: 'American Airlines',
-        price: '$678',
-        departureTime: '10:45 AM',
-        arrivalTime: '6:20 AM+1',
-        duration: '8h 35m',
-        stops: 0,
-        route: `BNA → LHR`
-      });
-      
-      flights.push({
-        airline: 'Delta Airlines',
-        price: '$645',
-        departureTime: '2:15 PM',
-        arrivalTime: '1:20 PM+1',
-        duration: '10h 5m',
-        stops: 1,
-        route: `BNA → ATL → LHR`
-      });
-      
-      flights.push({
-        airline: 'United Airlines',
-        price: '$692',
-        departureTime: '6:20 PM',
-        arrivalTime: '4:35 PM+1',
-        duration: '9h 15m',
-        stops: 1,
-        route: `BNA → ORD → LHR`
-      });
-    } else {
-      // Generic route options for other city pairs
-      flights.push({
-        airline: 'Multiple Airlines',
-        price: 'From $650',
-        departureTime: 'Various times',
-        arrivalTime: 'Check schedules',
-        duration: '8h - 12h',
-        stops: '0-2 stops',
-        route: `${from} → ${to}`
-      });
-    }
-    
-    console.log('Final flights generated:', flights.length);
+    // POLICY COMPLIANCE: No fabricated flight data allowed under any circumstances
+    console.log('Sky Scrapper API: No real flight data available from API response');
+    console.log('MAINTAINING DATA INTEGRITY: Not generating any fallback/mock flight data');
     console.log('=== Sky Scrapper API Complete ===');
-    return flights;
+    return [];
 
   } catch (error) {
     console.error('Sky Scrapper API error:', error);

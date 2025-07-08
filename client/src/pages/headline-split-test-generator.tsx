@@ -26,44 +26,27 @@ export default function HeadlineSplitTestGenerator() {
     
     setIsGenerating(true);
     
-    // Simulate API call - replace with actual OpenAI integration
-    setTimeout(() => {
-      const mockHeadlines: HeadlineVariant[] = [
-        {
-          headline: "Revolutionary AI Tool Cuts Work Time by 75% (Limited Access)",
-          style: "Urgency + Social Proof",
-          expectedCTR: 8.2,
-          reasoning: "Uses specific numbers and creates FOMO with limited access"
-        },
-        {
-          headline: "The Secret Weapon Fortune 500s Use to Automate Everything",
-          style: "Curiosity + Authority",
-          expectedCTR: 7.8,
-          reasoning: "Appeals to insider knowledge and authority bias"
-        },
-        {
-          headline: "Why Smart Business Owners Are Ditching Traditional Methods",
-          style: "Emotional Trigger",
-          expectedCTR: 6.9,
-          reasoning: "Creates fear of missing out on modern solutions"
-        },
-        {
-          headline: "Finally: AI That Actually Works for Small Businesses",
-          style: "Relief + Specificity",
-          expectedCTR: 7.4,
-          reasoning: "Addresses pain point and targets specific audience"
-        },
-        {
-          headline: "Get Results in 24 Hours (Or Your Money Back)",
-          style: "Guarantee + Time Pressure",
-          expectedCTR: 8.5,
-          reasoning: "Strong guarantee reduces risk and adds urgency"
-        }
-      ];
+    // BLOCKED: Real OpenAI API integration required - no mock data allowed
+    try {
+      const response = await fetch('/api/generate-headlines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputText })
+      });
       
-      setHeadlines(mockHeadlines);
+      if (!response.ok) {
+        throw new Error('Headline generation API not implemented');
+      }
+      
+      const data = await response.json();
+      setHeadlines(data.headlines);
+    } catch (error) {
+      console.error('Headline generation blocked:', error);
+      setHeadlines([]);
+      // User will see no headlines generated, indicating feature needs real API
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const copyHeadline = (headline: string) => {

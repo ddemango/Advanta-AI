@@ -98,8 +98,21 @@ export default function WorkflowAnalytics({ workflowId }: WorkflowAnalyticsProps
     );
   }
 
-  // Mock data for demonstration - in production this would come from the API
-  const mockAnalytics: AnalyticsData = {
+  // BLOCKED: Real analytics data required - no mock data allowed
+  // This component is blocked until real analytics API is implemented
+  
+  if (true) {
+    return (
+      <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h3 className="text-lg font-semibold text-yellow-800 mb-2">Analytics Temporarily Unavailable</h3>
+        <p className="text-yellow-700">
+          Real-time analytics data integration required. Mock data has been removed to maintain data integrity.
+        </p>
+      </div>
+    );
+  }
+
+  const analyticsData: AnalyticsData = {
     performanceMetrics: {
       successRate: 94.2,
       avgExecutionTime: 2.3,

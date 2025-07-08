@@ -32,46 +32,37 @@ export default function ContentCalendarGenerator() {
     
     setIsGenerating(true);
     
-    setTimeout(() => {
-      const mockCalendar: ContentItem[] = Array.from({ length: 30 }, (_, i) => ({
-        day: i + 1,
-        postIdea: [
-          'Behind-the-scenes look at our AI development process',
-          'Customer success story featuring 40% efficiency gains',
-          'Quick tip: 3 ways AI can automate your daily tasks',
-          'Industry insight: The future of AI in business automation',
-          'Tutorial: Setting up your first AI workflow in 5 minutes',
-          'Team spotlight: Meet our AI engineers',
-          'Case study: How Company X saved $50K with our solution',
-          'AI myth-busting: Common misconceptions explained',
-          'Product update: New features that save you time',
-          'Interactive poll: What\'s your biggest business challenge?'
-        ][i % 10],
-        platform: platform,
-        cta: [
-          'Try our free AI tool',
-          'Book a demo today',
-          'Download our guide',
-          'Join our community',
-          'Start your free trial'
-        ][i % 5],
-        hashtags: platform === 'LinkedIn' 
-          ? ['#AI', '#Business', '#Automation', '#Productivity', '#Innovation']
-          : platform === 'Twitter'
-          ? ['#AI', '#Tech', '#Business', '#Startup', '#Innovation', '#Productivity']
-          : ['#AI', '#Business', '#Technology', '#Innovation', '#Automation'],
-        suggestedPrompt: `Create a ${platform.toLowerCase()} post about ${[
-          'AI automation benefits',
-          'customer success stories',
-          'productivity tips',
-          'industry trends',
-          'how-to tutorials'
-        ][i % 5]} targeting ${industry || 'business professionals'}`
-      }));
+    // BLOCKED: Real OpenAI API integration required - no mock data allowed
+    try {
+      const response = await fetch('/api/generate-content-calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          contentGoal, 
+          platform, 
+          frequency, 
+          industry: 'AI consultancy',
+          audience: 'business professionals' 
+        })
+      });
       
-      setCalendar(mockCalendar);
+      if (!response.ok) {
+        throw new Error('Content calendar generation API not implemented');
+      }
+      
+      const data = await response.json();
+      setCalendar(data.calendar);
+    } catch (error) {
+      console.error('Content calendar generation blocked:', error);
+      setCalendar([]);
+      toast({
+        title: "Feature Temporarily Unavailable",
+        description: "Content calendar requires real OpenAI API integration. Mock data has been removed for data integrity.",
+        variant: "destructive"
+      });
+    } finally {
       setIsGenerating(false);
-    }, 2500);
+    }
   };
 
   const exportCalendar = () => {
