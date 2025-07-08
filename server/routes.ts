@@ -4291,11 +4291,18 @@ Analysis factors:
         tips: rental.features
       }));
 
-      // Travel API error - return proper error response
-      return res.status(503).json({
-        message: 'Travel data unavailable',
-        error: 'External flight APIs require valid subscription tokens',
-        suggestion: 'Please configure working API credentials to access authentic travel data',
+      // Return unified travel data in expected format
+      res.json({
+        flights: travelData.flights,
+        hotels: travelData.hotels,
+        carRentals: travelData.carRentals,
+        mistakeFares: travelData.mistakeFares,
+        flightDeals: flightDeals,
+        bonusHacks: [
+          'Consider flying into nearby airports for potential savings',
+          'Book Tuesday-Thursday departures for better rates', 
+          'Use incognito mode when searching to avoid price tracking'
+        ],
         helpfulLinks: [
           {
             name: 'Google Flights',
@@ -4306,11 +4313,6 @@ Analysis factors:
             name: 'Booking.com',
             url: 'https://booking.com',
             description: 'Hotel and accommodation booking'
-          },
-          {
-            name: 'Skyscanner',
-            url: 'https://skyscanner.com',
-            description: 'Flight comparison and booking'
           }
         ]
       });
