@@ -9,6 +9,7 @@ import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContentItem {
   day: number;
@@ -20,6 +21,7 @@ interface ContentItem {
 }
 
 export default function ContentCalendarGenerator() {
+  const { toast } = useToast();
   const [contentGoal, setContentGoal] = useState('');
   const [platform, setPlatform] = useState('');
   const [frequency, setFrequency] = useState('');
@@ -32,7 +34,6 @@ export default function ContentCalendarGenerator() {
     
     setIsGenerating(true);
     
-    // BLOCKED: Real OpenAI API integration required - no mock data allowed
     try {
       const response = await fetch('/api/generate-content-calendar', {
         method: 'POST',
@@ -41,23 +42,23 @@ export default function ContentCalendarGenerator() {
           contentGoal, 
           platform, 
           frequency, 
-          industry: 'AI consultancy',
+          industry: industry || 'AI consultancy',
           audience: 'business professionals' 
         })
       });
       
       if (!response.ok) {
-        throw new Error('Content calendar generation API not implemented');
+        throw new Error('Failed to generate content calendar');
       }
       
       const data = await response.json();
       setCalendar(data.calendar);
     } catch (error) {
-      console.error('Content calendar generation blocked:', error);
+      console.error('Content calendar generation error:', error);
       setCalendar([]);
       toast({
-        title: "Feature Temporarily Unavailable",
-        description: "Content calendar requires real OpenAI API integration. Mock data has been removed for data integrity.",
+        title: "Generation Failed",
+        description: "Unable to generate content calendar. Please try again.",
         variant: "destructive"
       });
     } finally {

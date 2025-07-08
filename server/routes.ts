@@ -5028,6 +5028,150 @@ Format the resume professionally with clear sections and consistent formatting.`
     }
   });
 
+  // OpenAI API endpoints for content generation
+  app.post('/api/generate-content-calendar', async (req, res) => {
+    try {
+      const { contentGoal, platform, frequency, industry, audience } = req.body;
+      
+      const prompt = `Create a detailed 30-day content calendar for ${platform} targeting ${audience} in the ${industry} industry.
+      
+Content Goal: ${contentGoal}
+Posting Frequency: ${frequency}
+
+For each day (1-30), provide:
+- Day number
+- Post idea (specific and actionable)
+- Call-to-action
+- 3-5 relevant hashtags
+- AI prompt for content creation
+
+Return as JSON array with this structure:
+[{"day": 1, "postIdea": "specific post idea", "platform": "${platform}", "cta": "specific call to action", "hashtags": ["#hashtag1", "#hashtag2"], "suggestedPrompt": "detailed AI prompt for creating this content"}]`;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 4000
+        })
+      });
+
+      if (!openaiResponse.ok) {
+        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+      }
+
+      const data = await openaiResponse.json();
+      const content = data.choices[0].message.content;
+      
+      const calendar = JSON.parse(content);
+      
+      res.json({ calendar });
+    } catch (error) {
+      console.error('Content calendar generation error:', error);
+      res.status(500).json({ error: 'Failed to generate content calendar' });
+    }
+  });
+
+  app.post('/api/generate-marketing-copy', async (req, res) => {
+    try {
+      const { product, audience, tone, platform, keyFeatures } = req.body;
+      
+      const prompt = `Generate 6 different marketing copy variations for "${product}" targeting ${audience} with a ${tone} tone.
+${platform ? `Primary platform: ${platform}` : ''}
+${keyFeatures ? `Key features: ${keyFeatures}` : ''}
+
+Create these copy types:
+1. Social Media Caption
+2. Ad Headline
+3. Product Description
+4. Email Subject Line
+5. Call-to-Action
+6. Value Proposition
+
+Return as JSON array: [{"type": "Social Media Caption", "content": "copy text"}]`;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.8,
+          max_tokens: 2000
+        })
+      });
+
+      if (!openaiResponse.ok) {
+        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+      }
+
+      const data = await openaiResponse.json();
+      const content = data.choices[0].message.content;
+      
+      const copies = JSON.parse(content);
+      
+      res.json({ copies });
+    } catch (error) {
+      console.error('Marketing copy generation error:', error);
+      res.status(500).json({ error: 'Failed to generate marketing copy' });
+    }
+  });
+
+  app.post('/api/generate-headlines', async (req, res) => {
+    try {
+      const { inputText } = req.body;
+      
+      const prompt = `Analyze this content and generate 5 high-converting headline variations with A/B test predictions:
+
+Content: ${inputText}
+
+For each headline, provide:
+- The headline text
+- Marketing style/approach
+- Expected CTR percentage
+- Reasoning for effectiveness
+
+Return as JSON array: [{"headline": "headline text", "style": "marketing approach", "expectedCTR": 8.5, "reasoning": "why this headline works"}]`;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 1500
+        })
+      });
+
+      if (!openaiResponse.ok) {
+        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+      }
+
+      const data = await openaiResponse.json();
+      const content = data.choices[0].message.content;
+      
+      const headlines = JSON.parse(content);
+      
+      res.json({ headlines });
+    } catch (error) {
+      console.error('Headline generation error:', error);
+      res.status(500).json({ error: 'Failed to generate headlines' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
@@ -5403,3 +5547,7 @@ function getCuratedRecommendations(preferences: any) {
     return true;
   });
 }
+
+
+
+

@@ -59,7 +59,6 @@ export default function MarketingCopyGenerator() {
 
     setIsGenerating(true);
 
-    // BLOCKED: Real OpenAI API integration required - no mock data allowed
     try {
       const response = await fetch('/api/generate-marketing-copy', {
         method: 'POST',
@@ -68,22 +67,22 @@ export default function MarketingCopyGenerator() {
       });
       
       if (!response.ok) {
-        throw new Error('Marketing copy generation API not implemented');
+        throw new Error('Failed to generate marketing copy');
       }
       
       const data = await response.json();
       setGeneratedCopy(data.copies);
       
       toast({
-        title: "Copy Generated!",
+        title: "Marketing Copy Generated!",
         description: `Created ${data.copies.length} pieces of marketing copy for ${formData.product}`,
       });
     } catch (error) {
-      console.error('Marketing copy generation blocked:', error);
+      console.error('Marketing copy generation error:', error);
       setGeneratedCopy([]);
       toast({
-        title: "Feature Temporarily Unavailable",
-        description: "Marketing copy generator requires real OpenAI API integration. Mock data has been removed for data integrity.",
+        title: "Generation Failed",
+        description: "Unable to generate marketing copy. Please try again.",
         variant: "destructive"
       });
     } finally {

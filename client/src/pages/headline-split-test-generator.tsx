@@ -26,7 +26,6 @@ export default function HeadlineSplitTestGenerator() {
     
     setIsGenerating(true);
     
-    // BLOCKED: Real OpenAI API integration required - no mock data allowed
     try {
       const response = await fetch('/api/generate-headlines', {
         method: 'POST',
@@ -35,15 +34,14 @@ export default function HeadlineSplitTestGenerator() {
       });
       
       if (!response.ok) {
-        throw new Error('Headline generation API not implemented');
+        throw new Error('Failed to generate headlines');
       }
       
       const data = await response.json();
       setHeadlines(data.headlines);
     } catch (error) {
-      console.error('Headline generation blocked:', error);
+      console.error('Headline generation error:', error);
       setHeadlines([]);
-      // User will see no headlines generated, indicating feature needs real API
     } finally {
       setIsGenerating(false);
     }
