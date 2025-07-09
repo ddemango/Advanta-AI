@@ -81,6 +81,8 @@ export default function Login() {
         ? { name, email, password, confirmPassword }
         : { email, password };
 
+      console.log('FRONTEND SENDING:', body);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
