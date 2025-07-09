@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ChevronDown, Zap, Users, Building, BookOpen } from 'lucide-react';
+import { Menu, X, ChevronDown, Users, Building, BookOpen } from 'lucide-react';
+import advantaLogo from '@assets/06D8F275-04BC-4E3C-A69B-B0E66F70D218_1752082906104.png';
 
 export function NewHeader() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,8 +59,8 @@ export function NewHeader() {
             onClick={() => setLocation('/')}
           >
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                <img src={advantaLogo} alt="Advanta AI" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold text-gray-900">
                 Advanta<span className="text-blue-600">AI</span>
