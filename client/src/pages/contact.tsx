@@ -14,7 +14,7 @@ import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { sendContactForm } from '@/lib/contact-service';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -116,7 +116,7 @@ export default function ContactPage() {
         <meta property="og:type" content="website" />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main>
         {/* AI Agents Business Benefits Hero Section */}

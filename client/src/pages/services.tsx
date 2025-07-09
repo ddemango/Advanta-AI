@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'wouter';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { GradientText } from '@/components/ui/gradient-text';
 import { Button } from '@/components/ui/button';
@@ -695,7 +695,7 @@ export default function ServicesPage() {
         <meta property="og:type" content="website" />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main>
         {/* Hero Section */}

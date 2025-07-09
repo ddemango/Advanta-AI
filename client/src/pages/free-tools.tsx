@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
 import { 
@@ -379,7 +379,7 @@ export default function FreeTools() {
         <meta property="og:description" content="24+ free professional AI tools for business growth, content creation, and automation." />
       </Helmet>
 
-      <Header />
+      <NewHeader />
 
       {/* Hero Section */}
       <section className="pt-20 pb-8 bg-gradient-to-br from-background via-background/95 to-primary/5">
