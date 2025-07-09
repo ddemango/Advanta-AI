@@ -1,6 +1,8 @@
 import type { Express, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import OpenAI from "openai";
+import crypto from "crypto";
+import { emailService } from "./email-service";
 
 // Extend session interface
 declare module 'express-session' {
@@ -1311,6 +1313,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.logout(() => {
       res.json({ message: 'Logged out successfully' });
     });
+  });
+
+  // Password reset endpoints
+  app.post('/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists for security
+        return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Save token to database
+      await storage.createPasswordResetToken({
+        userId: user.id,
+        token: resetToken,
+        expiresAt,
+        used: false
+      });
+
+      // Send email
+      const domain = process.env.REPLIT_DOMAINS || req.get('host');
+      const emailSent = await emailService.sendPasswordResetEmail(email, resetToken, domain);
+
+      if (!emailSent) {
+        return res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
+      }
+
+      res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+    } catch (error) {
+      console.error('Password reset error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: 'Token and new password are required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+
+      // Verify token
+      const resetToken = await storage.getPasswordResetToken(token);
+      if (!resetToken) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      // Check if token is expired
+      if (new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ message: 'Reset token has expired' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update user password
+      await storage.updateUserPassword(resetToken.userId, hashedPassword);
+
+      // Mark token as used
+      await storage.markTokenAsUsed(resetToken.id);
+
+      res.json({ message: 'Password has been reset successfully' });
+    } catch (error) {
+      console.error('Password reset error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   });
 
   // Start the blog scheduler to generate 2 articles daily

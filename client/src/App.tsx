@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import Login from "@/pages/login";
+import ResetPassword from "@/pages/reset-password";
 import Marketplace from "@/pages/marketplace";
 import Dashboard from "@/pages/Dashboard";
 import Onboarding from "@/pages/onboarding";
@@ -142,6 +143,7 @@ function Router() {
       <Route path="/home-original" component={Home} />
       <Route path="/build-my-ai-stack" component={Calculator} />
       <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/oauth-consent" component={OAuthConsent} />
       <Route path="/google-ads-oauth" component={GoogleAdsOAuth} />
       <Route path="/marketplace" component={Marketplace} />
