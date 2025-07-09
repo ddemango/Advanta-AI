@@ -110,9 +110,13 @@ export const resources = pgTable("resources", {
   description: text("description"),
   type: varchar("type").notNull(), // 'pdf', 'guide', 'template', etc.
   category: varchar("category").notNull(),
-  fileUrl: varchar("file_url"),
-  downloadCount: integer("download_count").default(0),
+  tags: text("tags").array(),
+  fileSize: varchar("file_size"),
   published: boolean("published").default(false),
+  featured: boolean("featured").default(false),
+  imageUrl: text("image_url"),
+  downloadUrl: text("download_url"),
+  downloadCount: integer("download_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
