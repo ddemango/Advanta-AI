@@ -1,0 +1,86 @@
+ADVANTA-AI SERVICES PAGE — REDESIGN INSTRUCTIONS
+Page: https://www.advanta-ai.com/services
+
+Main Goal:
+Make this page futuristic, mobile-first, clean, fast, and focused on converting leads.
+
+⸻
+
+1. Header Section (Top of Page)
+	•	Add headline: Custom AI Solutions That Scale With You
+	•	Add subheadline: Explore automation tools, GPT apps, and analytics designed to simplify your workflow and accelerate growth
+	•	Use white or light gray background
+	•	Optional: Add a subtle AI-style icon or animated visual
+
+⸻
+
+2. Services Section (Cards)
+	•	Turn each service into a swipeable card on mobile
+	•	Each card should include:
+	•	An icon (e.g. robot, graph, brain)
+	•	Title like: AI Assistants, GPT Apps, Marketing Tools
+	•	1–2 sentence description
+	•	A “Learn more →” link
+	•	Use consistent icon style (Tabler, Lucide, or RemixIcon)
+	•	Add tap animations like lift or glow
+	•	On desktop, arrange in a clean grid; on mobile, make them horizontal scrollable
+
+⸻
+
+3. Benefits Block (Why Choose Us)
+	•	Add headline: Why Businesses Choose Advanta AI
+	•	Include benefits with checkmark icons:
+	•	Deploy in days, not months
+	•	No-code workflows anyone can manage
+	•	Reduce workload by 30–50%
+	•	Trusted by 500+ teams
+
+⸻
+
+4. Industry Use Case Tiles
+	•	Add 3 simple cards for industries: Retail, Healthcare, Agencies
+	•	Each card should include:
+	•	A title
+	•	A 2-line description
+	•	A mini quote or stat (like “Saved 10+ hours/week” or “Reduced support tickets 35%”)
+
+⸻
+
+5. Testimonials & Trust Section
+	•	Include 1–2 short customer quotes (real or placeholder)
+	•	Add grayscale logos under the heading: “Trusted by teams at…”
+
+⸻
+
+6. Sticky CTA Bar (Mobile Only)
+	•	Add a small sticky bar that shows after user scrolls 20% down the page
+	•	Text example: Want to see it live? Book a 15‑min demo →
+	•	The bar should not block the chatbot or bottom nav
+
+⸻
+
+7. Final CTA Section (Bottom of Page)
+	•	Add bold headline: Ready to Build Smarter?
+	•	Add supporting line: Let’s design your custom GPT or automation system—tailored to your business goals
+	•	Include two buttons: [ Get Started ] and [ Book Demo ]
+	•	Optional: Use a gradient or soft AI-patterned background for visual polish
+
+⸻
+
+8. Style & UX Guidelines
+	•	Use a clean font like Inter, Satoshi, or Space Grotesk
+	•	Stick to a minimal color palette: white, black, 1 bright accent (blue or green)
+	•	Use Tailwind-style spacing (4/8/16/24/32px)
+	•	Add smooth scroll-in animations (fade or slide)
+	•	Meet accessibility standards: proper contrast, alt tags, ARIA labels
+	•	Optimize performance: lazy-load images, compress assets, avoid large JS
+
+⸻
+
+What to Ask Your Designer or AI Agent to Deliver:
+	•	Mobile-first wireframes (Figma-style)
+	•	Updated service card layout (mobile & desktop)
+	•	Redesign of header, CTA sections, and testimonial area
+	•	Trust/logo strip layout
+	•	Sticky demo CTA for mobile
+	•	Optional: Tailwind or React component code for implementation

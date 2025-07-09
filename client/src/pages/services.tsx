@@ -1,1036 +1,431 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'wouter';
 import { NewHeader } from '@/components/redesign/NewHeader';
-import Footer from '@/components/layout/Footer';
-import { GradientText } from '@/components/ui/gradient-text';
+import { NewFooter } from '@/components/redesign/NewFooter';
 import { Button } from '@/components/ui/button';
-import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
-import { CaseStudy } from '@/components/ui/case-study';
-
-type ServiceCategory = 'all' | 'custom-ai' | 'analytics' | 'automation' | 'integration';
-
-interface CaseStudy {
-  client: string;
-  industry: string;
-  challenge: string;
-  solution: string;
-  results: string[];
-  metrics: {
-    label: string;
-    value: string;
-    icon?: string;
-  }[];
-  testimonial?: {
-    quote: string;
-    author: string;
-    position: string;
-  };
-}
+import { 
+  Bot, 
+  Brain, 
+  BarChart3, 
+  Workflow, 
+  Zap, 
+  CheckCircle, 
+  ArrowRight,
+  Quote,
+  Star,
+  Play
+} from 'lucide-react';
 
 interface Service {
   id: string;
   title: string;
   description: string;
-  features: string[];
-  icon: string;
-  category: ServiceCategory;
-  caseStudyLink?: string;
-  caseStudy?: CaseStudy;
-  primaryColor: string;
-  secondaryColor: string;
+  icon: any;
+  link: string;
+}
+
+interface Benefit {
+  text: string;
+  icon: any;
+}
+
+interface IndustryCase {
+  industry: string;
+  title: string;
+  description: string;
+  stat: string;
+}
+
+interface Testimonial {
+  quote: string;
+  author: string;
+  company: string;
+  rating: number;
 }
 
 export default function ServicesPage() {
-  const [activeCategory, setActiveCategory] = useState<ServiceCategory>('all');
-  
+  const [, setLocation] = useLocation();
+  const [showStickyCTA, setShowStickyCTA] = useState(false);
+
+  // Handle sticky CTA bar visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPercentage = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+      setShowStickyCTA(scrollPercentage > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const services: Service[] = [
     {
-      id: 'custom-gpt-agents',
-      title: 'Custom GPT Agents',
-      description: 'AI assistants tailored to your brand voice, trained on your business data, and optimized for your specific use cases.',
-      features: [
-        'Personalized Knowledge Base',
-        'Multi-language Support',
-        'Custom Training on Private Data',
-        'Voice & Tone Matching',
-        'Secure Data Handling',
-        'Performance Analytics Dashboard'
-      ],
-      icon: 'fas fa-robot',
-      category: 'custom-ai',
-      caseStudyLink: '/case-studies/ecommerce',
-      caseStudy: {
-        client: 'GlobalShop',
-        industry: 'E-commerce / Retail',
-        challenge: "GlobalShop was struggling with a 34% cart abandonment rate and overwhelmed customer service team handling over 12,000 inquiries per month. Their existing chatbot couldn't handle complex product questions, leading to frustrated customers and lost sales.",
-        solution: "We deployed a custom GPT agent trained on GlobalShop's entire product catalog, customer service history, and brand voice guidelines. The agent could answer detailed product questions, make personalized recommendations, and handle order issues in real-time across 14 languages.",
-        results: [
-          'Reduced cart abandonment rate by 42% in the first quarter',
-          'Automated 78% of customer inquiries, freeing up human agents',
-          'Increased average order value by 23% through intelligent product recommendations',
-          'Customer satisfaction scores improved from 3.2/5 to 4.7/5'
-        ],
-        metrics: [
-          {
-            label: 'ROI',
-            value: '386%',
-            icon: 'fas fa-chart-line'
-          },
-          {
-            label: 'Revenue Increase',
-            value: '$4.2M annually',
-            icon: 'fas fa-dollar-sign'
-          },
-          {
-            label: 'Customer Support Cost Reduction',
-            value: '62%',
-            icon: 'fas fa-hand-holding-usd'
-          }
-        ],
-        testimonial: {
-          quote: "The Advanta AI custom agent completely transformed our customer experience. Our customers actually prefer the AI for most questions, and our team can focus on complex cases. The ROI has been remarkable—we've seen sales growth far beyond our expectations.",
-          author: "Sarah Chen",
-          position: "VP of Digital Experience, GlobalShop"
-        }
-      },
-      primaryColor: 'from-blue-500',
-      secondaryColor: 'to-indigo-600'
+      id: 'ai-assistants',
+      title: 'AI Assistants',
+      description: 'Custom GPT agents that understand your business and handle customer support, sales, and operations 24/7.',
+      icon: Bot,
+      link: '/custom-gpt-generator'
     },
     {
-      id: 'ai-workflow-automation',
-      title: 'AI Workflow Automation',
-      description: 'Automate repetitive tasks, data processing, and customer journeys with intelligent AI workflows.',
-      features: [
-        'Document Processing Automation',
-        'Intelligent Form Handling',
-        'Decision Support Systems',
-        'Customer Journey Orchestration',
-        'Process Mining & Optimization',
-        'Conditional Logic Workflows'
-      ],
-      icon: 'fas fa-cogs',
-      category: 'automation',
-      caseStudyLink: '/case-studies/saas',
-      caseStudy: {
-        client: 'CloudSoft Solutions',
-        industry: 'SaaS / Software',
-        challenge: 'CloudSoft was experiencing lengthy customer onboarding times (averaging 28 days) and high error rates in their documentation processing. Their manual data verification process required 4 full-time employees and still had a 12% error rate, delaying revenue recognition.',
-        solution: 'We implemented an AI-powered workflow automation system that intelligently processed client documents, validated data across systems, and orchestrated the entire onboarding journey with conditional logic based on client type and requirements.',
-        results: [
-          'Reduced onboarding time from 28 days to just 4 days',
-          'Decreased document processing errors by 94%',
-          'Automated 87% of the verification steps with human oversight for complex cases',
-          'Enabled faster revenue recognition and improved cash flow'
-        ],
-        metrics: [
-          {
-            label: 'Productivity Increase',
-            value: '340%',
-            icon: 'fas fa-tasks'
-          },
-          {
-            label: 'Cost Savings',
-            value: '$1.8M annually',
-            icon: 'fas fa-hand-holding-usd'
-          },
-          {
-            label: 'Employee Satisfaction',
-            value: '+47%',
-            icon: 'fas fa-smile'
-          }
-        ],
-        testimonial: {
-          quote: "Advanta AI's workflow automation transformed our operations. What used to take a month now happens in days, and our team is freed up for high-value work instead of manual data entry. Our customers are delighted with the seamless experience, and we've been able to scale without adding headcount.",
-          author: "Michael Torres",
-          position: "COO, CloudSoft Solutions"
-        }
-      },
-      primaryColor: 'from-purple-500',
-      secondaryColor: 'to-pink-600'
+      id: 'gpt-apps',
+      title: 'GPT Apps',
+      description: 'Specialized AI applications for content creation, data analysis, and workflow automation.',
+      icon: Brain,
+      link: '/build-my-ai-stack'
     },
     {
-      id: 'predictive-dashboards',
-      title: 'Predictive Dashboards',
-      description: 'Real-time analytics and forecasting dashboards powered by AI to help you make data-driven decisions.',
-      features: [
-        'Real-time Data Visualization',
-        'Trend Prediction & Anomaly Detection',
-        'Customizable KPI Tracking',
-        'Multi-source Data Integration',
-        'Interactive Business Intelligence',
-        'Automated Reporting Systems'
-      ],
-      icon: 'fas fa-chart-line',
-      category: 'analytics',
-      caseStudyLink: '/case-studies/finance',
-      caseStudy: {
-        client: "CapitalWise Investments",
-        industry: "Financial Services",
-        challenge: "CapitalWise was struggling with outdated reporting systems that delayed critical investment decisions. Their analysis process took 3-5 days, causing them to miss market opportunities and deliver lower returns to clients. Traditional dashboards couldn't predict market trends or identify emerging risks.",
-        solution: "We developed a predictive analytics dashboard that ingested data from 16 different financial sources, including market feeds, economic indicators, and proprietary datasets. The system uses AI to forecast market movements, identify investment opportunities, and alert analysts to potential risks.",
-        results: [
-          "Reduced analysis time from days to minutes",
-          "Increased investment portfolio performance by 12.4% year-over-year",
-          "Identified 28 high-opportunity investments that human analysts missed",
-          "Detected early warning signs for market volatility two weeks before traditional indicators"
-        ],
-        metrics: [
-          {
-            label: "Client Retention",
-            value: "97%",
-            icon: "fas fa-user-check"
-          },
-          {
-            label: "Decision Speed",
-            value: "95% faster",
-            icon: "fas fa-bolt"
-          },
-          {
-            label: "ROI",
-            value: "473%",
-            icon: "fas fa-chart-line"
-          }
-        ],
-        testimonial: {
-          quote: "The predictive dashboard from Advanta AI has completely transformed how we make investment decisions. We can identify opportunities and risks before our competitors, giving our clients a significant edge in the market. The ROI has been exceptional.",
-          author: "Elizabeth Morgan",
-          position: "Chief Investment Officer, CapitalWise"
-        }
-      },
-      primaryColor: 'from-green-500',
-      secondaryColor: 'to-emerald-600'
+      id: 'marketing-tools',
+      title: 'Marketing Tools',
+      description: 'AI-powered content generation, campaign optimization, and customer insight tools.',
+      icon: BarChart3,
+      link: '/marketing-copy-generator'
     },
     {
-      id: 'multilingual-support-bots',
-      title: 'Multilingual Support Bots',
-      description: 'AI assistants that communicate fluently in multiple languages to serve your global customer base.',
-      features: [
-        'Support for 95+ Languages',
-        'Cultural Context Adaptation',
-        'Speech-to-Text Capabilities',
-        'Accent & Dialect Recognition',
-        'Seamless Language Switching',
-        'Idiom & Slang Understanding'
-      ],
-      icon: 'fas fa-language',
-      category: 'custom-ai',
-      caseStudyLink: '/case-studies/travel',
-      caseStudy: {
-        client: "WorldVoyage Tours",
-        industry: "Travel & Hospitality",
-        challenge: "WorldVoyage Tours was losing international bookings due to language barriers. Their customer service team could only support 3 languages, causing 42% of international inquiries to go unanswered or poorly handled. Customer satisfaction scores from non-English speaking regions were 30% lower than English-speaking markets.",
-        solution: "We deployed an AI-powered multilingual support system that handles customer inquiries in 24 languages. The system maintains context across languages, understands cultural nuances, and can seamlessly switch languages mid-conversation. It integrates with their booking system to provide personalized assistance for reservations, itinerary changes, and local recommendations.",
-        results: [
-          "Expanded service to 24 languages without adding staff",
-          "Increased international bookings by 58% year-over-year",
-          "Reduced response time for non-English inquiries from 12 hours to 2 minutes",
-          "Improved customer satisfaction scores in international markets by 47%"
-        ],
-        metrics: [
-          {
-            label: "Global Reach",
-            value: "680% increase",
-            icon: "fas fa-globe"
-          },
-          {
-            label: "Cost per Interaction",
-            value: "87% reduction",
-            icon: "fas fa-hand-holding-usd"
-          },
-          {
-            label: "Conversion Rate",
-            value: "+34% internationally",
-            icon: "fas fa-chart-line"
-          }
-        ],
-        testimonial: {
-          quote: "Advanta AI's multilingual support system has transformed our global business. We're now able to provide the same exceptional service to customers worldwide, regardless of language. The system even understands cultural contexts and local expressions that machine translation would miss. Our international growth has been remarkable.",
-          author: "Isabella Lopez",
-          position: "Global Customer Experience Director, WorldVoyage Tours"
-        }
-      },
-      primaryColor: 'from-amber-500',
-      secondaryColor: 'to-orange-600'
+      id: 'workflow-automation',
+      title: 'Workflow Automation',
+      description: 'Intelligent process automation that learns and adapts to your business needs.',
+      icon: Workflow,
+      link: '/automation-builder'
     },
     {
-      id: 'crm-app-integrations',
-      title: 'CRM/App Integrations',
-      description: 'Seamlessly connect your AI solutions with your existing CRM, marketing, and business tools.',
-      features: [
-        'Native Salesforce & HubSpot Integration',
-        'Custom API Development',
-        'Two-way Data Synchronization',
-        'Workflow Trigger Management',
-        'Compliance & Security Controls',
-        'Cross-platform Compatibility'
-      ],
-      icon: 'fas fa-plug',
-      category: 'integration',
-      caseStudyLink: '/case-studies/manufacturing',
-      caseStudy: {
-        client: "NextGen Manufacturing",
-        industry: "Manufacturing",
-        challenge: "NextGen had valuable customer data siloed across six different systems (Salesforce, HubSpot, custom ERP, inventory management, quality control, and service desk). Sales teams couldn't see production data, support teams had no visibility into customer history, and executives couldn't get unified reporting. This caused a 23% error rate in customer communications and delayed response times by 15+ hours.",
-        solution: "We developed a comprehensive integration solution that created bi-directional data flows between all systems. This included custom API development for their legacy ERP, real-time syncing of customer data across platforms, automated workflow triggers between systems, and a unified dashboard that pulled data from all sources into actionable insights.",
-        results: [
-          "Created a single source of truth for customer data across all departments",
-          "Reduced data entry errors by 94% through automated synchronization",
-          "Cut response times to customer inquiries from 15+ hours to under 30 minutes",
-          "Enabled cross-selling opportunities by giving sales teams visibility into service history"
-        ],
-        metrics: [
-          {
-            label: "Integration ROI",
-            value: "418%",
-            icon: "fas fa-chart-line"
-          },
-          {
-            label: "Productivity Gain",
-            value: "37 hours/week",
-            icon: "fas fa-clock"
-          },
-          {
-            label: "Customer Retention",
-            value: "+18% YoY",
-            icon: "fas fa-user-check"
-          }
-        ],
-        testimonial: {
-          quote: "The CRM integration solution from Advanta AI eliminated our data silos and created a seamless information flow across our entire organization. For the first time, we have a complete 360-degree view of our customers from initial contact through production, delivery, and ongoing service. This has transformed our ability to deliver exceptional customer experiences.",
-          author: "David Reeves",
-          position: "CIO, NextGen Manufacturing"
-        }
-      },
-      primaryColor: 'from-sky-500',
-      secondaryColor: 'to-blue-600'
-    },
-    {
-      id: 'ai-trained-on-client-data',
-      title: 'AI Trained on Client Data',
-      description: 'Custom AI models trained on your proprietary data for maximum relevance and effectiveness.',
-      features: [
-        'Secure Data Processing Pipeline',
-        'Custom Model Training',
-        'Proprietary Algorithm Development',
-        'Iterative Performance Optimization',
-        'Model Versioning & Management',
-        'Ethical AI Implementation'
-      ],
-      icon: 'fas fa-database',
-      category: 'custom-ai',
-      caseStudyLink: '/case-studies/healthcare',
-      caseStudy: {
-        client: "MediCore Health Systems",
-        industry: "Healthcare",
-        challenge: "MediCore had accumulated 12+ years of patient data across their network of 8 hospitals but couldn't effectively use this information to improve patient outcomes. Traditional analytics couldn't identify complex patterns or predict patient risks accurately. They faced rising readmission rates of 18.3% and struggled with resource allocation.",
-        solution: "We developed a custom AI model trained specifically on MediCore's anonymized patient data, incorporating their unique clinical workflows, physician notes, treatment protocols, and regional health factors. The model was fine-tuned to predict patient risks, recommend personalized treatment plans, and optimize resource allocation.",
-        results: [
-          "Reduced 30-day readmission rates by 42%",
-          "Identified high-risk patients with 89% accuracy (up from 64%)",
-          "Improved resource allocation, reducing average length of stay by 2.3 days",
-          "Generated personalized care plans that increased treatment effectiveness by 31%"
-        ],
-        metrics: [
-          {
-            label: "Cost Savings",
-            value: "$4.2M annually",
-            icon: "fas fa-hand-holding-usd"
-          },
-          {
-            label: "Patient Outcomes",
-            value: "+28%",
-            icon: "fas fa-heartbeat"
-          },
-          {
-            label: "Time Saved",
-            value: "1,200+ hours/month",
-            icon: "fas fa-clock"
-          }
-        ],
-        testimonial: {
-          quote: "Advanta AI's custom-trained model has revolutionized how we deliver care. By leveraging our own data, the AI understands the unique characteristics of our patient population in ways generic models simply cannot. The improvement in patient outcomes speaks for itself, and the ROI has exceeded our most optimistic projections.",
-          author: "Dr. Samantha Wu",
-          position: "Chief Medical Officer, MediCore Health Systems"
-        }
-      },
-      primaryColor: 'from-red-500',
-      secondaryColor: 'to-pink-600'
-    },
-    {
-      id: 'white-label-portals',
-      title: 'White-Label Portals',
-      description: 'Offer clients their own branded portal with analytics, bot controls, and CRM integrations.',
-      features: [
-        'Fully Customizable Branding',
-        'Client Access Management',
-        'Multi-tenant Architecture',
-        'Usage & Performance Analytics',
-        'Configurable Feature Sets',
-        'Tiered Service Levels'
-      ],
-      icon: 'fas fa-copyright',
-      category: 'integration',
-      caseStudyLink: '/case-studies/marketing',
-      caseStudy: {
-        client: "Horizon Marketing Group",
-        industry: "Marketing & Advertising",
-        challenge: "Horizon Marketing Group needed to offer AI-powered analytics to their 140+ agency clients without building their own platform. Each client required their own branded experience, custom data integrations, and varying service levels. Their previous white-labeled solution had poor customization options and only supported basic analytics, leading to a 27% client churn rate.",
-        solution: "We developed a multi-tenant white-label portal platform that allowed Horizon to provide each client with a fully branded AI analytics experience. The system included customizable dashboards, tiered feature access based on service level, automated reporting, and secure data partitioning to ensure each client only accessed their own data.",
-        results: [
-          "Reduced client churn from 27% to 8% in the first year",
-          "Enabled Horizon to upsell premium analytics packages to 42% of clients",
-          "Increased client acquisition by 34% with the new service offering",
-          "Reduced onboarding time for new clients from 3 weeks to 2 days"
-        ],
-        metrics: [
-          {
-            label: "Revenue Growth",
-            value: "$1.8M annual",
-            icon: "fas fa-dollar-sign"
-          },
-          {
-            label: "Client Satisfaction",
-            value: "94%",
-            icon: "fas fa-smile"
-          },
-          {
-            label: "Implementation ROI",
-            value: "387%",
-            icon: "fas fa-chart-line"
-          }
-        ],
-        testimonial: {
-          quote: "The white-label portal solution from Advanta AI has been a game-changer for our agency. Our clients love having their own branded analytics platform, and we love the flexibility to offer different feature sets based on service tier. The platform has become a major competitive advantage for us and opened up entirely new revenue streams.",
-          author: "Jennifer Martinez",
-          position: "CEO, Horizon Marketing Group"
-        }
-      },
-      primaryColor: 'from-violet-500',
-      secondaryColor: 'to-purple-600'
-    },
-    {
-      id: 'autoblog-faq-generator',
-      title: 'AutoBlog + FAQ Generator',
-      description: 'AI-powered content generation for blogs, FAQs, and help documentation based on your business data.',
-      features: [
-        'SEO-optimized Content Creation',
-        'Topic & Keyword Research',
-        'Scheduled Publishing',
-        'Content Style Adaptation',
-        'Multimedia Content Suggestions',
-        'Multilingual Content Generation'
-      ],
-      icon: 'fas fa-brain',
-      category: 'automation',
-      caseStudyLink: '/case-studies/digital-media',
-      caseStudy: {
-        client: "TechVantage Media",
-        industry: "Digital Publishing & Media",
-        challenge: "TechVantage Media needed to produce high-quality content across 6 different technology blogs but struggled with scaling production and maintaining consistency. Their team of 4 writers could only publish 3-4 articles per week, had inconsistent SEO practices, and couldn't keep their FAQ sections updated with new product information. Their organic traffic had plateaued at around 120,000 monthly visitors for over a year.",
-        solution: "We implemented an AI-powered content generation system that could create SEO-optimized blog posts, product FAQs, and help documentation based on TechVantage's existing content library and industry data. The system was trained on their brand voice, incorporated keyword research, and could generate content in multiple formats including long-form articles, FAQ sections, and social media snippets.",
-        results: [
-          "Increased content production from 16 articles per month to 120+ without additional staff",
-          "Improved organic search traffic by 213% within 6 months",
-          "Reduced content production costs by 67% per article",
-          "Expanded coverage to emerging technology topics that previously lacked resources"
-        ],
-        metrics: [
-          {
-            label: "SEO Rankings",
-            value: "+342 keywords in top 10",
-            icon: "fas fa-search"
-          },
-          {
-            label: "Conversion Rate",
-            value: "4.2% (from 1.8%)",
-            icon: "fas fa-funnel-dollar"
-          },
-          {
-            label: "Time Savings",
-            value: "76 hours/week",
-            icon: "fas fa-clock"
-          }
-        ],
-        testimonial: {
-          quote: "The AutoBlog system has revolutionized our content strategy. We're now able to cover more topics, respond to industry trends faster, and maintain a consistent publishing schedule across all our properties. The AI-generated content is remarkably on-brand, and with light editing from our team, readers can't tell the difference. The ROI has exceeded our expectations.",
-          author: "Robert Chen",
-          position: "Content Director, TechVantage Media"
-        }
-      },
-      primaryColor: 'from-blue-500',
-      secondaryColor: 'to-cyan-600'
-    },
-    {
-      id: 'ai-lead-scoring',
-      title: 'AI Lead Scoring & Qualification',
-      description: 'Intelligent prioritization of sales leads based on AI-analyzed likelihood to convert.',
-      features: [
-        'Behavioral Pattern Analysis',
-        'Engagement Scoring Algorithm',
-        'Custom Qualification Criteria',
-        'Pipeline Velocity Optimization',
-        'Real-time Lead Reassignment',
-        'Conversion Probability Prediction'
-      ],
-      icon: 'fas fa-user-check',
-      category: 'analytics',
-      caseStudyLink: '/case-studies/tech-saas',
-      caseStudy: {
-        client: "GrowthForce Technologies",
-        industry: "Tech SaaS",
-        challenge: "GrowthForce's sales team was spending an excessive amount of time on low-value leads. Their manual lead scoring process was inconsistent, relying on basic demographic data and gut feelings rather than behavioral patterns. As a result, only 12% of sales team effort was being directed toward high-potential prospects, and their conversion rate hovered at just 1.7%.",
-        solution: "We implemented an AI-powered lead scoring and qualification system that analyzed over 50 prospect data points, including website behavior, engagement patterns, company growth signals, and industry-specific conversion indicators. The system prioritized leads based on their likelihood to convert and automatically routed them to the appropriate sales representatives.",
-        results: [
-          "Increased lead-to-opportunity conversion rate from 1.7% to 6.3%",
-          "Reduced sales cycle length by 37% by focusing on high-quality leads",
-          "Improved sales team efficiency with 68% of effort now directed at high-value prospects",
-          "Boosted marketing ROI by identifying the most effective lead generation channels"
-        ],
-        metrics: [
-          {
-            label: "Revenue Impact",
-            value: "+43% YoY",
-            icon: "fas fa-chart-line"
-          },
-          {
-            label: "Predictive Accuracy",
-            value: "92%",
-            icon: "fas fa-bullseye"
-          },
-          {
-            label: "Time Savings",
-            value: "128 hours/month",
-            icon: "fas fa-clock"
-          }
-        ],
-        testimonial: {
-          quote: "The AI lead scoring system from Advanta AI has fundamentally transformed our sales process. Our team now knows exactly which leads to prioritize and when to contact them. We've seen a dramatic improvement in conversion rates and our sales team is more productive than ever. The system continues to learn and improve, which means our results keep getting better over time.",
-          author: "Jason Winters",
-          position: "VP of Sales, GrowthForce Technologies"
-        }
-      },
-      primaryColor: 'from-green-500',
-      secondaryColor: 'to-teal-600'
-    },
-    {
-      id: 'sentiment-analysis',
-      title: 'Sentiment Analysis Engine',
-      description: 'Advanced AI that monitors customer feedback, reviews, and communications to detect sentiment trends.',
-      features: [
-        'Multilingual Sentiment Detection',
-        'Emotion Classification',
-        'Topic & Entity Extraction',
-        'Trend Analysis Dashboard',
-        'Real-time Alert System',
-        'Competitive Benchmark Comparison'
-      ],
-      icon: 'fas fa-smile',
-      category: 'analytics',
-      caseStudyLink: '/case-studies/hospitality',
-      caseStudy: {
-        client: "GlobalStar Resorts",
-        industry: "Hospitality",
-        challenge: "GlobalStar Resorts, a luxury hotel chain with 27 properties worldwide, was struggling to effectively process and analyze the 125,000+ guest reviews they received annually across multiple platforms (their own app, TripAdvisor, Booking.com, social media, etc.). Their manual review analysis was inconsistent, time-consuming, and often missed emerging issues until they became significant problems affecting their reputation.",
-        solution: "We implemented a comprehensive sentiment analysis engine that automatically collected, processed, and analyzed all guest feedback across platforms in real-time. The system categorized feedback by sentiment, property, department, and specific service elements, while identifying emerging trends and critical issues requiring immediate attention.",
-        results: [
-          "Reduced response time to negative reviews from 24+ hours to under 30 minutes",
-          "Identified recurring pain points that were previously undetected, leading to targeted service improvements",
-          "Enabled property-specific benchmarking to identify best practices across the chain",
-          "Increased positive review response rate from 12% to 87%"
-        ],
-        metrics: [
-          {
-            label: "Guest Satisfaction",
-            value: "+22% improvement",
-            icon: "fas fa-smile"
-          },
-          {
-            label: "Review Analysis",
-            value: "99.4% accuracy",
-            icon: "fas fa-check-double"
-          },
-          {
-            label: "Revenue Impact",
-            value: "+8.3% ADR",
-            icon: "fas fa-dollar-sign"
-          }
-        ],
-        testimonial: {
-          quote: "The sentiment analysis engine from Advanta AI has transformed how we understand and respond to guest feedback. We can now identify and address concerns before they become widespread issues. Our management teams have real-time insights into what's working and what needs attention across all properties. This has not only improved our guest experience but has had a measurable impact on our repeat booking rates and average daily rates.",
-          author: "Elena Rodriguez",
-          position: "Chief Guest Experience Officer, GlobalStar Resorts"
-        }
-      },
-      primaryColor: 'from-yellow-500',
-      secondaryColor: 'to-amber-600'
-    },
-    {
-      id: 'ai-product-recommendation',
-      title: 'AI Product Recommendation',
-      description: 'Personalized product suggestions that adapt to user behavior and preferences in real-time.',
-      features: [
-        'Behavioral Analytics Engine',
-        'Cross-selling Optimization',
-        'Visual Similarity Matching',
-        'Seasonal Trend Adaptation',
-        'Inventory-aware Recommendations',
-        'A/B Testing Framework'
-      ],
-      icon: 'fas fa-gift',
-      category: 'custom-ai',
-      caseStudyLink: '/case-studies/retail',
-      caseStudy: {
-        client: "LuxeStyle Brands",
-        industry: "Retail / E-commerce",
-        challenge: "LuxeStyle was facing declining conversion rates (2.1%) and stagnant average order values ($42). Their generic product recommendation system showed the same items to all users regardless of browsing history, preferences, or purchase patterns, resulting in poor engagement and missed sales opportunities.",
-        solution: "We implemented an AI-powered product recommendation engine that analyzes customer behavior in real-time, evaluates purchase history, identifies visual similarities between products, and adapts to seasonal trends. The system also integrates with their inventory management to prioritize in-stock items and implements an A/B testing framework to continuously optimize recommendations.",
-        results: [
-          "Increased conversion rate from 2.1% to 4.8% within 3 months",
-          "Improved average order value by 37% ($42 to $57.50)",
-          "Boosted repeat purchase rate by 42%",
-          "Reduced inventory holding costs by 21% through smarter recommendation of slow-moving items"
-        ],
-        metrics: [
-          {
-            label: "Revenue Growth",
-            value: "+31% YoY",
-            icon: "fas fa-chart-line"
-          },
-          {
-            label: "Cross-sell Rate",
-            value: "48% increase",
-            icon: "fas fa-shopping-cart"
-          },
-          {
-            label: "ROI",
-            value: "529%",
-            icon: "fas fa-dollar-sign"
-          }
-        ],
-        testimonial: {
-          quote: "The AI recommendation engine from Advanta AI completely transformed our online shopping experience. Our customers now discover products they love but might never have found on their own. The system pays for itself many times over, and we've seen both immediate sales growth and stronger long-term customer loyalty.",
-          author: "Marcus Johnson",
-          position: "Director of E-commerce, LuxeStyle Brands"
-        }
-      },
-      primaryColor: 'from-red-500',
-      secondaryColor: 'to-rose-600'
-    },
-    {
-      id: 'predictive-maintenance',
-      title: 'Predictive Maintenance AI',
-      description: 'AI systems that predict equipment failures before they happen, reducing downtime and maintenance costs.',
-      features: [
-        'IoT Sensor Data Integration',
-        'Failure Pattern Recognition',
-        'Maintenance Schedule Optimization',
-        'Cost Savings Calculator',
-        'Remote Monitoring Interface',
-        'Asset Lifetime Prediction'
-      ],
-      icon: 'fas fa-tools',
-      category: 'analytics',
-      caseStudyLink: '/case-studies/manufacturing',
-      caseStudy: {
-        client: "Global Machinery Corp",
-        industry: "Industrial Manufacturing",
-        challenge: "Global Machinery was experiencing costly unplanned downtime averaging 127 hours per quarter across their production facilities. Their reactive maintenance approach meant machines would fail unexpectedly, leading to production halts, emergency repair costs, and missed delivery deadlines. Each hour of downtime cost the company approximately $45,000, resulting in quarterly losses exceeding $5.7 million, not including replacement parts and overtime labor.",
-        solution: "We implemented a comprehensive Predictive Maintenance AI system that collected and analyzed real-time data from 850+ sensors across their machine fleet. The system used advanced machine learning algorithms to identify subtle patterns that preceded component failures. It integrated with their existing ERP and maintenance systems to automatically schedule preventive maintenance at optimal times that minimized disruption to production schedules.",
-        results: [
-          "Reduced unplanned downtime by 83% (from 127 hours to 21 hours per quarter)",
-          "Extended average machine component lifespan by 37%",
-          "Optimized maintenance scheduling, reducing maintenance labor hours by 24%",
-          "Decreased spare parts inventory by 31% through more accurate forecasting"
-        ],
-        metrics: [
-          {
-            label: "Cost Savings",
-            value: "$4.8M quarterly",
-            icon: "fas fa-dollar-sign"
-          },
-          {
-            label: "Production Uptime",
-            value: "97% (from 86%)",
-            icon: "fas fa-industry"
-          },
-          {
-            label: "ROI Timeline",
-            value: "4.2 months",
-            icon: "fas fa-calendar-check"
-          }
-        ],
-        testimonial: {
-          quote: "The Predictive Maintenance AI from Advanta AI has completely transformed our operational efficiency. We've gone from constantly fighting fires with unexpected breakdowns to a smooth, predictable maintenance schedule that keeps our production lines running. The system continues to become more intelligent over time, now detecting potential issues we wouldn't have noticed until complete failure occurred.",
-          author: "Michael Reeves",
-          position: "Director of Operations, Global Machinery Corp"
-        }
-      },
-      primaryColor: 'from-blue-500',
-      secondaryColor: 'to-sky-600'
+      id: 'analytics-insights',
+      title: 'Analytics & Insights',
+      description: 'Real-time business intelligence and predictive analytics powered by AI.',
+      icon: Zap,
+      link: '/roi-calculator'
     }
   ];
-  
-  const categories = [
-    { id: 'all', name: 'All Services', icon: 'fas fa-th-large' },
-    { id: 'custom-ai', name: 'Custom AI', icon: 'fas fa-robot' },
-    { id: 'analytics', name: 'Analytics & Intelligence', icon: 'fas fa-chart-line' },
-    { id: 'automation', name: 'Automation', icon: 'fas fa-cogs' },
-    { id: 'integration', name: 'Integration & Portals', icon: 'fas fa-plug' }
+
+  const benefits: Benefit[] = [
+    { text: 'Deploy in days, not months', icon: CheckCircle },
+    { text: 'No-code workflows anyone can manage', icon: CheckCircle },
+    { text: 'Reduce workload by 30–50%', icon: CheckCircle },
+    { text: 'Trusted by 500+ teams', icon: CheckCircle }
   ];
-  
-  const filteredServices = activeCategory === 'all' 
-    ? services 
-    : services.filter(service => service.category === activeCategory);
+
+  const industryCases: IndustryCase[] = [
+    {
+      industry: 'Retail',
+      title: 'Customer Support Revolution',
+      description: 'AI assistants handling product inquiries and order management across multiple channels.',
+      stat: 'Saved 10+ hours/week'
+    },
+    {
+      industry: 'Healthcare',
+      title: 'Patient Experience Enhancement',
+      description: 'Automated appointment scheduling and patient communication systems.',
+      stat: 'Reduced support tickets 35%'
+    },
+    {
+      industry: 'Agencies',
+      title: 'Creative Workflow Optimization',
+      description: 'AI-powered content creation and client management automation.',
+      stat: 'Increased productivity 40%'
+    }
+  ];
+
+  const testimonials: Testimonial[] = [
+    {
+      quote: "Advanta AI transformed our customer service. Response times dropped from hours to seconds, and our team can focus on complex issues.",
+      author: "Sarah Chen",
+      company: "TechFlow Solutions",
+      rating: 5
+    },
+    {
+      quote: "The AI automation tools saved us 15 hours per week on repetitive tasks. ROI was clear within the first month.",
+      author: "Marcus Rodriguez",
+      company: "Digital Dynamics",
+      rating: 5
+    }
+  ];
+
+  const trustedLogos = [
+    { name: 'TechFlow', width: 'w-24' },
+    { name: 'InnovateCorp', width: 'w-28' },
+    { name: 'FutureWorks', width: 'w-26' },
+    { name: 'NextGen', width: 'w-22' },
+    { name: 'CloudFirst', width: 'w-25' }
+  ];
 
   return (
     <>
       <Helmet>
-        <title>AI Services & Solutions | Advanta AI</title>
-        <meta name="description" content="Explore our comprehensive suite of AI solutions including custom GPT agents, predictive analytics, workflow automation, and system integrations." />
-        <meta name="keywords" content="AI services, custom GPT, analytics, predictive dashboards, AI automation, machine learning solutions" />
-        <meta property="og:title" content="AI Services & Solutions | Advanta AI" />
-        <meta property="og:description" content="Explore our comprehensive suite of AI solutions including custom GPT agents, predictive analytics, workflow automation, and system integrations." />
+        <title>Custom AI Solutions That Scale With You | Advanta AI</title>
+        <meta name="description" content="Explore automation tools, GPT apps, and analytics designed to simplify your workflow and accelerate growth. Deploy in days, not months." />
+        <meta name="keywords" content="AI solutions, custom GPT, automation tools, AI assistants, workflow automation, business AI" />
+        
+        <meta property="og:title" content="Custom AI Solutions That Scale With You | Advanta AI" />
+        <meta property="og:description" content="Explore automation tools, GPT apps, and analytics designed to simplify your workflow and accelerate growth." />
         <meta property="og:type" content="website" />
       </Helmet>
-      
-      <NewHeader />
-      
-      <main>
-        {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
-          
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <motion.div 
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="text-center mb-12"
-            >
-              <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                Our Enterprise <GradientText>AI Solutions</GradientText>
-              </motion.h1>
-              <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-                Transformative intelligence that delivers measurable business outcomes through our suite of specialized AI services.
-              </motion.p>
-            </motion.div>
-            
-            {/* Category Navigation */}
-            <motion.div 
-              variants={fadeIn}
-              initial="hidden"
-              animate="show"
-              className="flex flex-col items-center gap-6 mb-20"
-            >
-              <h3 className="text-xl text-gray-200 mb-3">Select a service category to explore:</h3>
-              <div className="flex flex-wrap justify-center gap-4">
-                {categories.map((category) => (
-                  <Button
-                    key={category.id}
-                    variant={activeCategory === category.id ? 'default' : 'outline'}
-                    className={`text-sm font-medium py-6 px-6 rounded-lg transition-all duration-300 ${
-                      activeCategory === category.id 
-                        ? 'bg-primary text-white scale-105 shadow-lg shadow-primary/20' 
-                        : 'hover:border-primary/50 hover:bg-primary/5'
-                    }`}
-                    onClick={() => setActiveCategory(category.id as ServiceCategory)}
-                  >
-                    <i className={`${category.icon} text-lg mr-3`}></i>
-                    {category.name}
-                  </Button>
-                ))}
-              </div>
-              <div className="mt-3 text-center text-muted-foreground text-sm">
-                {activeCategory !== 'all' && (
-                  <p>Showing {filteredServices.length} services in {categories.find(c => c.id === activeCategory)?.name}</p>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* Services Listing */}
-        <section className="py-16 bg-muted relative">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {filteredServices.map((service, index) => (
-                <motion.div 
-                  key={service.id}
-                  variants={fadeIn}
-                  transition={{ delay: index * 0.1 }}
-                  className="h-full"
-                >
-                  <div className="bg-background rounded-xl overflow-hidden border border-white/10 h-full flex flex-col">
-                    <div className={`bg-gradient-to-r ${service.primaryColor} ${service.secondaryColor} p-5`}>
-                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-xl">
-                        <i className={service.icon}></i>
-                      </div>
-                    </div>
-                    
-                    <div className="p-6 flex-grow">
-                      <h3 className="text-xl font-bold mb-2">{service.title}</h3>
-                      <p className="text-gray-400 mb-4">{service.description}</p>
-                      
-                      <div className="mb-4">
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Key Features:</h4>
-                        <ul className="space-y-1">
-                          {service.features.slice(0, 4).map((feature, i) => (
-                            <li key={i} className="flex items-start">
-                              <span className="text-primary mr-2">•</span>
-                              <span className="text-sm text-gray-400">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      
-                      {/* Data Insights for Service Cards */}
-                      <div className="mb-4 mt-6">
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center">
-                          <i className="fas fa-chart-line text-blue-400 mr-2"></i>
-                          Business Impact
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-black/40 border border-gray-800 rounded-lg p-2">
-                            <div className="flex items-center mb-1">
-                              <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-                              <h5 className="text-xs font-medium text-white">Implementation</h5>
-                            </div>
-                            <div className="flex items-end justify-between">
-                              <span className="text-lg font-bold text-white">14-21d</span>
-                              <span className="text-gray-400 text-[10px]">rapid deployment</span>
-                            </div>
-                          </div>
-                          <div className="bg-black/40 border border-gray-800 rounded-lg p-2">
-                            <div className="flex items-center mb-1">
-                              <div className="w-2 h-2 rounded-full bg-indigo-500 mr-1"></div>
-                              <h5 className="text-xs font-medium text-white">ROI</h5>
-                            </div>
-                            <div className="flex items-end justify-between">
-                              <span className="text-lg font-bold text-white">2.8x</span>
-                              <span className="text-gray-400 text-[10px]">in 90 days</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-2 bg-black/30 border border-gray-800 rounded-lg p-3">
-                          <div className="flex items-start text-xs">
-                            <div className="flex-shrink-0 w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center mt-0.5 mr-2">
-                              <i className="fas fa-check text-white text-[8px]"></i>
-                            </div>
-                            <p className="text-gray-300"><span className="text-white font-medium">Success Rate:</span> 97% enterprise adoption with 37% improved performance vs. competing solutions</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="p-6 pt-0 mt-auto">
-                      {service.caseStudy ? (
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => {
-                            const element = document.getElementById(`case-study-${service.id}`);
-                            if (element) {
-                              element.scrollIntoView({ behavior: 'smooth' });
-                            }
-                          }}
-                        >
-                          View Success Story
-                          <i className="fas fa-arrow-down ml-2"></i>
-                        </Button>
-                      ) : (
-                        <Link to={`/service/${service.id}`}>
-                          <Button variant="outline" className="w-full">
-                            Learn More
-                            <i className="fas fa-arrow-right ml-2"></i>
-                          </Button>
-                        </Link>
-                      )}
-                      
-                      {service.caseStudyLink && !service.caseStudy && (
-                        <div className="mt-3 text-center">
-                          <Link to={service.caseStudyLink} className="text-xs text-primary hover:underline">
-                            View Case Study
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* Implementation Process */}
-        <section className="py-20 bg-black/60 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
-          
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-                Enterprise-Grade <GradientText>Implementation Process</GradientText>
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Our systematic approach ensures rapid deployment with minimal disruption to your operations.
-              </motion.p>
-            </motion.div>
-            
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
-            >
-              {[
-                {
-                  number: '1',
-                  title: 'Strategic AI Discovery Session',
-                  description: 'Our AI architects analyze your business processes to identify high-ROI automation opportunities and competitive advantages.',
-                  icon: 'fa-solid fa-lightbulb'
-                },
-                {
-                  number: '2',
-                  title: 'Proprietary Algorithm Implementation',
-                  description: 'We deploy our enterprise-grade algorithms trained on your specific industry data for maximum accuracy and performance.',
-                  icon: 'fa-solid fa-code'
-                },
-                {
-                  number: '3',
-                  title: 'Accelerated Market Deployment',
-                  description: 'Launch within 14 days with real-time analytics dashboard monitoring performance, ROI metrics, and competitive intelligence.',
-                  icon: 'fa-solid fa-rocket'
-                }
-              ].map((step, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeIn}
-                  className="relative"
-                >
-                  <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-8 h-full">
-                    {/* Step number */}
-                    <div className="absolute -top-5 -left-5 w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-                      <span className="text-xl font-bold">{step.number}</span>
-                    </div>
-                    
-                    {/* Connector line */}
-                    {index < 2 && (
-                      <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-[2px] bg-primary/40 z-0">
-                        <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-2 rounded-full bg-primary"></div>
-                      </div>
-                    )}
-                    
-                    <div className="mb-4 text-3xl text-primary mt-4">
-                      <i className={step.icon}></i>
-                    </div>
-                    
-                    <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                    <p className="text-gray-300">{step.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* Case Studies Showcase */}
-        <section className="py-20 bg-black/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="text-center mb-12"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4">
-                Client <GradientText>Success Stories</GradientText>
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
-                See how our AI solutions have delivered measurable results for industry-leading organizations
-              </motion.p>
-            </motion.div>
 
-            <div className="space-y-16 mt-12">
-              {services
-                .filter(service => service.caseStudy)
-                .map(service => (
-                  <div key={service.id} id={`case-study-${service.id}`} className="scroll-mt-24">
-                    <motion.div
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: true, margin: "-100px" }}
-                      className="mb-4"
-                    >
-                      <h3 className="text-2xl font-bold mb-2 flex items-center">
-                        <span className={`w-2 h-8 mr-3 rounded bg-gradient-to-b ${service.primaryColor} ${service.secondaryColor}`}></span>
-                        {service.title}
-                      </h3>
-                      <p className="text-gray-400 pl-5">{service.description}</p>
-                    </motion.div>
-                    
-                    {service.caseStudy && (
-                      <CaseStudy
-                        client={service.caseStudy.client}
-                        industry={service.caseStudy.industry}
-                        challenge={service.caseStudy.challenge}
-                        solution={service.caseStudy.solution}
-                        results={service.caseStudy.results}
-                        metrics={service.caseStudy.metrics}
-                        testimonial={service.caseStudy.testimonial}
-                        primaryColor={service.primaryColor}
-                        secondaryColor={service.secondaryColor}
-                      />
-                    )}
-                  </div>
-                ))}
-            </div>
-          </div>
-        </section>
+      <div className="min-h-screen bg-white">
+        <NewHeader />
         
-        {/* Call to Action */}
-        <section className="py-20 bg-primary/10">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="max-w-4xl mx-auto text-center"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-6">
-                Ready to Transform Your Business with <GradientText>Enterprise AI</GradientText>?
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-xl text-gray-300 mb-8">
-                Schedule a consultation with our AI specialists to explore how our services can be tailored to your specific needs.
-              </motion.p>
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild>
-                  <Link href="/contact">Schedule Consultation</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/calculator">Build Custom AI Stack</Link>
-                </Button>
+        <main>
+          {/* Header Section */}
+          <section className="pt-20 pb-16 bg-gradient-to-br from-gray-50 to-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-center max-w-4xl mx-auto"
+              >
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                  Custom AI Solutions That{' '}
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Scale With You
+                  </span>
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Explore automation tools, GPT apps, and analytics designed to simplify your workflow and accelerate growth
+                </p>
               </motion.div>
-            </motion.div>
-          </div>
-        </section>
-      </main>
-      
-      <Footer />
+            </div>
+          </section>
+
+          {/* Services Cards Section */}
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Mobile: Horizontal Scroll */}
+              <div className="block lg:hidden">
+                <div className="flex space-x-6 overflow-x-auto pb-6 snap-x snap-mandatory">
+                  {services.map((service, index) => (
+                    <motion.div
+                      key={service.id}
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex-none w-80 bg-white rounded-2xl border border-gray-200 p-6 shadow-lg hover:shadow-xl transition-all duration-300 snap-start"
+                      whileHover={{ y: -5 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex items-center space-x-4 mb-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                          <service.icon className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-900">{service.title}</h3>
+                      </div>
+                      <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                      <Button
+                        onClick={() => setLocation(service.link)}
+                        variant="outline"
+                        className="w-full group"
+                      >
+                        Learn more
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop: Grid Layout */}
+              <div className="hidden lg:grid lg:grid-cols-3 gap-8">
+                {services.map((service, index) => (
+                  <motion.div
+                    key={service.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg hover:shadow-xl transition-all duration-300"
+                    whileHover={{ y: -5 }}
+                  >
+                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+                      <service.icon className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-4">{service.title}</h3>
+                    <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                    <Button
+                      onClick={() => setLocation(service.link)}
+                      variant="outline"
+                      className="group"
+                    >
+                      Learn more
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Benefits Section */}
+          <section className="py-20 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center mb-16"
+              >
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Why Businesses Choose Advanta AI
+                </h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {benefits.map((benefit, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center space-x-3"
+                  >
+                    <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+                    <span className="text-gray-700 font-medium">{benefit.text}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Industry Use Cases */}
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center mb-16"
+              >
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Proven Results Across Industries
+                </h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {industryCases.map((caseItem, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8"
+                  >
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{caseItem.industry}</h3>
+                    <h4 className="text-lg font-semibold text-blue-600 mb-4">{caseItem.title}</h4>
+                    <p className="text-gray-600 mb-6 leading-relaxed">{caseItem.description}</p>
+                    <div className="inline-flex items-center bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-semibold">
+                      {caseItem.stat}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Testimonials & Trust */}
+          <section className="py-20 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Testimonials */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                {testimonials.map((testimonial, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.2 }}
+                    className="bg-white rounded-2xl p-8 shadow-lg"
+                  >
+                    <div className="flex mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                      ))}
+                    </div>
+                    <Quote className="w-8 h-8 text-blue-200 mb-4" />
+                    <p className="text-gray-700 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
+                    <div>
+                      <div className="font-semibold text-gray-900">{testimonial.author}</div>
+                      <div className="text-gray-600">{testimonial.company}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Trust Logos */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-8">Trusted by teams at…</h3>
+                <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+                  {trustedLogos.map((logo, index) => (
+                    <div key={index} className={`${logo.width} h-8 bg-gray-300 rounded`}>
+                      {/* Placeholder for actual logos */}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Final CTA */}
+          <section className="py-20 bg-gradient-to-br from-blue-600 to-purple-600">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-white"
+              >
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Build Smarter?</h2>
+                <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
+                  Let's design your custom GPT or automation system—tailored to your business goals
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <Button
+                    onClick={() => setLocation('/build-my-ai-stack')}
+                    size="lg"
+                    className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+                  >
+                    Get Started
+                  </Button>
+                  <Button
+                    onClick={() => setLocation('/demo')}
+                    variant="outline"
+                    size="lg"
+                    className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg font-semibold"
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Book Demo
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        </main>
+
+        {/* Sticky CTA Bar (Mobile Only) */}
+        {showStickyCTA && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="lg:hidden fixed bottom-20 left-4 right-4 z-40"
+          >
+            <div className="bg-blue-600 text-white rounded-xl p-4 shadow-lg">
+              <Button
+                onClick={() => setLocation('/demo')}
+                className="w-full bg-white text-blue-600 hover:bg-gray-100"
+              >
+                Want to see it live? Book a 15‑min demo →
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        <NewFooter />
+      </div>
     </>
   );
 }
