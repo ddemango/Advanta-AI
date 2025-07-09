@@ -1,0 +1,88 @@
+ADVANTA-AI RESOURCES PAGE — REDESIGN INSTRUCTIONS
+Goal: Build a modern, mobile-friendly, easy-to-navigate content hub that showcases Advanta AI’s expertise with articles, guides, videos, and tools.
+
+⸻
+
+1. Hero Section (Top of Page)
+	•	Headline:
+Unlock the Power of AI — One Resource at a Time
+	•	Subheadline:
+Explore expert insights, practical guides, AI templates, and real-world examples to help your business scale smarter.
+	•	Optional: Add a subtle AI-themed background visual (mesh, light grid, circuit lines)
+	•	Include a quick link bar or category filter right below the hero for easy browsing
+
+⸻
+
+2. Resource Card Grid
+	•	Each piece of content should be shown as a card, including:
+	•	Thumbnail image or icon
+	•	Title (1–2 lines max)
+	•	Short description (2 lines max)
+	•	Resource type tag: Article, Video, Guide, Template
+	•	CTA: [ View Resource → ]
+	•	Layout:
+	•	Use a 3-column grid on desktop, switch to single-column or 2-column on mobile
+	•	Use a hover or tap animation (card lift, border glow, or icon pulse)
+
+⸻
+
+3. Resource Filters (Tags or Categories)
+	•	Add filter pills or buttons to sort by type or topic:
+	•	[🧠 AI Strategy] [🛠 Tools & Templates] [📄 Guides] [🎥 Videos] [📈 Case Studies]
+	•	Filters should highlight on active selection
+	•	Filters must be horizontally scrollable on mobile
+
+⸻
+
+4. Featured Resource or Spotlight Block
+	•	Highlight 1 premium resource at top or mid-page
+	•	Larger card with:
+	•	Featured badge (⭐ or “Editor’s Pick”)
+	•	Slight background highlight
+	•	Callout copy like: “Download our AI Integration Playbook”
+
+⸻
+
+5. Newsletter Signup Block (Optional)
+	•	Callout box:
+	•	Stay Ahead of the AI Curve
+	•	Join 2,000+ business leaders getting our best AI tips, updates & resources.
+	•	Input: Email field + [ Subscribe → ] button
+	•	Optional: Add checkbox for GDPR consent
+	•	Background: light gradient or clean white section
+
+⸻
+
+6. Final CTA Section
+	•	Headline: Need a Custom AI Strategy?
+	•	Subheadline: Schedule a 15-min strategy call with our team to explore custom GPTs, automations, or integrations.
+	•	Button: [ Book a Demo → ]
+	•	Include in a wide section with clear spacing, icons, or illustrations
+
+⸻
+
+7. Mobile Optimization Checklist
+	•	Resource cards should stack cleanly with enough spacing
+	•	Filter pills should scroll horizontally and be tappable
+	•	CTA buttons should be full-width with large hit areas
+	•	Fonts and spacing must be readable and breathable
+
+⸻
+
+8. Style & UX Guidelines
+	•	Fonts: Inter, Satoshi, or Space Grotesk
+	•	Icons: RemixIcon or Lucide
+	•	Colors: Clean white/light gray background with 1–2 bright accents (e.g., blue, teal)
+	•	Animation: fade-in, slide-in on scroll; hover effects on cards
+	•	Card spacing: use Tailwind scale (16–24px padding inside, 32px between rows)
+	•	Accessibility: Alt tags on images, proper labels, visible focus states
+
+⸻
+
+What to Ask Your Designer or AI Agent to Deliver:
+	•	Fully responsive card grid layout (mobile + desktop)
+	•	Filter/tag bar with active states
+	•	Spotlight resource block design
+	•	Optional newsletter signup block
+	•	Final CTA section for demo booking
+	•	Tailwind/React component structure if needed

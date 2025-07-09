@@ -117,6 +117,7 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 9, 2025. RESOURCES PAGE REDESIGNED: Complete mobile-first redesign with hero section, resource card grid, category filters, featured spotlight, newsletter signup, and demo CTA following modern content hub design principles
 - July 9, 2025. CONTACT PAGE REDESIGNED: Complete mobile-first redesign with clean form layout, contact details, team section, demo CTA, and trust indicators following modern design principles
 - July 9, 2025. LOGIN PAGE REDESIGNED: Complete mobile-first redesign with two-panel desktop layout, secure form inputs, social login options, trust badges, and seamless sign-up flow following modern design principles
 - July 9, 2025. CASE STUDIES PAGE REDESIGNED: Complete mobile-first redesign with filterable case study cards, results stats section, trust reinforcement, and final CTA following clean modern design principles
