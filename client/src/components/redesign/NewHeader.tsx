@@ -7,7 +7,6 @@ import { Menu, X, ChevronDown, Zap, Users, Building, BookOpen } from 'lucide-rea
 export function NewHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [portalDropdown, setPortalDropdown] = useState(false);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -15,19 +14,9 @@ export function NewHeader() {
       setScrolled(window.scrollY > 20);
     };
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (portalDropdown && !(event.target as Element).closest('.portal-dropdown')) {
-        setPortalDropdown(false);
-      }
-    };
-
     window.addEventListener('scroll', handleScroll);
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [portalDropdown]);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navigation = [
     { name: 'Solutions', href: '/services' },
@@ -36,23 +25,16 @@ export function NewHeader() {
     { name: 'Pricing', href: '/pricing' }
   ];
 
-  const portalItems = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'My AI Stack', href: '/build-my-ai-stack' },
-    { name: 'Workflow Builder', href: '/workflow-builder' },
-    { name: 'Analytics', href: '/analytics' },
-    { name: 'Settings', href: '/settings' }
-  ];
+
 
   const mobileNavigation = [
     { name: 'Home', href: '/' },
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
     { name: 'Resources', href: '/resources' },
-    { name: 'Contact', href: '/contact' }
+    { name: 'Contact', href: '/contact' },
+    { name: 'Client Suite Portal', href: '/login' }
   ];
-
-  const allMobileNavigation = [...mobileNavigation, ...portalItems];
 
   const mobileMenuVariants = {
     hidden: { opacity: 0, y: -20 },
@@ -95,41 +77,13 @@ export function NewHeader() {
               </button>
             ))}
             
-            {/* Client Suite Portal Dropdown */}
-            <div className="relative portal-dropdown">
-              <button
-                onClick={() => setPortalDropdown(!portalDropdown)}
-                className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
-              >
-                <span>Client Suite Portal</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${portalDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              
-              <AnimatePresence>
-                {portalDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
-                  >
-                    {portalItems.map((item) => (
-                      <button
-                        key={item.name}
-                        onClick={() => {
-                          setLocation(item.href);
-                          setPortalDropdown(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-200"
-                      >
-                        {item.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Client Suite Portal Button */}
+            <button
+              onClick={() => setLocation('/login')}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
+            >
+              Client Suite Portal
+            </button>
           </nav>
 
           {/* Desktop CTA */}
@@ -174,23 +128,17 @@ export function NewHeader() {
               className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
             >
               <div className="px-4 py-6 space-y-4">
-                {allMobileNavigation.map((item, index) => (
-                  <div key={item.name}>
-                    {index === mobileNavigation.length && (
-                      <div className="border-t border-gray-200 pt-4 mb-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Client Suite Portal</p>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        setLocation(item.href);
-                        setIsOpen(false);
-                      }}
-                      className="block w-full text-left py-3 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-                    >
-                      {item.name}
-                    </button>
-                  </div>
+                {mobileNavigation.map((item) => (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      setLocation(item.href);
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left py-3 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                  >
+                    {item.name}
+                  </button>
                 ))}
                 <div className="pt-4 border-t border-gray-200 space-y-3">
                   <Button
