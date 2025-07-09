@@ -58,8 +58,8 @@ export function NewHeader() {
             whileHover={{ scale: 1.02 }}
             onClick={() => setLocation('/')}
           >
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
                 <img src={advantaLogo} alt="Advanta AI" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold text-gray-900">
