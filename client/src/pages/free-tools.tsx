@@ -382,7 +382,7 @@ export default function FreeTools() {
       <NewHeader />
 
       {/* Hero Section */}
-      <section className="pt-20 pb-8 bg-gradient-to-br from-background via-background/95 to-primary/5">
+      <section className="pt-16 pb-6 bg-gradient-to-br from-background via-background/95 to-primary/5">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
@@ -408,7 +408,7 @@ export default function FreeTools() {
       </section>
 
       {/* Quick Access Section */}
-      <section className="py-8 bg-muted/30">
+      <section className="py-6 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
@@ -441,7 +441,7 @@ export default function FreeTools() {
       </section>
 
       {/* Search and Filter Section */}
-      <section className="py-8">
+      <section className="py-6">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
@@ -477,13 +477,13 @@ export default function FreeTools() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <div className="mb-6">
-                <div className="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-1.5 mb-4 justify-center md:justify-start">
                   <Button
                     variant={selectedCategory === 'all' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory('all')}
-                    className="text-xs"
+                    className="text-xs px-3 py-1.5 h-auto"
                   >
                     All
                   </Button>
@@ -493,9 +493,9 @@ export default function FreeTools() {
                       variant={selectedCategory === category ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedCategory(category)}
-                      className="text-xs"
+                      className="text-xs px-3 py-1.5 h-auto"
                     >
-                      {category}
+                      {category.length > 12 ? category.split(' ')[0] : category}
                     </Button>
                   ))}
                 </div>
