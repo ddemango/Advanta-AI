@@ -3305,6 +3305,8 @@ Please provide analysis in this exact JSON format (no additional text):
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
+      console.log('User found:', { id: user.id, email: user.email, hasPassword: !!user.password });
+
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
