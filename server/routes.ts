@@ -4255,6 +4255,86 @@ Please provide analysis in this exact JSON format (no additional text):
           expertTier: 'WR1',
           ceiling: 28,
           floor: 14
+        },
+        'Travis Kelce': {
+          matchup: '@ LAC',
+          opponent: 'Los Angeles Chargers',
+          defensiveRank: 14,
+          projectedPoints: 16.4,
+          confidence: 81,
+          recommendation: 'START',
+          analysis: 'Travis Kelce faces the Chargers defense in Week 1 2025 in São Paulo, Brazil. Los Angeles ranked 14th against tight ends in 2024 but allowed 15.8 fantasy PPG to the position. Kelce remains Patrick Mahomes\' top target and should see heavy volume in this neutral site international game.',
+          keyFactors: [
+            'Chargers allowed 15.8 fantasy PPG to TEs in 2024',
+            'International game in neutral site Brazil',
+            'Kelce remains Mahomes\' primary target',
+            'Chiefs likely to throw frequently in high-profile game'
+          ],
+          injuryStatus: 'Healthy',
+          weatherImpact: 'Indoor stadium - perfect conditions',
+          expertTier: 'TE1',
+          ceiling: 23,
+          floor: 10
+        },
+        'Isaiah Likely': {
+          matchup: 'vs BUF',
+          opponent: 'Buffalo Bills',
+          defensiveRank: 8,
+          projectedPoints: 9.2,
+          confidence: 58,
+          recommendation: 'SIT',
+          analysis: 'Isaiah Likely faces the Bills defense in Week 1 2025 at home in Baltimore. Buffalo ranked 8th against tight ends in 2024, allowing just 11.4 fantasy PPG to the position. With Mark Andrews healthy, Likely faces reduced target share in a tough matchup against an elite defense.',
+          keyFactors: [
+            'Bills allowed just 11.4 fantasy PPG to TEs (8th best)',
+            'Mark Andrews expected to dominate target share',
+            'Buffalo defense improved in offseason',
+            'Likely inconsistent without Andrews absence'
+          ],
+          injuryStatus: 'Healthy',
+          weatherImpact: 'Early September - good conditions',
+          expertTier: 'TE3',
+          ceiling: 16,
+          floor: 3
+        },
+        'Dak Prescott': {
+          matchup: '@ PHI',
+          opponent: 'Philadelphia Eagles',
+          defensiveRank: 16,
+          projectedPoints: 19.8,
+          confidence: 76,
+          recommendation: 'START',
+          analysis: 'Dak Prescott opens the 2025 season in the NFL Kickoff Game against Philadelphia. The Eagles ranked 16th in pass defense in 2024 but allowed 18.9 fantasy PPG to quarterbacks. This primetime divisional rivalry should be high-scoring with both teams motivated for the season opener.',
+          keyFactors: [
+            'Eagles allowed 18.9 fantasy PPG to QBs in 2024',
+            'NFL Kickoff Game - high-scoring potential',
+            'Divisional rivalry with playoff implications',
+            'Prescott healthy with full receiving corps'
+          ],
+          injuryStatus: 'Healthy',
+          weatherImpact: 'Indoor game - perfect conditions',
+          expertTier: 'QB1',
+          ceiling: 27,
+          floor: 13
+        },
+        'Geno Smith': {
+          matchup: 'vs SF',
+          opponent: 'San Francisco 49ers',
+          defensiveRank: 6,
+          projectedPoints: 14.2,
+          confidence: 62,
+          recommendation: 'SIT',
+          analysis: 'Geno Smith faces the 49ers defense in Week 1 2025 at home in Seattle. San Francisco ranked 6th in pass defense in 2024, allowing just 16.1 fantasy PPG to quarterbacks. The 49ers improved their secondary this offseason and present a challenging matchup for Smith in the season opener.',
+          keyFactors: [
+            '49ers allowed just 16.1 fantasy PPG to QBs (6th best)',
+            'San Francisco improved secondary in offseason',
+            'Smith inconsistent against elite defenses',
+            'Seattle favored to rely more on ground game'
+          ],
+          injuryStatus: 'Healthy',
+          weatherImpact: 'Indoor game - no weather concerns',
+          expertTier: 'QB2',
+          ceiling: 21,
+          floor: 8
         }
       };
 
