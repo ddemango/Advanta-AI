@@ -64,6 +64,7 @@ import TermsOfService from "@/pages/terms-of-service";
 import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
+import RedesignedHome from "@/pages/redesigned-home";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
@@ -138,7 +139,8 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={RedesignedHome} />
+      <Route path="/home-original" component={Home} />
       <Route path="/build-my-ai-stack" component={Calculator} />
       <Route path="/login" component={Login} />
       <Route path="/oauth-consent" component={OAuthConsent} />
