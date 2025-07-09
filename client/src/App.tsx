@@ -1,29 +1,22 @@
-import { Route, Switch } from "wouter";
+import { Switch, Route } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import NotFound from "@/pages/not-found";
+
+// Page imports
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import Login from "@/pages/login";
 import ResetPassword from "@/pages/reset-password";
 import Marketplace from "@/pages/marketplace";
+import Dashboard from "@/pages/dashboard";
 import SimpleDashboard from "@/pages/SimpleDashboard";
+import WorkingDashboard from "@/pages/WorkingDashboard";
 import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
 import TemplateDemo from "@/pages/template-demo";
-import MarketingCopyGenerator from "@/pages/marketing-copy-generator";
-import AIToolQuiz from "@/pages/ai-tool-quiz";
-import BusinessNameGenerator from "@/pages/business-name-generator";
-import ResumeOptimizer from "@/pages/resume-optimizer";
-import ResumeGenerator from "@/pages/resume-generator";
-import ATSResumeTailor from "@/pages/ats-resume-tailor";
-import AIToolsComparison from "@/pages/ai-tools-comparison";
-import CompetitorIntelligence from "@/pages/competitor-intelligence";
-import VoiceoverScriptGenerator from "@/pages/voiceover-script-generator";
-import SlideDeckMaker from "@/pages/slide-deck-maker";
-import ColdEmailGenerator from "@/pages/cold-email-generator";
 import Sandbox from "@/pages/sandbox";
 import ServicesPage from "@/pages/services";
 import ContactPage from "@/pages/contact";
@@ -36,6 +29,17 @@ import Blog from "@/pages/blog";
 import BlogPostPage from "@/pages/blog-post";
 import Resources from "@/pages/resources";
 import ResourceDetail from "@/pages/resource-detail";
+import MarketingCopyGenerator from "@/pages/marketing-copy-generator";
+import AIToolQuiz from "@/pages/ai-tool-quiz";
+import BusinessNameGenerator from "@/pages/business-name-generator";
+import ResumeOptimizer from "@/pages/resume-optimizer";
+import ResumeGenerator from "@/pages/resume-generator";
+import ATSResumeTailor from "@/pages/ats-resume-tailor";
+import AIToolsComparison from "@/pages/ai-tools-comparison";
+import CompetitorIntelligence from "@/pages/competitor-intelligence";
+import VoiceoverScriptGenerator from "@/pages/voiceover-script-generator";
+import SlideDeckMaker from "@/pages/slide-deck-maker";
+import ColdEmailGenerator from "@/pages/cold-email-generator";
 import EnterpriseGovernance from "@/pages/enterprise-governance";
 import EnterpriseSecurity from "@/pages/enterprise-security";
 import ExecutiveIntelligence from "@/pages/executive-intelligence";
@@ -66,6 +70,7 @@ import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
 import RedesignedHome from "@/pages/redesigned-home";
+import NotFound from "@/pages/not-found";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
 
@@ -127,7 +132,7 @@ function Router() {
       <Route path="/oauth-consent" component={OAuthConsent} />
       <Route path="/google-ads-oauth" component={GoogleAdsOAuth} />
       <Route path="/marketplace" component={Marketplace} />
-      <Route path="/dashboard" component={SimpleDashboard} />
+      <Route path="/dashboard" component={WorkingDashboard} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/demo" component={Demo} />
       <Route path="/template-demo" component={TemplateDemo} />
