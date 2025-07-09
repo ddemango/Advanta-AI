@@ -9,7 +9,7 @@ import Calculator from "@/pages/calculator";
 import Login from "@/pages/login";
 import ResetPassword from "@/pages/reset-password";
 import Marketplace from "@/pages/marketplace";
-import Dashboard from "@/pages/Dashboard";
+import SimpleDashboard from "@/pages/SimpleDashboard";
 import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
 import TemplateDemo from "@/pages/template-demo";
@@ -127,7 +127,7 @@ function Router() {
       <Route path="/oauth-consent" component={OAuthConsent} />
       <Route path="/google-ads-oauth" component={GoogleAdsOAuth} />
       <Route path="/marketplace" component={Marketplace} />
-      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/dashboard" component={SimpleDashboard} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/demo" component={Demo} />
       <Route path="/template-demo" component={TemplateDemo} />
