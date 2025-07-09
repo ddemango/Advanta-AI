@@ -1298,6 +1298,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first
   setupAuth(app);
 
+  // Authentication endpoints
+  app.get('/auth/user', (req, res) => {
+    if (req.user) {
+      res.json(req.user);
+    } else {
+      res.status(401).json({ message: 'Not authenticated' });
+    }
+  });
+
+  app.post('/auth/logout', (req, res) => {
+    req.logout(() => {
+      res.json({ message: 'Logged out successfully' });
+    });
+  });
+
   // Start the blog scheduler to generate 2 articles daily
   const blogScheduler = new BlogScheduler(2);
   blogScheduler.start();

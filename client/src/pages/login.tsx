@@ -43,7 +43,8 @@ export default function Login() {
   }, [setLocation]);
 
   const handleGoogleLogin = () => {
-    setLocation('/oauth-consent');
+    // Redirect to Google OAuth endpoint
+    window.location.href = '/auth/google';
   };
 
   const handleAppleLogin = async () => {

@@ -55,7 +55,10 @@ export function setupAuth(app: Express) {
         return done(null, demoUser);
       }
       
-      done(null, null);
+      // Get real user from database
+      const { storage } = await import('./storage');
+      const user = await storage.getUser(id);
+      done(null, user);
     } catch (error) {
       done(error, null);
     }
@@ -63,25 +66,32 @@ export function setupAuth(app: Express) {
 
   // Google OAuth Strategy
   passport.use('google', new GoogleStrategy({
-    clientID: 'demo-google-client-id',
-    clientSecret: 'demo-google-client-secret',
+    clientID: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     callbackURL: "/auth/google/callback"
   },
   async (accessToken: any, refreshToken: any, profile: any, done: any) => {
     try {
-      const demoUser = {
-        id: 1001,
-        email: 'demo.user@gmail.com',
-        firstName: 'Demo',
-        lastName: 'User',
-        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-        provider: 'google',
-        providerId: 'demo_google_id_123',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      done(null, demoUser);
+      const { storage } = await import('./storage');
+      
+      // Try to find existing user
+      let user = await storage.getUserByProviderId('google', profile.id);
+      
+      if (!user) {
+        // Create new user
+        user = await storage.createUser({
+          email: profile.emails[0].value,
+          firstName: profile.name.givenName,
+          lastName: profile.name.familyName,
+          picture: profile.photos[0].value,
+          provider: 'google',
+          providerId: profile.id
+        });
+      }
+      
+      done(null, user);
     } catch (error) {
+      console.error('Google OAuth error:', error);
       done(error, null);
     }
   }));
