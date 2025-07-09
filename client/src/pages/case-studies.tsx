@@ -1,678 +1,451 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'wouter';
 import { NewHeader } from '@/components/redesign/NewHeader';
-import Footer from '@/components/layout/Footer';
+import { NewFooter } from '@/components/redesign/NewFooter';
 import { Button } from '@/components/ui/button';
-import { GradientText } from '@/components/ui/gradient-text';
-import { CaseStudy, CaseStudyProps } from '@/components/ui/case-study';
-import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+import { useLocation } from 'wouter';
 import { Helmet } from 'react-helmet';
+import { 
+  CheckCircle, 
+  TrendingUp, 
+  Rocket, 
+  Filter,
+  ArrowRight,
+  Store,
+  Heart,
+  Briefcase,
+  MessageSquare,
+  BarChart3,
+  Users,
+  Play
+} from 'lucide-react';
+
+interface CaseStudy {
+  id: string;
+  company: string;
+  logo: string;
+  industry: string;
+  industryIcon: any;
+  category: string;
+  headline: string;
+  summary: string;
+  metrics: {
+    label: string;
+    value: string;
+  }[];
+  link: string;
+  featured?: boolean;
+}
+
+interface ResultStat {
+  number: string;
+  label: string;
+  icon: any;
+}
 
 export default function CaseStudiesPage() {
-  const [activeIndustry, setActiveIndustry] = useState('All Industries');
-  const [visibleCount, setVisibleCount] = useState(6);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  // All industries represented in the case studies
-  const industries = [
-    'All Industries',
-    'eCommerce',
-    'SaaS',
-    'Real Estate',
-    'Finance',
-    'Healthcare',
-    'Retail',
-    'Manufacturing',
-    'Transportation',
-    'Education',
-    'Legal',
-    'Energy',
-    'Media & Entertainment'
+  const [, setLocation] = useLocation();
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const categories = [
+    { id: 'all', label: 'All', icon: Filter },
+    { id: 'retail', label: 'Retail', icon: Store },
+    { id: 'healthcare', label: 'Healthcare', icon: Heart },
+    { id: 'sales', label: 'Sales Ops', icon: BarChart3 },
+    { id: 'chatbot', label: 'AI Chatbot', icon: MessageSquare }
   ];
-  
-  // Comprehensive case study data
-  const caseStudies: CaseStudyProps[] = [
+
+  const caseStudies: CaseStudy[] = [
     {
-      id: 1,
-      title: 'Personalization Engine Overhaul',
-      client: 'FashionGo',
-      logo: 'FG',
-      logoColor: '#4A90E2',
-      industry: 'eCommerce',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'FashionGo struggled with generic product recommendations that resulted in low conversion rates across their platform, with customers often abandoning searches after viewing only a few products.',
-      solution: 'We implemented a custom AI-driven personalization system that analyzes real-time user behavior, purchase history, and fashion trends to deliver highly relevant product suggestions.',
-      result: 'The new personalization engine transformed their customer experience by delivering product recommendations that align with individual style preferences and shopping patterns.',
+      id: 'globalshop-ecommerce',
+      company: 'GlobalShop',
+      logo: 'GS',
+      industry: 'E-commerce',
+      industryIcon: Store,
+      category: 'retail',
+      headline: 'Reduced cart abandonment by 42%',
+      summary: 'Custom GPT agent trained on product catalog and customer service history, handling 78% of inquiries while increasing average order value by 23%.',
       metrics: [
-        { label: 'Conversion Rate', value: '+38%' },
-        { label: 'Average Order Value', value: '+22%' },
-        { label: 'Customer Retention', value: '+47%' }
+        { label: 'Cart Abandonment', value: '-42%' },
+        { label: 'Order Value', value: '+23%' },
+        { label: 'Customer Satisfaction', value: '4.7/5' }
       ],
-      quote: 'The AI recommendations are so accurate that customers ask if we are reading their minds.',
-      spokespersonName: 'Sarah Chen',
-      spokespersonTitle: 'Director of eCommerce',
-      technologies: ['NLP', 'Visual Recognition AI', 'Reinforcement Learning'],
-      implementationTime: '21 days',
-      color: 'primary',
+      link: '/case-studies/globalshop',
       featured: true
     },
     {
-      id: 2,
-      title: 'AI Task Prioritization & Assignment',
-      client: 'TaskMaster',
-      logo: 'TM',
-      logoColor: '#8957E5',
-      industry: 'SaaS',
-      image: 'https://images.unsplash.com/photo-1639762681057-408e52192e55?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'TaskMaster project management software lacked intelligent task allocation, causing teams to waste time in planning meetings and miss critical deadlines.',
-      solution: 'We developed an AI system that learns team members skills, work patterns, and availability to automatically prioritize and assign tasks for optimal workflow efficiency.',
-      result: 'Teams using TaskMaster now spend less time planning and more time executing, with the AI handling routine task management decisions.',
-      metrics: [
-        { label: 'Team Productivity', value: '+41%' },
-        { label: 'Project Completion Time', value: '-28%' },
-        { label: 'User Engagement', value: '+63%' }
-      ],
-      quote: 'We have eliminated endless planning meetings with AI that learns team patterns.',
-      spokespersonName: 'Michael Reynolds',
-      spokespersonTitle: 'Chief Product Officer',
-      technologies: ['Machine Learning', 'Predictive Analytics', 'API Integration'],
-      implementationTime: '30 days',
-      color: 'accent',
-      featured: true
-    },
-    {
-      id: 3,
-      title: 'Fraud Detection & Risk Analysis',
-      client: 'FinCore',
-      logo: 'FC',
-      logoColor: '#10B981',
-      industry: 'Finance',
-      image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'FinCore traditional fraud detection systems generated excessive false positives, frustrating legitimate customers while still missing sophisticated fraud patterns.',
-      solution: 'We built a multi-layered AI system that combines behavioral biometrics, transaction pattern analysis, and network effect modeling to identify fraudulent activities with unprecedented accuracy.',
-      result: 'FinCore now detects fraudulent transactions with remarkable precision while reducing the friction for legitimate customers.',
-      metrics: [
-        { label: 'Fraud Detection Rate', value: '+92%' },
-        { label: 'False Positives', value: '-76%' },
-        { label: 'Operational Cost', value: '-34%' }
-      ],
-      quote: 'The system identified patterns that would take months for human analysts to discover.',
-      spokespersonName: 'Alicia Mendez',
-      spokespersonTitle: 'Chief Risk Officer',
-      technologies: ['Deep Learning', 'Network Analysis', 'Behavioral Analytics'],
-      implementationTime: '45 days',
-      color: 'secondary',
-      featured: true
-    },
-    {
-      id: 4,
-      title: 'Inventory Optimization System',
-      client: 'RetailPro',
-      logo: 'RP',
-      logoColor: '#F59E0B',
-      industry: 'Retail',
-      image: 'https://images.unsplash.com/photo-1580894732930-0babd100d356?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'RetailPro struggled with inventory management across multiple locations, resulting in frequent stockouts of popular items and excess inventory of slow-moving products.',
-      solution: 'We implemented a predictive inventory management system that forecasts demand patterns, optimizes stock levels, and automatically adjusts purchasing recommendations based on multiple factors like seasonality, promotions, and market trends.',
-      result: 'The AI solution transformed RetailPro inventory management, ensuring optimal stock levels across all store locations and significantly reducing carrying costs.',
-      metrics: [
-        { label: 'Stockout Reduction', value: '-68%' },
-        { label: 'Inventory Carrying Cost', value: '-32%' },
-        { label: 'Forecast Accuracy', value: '+45%' }
-      ],
-      quote: 'The AI system predicts demand better than our most experienced team members.',
-      spokespersonName: 'Damon Morris',
-      spokespersonTitle: 'VP of Operations',
-      technologies: ['Predictive Analytics', 'Time Series Analysis', 'Supply Chain Optimization'],
-      implementationTime: '28 days',
-      color: 'primary'
-    },
-    {
-      id: 5,
-      title: 'Patient Care Optimization',
-      client: 'HealthCorp',
-      logo: 'HC',
-      logoColor: '#EF4444',
+      id: 'healthplus-patient',
+      company: 'HealthPlus',
+      logo: 'HP',
       industry: 'Healthcare',
-      image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'HealthCorp hospitals faced increasing patient wait times, staff burnout, and inefficient resource allocation across departments.',
-      solution: 'We created an AI-driven patient flow optimization system that predicts patient volume, optimizes staff scheduling, and intelligently allocates resources based on real-time demand patterns.',
-      result: 'HealthCorp achieved significant improvements in resource utilization and patient satisfaction while reducing the burden on healthcare staff.',
+      industryIcon: Heart,
+      category: 'healthcare',
+      headline: 'Automated 85% of appointment scheduling',
+      summary: 'AI-powered patient communication system reduced wait times, improved appointment efficiency, and enhanced patient experience across multiple clinics.',
       metrics: [
-        { label: 'Patient Wait Times', value: '-56%' },
-        { label: 'Staff Efficiency', value: '+37%' },
-        { label: 'Patient Satisfaction', value: '+48%' }
+        { label: 'Scheduling Automation', value: '85%' },
+        { label: 'Wait Time Reduction', value: '-60%' },
+        { label: 'Patient Satisfaction', value: '+40%' }
       ],
-      quote: 'Our care quality improved while simultaneously reducing staff burnout.',
-      spokespersonName: 'Dr. Elena Patel',
-      spokespersonTitle: 'Medical Director',
-      technologies: ['Predictive Modeling', 'Queue Optimization', 'Resource Allocation AI'],
-      implementationTime: '60 days',
-      color: 'accent'
+      link: '/case-studies/healthplus'
     },
     {
-      id: 6,
-      title: 'Real Estate Market Predictor',
-      client: 'HomeVista',
-      logo: 'HV',
-      logoColor: '#0EA5E9',
-      industry: 'Real Estate',
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'HomeVista relied on traditional market analysis methods that could not accurately predict neighborhood-specific price trends, causing missed opportunities and suboptimal property investments.',
-      solution: 'We built a predictive AI platform that ingests multiple data sources including historical sales, local economics, development permits, and social sentiment to forecast market movements at a hyper-local level.',
-      result: 'HomeVista now has unprecedented visibility into market trends, allowing them to make data-driven decisions weeks before their competitors.',
+      id: 'cloudsoft-onboarding',
+      company: 'CloudSoft Solutions',
+      logo: 'CS',
+      industry: 'SaaS',
+      industryIcon: Briefcase,
+      category: 'sales',
+      headline: 'Reduced onboarding time from 28 to 4 days',
+      summary: 'AI workflow automation system streamlined client onboarding with intelligent document processing and conditional logic workflows.',
       metrics: [
-        { label: 'Price Prediction Accuracy', value: '+85%' },
-        { label: 'Days on Market', value: '-42%' },
-        { label: 'Client Portfolio Growth', value: '+29%' }
+        { label: 'Onboarding Time', value: '-86%' },
+        { label: 'Processing Errors', value: '-94%' },
+        { label: 'Cost Savings', value: '$1.8M' }
       ],
-      quote: 'We can now pinpoint market shifts months before our competitors.',
-      spokespersonName: 'Jonathan Miller',
-      spokespersonTitle: 'Director of Acquisitions',
-      technologies: ['Geospatial AI', 'Economic Modeling', 'Sentiment Analysis'],
-      implementationTime: '35 days',
-      color: 'secondary'
+      link: '/case-studies/cloudsoft',
+      featured: true
     },
     {
-      id: 7,
-      title: 'Supply Chain Predictive Maintenance',
-      client: 'GlobalManufacturing',
-      logo: 'GM',
-      logoColor: '#6366F1',
-      industry: 'Manufacturing',
-      image: 'https://images.unsplash.com/photo-1621574539437-8732dcaef4b3?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'GlobalManufacturing experienced frequent unplanned equipment failures that disrupted production schedules and significantly increased maintenance costs.',
-      solution: 'We deployed IoT sensors throughout their manufacturing facilities and developed an AI system that predicts equipment failures before they occur by analyzing patterns in temperature, vibration, and performance data.',
-      result: 'The predictive maintenance system transformed GlobalManufacturing operations by dramatically reducing unexpected downtime and extending the useful life of critical equipment.',
+      id: 'retailmax-support',
+      company: 'RetailMax',
+      logo: 'RM',
+      industry: 'Retail',
+      industryIcon: Store,
+      category: 'chatbot',
+      headline: 'Cut support response time by 89%',
+      summary: 'Intelligent chatbot system handling customer inquiries, order tracking, and product recommendations with human-like accuracy.',
       metrics: [
-        { label: 'Unplanned Downtime', value: '-78%' },
-        { label: 'Maintenance Costs', value: '-42%' },
-        { label: 'Equipment Lifespan', value: '+32%' }
+        { label: 'Response Time', value: '-89%' },
+        { label: 'Resolution Rate', value: '92%' },
+        { label: 'Support Cost', value: '-65%' }
       ],
-      quote: 'Our AI now predicts equipment failures weeks before they would occur, transforming our maintenance operations.',
-      spokespersonName: 'Robert Zhang',
-      spokespersonTitle: 'Head of Operations',
-      technologies: ['IoT Integration', 'Anomaly Detection', 'Predictive Modeling'],
-      implementationTime: '90 days',
-      color: 'primary'
+      link: '/case-studies/retailmax'
     },
     {
-      id: 8,
-      title: 'Fleet Optimization System',
-      client: 'TransGlobal',
-      logo: 'TG',
-      logoColor: '#0D9488',
-      industry: 'Transportation',
-      image: 'https://images.unsplash.com/photo-1620370018846-be2953441456?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'TransGlobal logistics operations were plagued by inefficient routing, vehicle utilization issues, and unpredictable fuel costs that eroded their profit margins.',
-      solution: 'We implemented an AI-driven fleet management system that optimizes routes in real-time based on current traffic conditions, weather forecasts, delivery priorities, and fuel efficiency calculations.',
-      result: 'The solution has revolutionized TransGlobal logistics operations, significantly reducing delivery times while minimizing operational costs.',
+      id: 'salesforce-leads',
+      company: 'SalesForce Pro',
+      logo: 'SP',
+      industry: 'Sales',
+      industryIcon: BarChart3,
+      category: 'sales',
+      headline: 'Increased qualified leads by 156%',
+      summary: 'AI-powered lead scoring and nurturing system that identifies high-value prospects and automates personalized outreach campaigns.',
       metrics: [
-        { label: 'Fuel Consumption', value: '-25%' },
-        { label: 'On-Time Deliveries', value: '+37%' },
-        { label: 'Fleet Utilization', value: '+40%' }
+        { label: 'Qualified Leads', value: '+156%' },
+        { label: 'Conversion Rate', value: '+73%' },
+        { label: 'Sales Cycle', value: '-45%' }
       ],
-      quote: 'Our delivery efficiency has reached levels we previously thought impossible.',
-      spokespersonName: 'Carlos Rivera',
-      spokespersonTitle: 'Logistics Director',
-      technologies: ['Route Optimization', 'Real-time Traffic Analysis', 'Fuel Efficiency Modeling'],
-      implementationTime: '45 days',
-      color: 'accent'
+      link: '/case-studies/salesforce'
     },
     {
-      id: 9,
-      title: 'Personalized Learning Platform',
-      client: 'EduConnect',
-      logo: 'EC',
-      logoColor: '#8B5CF6',
-      industry: 'Education',
-      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'EduConnect one-size-fits-all educational content resulted in disengagement from students with different learning styles and knowledge levels.',
-      solution: 'We built an adaptive learning platform that uses AI to assess each student knowledge gaps, learning style, and pace, then customizes educational content and exercises accordingly.',
-      result: 'The personalized learning system has transformed student engagement and outcomes across EduConnect platform.',
+      id: 'meditech-diagnostics',
+      company: 'MediTech Labs',
+      logo: 'MT',
+      industry: 'Healthcare',
+      industryIcon: Heart,
+      category: 'healthcare',
+      headline: 'Improved diagnostic accuracy by 34%',
+      summary: 'AI-assisted diagnostic system that analyzes medical imaging and patient data to support healthcare professionals in making faster, more accurate decisions.',
       metrics: [
-        { label: 'Student Engagement', value: '+58%' },
-        { label: 'Completion Rates', value: '+62%' },
-        { label: 'Test Score Improvement', value: '+43%' }
+        { label: 'Diagnostic Accuracy', value: '+34%' },
+        { label: 'Analysis Time', value: '-58%' },
+        { label: 'Patient Outcomes', value: '+29%' }
       ],
-      quote: 'Our AI creates truly personalized learning journeys that adapt to each student needs.',
-      spokespersonName: 'Priya Sharma',
-      spokespersonTitle: 'Chief Learning Officer',
-      technologies: ['Adaptive Learning', 'Knowledge Mapping', 'Content Personalization'],
-      implementationTime: '60 days',
-      color: 'secondary'
-    },
-    {
-      id: 10,
-      title: 'Legal Document Analysis System',
-      client: 'LexisNova',
-      logo: 'LN',
-      logoColor: '#EC4899',
-      industry: 'Legal',
-      image: 'https://images.unsplash.com/photo-1589391886645-d51941baf7fb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'LexisNova attorneys spent countless hours manually reviewing case documents, contracts, and legal precedents, reducing their productivity and increasing client costs.',
-      solution: 'We developed an AI-powered legal document analysis system that automatically extracts key information, identifies contractual risks, and connects relevant case precedents to current matters.',
-      result: 'The system dramatically accelerated document review processes while improving accuracy and consistency of legal analysis.',
-      metrics: [
-        { label: 'Document Review Time', value: '-73%' },
-        { label: 'Risk Identification', value: '+67%' },
-        { label: 'Case Research Time', value: '-58%' }
-      ],
-      quote: 'Our AI system finds connections between cases that would take days for human attorneys to discover.',
-      spokespersonName: 'Marcus Bennett',
-      spokespersonTitle: 'Managing Partner',
-      technologies: ['Natural Language Processing', 'Legal Knowledge Graphs', 'Semantic Search'],
-      implementationTime: '75 days',
-      color: 'primary'
-    },
-    {
-      id: 11,
-      title: 'Smart Grid Management System',
-      client: 'PowerGrid',
-      logo: 'PG',
-      logoColor: '#FBBF24',
-      industry: 'Energy',
-      image: 'https://images.unsplash.com/photo-1581094289810-adf5d25690e3?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'PowerGrid struggled with inefficient energy distribution, difficulty integrating renewable sources, and challenges predicting demand fluctuations.',
-      solution: 'We implemented an AI-driven grid management system that predicts energy demand, optimizes distribution in real-time, and smoothly integrates intermittent renewable energy sources.',
-      result: 'The smart grid system has significantly improved PowerGrid distribution efficiency while enabling greater adoption of renewable energy sources.',
-      metrics: [
-        { label: 'Distribution Efficiency', value: '+31%' },
-        { label: 'Renewable Integration', value: '+54%' },
-        { label: 'Outage Duration', value: '-47%' }
-      ],
-      quote: 'Our grid now anticipates demand shifts and automatically rebalances for optimal efficiency.',
-      spokespersonName: 'Lisa Johnson',
-      spokespersonTitle: 'Grid Operations Director',
-      technologies: ['Demand Forecasting', 'Real-time Optimization', 'Renewable Integration'],
-      implementationTime: '120 days',
-      color: 'accent'
-    },
-    {
-      id: 12,
-      title: 'Content Personalization Engine',
-      client: 'StreamVerse',
-      logo: 'SV',
-      logoColor: '#7C3AED',
-      industry: 'Media & Entertainment',
-      image: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
-      problem: 'StreamVerse content recommendations were based on limited factors, resulting in poor engagement and high subscriber churn rates.',
-      solution: 'We developed a sophisticated content personalization engine that analyzes viewing patterns, content characteristics, emotional responses, and contextual factors to deliver highly relevant recommendations.',
-      result: 'The personalization system has transformed user engagement with StreamVerse platform, significantly reducing subscriber churn.',
-      metrics: [
-        { label: 'User Engagement', value: '+72%' },
-        { label: 'Content Discovery', value: '+83%' },
-        { label: 'Subscriber Retention', value: '+47%' }
-      ],
-      quote: 'Our viewers now find content they love without endless scrolling, transforming their experience.',
-      spokespersonName: 'David Kim',
-      spokespersonTitle: 'Chief Content Officer',
-      technologies: ['Recommendation Algorithms', 'Content Analysis', 'Behavioral Modeling'],
-      implementationTime: '60 days',
-      color: 'secondary'
+      link: '/case-studies/meditech',
+      featured: true
     }
   ];
-  
-  const filteredCaseStudies = activeIndustry === 'All Industries'
-    ? caseStudies
-    : caseStudies.filter(study => study.industry === activeIndustry);
 
-  const visibleCaseStudies = filteredCaseStudies.slice(0, visibleCount);
-  const hasMore = visibleCaseStudies.length < filteredCaseStudies.length;
-  
-  // Responsive industry filter display
-  const isDesktop = windowWidth >= 768;
+  const resultStats: ResultStat[] = [
+    { number: '80+', label: 'Businesses Transformed', icon: Users },
+    { number: '30-50%', label: 'Average Time Savings', icon: TrendingUp },
+    { number: '100+', label: 'AI Workflows Deployed', icon: Rocket },
+    { number: '4.9/5', label: 'Client Satisfaction', icon: CheckCircle }
+  ];
+
+  const trustedCompanies = [
+    { name: 'GlobalShop', industry: 'E-commerce' },
+    { name: 'HealthPlus', industry: 'Healthcare' },
+    { name: 'CloudSoft', industry: 'SaaS' },
+    { name: 'RetailMax', industry: 'Retail' },
+    { name: 'MediTech', industry: 'Healthcare' },
+    { name: 'SalesForce Pro', industry: 'Sales' }
+  ];
+
+  const filteredCaseStudies = activeFilter === 'all' 
+    ? caseStudies 
+    : caseStudies.filter(study => study.category === activeFilter);
 
   return (
     <>
       <Helmet>
-        <title>Case Studies & Results | Advanta AI</title>
-        <meta name="description" content="Explore our AI success stories across industries. See how our clients achieved measurable business outcomes with our enterprise AI solutions." />
-        <meta name="keywords" content="AI case studies, enterprise AI results, artificial intelligence ROI, business transformation, industry solutions" />
-        <meta property="og:title" content="Case Studies & Results | Advanta AI" />
-        <meta property="og:description" content="Explore our AI success stories across industries. See how our clients achieved measurable business outcomes with our enterprise AI solutions." />
+        <title>Real Results with Advanta AI | Case Studies</title>
+        <meta name="description" content="Discover how businesses are scaling faster, saving time, and boosting productivity with AI-powered solutions. Real case studies, real results." />
+        <meta name="keywords" content="AI case studies, business automation results, AI success stories, customer testimonials, business transformation" />
+        
+        <meta property="og:title" content="Real Results with Advanta AI | Case Studies" />
+        <meta property="og:description" content="Discover how businesses are scaling faster, saving time, and boosting productivity with AI-powered solutions." />
         <meta property="og:type" content="website" />
       </Helmet>
-      
-      <NewHeader />
-      
-      <main>
-        {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
-          
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <motion.div 
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="text-center mb-12"
-            >
-              <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                Case Studies & <GradientText>Results</GradientText>
-              </motion.h1>
-              <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-                Real business transformation with measurable outcomes across industries
-              </motion.p>
-            </motion.div>
-            
-            {/* Industry Statistics */}
-            <motion.div 
-              variants={fadeInUp}
-              initial="hidden"
-              animate="show"
-              className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
-            >
-              <div className="bg-background/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">12+</div>
-                <div className="text-gray-300">Industries Served</div>
-              </div>
-              <div className="bg-background/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">98%</div>
-                <div className="text-gray-300">Client Satisfaction</div>
-              </div>
-              <div className="bg-background/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">385%</div>
-                <div className="text-gray-300">Average ROI</div>
-              </div>
-              <div className="bg-background/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
-                <div className="text-4xl font-bold text-primary mb-2">14-30</div>
-                <div className="text-gray-300">Days to Implementation</div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
+
+      <div className="min-h-screen bg-white">
+        <NewHeader />
         
-        {/* Industry Filters */}
-        <section className="py-8 bg-muted">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div 
-              variants={fadeIn}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-            >
-              <h2 className="text-2xl font-bold mb-6 text-center">Browse by Industry</h2>
-              
-              {isDesktop ? (
-                // Desktop - Buttons in rows
-                <div className="flex flex-wrap justify-center gap-3 mb-8">
-                  {industries.map((industry) => (
-                    <Button
-                      key={industry}
-                      variant={activeIndustry === industry ? "default" : "outline"}
-                      className={`text-sm font-medium ${activeIndustry === industry ? 'bg-primary text-white' : ''}`}
-                      onClick={() => {
-                        setActiveIndustry(industry);
-                        setVisibleCount(6); // Reset visible count when filter changes
-                      }}
-                    >
-                      {industry}
-                    </Button>
-                  ))}
-                </div>
-              ) : (
-                // Mobile - Horizontal scrolling tabs
-                <div className="overflow-x-auto pb-4 mb-4 -mx-4 px-4">
-                  <div className="flex space-x-2" style={{ minWidth: 'max-content' }}>
-                    {industries.map((industry) => (
-                      <Button
-                        key={industry}
-                        variant={activeIndustry === industry ? "default" : "outline"}
-                        className={`text-sm font-medium whitespace-nowrap ${activeIndustry === industry ? 'bg-primary text-white' : ''}`}
-                        onClick={() => {
-                          setActiveIndustry(industry);
-                          setVisibleCount(6);
-                        }}
-                      >
-                        {industry}
-                      </Button>
-                    ))}
+        <main>
+          {/* Hero Section */}
+          <section className="pt-20 pb-16 bg-gradient-to-br from-green-50 to-blue-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-center max-w-4xl mx-auto"
+              >
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
                   </div>
                 </div>
-              )}
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* Featured Case Studies */}
-        {activeIndustry === 'All Industries' && (
-          <section className="py-12 bg-black/40">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true }}
-                className="text-center mb-10"
-              >
-                <motion.h2 variants={fadeInUp} className="text-3xl font-bold mb-4">
-                  Featured Success Stories
-                </motion.h2>
-                <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
-                  Our most impactful AI implementations with transformative results
-                </motion.p>
-              </motion.div>
-              
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-8"
-              >
-                {caseStudies
-                  .filter(study => study.featured)
-                  .map((study) => (
-                    <motion.div key={study.id} variants={fadeIn}>
-                      <CaseStudy {...study} />
-                    </motion.div>
-                  ))}
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                  Real Results with{' '}
+                  <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                    Advanta AI
+                  </span>
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Discover how businesses are scaling faster, saving time, and boosting productivity with AI-powered solutions
+                </p>
               </motion.div>
             </div>
           </section>
-        )}
-        
-        {/* All Case Studies */}
-        <section className="py-16 bg-muted">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl font-bold mb-4">
-                {activeIndustry === 'All Industries' 
-                  ? 'All Case Studies' 
-                  : `${activeIndustry} Success Stories`}
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
-                {activeIndustry === 'All Industries'
-                  ? 'Discover how our AI solutions deliver measurable results across all industries'
-                  : `See how our AI solutions transform ${activeIndustry} businesses with measurable outcomes`}
-              </motion.p>
-            </motion.div>
-            
-            {filteredCaseStudies.length > 0 ? (
-              <>
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                >
-                  {visibleCaseStudies.map((study) => (
-                    <motion.div key={study.id} variants={fadeIn}>
-                      <CaseStudy {...study} />
+
+          {/* Filter Buttons */}
+          <section className="py-8 bg-white border-b border-gray-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-wrap justify-center gap-3">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setActiveFilter(category.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                      activeFilter === category.id
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <category.icon className="w-4 h-4" />
+                    <span>{category.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Case Study Cards */}
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Mobile: Vertical Stack with Swipe */}
+              <div className="block lg:hidden space-y-6">
+                {filteredCaseStudies.map((study, index) => (
+                  <motion.div
+                    key={study.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`bg-white rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                      study.featured ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-white' : 'border-gray-200'
+                    }`}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-start space-x-4 mb-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center font-bold text-blue-600">
+                        {study.logo}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <study.industryIcon className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm text-gray-500">{study.industry}</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">{study.company}</h3>
+                      </div>
+                    </div>
+                    
+                    <h4 className="text-xl font-semibold text-blue-600 mb-3">{study.headline}</h4>
+                    <p className="text-gray-600 mb-6 leading-relaxed">{study.summary}</p>
+                    
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      {study.metrics.map((metric, idx) => (
+                        <div key={idx} className="text-center">
+                          <div className="text-lg font-bold text-gray-900">{metric.value}</div>
+                          <div className="text-xs text-gray-500">{metric.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      onClick={() => setLocation(study.link)}
+                      className="w-full group"
+                    >
+                      View Full Case Study
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Desktop: Staggered Grid */}
+              <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                {filteredCaseStudies.map((study, index) => (
+                  <motion.div
+                    key={study.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`bg-white rounded-2xl border-2 p-8 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                      study.featured ? 'border-blue-200 bg-gradient-to-br from-blue-50 to-white' : 'border-gray-200'
+                    }`}
+                    whileHover={{ y: -5 }}
+                  >
+                    <div className="flex items-center space-x-4 mb-6">
+                      <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center font-bold text-blue-600 text-lg">
+                        {study.logo}
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <study.industryIcon className="w-5 h-5 text-gray-500" />
+                          <span className="text-sm text-gray-500">{study.industry}</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">{study.company}</h3>
+                      </div>
+                    </div>
+                    
+                    <h4 className="text-2xl font-semibold text-blue-600 mb-4">{study.headline}</h4>
+                    <p className="text-gray-600 mb-6 leading-relaxed">{study.summary}</p>
+                    
+                    <div className="space-y-3 mb-8">
+                      {study.metrics.map((metric, idx) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="text-gray-600">{metric.label}</span>
+                          <span className="font-bold text-gray-900">{metric.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      onClick={() => setLocation(study.link)}
+                      variant="outline"
+                      className="w-full group"
+                    >
+                      View Full Case Study
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Results Stats Section */}
+          <section className="py-20 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center mb-16"
+              >
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Proven Impact Across Industries
+                </h2>
+              </motion.div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                {resultStats.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="text-center"
+                  >
+                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <stat.icon className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{stat.number}</div>
+                    <div className="text-gray-600 font-medium">{stat.label}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Trust Reinforcement */}
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <h3 className="text-2xl font-bold text-gray-900 mb-12">Trusted by Industry Leaders</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+                  {trustedCompanies.map((company, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className="text-center"
+                    >
+                      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3 font-bold text-gray-600">
+                        {company.name.slice(0, 2)}
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900">{company.name}</div>
+                      <div className="text-xs text-gray-500">{company.industry}</div>
                     </motion.div>
                   ))}
-                </motion.div>
-                
-                {hasMore && (
-                  <div className="text-center mt-12">
-                    <Button 
-                      onClick={() => setVisibleCount(prev => prev + 6)}
-                      variant="outline"
-                      size="lg"
-                      className="min-w-[200px]"
-                    >
-                      Load More Case Studies
-                    </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4 text-primary/50">
-                  <i className="fas fa-folder-open"></i>
                 </div>
-                <h3 className="text-2xl font-bold mb-2">No Case Studies Found</h3>
-                <p className="text-gray-400 mb-6">
-                  We do not have any case studies for this industry yet, but we are constantly adding new success stories.
-                </p>
-                <Button onClick={() => setActiveIndustry('All Industries')}>
-                  View All Industries
-                </Button>
-              </div>
-            )}
-          </div>
-        </section>
-        
-        {/* Metrics Overview */}
-        <section className="py-16 bg-primary/10">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl font-bold mb-4">
-                Impact <GradientText>Overview</GradientText>
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Average results our clients achieve with our AI solutions
-              </motion.p>
-            </motion.div>
-            
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-              {[
-                {
-                  category: "Revenue Growth",
-                  value: "+48%",
-                  description: "Average revenue increase after AI implementation",
-                  icon: "fas fa-chart-line"
-                },
-                {
-                  category: "Operational Efficiency",
-                  value: "+62%",
-                  description: "Improved productivity and resource optimization",
-                  icon: "fas fa-cogs"
-                },
-                {
-                  category: "Cost Reduction",
-                  value: "-35%",
-                  description: "Decreased operational expenses",
-                  icon: "fas fa-piggy-bank"
-                },
-                {
-                  category: "Customer Satisfaction",
-                  value: "+57%",
-                  description: "Enhanced customer experience and loyalty",
-                  icon: "fas fa-smile"
-                },
-                {
-                  category: "Time Savings",
-                  value: "-73%",
-                  description: "Reduced time for critical business processes",
-                  icon: "fas fa-clock"
-                },
-                {
-                  category: "Accuracy",
-                  value: "+89%",
-                  description: "Improved prediction and process precision",
-                  icon: "fas fa-bullseye"
-                },
-                {
-                  category: "Decision Making",
-                  value: "5.7x",
-                  description: "Faster and more data-driven decisions",
-                  icon: "fas fa-brain"
-                },
-                {
-                  category: "ROI Timeline",
-                  value: "3-6 mos",
-                  description: "Average time to investment recovery",
-                  icon: "fas fa-calendar-check"
-                }
-              ].map((metric, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeIn}
-                  className="bg-background border border-white/10 rounded-xl p-6"
-                >
-                  <div className="text-2xl text-primary mb-4">
-                    <i className={metric.icon}></i>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Final CTA */}
+          <section className="py-20 bg-gradient-to-br from-blue-600 to-purple-600">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-white"
+              >
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                    <Rocket className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold mb-1">{metric.category}</h3>
-                  <div className="text-3xl font-bold text-primary mb-2">{metric.value}</div>
-                  <p className="text-gray-400 text-sm">{metric.description}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-        
-        {/* CTA Section */}
-        <section className="py-20 bg-black/60">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-              className="max-w-4xl mx-auto text-center"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-6">
-                Ready to Become Our Next <GradientText>Success Story</GradientText>?
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-xl text-gray-300 mb-8">
-                Schedule a consultation with our AI specialists to explore how our services can be tailored to your specific needs and industry.
-              </motion.p>
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild>
-                  <Link href="/contact">Schedule Consultation</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/services">Explore Our Solutions</Link>
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">Want to Be Our Next Success Story?</h2>
+                <p className="text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
+                  Let's build your own AI assistant or workflow — custom-built to solve real challenges
+                </p>
+                <Button
+                  onClick={() => setLocation('/demo')}
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Book a Demo
                 </Button>
               </motion.div>
-            </motion.div>
-          </div>
-        </section>
-      </main>
-      
-      <Footer />
+            </div>
+          </section>
+        </main>
+
+        <NewFooter />
+      </div>
     </>
   );
 }

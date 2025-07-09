@@ -1,0 +1,83 @@
+ADVANTA-AI CASE STUDIES PAGE — REDESIGN INSTRUCTIONS
+Goal: Make this page clean, modern, mobile-first, and persuasive — showcasing real wins in a visually engaging way.
+
+⸻
+
+1. Hero Section (Top of Page)
+	•	Add bold headline: Real Results with Advanta AI
+	•	Subheadline: Discover how businesses are scaling faster, saving time, and boosting productivity with AI-powered solutions
+	•	Use a soft gradient or white background
+	•	Optional: Add a visual icon or animation (checkmark, rocket, growth chart)
+
+⸻
+
+2. Case Study Card Layout
+	•	Each case study should be displayed in a card format, scrollable on mobile
+	•	Each card should include:
+	•	Company name and logo
+	•	Industry or category (e.g. Retail, Healthcare, Agency)
+	•	Brief headline (e.g. “Reduced support time by 70%”)
+	•	1-paragraph summary
+	•	Button or link: [ View Full Case Study → ]
+	•	Add consistent icons or mini flags for industries
+	•	Add hover/tap animation (scale or shadow)
+	•	Use a staggered grid on desktop, and vertical stack or swipe carousel on mobile
+
+⸻
+
+3. Filter or Category Tags (Optional but Valuable)
+	•	Add simple filter buttons or pills to sort by industry or goal
+	•	Examples: [🛍 Retail] [🏥 Healthcare] [📈 Sales Ops] [💬 AI Chatbot]
+	•	Can be a static set or dynamic filter (JS or CMS-driven)
+
+⸻
+
+4. Results Section (Optional Highlight Block)
+	•	Midway down the page, highlight overall stats like:
+	•	80+ businesses transformed with Advanta AI
+	•	30–50% time savings on average
+	•	100+ GPT workflows deployed
+	•	Use bold numbers with icons in a grid format
+
+⸻
+
+5. Trust Reinforcement Strip
+	•	Repeat or expand your “Trusted by” client logos
+	•	Optional: add mini quote under each logo (1 line)
+
+⸻
+
+6. Final CTA Section (Bottom of Page)
+	•	Headline: Want to Be Our Next Success Story?
+	•	Subheadline: Let’s build your own AI assistant or workflow — custom-built to solve real challenges
+	•	Button: [ Book a Demo → ]
+	•	Optional: Add background like wave lines, subtle gradient, or motion blur effect
+
+⸻
+
+7. Mobile Optimization Notes
+	•	Make all cards and logos fully responsive
+	•	Ensure buttons are tap-friendly (min 44x44px)
+	•	Add swipe functionality for card sections on mobile
+	•	Avoid long paragraphs — stick to punchy 2–3 line summaries
+
+⸻
+
+8. Style & UX Guidelines
+	•	Font: Use Inter, Satoshi, or Space Grotesk
+	•	Icons: Use Tabler or RemixIcon for visual consistency
+	•	Color palette: Neutral base (white/gray) with bold accent color (blue, green)
+	•	Animations: Add fade-in or slide-in on scroll (cards, stats, CTA)
+	•	Accessibility: High contrast text, alt tags, and ARIA labels
+	•	Performance: Lazy-load images and logos, use compressed assets
+
+⸻
+
+What to Request from Your Designer or AI Agent:
+	•	Mobile-first card layout (vertical and swipeable)
+	•	Hero section redesign with icon and modern font styling
+	•	Full responsive grid of case study cards (desktop)
+	•	Optional filter bar for sorting by category
+	•	Mid-page results block (metrics or impact stats)
+	•	Final CTA block with action-oriented copy
+	•	Optional: Tailwind or React component templates for layout + animation

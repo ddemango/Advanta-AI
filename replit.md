@@ -117,6 +117,7 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 9, 2025. CASE STUDIES PAGE REDESIGNED: Complete mobile-first redesign with filterable case study cards, results stats section, trust reinforcement, and final CTA following clean modern design principles
 - July 9, 2025. SERVICES PAGE REDESIGNED: Complete mobile-first redesign with swipeable service cards, benefits section, industry use cases, testimonials, trust indicators, and sticky mobile CTA following futuristic clean design principles
 - July 9, 2025. BRAND LOGO UPDATED: Replaced generic Zap icon with authentic Advanta AI logo featuring the blue gradient A symbol with network nodes
 - July 9, 2025. CONSISTENT NAVIGATION: Updated all main pages to use NewHeader component for consistent navigation across ROI Calculator, Services, Resources, Case Studies, Contact, and Free Tools pages
