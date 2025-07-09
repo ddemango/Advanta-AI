@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import QuickStartTemplates from '@/components/home/QuickStartTemplates';
 import { Button } from '@/components/ui/button';
@@ -71,7 +71,7 @@ export default function QuickStartTemplatesPage() {
         <meta property="og:type" content="website" />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main>
         {/* Hero Banner */}

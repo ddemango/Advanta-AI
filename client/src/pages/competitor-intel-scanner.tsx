@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 import { 
   Search, 
@@ -163,7 +163,7 @@ export default function CompetitorIntelScanner() {
       </Helmet>
       
       <div className="min-h-screen bg-background">
-        <Header />
+        <NewHeader />
         
         {/* Hero Section */}
         <section className="pt-20 pb-16 bg-gradient-to-b from-background to-muted/20">

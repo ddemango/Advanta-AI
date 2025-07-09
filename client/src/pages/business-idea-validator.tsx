@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -78,7 +78,7 @@ export default function BusinessIdeaValidator() {
         <meta name="description" content="Validate your startup idea with AI-powered analysis. Get target audience insights, monetization strategies, and investor readiness scores." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         {/* Hero Section */}

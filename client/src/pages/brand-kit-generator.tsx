@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -88,7 +88,7 @@ export default function BrandKitGenerator() {
         <meta name="description" content="Generate a complete brand kit with personality, colors, fonts, and taglines for your business in minutes." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">

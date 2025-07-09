@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import Header from "@/components/layout/Header";
+import { NewHeader } from "@/components/redesign/NewHeader";
 import { Helmet } from "react-helmet";
 
 const fadeInUp = {
@@ -512,7 +512,7 @@ Please create a professional resume with proper formatting, strong action verbs,
         <meta name="description" content="Create professional, ATS-optimized resumes with AI. Free resume generator with industry templates, keyword optimization, and instant download." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

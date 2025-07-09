@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -156,7 +156,7 @@ export default function Sandbox() {
         <meta name="description" content="Experiment with various AI capabilities including text generation, image creation, chatbots, and data analysis in our interactive sandbox." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

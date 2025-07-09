@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -157,7 +157,7 @@ export default function Dashboard() {
         <meta name="description" content="Manage your AI assistants, view analytics, and control your AI stack from your personalized dashboard." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

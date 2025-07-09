@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -106,7 +106,7 @@ export default function PricingStrategyAssistant() {
         <meta name="description" content="Get AI-powered pricing recommendations with psychological tactics, value stacks, and market positioning for your product." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet";
-import Header from "@/components/layout/Header";
+import { NewHeader } from "@/components/redesign/NewHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -464,7 +464,7 @@ export default function ATSResumeTailor() {
         <meta name="description" content="Upload your resume and job description to get AI-powered ATS optimization. Increase your chances of getting through applicant tracking systems." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

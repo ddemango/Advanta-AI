@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import { Header } from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -160,7 +160,7 @@ export default function MovieMatchmaker() {
         <meta property="twitter:image" content="/advanta-ai-og.png" />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

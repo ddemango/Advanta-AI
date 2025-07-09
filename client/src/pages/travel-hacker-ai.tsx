@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -196,7 +196,7 @@ export default function TravelHackerAI() {
         <meta property="twitter:description" content="Build, automate, and scale with AI. Smart automation, AI workflows, and free AI tools including Travel Hacker AI for finding cheap flights." />
         <meta property="twitter:image" content="/travel-hacker-ai-og.png" />
       </Helmet>
-      <Header />
+      <NewHeader />
       <main className="pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}

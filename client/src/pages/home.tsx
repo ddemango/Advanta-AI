@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
 import HowItWorks from '@/components/home/HowItWorks';
@@ -110,7 +110,7 @@ export default function Home() {
         <meta property="og:type" content="website" />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       {/* Mobile-friendly Bottom Navigation Bar - Minimalistic Version */}
       <motion.div 

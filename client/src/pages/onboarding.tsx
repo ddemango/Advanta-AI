@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -153,7 +153,7 @@ export default function Onboarding() {
         <meta name="description" content="Create your custom AI assistant in minutes with our step-by-step wizard." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

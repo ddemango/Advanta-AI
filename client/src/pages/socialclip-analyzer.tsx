@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 import { 
   Upload, 
@@ -214,7 +214,7 @@ export default function SocialClipAnalyzer() {
       </Helmet>
       
       <div className="min-h-screen bg-background">
-        <Header />
+        <NewHeader />
         
         {/* Hero Section */}
         <section className="pt-20 pb-16 bg-gradient-to-b from-background to-muted/20">

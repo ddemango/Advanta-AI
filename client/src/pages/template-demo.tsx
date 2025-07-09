@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -852,7 +852,7 @@ export default function TemplateDemo() {
   if (!currentTemplate) {
     return (
       <>
-        <Header />
+        <NewHeader />
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Template Not Found</h1>
@@ -873,7 +873,7 @@ export default function TemplateDemo() {
         <meta name="description" content={`Interactive demo of ${currentTemplate.name}. Try before you buy!`} />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

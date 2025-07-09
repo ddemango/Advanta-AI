@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -202,7 +202,7 @@ export default function Demo() {
         <meta name="description" content="Try our AI assistant demo and experience the power of conversational AI. Ask questions, get information, and see how an AI solution could work for your business." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

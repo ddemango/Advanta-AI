@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -128,7 +128,7 @@ export default function PromptLibrary() {
         <meta name="description" content="Curated collection of AI prompts for marketing, sales, product development, and operations. Copy, favorite, and search through proven templates." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">

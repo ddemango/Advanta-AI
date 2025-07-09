@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { motion } from "framer-motion";
 import { Wrench, ArrowRight, ArrowLeft, Sparkles, Mail } from "lucide-react";
-import Header from "@/components/layout/Header";
+import { NewHeader } from "@/components/redesign/NewHeader";
 import Footer from "@/components/layout/Footer";
 import { useToast } from "@/hooks/use-toast";
 
@@ -429,7 +429,7 @@ export default function Calculator() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
-      <Header />
+      <NewHeader />
       
       <div className="container mx-auto px-4 py-24">
         <motion.div

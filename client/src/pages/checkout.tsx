@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, CreditCard, Shield, Star } from 'lucide-react';
 import { useLocation } from 'wouter';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
@@ -65,7 +65,7 @@ const CheckoutForm = ({ templateData, priceType }: { templateData: any, priceTyp
 
   return (
     <div className="min-h-screen bg-background pt-20">
-      <Header />
+      <NewHeader />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
           <motion.div

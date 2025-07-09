@@ -1,5 +1,5 @@
 import React from 'react';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import IndustryTemplates from '@/components/home/IndustryTemplates';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ export default function IndustryTemplatesPage() {
         <meta property="og:type" content="website" />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main>
         {/* Hero Banner */}

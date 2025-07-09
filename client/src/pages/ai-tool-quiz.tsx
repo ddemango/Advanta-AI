@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -269,7 +269,7 @@ export default function AIToolQuiz() {
           <meta name="description" content="Get personalized AI tool recommendations based on your role, goals, and budget. Find the perfect AI solutions for your business." />
         </Helmet>
         
-        <Header />
+        <NewHeader />
         
         <main className="min-h-screen bg-background py-12">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -377,7 +377,7 @@ export default function AIToolQuiz() {
         <meta name="description" content="Take our 2-minute quiz to discover the best AI tools for your role, goals, and budget. Get personalized recommendations from AI experts." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

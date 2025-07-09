@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 import { 
   Film, 
@@ -188,7 +188,7 @@ export default function MovieMatchmaker() {
         <meta name="description" content="Get personalized movie and TV show recommendations based on your mood, preferences, and viewing context. AI-powered watchlist generator for Netflix, Hulu, and more." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-8">
         <div className="max-w-6xl mx-auto">

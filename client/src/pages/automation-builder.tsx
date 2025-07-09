@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { automationTemplates, type AutomationTemplate } from '@/data/automation-templates';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { apiRequest } from '@/lib/queryClient';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -113,7 +113,7 @@ export default function AutomationBuilder() {
         <meta name="description" content="Build powerful automations with our visual workflow builder. Connect your favorite apps and automate repetitive tasks in minutes." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">

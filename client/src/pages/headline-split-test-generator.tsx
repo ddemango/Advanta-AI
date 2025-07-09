@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -58,7 +58,7 @@ export default function HeadlineSplitTestGenerator() {
         <meta name="description" content="Generate high-converting headlines with A/B test predictions. Get multiple headline variations with CTR estimates for your landing pages and ads." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         {/* Hero Section */}

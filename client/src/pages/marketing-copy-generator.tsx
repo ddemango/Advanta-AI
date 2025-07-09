@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -127,7 +127,7 @@ export default function MarketingCopyGenerator() {
         <meta property="og:description" content="Create professional marketing content instantly with our AI-powered copy generator. Perfect for social media, ads, and product descriptions." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

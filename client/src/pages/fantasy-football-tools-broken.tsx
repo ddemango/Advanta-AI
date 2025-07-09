@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Target, Users, TrendingUp, Star, Clock, CheckCircle, Trophy, Search } from "lucide-react";
-import Header from "@/components/layout/Header";
+import { NewHeader } from "@/components/redesign/NewHeader";
 import Footer from "@/components/layout/Footer";
 
 const fadeInUp = {
@@ -428,7 +428,7 @@ export default function FantasyFootballTools() {
         <meta property="twitter:description" content="AI-powered fantasy football tools for smarter draft and lineup decisions using real NFL data." />
         <meta property="twitter:image" content="/advanta-ai-og.png" />
       </Helmet>
-      <Header />
+      <NewHeader />
       <main className="pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Section */}

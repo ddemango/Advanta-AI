@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Mail, MapPin } from 'lucide-react';
 
@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
       </Helmet>
       
       <div className="min-h-screen bg-background">
-        <Header />
+        <NewHeader />
         
         <div className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">

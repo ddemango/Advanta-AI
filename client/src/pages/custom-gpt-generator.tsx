@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { GradientText } from '@/components/ui/gradient-text';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 
@@ -86,7 +86,7 @@ Key behaviors:
         <meta name="description" content="Create custom AI assistants with specialized prompts and instructions. Generate sales coaches, marketing advisors, and domain-specific AI bots." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">

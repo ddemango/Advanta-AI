@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import { useLocation, Link } from 'wouter';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -134,7 +134,7 @@ export default function ResourceDetail() {
   if (isLoadingResource) {
     return (
       <>
-        <Header />
+        <NewHeader />
         <main className="py-28 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
@@ -160,7 +160,7 @@ export default function ResourceDetail() {
   if (resourceError || !resource) {
     return (
       <>
-        <Header />
+        <NewHeader />
         <main className="py-28 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-3xl font-bold mb-4">Resource Not Found</h1>
@@ -191,7 +191,7 @@ export default function ResourceDetail() {
         ))}
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

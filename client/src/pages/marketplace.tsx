@@ -10,7 +10,7 @@ import { GradientText } from '@/components/ui/gradient-text';
 import { useToast } from '@/hooks/use-toast';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { Star, Play, Download, Eye, ShoppingCart, ExternalLink, Users, Zap, Shield, TrendingUp } from 'lucide-react';
-import Header from '@/components/layout/Header';
+import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
@@ -452,7 +452,7 @@ export default function Marketplace() {
         <meta property="og:description" content="Professional AI templates for enterprise. Live demos available. Boost ROI with proven AI solutions." />
       </Helmet>
       
-      <Header />
+      <NewHeader />
       
       <main className="min-h-screen bg-background">
         {/* Hero Section */}
