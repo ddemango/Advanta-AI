@@ -73,29 +73,9 @@ function Router() {
   const [location] = useLocation();
   const [sessionInitialized, setSessionInitialized] = useState(false);
 
-  // Initialize demo session on app load
+  // Don't auto-initialize demo session - let user login normally
   useEffect(() => {
-    const initializeSession = async () => {
-      try {
-        const response = await fetch('/auth/demo-login', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          console.log('Demo session established successfully');
-        }
-      } catch (error) {
-        console.error('Failed to establish demo session:', error);
-      } finally {
-        setSessionInitialized(true);
-      }
-    };
-
-    initializeSession();
+    setSessionInitialized(true);
   }, []);
 
   // Scroll to top on route change

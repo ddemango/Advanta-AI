@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,8 +138,14 @@ export default function Dashboard() {
     );
   }
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation('/login');
+    }
+  }, [isLoading, user, setLocation]);
+
   if (!isLoading && !user) {
-    setLocation('/login');
     return null;
   }
 
