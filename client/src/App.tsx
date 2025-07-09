@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
-import Login from "@/pages/Login";
+import Login from "@/pages/login";
 import Marketplace from "@/pages/marketplace";
 import Dashboard from "@/pages/Dashboard";
 import Onboarding from "@/pages/onboarding";
