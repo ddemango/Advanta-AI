@@ -5,13 +5,19 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
-    // Use Gmail SMTP or other email service
+    // Use Gmail SMTP with app-specific password
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER || 'D.s.demango@gmail.com',
+        pass: process.env.EMAIL_PASS || 'admin1',
       },
+      tls: {
+        rejectUnauthorized: false
+      }
     });
   }
 
@@ -20,7 +26,7 @@ export class EmailService {
       const resetUrl = `https://${domain}/reset-password?token=${resetToken}`;
       
       const mailOptions = {
-        from: process.env.EMAIL_USER || 'noreply@advanta-ai.com',
+        from: process.env.EMAIL_USER || 'D.s.demango@gmail.com',
         to: email,
         subject: 'Reset Your Advanta AI Password',
         html: `
@@ -66,10 +72,22 @@ export class EmailService {
         `,
       };
 
-      await this.transporter.sendMail(mailOptions);
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log('Password reset email sent successfully:', { 
+        to: email, 
+        messageId: result.messageId,
+        accepted: result.accepted,
+        rejected: result.rejected 
+      });
       return true;
-    } catch (error) {
-      console.error('Failed to send password reset email:', error);
+    } catch (error: any) {
+      console.error('Failed to send password reset email:', {
+        error: error.message,
+        code: error.code,
+        response: error.response,
+        command: error.command,
+        to: email
+      });
       return false;
     }
   }

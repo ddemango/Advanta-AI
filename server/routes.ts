@@ -1315,6 +1315,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Email test endpoint (development only)
+  app.post('/auth/test-email', async (req, res) => {
+    try {
+      const { email } = req.body;
+      const testEmail = email || 'test@example.com';
+      
+      const emailSent = await emailService.sendPasswordResetEmail(testEmail, 'test-token-123', 'localhost:5000');
+      
+      if (emailSent) {
+        res.json({ success: true, message: 'Test email sent successfully' });
+      } else {
+        res.status(500).json({ success: false, message: 'Failed to send test email' });
+      }
+    } catch (error) {
+      console.error('Email test error:', error);
+      res.status(500).json({ success: false, message: 'Email test failed', error: error.message });
+    }
+  });
+
   // Password reset endpoints
   app.post('/auth/forgot-password', async (req, res) => {
     try {
@@ -1344,12 +1363,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send email
-      const domain = process.env.REPLIT_DOMAINS || req.get('host');
+      const domain = req.get('host') || 'localhost:5000';
       const emailSent = await emailService.sendPasswordResetEmail(email, resetToken, domain);
 
       if (!emailSent) {
+        console.error('Email sending failed for:', email);
         return res.status(500).json({ message: 'Failed to send reset email. Please try again.' });
       }
+      
+      console.log('Password reset email sent successfully to:', email);
 
       res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
     } catch (error) {
