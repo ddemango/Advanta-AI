@@ -46,7 +46,7 @@ export function MobileNavigation() {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="fixed bottom-6 right-6 z-50 md:hidden"
+        className="fixed bottom-6 left-6 z-50 md:hidden"
       >
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -87,7 +87,7 @@ export function MobileNavigation() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-6 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-50 md:hidden min-w-[240px]"
+            className="fixed bottom-24 left-6 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-50 md:hidden min-w-[240px]"
           >
             <div className="space-y-2">
               {navItems.map((item, index) => (

@@ -22,7 +22,7 @@ export function ChatButton() {
       <AnimatePresence>
         {!isOpen && (
           <motion.div 
-            className="fixed bottom-4 right-4 z-50"
+            className="fixed bottom-20 sm:bottom-6 right-4 z-40"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
@@ -34,9 +34,9 @@ export function ChatButton() {
                 setMinimized(false);
               }}
               size="lg"
-              className="rounded-full shadow-lg h-14 w-14 bg-gradient-to-r from-primary to-accent text-white hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+              className="rounded-full shadow-lg h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105"
             >
-              <MessageCircle size={24} />
+              <MessageCircle size={20} className="sm:w-6 sm:h-6" />
             </Button>
           </motion.div>
         )}

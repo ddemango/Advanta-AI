@@ -153,7 +153,7 @@ export function ChatInterface({ isOpen, onToggle, minimized, onMinimize }: ChatI
         }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="fixed bottom-4 right-4 w-80 sm:w-96 bg-black border border-white/10 rounded-xl overflow-hidden shadow-2xl z-50 flex flex-col"
+        className="fixed bottom-20 sm:bottom-6 right-4 w-80 sm:w-96 bg-black border border-white/10 rounded-xl overflow-hidden shadow-2xl z-50 flex flex-col"
         style={{ 
           backdropFilter: 'blur(16px)', 
           backgroundColor: 'rgba(0, 0, 0, 0.75)' 
