@@ -568,12 +568,34 @@ async function generateCustomDraftAnalysis(draftData: {
   
   const availablePlayers = playerPool || draftBoard[10];
   
+  // CRITICAL FIX: Filter players to only include positions in roster needs
+  let filteredPlayers;
+  if (rosterNeeds && rosterNeeds.length > 0) {
+    // Convert roster needs to uppercase for consistent comparison
+    const normalizedRosterNeeds = rosterNeeds.map(pos => pos.toUpperCase());
+    
+    // STRICT FILTERING: Only return players matching roster needs
+    filteredPlayers = availablePlayers.filter(player => {
+      const playerPosition = player.position.toUpperCase();
+      return normalizedRosterNeeds.includes(playerPosition);
+    });
+    
+    // If no players match roster needs, throw error instead of fallback
+    if (filteredPlayers.length === 0) {
+      throw new Error(`No players available for the requested positions (${rosterNeeds.join(', ')}) at pick ${pickNumber} in round ${currentRound}`);
+    }
+  } else {
+    // If no roster needs specified, use all available players
+    filteredPlayers = availablePlayers;
+  }
+
   // Score players based on league needs and settings
-  const scoredPlayers = availablePlayers.map(player => {
+  const scoredPlayers = filteredPlayers.map(player => {
     let score = 100;
     
     // Position need bonus - significant bonus for needed positions
-    if (rosterNeeds.includes(player.position.toLowerCase())) {
+    const normalizedRosterNeeds = rosterNeeds.map(pos => pos.toUpperCase());
+    if (normalizedRosterNeeds.includes(player.position.toUpperCase())) {
       score += 40;
     }
     
