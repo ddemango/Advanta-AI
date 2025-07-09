@@ -387,7 +387,16 @@ async function findPlayerInSleeper(playerName: string, preferredPosition?: strin
 }
 
 function getPlayerHeadshot(playerId: string): string {
+  // Primary: Sleeper CDN
   return `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+}
+
+function getESPNHeadshot(playerName: string): string {
+  // ESPN CDN fallback - convert name to ESPN format
+  const formattedName = playerName.toLowerCase()
+    .replace(/[^a-z\s]/g, '') // Remove special characters
+    .replace(/\s+/g, '-'); // Replace spaces with hyphens
+  return `https://a.espncdn.com/i/headshots/nfl/players/full/${formattedName}.png`;
 }
 
 async function getPlayerPosition(playerName: string): Promise<string> {
@@ -4183,7 +4192,7 @@ Please provide analysis in this exact JSON format (no additional text):
             expertTier: projectedPoints > projections.base + 3 ? `${position}1` : `${position}2`,
             ceiling: Math.round(projectedPoints * 1.4),
             floor: Math.max(0, Math.round(projectedPoints * 0.3)),
-            headshot: player.player_id ? getPlayerHeadshot(player.player_id) : `https://sleepercdn.com/content/nfl/players/thumb/default.jpg`,
+            headshot: player.player_id ? getPlayerHeadshot(player.player_id) : getESPNHeadshot(actualPlayerName),
             playerId: player.player_id || null
           };
         } catch (error) {
@@ -4315,8 +4324,8 @@ Please provide analysis in this exact JSON format (no additional text):
           expertTier: 'WR2',
           ceiling: 21,
           floor: 9,
-          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/5848.jpg',
-          playerId: '5848'
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/4039.jpg',
+          playerId: '4039'
         },
         'Davante Adams': {
           matchup: '@ NE',
@@ -4337,8 +4346,8 @@ Please provide analysis in this exact JSON format (no additional text):
           expertTier: 'WR1',
           ceiling: 25,
           floor: 11,
-          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/4017.jpg',
-          playerId: '4017'
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/2133.jpg',
+          playerId: '2133'
         },
         'Puka Nacua': {
           matchup: 'vs HOU',
@@ -4359,8 +4368,8 @@ Please provide analysis in this exact JSON format (no additional text):
           expertTier: 'WR1',
           ceiling: 28,
           floor: 14,
-          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/9487.jpg',
-          playerId: '9487'
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/9493.jpg',
+          playerId: '9493'
         },
         'Travis Kelce': {
           matchup: '@ LAC',
@@ -4381,8 +4390,8 @@ Please provide analysis in this exact JSON format (no additional text):
           expertTier: 'TE1',
           ceiling: 23,
           floor: 10,
-          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/4881.jpg',
-          playerId: '4881'
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/1466.jpg',
+          playerId: '1466'
         },
         'Isaiah Likely': {
           matchup: 'vs BUF',
