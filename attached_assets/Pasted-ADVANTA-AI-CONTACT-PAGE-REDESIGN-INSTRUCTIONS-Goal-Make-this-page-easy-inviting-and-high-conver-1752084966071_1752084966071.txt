@@ -1,0 +1,89 @@
+ADVANTA-AI CONTACT PAGE — REDESIGN INSTRUCTIONS
+Goal: Make this page easy, inviting, and high-converting — with a clean, modern layout optimized for mobile and professional AI agency branding.
+
+⸻
+
+1. Page Hero Section
+	•	Add headline: Let’s Build Smarter, Together
+	•	Subheadline: Have questions or want to start your AI project? Get in touch and we’ll respond within 1 business day.
+	•	Optional: Add subtle background pattern (e.g. lines, gradient, or mesh grid)
+	•	Keep it clean and minimal — avoid clutter
+
+⸻
+
+2. Contact Form Design
+	•	Inputs to include:
+	•	Full Name
+	•	Email
+	•	Company (optional)
+	•	Message
+	•	Use large, full-width input fields
+	•	Add labels (not just placeholders) for accessibility
+	•	Add placeholder text for clarity (e.g., “Tell us about your AI goals…”)
+	•	CTA Button:
+	•	Text: [ Send Message → ]
+	•	Bold color (blue or green), large tap area, full-width on mobile
+
+⸻
+
+3. Form Enhancements & Trust
+	•	Add small text below the form:
+	•	We’ll never spam you. Your contact info is safe with us.
+	•	Optional: Add a small lock icon + text: SSL secured form submission
+	•	Use ARIA labels and clear error messages for invalid entries
+	•	Add a success message after submission (e.g. “Thanks! We’ll get back to you shortly.”)
+
+⸻
+
+4. Contact Details Block
+	•	Add an alternative way to reach you:
+	•	📧 hello@advanta-ai.com
+	•	🕒 Mon–Fri, 9am–6pm EST
+	•	Optional: Add a business mailing address or HQ city
+	•	Display contact info with clear icons
+
+⸻
+
+5. Team or Visual Touch (Optional)
+	•	Add small circular headshots of team members or a smiling AI avatar graphic
+	•	Label: Your message will be reviewed by our leadership team or Meet the humans behind the AI
+
+⸻
+
+6. Map or Visual Area (Optional)
+	•	Add Google Maps embed or placeholder image showing location or service reach
+	•	OR use a sleek animated globe visual or AI concept art instead
+
+⸻
+
+7. Final CTA Section (Bottom)
+	•	Headline: Prefer to Book a Demo Instead?
+	•	Add button: [ Schedule a 15‑Min Call → ]
+	•	Position this in a soft gray block or gradient with plenty of padding
+
+⸻
+
+8. Mobile Optimization Tips
+	•	Stack fields vertically with enough spacing (16–24px)
+	•	Button: min 48px tall with visible focus state
+	•	Form should fit entirely above fold on mobile
+	•	Use native validation and real-time feedback
+
+⸻
+
+9. Style & UX Guidelines
+	•	Fonts: Inter, Space Grotesk, or Satoshi
+	•	Icons: Tabler or Lucide (thin-line icons)
+	•	Colors: White/light gray background + electric blue or green accents
+	•	Button animation: slight scale-up or glow on hover
+	•	Use consistent spacing: Tailwind-style scale (4, 8, 16, 24, 32px)
+
+⸻
+
+What to Ask Your Designer or AI Agent to Deliver:
+	•	Mobile-optimized contact form layout
+	•	Full desktop + mobile version of the page
+	•	Trust-building UI copy and lock icon element
+	•	Final CTA block linking to demo
+	•	Optional: Tailwind/React form component
+	•	Optional: Google Maps or animated background integration

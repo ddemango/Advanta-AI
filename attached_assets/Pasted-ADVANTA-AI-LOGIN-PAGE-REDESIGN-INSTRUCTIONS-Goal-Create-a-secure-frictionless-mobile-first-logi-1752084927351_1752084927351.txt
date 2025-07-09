@@ -1,0 +1,97 @@
+ADVANTA-AI LOGIN PAGE — REDESIGN INSTRUCTIONS
+Goal: Create a secure, frictionless, mobile-first login experience that feels modern, trustworthy, and on-brand for a cutting-edge AI platform.
+
+⸻
+
+1. Page Layout & Structure
+	•	Use a two-panel layout on desktop (Left = brand/message, Right = form)
+	•	On mobile, convert to a clean single-column stack with top logo and centered login form
+	•	Keep form inputs high on the screen for easier thumb access
+
+⸻
+
+2. Top Branding & Messaging
+	•	Add the Advanta AI logo at top center or top-left
+	•	Optional tagline below logo:
+	•	“Welcome back to your AI workspace”
+	•	OR “Sign in to streamline your next breakthrough”
+	•	Use soft animation or fade-in for logo or headline
+
+⸻
+
+3. Login Form Design
+	•	Clean input fields with labels and large tap areas
+	•	Inputs:
+	•	Email (or username)
+	•	Password
+	•	Optional: “Show Password” toggle
+	•	CTA Button:
+	•	Label: [ Log In → ]
+	•	Use full-width button with bold styling
+	•	Include:
+	•	“Forgot password?” link below form
+	•	Option for “Sign in with Google” (if SSO or OAuth is enabled)
+
+⸻
+
+4. Security & Trust UI Elements
+	•	Display a small lock icon with:
+	•	“Your login is secure & encrypted”
+	•	Optional: Add compliance badges (SOC2, GDPR, etc.)
+	•	Use high-contrast field borders and visible focus states
+
+⸻
+
+5. New User CTA (Register)
+	•	Add clear line below form:
+	•	“Don’t have an account?”
+	•	Followed by: [ Sign up → ]
+	•	Make this visible and easy to tap on mobile
+
+⸻
+
+6. Optional Design Enhancements
+	•	Use soft background gradient or abstract AI-style shapes
+	•	Optional illustration or Lottie animation on desktop left side
+	•	Add a wave or line-pattern at the bottom to frame the page
+
+⸻
+
+7. Mobile Optimization Checklist
+	•	Form fields should be full-width with at least 16px padding
+	•	Button height: minimum 48px
+	•	All links should be easy to tap
+	•	Use auto-focus on first input (email/username)
+	•	Disable auto-zoom on mobile by setting correct viewport meta tags
+
+⸻
+
+8. Style & UI Guidelines
+	•	Font: Inter, Satoshi, or Space Grotesk
+	•	Icons: Simple, thin-line (lock, user, eye, etc.)
+	•	Colors:
+	•	Background: white or very light gray
+	•	Accent: Advanta AI’s signature blue or green
+	•	Button: Bold CTA with hover & focus styles
+	•	Accessibility:
+	•	ARIA labels on all inputs
+	•	Use aria-invalid for error states
+	•	Label fields explicitly (no placeholders-only)
+
+⸻
+
+Optional Features to Add Later
+	•	Magic link login
+	•	Passwordless via OTP/email
+	•	“Remember me” checkbox
+	•	Dark mode toggle
+
+⸻
+
+What to Ask Your Designer or AI Agent to Deliver:
+	•	Mobile-first login form layout
+	•	Two-column desktop layout
+	•	Full component styling (form, button, error states)
+	•	Trust-building elements (lock icon, compliance badges)
+	•	Sign-up redirect flow
+	•	Optional: Tailwind, React, or Next.js form components
