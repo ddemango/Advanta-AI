@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'wouter';
@@ -477,44 +477,57 @@ export default function FreeTools() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 mb-6">
-                  <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                  {categories.slice(0, 7).map(category => (
-                    <TabsTrigger key={category} value={category} className="text-xs">
-                      {category.split(' ')[0]}
-                    </TabsTrigger>
+              <div className="mb-6">
+                <div className="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
+                  <Button
+                    variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory('all')}
+                    className="text-xs"
+                  >
+                    All
+                  </Button>
+                  {categories.map(category => (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category)}
+                      className="text-xs"
+                    >
+                      {category}
+                    </Button>
                   ))}
-                </TabsList>
+                </div>
+              </div>
 
-                <TabsContent value={selectedCategory} className="mt-0">
-                  {filteredTools.length === 0 ? (
-                    <div className="text-center py-12">
-                      <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No tools found</h3>
-                      <p className="text-muted-foreground">Try adjusting your search or category filter.</p>
-                    </div>
-                  ) : (
-                    <div className={
-                      viewMode === 'grid' 
-                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                        : "space-y-3"
-                    }>
-                      {filteredTools.map((tool, index) => (
-                        <motion.div 
-                          key={tool.id} 
-                          variants={fadeIn} 
-                          custom={index}
-                          initial="hidden"
-                          animate="show"
-                        >
-                          <ToolCard tool={tool} compact={viewMode === 'list'} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+              <div className="mt-0">
+                {filteredTools.length === 0 ? (
+                  <div className="text-center py-12">
+                    <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No tools found</h3>
+                    <p className="text-muted-foreground">Try adjusting your search or category filter.</p>
+                  </div>
+                ) : (
+                  <div className={
+                    viewMode === 'grid' 
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                      : "space-y-3"
+                  }>
+                    {filteredTools.map((tool, index) => (
+                      <motion.div 
+                        key={tool.id} 
+                        variants={fadeIn} 
+                        custom={index}
+                        initial="hidden"
+                        animate="show"
+                      >
+                        <ToolCard tool={tool} compact={viewMode === 'list'} />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         </div>
