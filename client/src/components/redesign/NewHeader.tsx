@@ -22,6 +22,7 @@ export function NewHeader() {
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
     { name: 'Resources', href: '/resources' },
+    { name: 'ROI Calculator', href: '/roi-calculator' },
     { name: 'Pricing', href: '/pricing' }
   ];
 
@@ -32,6 +33,7 @@ export function NewHeader() {
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
     { name: 'Resources', href: '/resources' },
+    { name: 'ROI Calculator', href: '/roi-calculator' },
     { name: 'Contact', href: '/contact' },
     { name: 'Client Suite Portal', href: '/login' }
   ];
