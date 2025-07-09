@@ -5,7 +5,7 @@ import { NewServices } from '@/components/redesign/NewServices';
 import { NewTrustSection } from '@/components/redesign/NewTrustSection';
 import { NewCTA } from '@/components/redesign/NewCTA';
 import { NewFooter } from '@/components/redesign/NewFooter';
-import { MobileNavigation } from '@/components/redesign/MobileNavigation';
+
 
 export default function RedesignedHome() {
   return (
@@ -64,7 +64,6 @@ export default function RedesignedHome() {
           <NewCTA />
         </main>
         <NewFooter />
-        <MobileNavigation />
       </div>
     </>
   );

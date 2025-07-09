@@ -104,27 +104,7 @@
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
-  /* Chat button positioning fixes */
-  .chat-safe-zone {
-    padding-bottom: 80px;
-  }
 
-  @media (min-width: 640px) {
-    .chat-safe-zone {
-      padding-bottom: 24px;
-    }
-  }
-
-  /* Prevent chat button from interfering with forms */
-  .form-container {
-    margin-bottom: 80px;
-  }
-
-  @media (min-width: 640px) {
-    .form-container {
-      margin-bottom: 24px;
-    }
-  }
   
   /* Hide scrollbar for Chrome, Safari and Opera */
   .scrollbar-hide::-webkit-scrollbar {

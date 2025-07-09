@@ -25,6 +25,14 @@ export function NewHeader() {
     { name: 'Pricing', href: '/pricing' }
   ];
 
+  const mobileNavigation = [
+    { name: 'Home', href: '/' },
+    { name: 'Solutions', href: '/services' },
+    { name: 'Case Studies', href: '/case-studies' },
+    { name: 'Resources', href: '/resources' },
+    { name: 'Contact', href: '/contact' }
+  ];
+
   const mobileMenuVariants = {
     hidden: { opacity: 0, y: -20 },
     visible: { opacity: 1, y: 0 }
@@ -109,7 +117,7 @@ export function NewHeader() {
               className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
             >
               <div className="px-4 py-6 space-y-4">
-                {navigation.map((item) => (
+                {mobileNavigation.map((item) => (
                   <button
                     key={item.name}
                     onClick={() => {
