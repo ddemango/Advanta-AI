@@ -4314,7 +4314,9 @@ Please provide analysis in this exact JSON format (no additional text):
           weatherImpact: 'Dome game - perfect conditions',
           expertTier: 'WR2',
           ceiling: 21,
-          floor: 9
+          floor: 9,
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/5848.jpg',
+          playerId: '5848'
         },
         'Davante Adams': {
           matchup: '@ NE',
@@ -4334,7 +4336,9 @@ Please provide analysis in this exact JSON format (no additional text):
           weatherImpact: 'Early September - good conditions',
           expertTier: 'WR1',
           ceiling: 25,
-          floor: 11
+          floor: 11,
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/4017.jpg',
+          playerId: '4017'
         },
         'Puka Nacua': {
           matchup: 'vs HOU',
@@ -4354,7 +4358,9 @@ Please provide analysis in this exact JSON format (no additional text):
           weatherImpact: 'Indoor game - no weather concerns',
           expertTier: 'WR1',
           ceiling: 28,
-          floor: 14
+          floor: 14,
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/9487.jpg',
+          playerId: '9487'
         },
         'Travis Kelce': {
           matchup: '@ LAC',
@@ -4374,7 +4380,9 @@ Please provide analysis in this exact JSON format (no additional text):
           weatherImpact: 'Indoor stadium - perfect conditions',
           expertTier: 'TE1',
           ceiling: 23,
-          floor: 10
+          floor: 10,
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/4881.jpg',
+          playerId: '4881'
         },
         'Isaiah Likely': {
           matchup: 'vs BUF',
@@ -4457,14 +4465,18 @@ Please provide analysis in this exact JSON format (no additional text):
             ...player1Data,
             defensiveRank: player1Data.defensiveRank || 15,
             keyFactors: player1Data.keyFactors || [],
-            analysis: player1Data.analysis || ''
+            analysis: player1Data.analysis || '',
+            headshot: player1Data.headshot || undefined,
+            playerId: player1Data.playerId || undefined
           };
           
           const normalizedPlayer2 = {
             ...player2Data,
             defensiveRank: player2Data.defensiveRank || 15,
             keyFactors: player2Data.keyFactors || [],
-            analysis: player2Data.analysis || ''
+            analysis: player2Data.analysis || '',
+            headshot: player2Data.headshot || undefined,
+            playerId: player2Data.playerId || undefined
           };
 
           // Both players have expert data
