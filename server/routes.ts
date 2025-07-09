@@ -386,6 +386,10 @@ async function findPlayerInSleeper(playerName: string, preferredPosition?: strin
   return matches[0];
 }
 
+function getPlayerHeadshot(playerId: string): string {
+  return `https://sleepercdn.com/content/nfl/players/thumb/${playerId}.jpg`;
+}
+
 async function getPlayerPosition(playerName: string): Promise<string> {
   const player = await findPlayerInSleeper(playerName);
   return player?.position || 'WR';
@@ -4178,7 +4182,9 @@ Please provide analysis in this exact JSON format (no additional text):
             weatherImpact: 'Week 1 conditions expected to be favorable',
             expertTier: projectedPoints > projections.base + 3 ? `${position}1` : `${position}2`,
             ceiling: Math.round(projectedPoints * 1.4),
-            floor: Math.max(0, Math.round(projectedPoints * 0.3))
+            floor: Math.max(0, Math.round(projectedPoints * 0.3)),
+            headshot: player.player_id ? getPlayerHeadshot(player.player_id) : `https://sleepercdn.com/content/nfl/players/thumb/default.jpg`,
+            playerId: player.player_id || null
           };
         } catch (error) {
           console.error('Error generating expert analysis:', error);
@@ -4206,7 +4212,9 @@ Please provide analysis in this exact JSON format (no additional text):
           weatherImpact: 'Dome game - perfect conditions',
           expertTier: 'RB1',
           ceiling: 24,
-          floor: 11
+          floor: 11,
+          headshot: 'https://sleepercdn.com/content/nfl/players/thumb/9226.jpg',
+          playerId: '9226'
         },
         'Rhamondre Stevenson': {
           matchup: 'vs LV',
@@ -4482,7 +4490,9 @@ Please provide analysis in this exact JSON format (no additional text):
               injuryStatus: normalizedPlayer1.injuryStatus,
               weatherImpact: normalizedPlayer1.weatherImpact,
               ceiling: normalizedPlayer1.ceiling,
-              floor: normalizedPlayer1.floor
+              floor: normalizedPlayer1.floor,
+              headshot: normalizedPlayer1.headshot,
+              playerId: normalizedPlayer1.playerId
             },
             player2Analysis: {
               playerName: actualPlayer2,
@@ -4500,7 +4510,9 @@ Please provide analysis in this exact JSON format (no additional text):
               injuryStatus: normalizedPlayer2.injuryStatus,
               weatherImpact: normalizedPlayer2.weatherImpact,
               ceiling: normalizedPlayer2.ceiling,
-              floor: normalizedPlayer2.floor
+              floor: normalizedPlayer2.floor,
+              headshot: normalizedPlayer2.headshot,
+              playerId: normalizedPlayer2.playerId
             },
             headToHeadComparison: [
               `${winnerName} projects ${Math.abs(normalizedPlayer1.projectedPoints - normalizedPlayer2.projectedPoints).toFixed(1)} more points`,
@@ -4562,7 +4574,9 @@ Please provide analysis in this exact JSON format (no additional text):
               injuryStatus: normalizedPlayer.injuryStatus,
               weatherImpact: normalizedPlayer.weatherImpact,
               ceiling: normalizedPlayer.ceiling,
-              floor: normalizedPlayer.floor
+              floor: normalizedPlayer.floor,
+              headshot: normalizedPlayer.headshot,
+              playerId: normalizedPlayer.playerId
             }
           };
           

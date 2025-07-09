@@ -75,6 +75,8 @@ interface StartSitRecommendation {
     boomBustPotential: string;
     reasoning: string[];
     keyFactors: string[];
+    headshot?: string;
+    playerId?: string;
   };
   player2Analysis: {
     playerName: string;
@@ -86,6 +88,8 @@ interface StartSitRecommendation {
     boomBustPotential: string;
     reasoning: string[];
     keyFactors: string[];
+    headshot?: string;
+    playerId?: string;
   };
   headToHeadComparison: string[];
   injuryAlerts: string[];
@@ -789,16 +793,43 @@ export default function FantasyFootballTools() {
                                     {/* Player Card */}
                                     <div className="bg-gray-200 rounded-lg p-6 mb-4 min-h-[200px] flex items-center justify-center">
                                       <div className="text-center">
-                                        <div className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 ${getTeamGradient(player.team)}`}>
-                                          <div className="text-center">
-                                            <div className="text-lg font-black tracking-tight">
-                                              {player.playerName.split(' ').map(name => name[0]).join('').slice(0, 2)}
-                                            </div>
-                                            <div className="text-xs opacity-90 font-medium">
-                                              {player.team}
+                                        {player.headshot ? (
+                                          <div className="w-20 h-20 rounded-full mx-auto mb-2 overflow-hidden border-2 border-white/20 shadow-lg">
+                                            <img 
+                                              src={player.headshot} 
+                                              alt={player.playerName}
+                                              className="w-full h-full object-cover"
+                                              onError={(e) => {
+                                                // Fallback to initials if headshot fails to load
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                                target.parentElement!.innerHTML = `
+                                                  <div class="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 bg-gradient-to-br from-slate-600 to-slate-800">
+                                                    <div class="text-center">
+                                                      <div class="text-lg font-black tracking-tight">
+                                                        ${player.playerName.split(' ').map((name: string) => name[0]).join('').slice(0, 2)}
+                                                      </div>
+                                                      <div class="text-xs opacity-90 font-medium">
+                                                        ${player.team}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                `;
+                                              }}
+                                            />
+                                          </div>
+                                        ) : (
+                                          <div className={`w-20 h-20 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white/20 ${getTeamGradient(player.team)}`}>
+                                            <div className="text-center">
+                                              <div className="text-lg font-black tracking-tight">
+                                                {player.playerName.split(' ').map(name => name[0]).join('').slice(0, 2)}
+                                              </div>
+                                              <div className="text-xs opacity-90 font-medium">
+                                                {player.team}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
+                                        )}
                                         <div className="text-gray-600 text-sm">{player.position} - {player.team}</div>
                                       </div>
                                     </div>
