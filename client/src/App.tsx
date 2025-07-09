@@ -65,7 +65,6 @@ import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
 import RedesignedHome from "@/pages/redesigned-home";
-import { LoadingScreen } from "@/components/ui/loading-screen";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
 
@@ -208,29 +207,11 @@ function Router() {
 }
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Show the loading screen for a fixed duration to create an immersive experience
-  useEffect(() => {
-    // We'll show the loading screen for a meaningful amount of time
-    // to allow users to enjoy the machine learning visualization
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000); // 5 seconds is a good balance
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
   return (
     <TooltipProvider>
-      <LoadingScreen 
-        isLoading={isLoading} 
-        onLoadingComplete={() => setIsLoading(false)}
-        loadingDuration={4800} // Slightly shorter than the timeout to ensure smooth transition
-      />
       <Toaster />
       <Router />
-      {!isLoading && <ChatButton />}
+      <ChatButton />
     </TooltipProvider>
   );
 }
