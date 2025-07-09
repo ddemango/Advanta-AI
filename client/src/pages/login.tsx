@@ -35,7 +35,7 @@ export default function Login() {
 
   // Check if user is already authenticated
   useEffect(() => {
-    fetch('/auth/user')
+    fetch('/auth/user', { credentials: 'include' })
       .then(res => res.json())
       .then(user => {
         if (user) {
@@ -86,14 +86,19 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(body),
       });
 
       const data = await response.json();
+      console.log('Login response:', { status: response.status, data });
 
-      if (response.ok) {
-        setLocation('/dashboard');
+      if (response.ok && data.success) {
+        console.log('Login successful, redirecting to dashboard');
+        // Force page reload to ensure session is established
+        window.location.href = '/dashboard';
       } else {
+        console.log('Login failed:', data);
         setError(data.message || 'Authentication failed');
       }
     } catch (error) {
