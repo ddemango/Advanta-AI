@@ -47,8 +47,52 @@ export function MobileChatInterface() {
 
   // Auto-focus input on mount for mobile experience
   useEffect(() => {
-    if (inputRef.current && window.innerWidth >= 768) {
-      inputRef.current.focus();
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Ensure input remains interactive with improved mobile support
+  useEffect(() => {
+    const input = inputRef.current;
+    if (input) {
+      // Add mobile-specific event listeners
+      const handleTouchStart = (e: TouchEvent) => {
+        console.log('Touch start on input');
+        e.stopPropagation();
+      };
+      
+      const handleTouchEnd = (e: TouchEvent) => {
+        console.log('Touch end on input');
+        e.stopPropagation();
+        e.preventDefault();
+        input.focus();
+      };
+      
+      const handleClick = (e: MouseEvent) => {
+        console.log('Click on input');
+        e.stopPropagation();
+        input.focus();
+      };
+      
+      // Add all event listeners
+      input.addEventListener('touchstart', handleTouchStart, { passive: true });
+      input.addEventListener('touchend', handleTouchEnd, { passive: false });
+      input.addEventListener('click', handleClick, { passive: false });
+      
+      // Force enable input
+      input.style.pointerEvents = 'auto';
+      input.style.userSelect = 'text';
+      input.style.webkitUserSelect = 'text';
+      
+      return () => {
+        input.removeEventListener('touchstart', handleTouchStart);
+        input.removeEventListener('touchend', handleTouchEnd);
+        input.removeEventListener('click', handleClick);
+      };
     }
   }, []);
 
@@ -408,8 +452,8 @@ export function MobileChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white">
-        <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-3">
+      <div className="p-4 bg-white border-t border-gray-100 relative z-10 touch-auto">
+        <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-3 relative touch-auto border border-gray-200 hover:bg-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
           <Button
             variant="ghost"
             size="sm"
@@ -421,15 +465,37 @@ export function MobileChatInterface() {
           
           <input
             ref={inputRef}
+            type="text"
             value={currentInput}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your automation request..."
-            className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500"
+            className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 min-h-[44px] text-base touch-target"
+            style={{
+              WebkitUserSelect: 'text',
+              userSelect: 'text',
+              WebkitTouchCallout: 'default',
+              touchAction: 'manipulation',
+              pointerEvents: 'auto'
+            }}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
+                e.preventDefault();
                 handleSendMessage();
               }
             }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (inputRef.current) {
+                inputRef.current.focus();
+              }
+            }}
+            onFocus={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+            }}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
           />
           
           <Button

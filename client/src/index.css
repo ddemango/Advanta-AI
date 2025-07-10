@@ -88,3 +88,27 @@
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* Mobile touch optimization */
+@layer utilities {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+    touch-action: manipulation !important;
+    pointer-events: auto !important;
+  }
+  
+  /* Fix for iOS input focus */
+  input:focus {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
