@@ -65,7 +65,7 @@ export function MobileChatInterface() {
     });
 
     // Add processing message
-    const processingMessage = addMessage({
+    const processingMessageId = addMessage({
       type: 'assistant',
       content: 'Processing your request...',
       status: 'pending',
@@ -108,9 +108,8 @@ export function MobileChatInterface() {
       addTaskLog(taskId, 'AI analysis complete, processing results...');
       updateTask(taskId, { progress: 75 });
 
-      // Add AI response message
-      addMessage({
-        type: 'assistant',
+      // Update processing message with actual response
+      updateMessage(processingMessageId, {
         content: data.response,
         status: 'complete',
       });
@@ -197,9 +196,8 @@ export function MobileChatInterface() {
       
       addTaskLog(taskId, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
 
-      // Add error message
-      addMessage({
-        type: 'assistant',
+      // Update processing message with error
+      updateMessage(processingMessageId, {
         content: 'I apologize, but I encountered an error while processing your request. Please try again or rephrase your request.',
         status: 'error',
       });

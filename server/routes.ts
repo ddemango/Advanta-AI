@@ -27,7 +27,6 @@ import { triggerSystem, parseAdvancedSchedule } from "./advanced-triggers";
 import { aiCapabilities } from "./ai-capabilities";
 import { log } from "./vite";
 import Stripe from "stripe";
-import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -1296,25 +1295,9 @@ class BlogScheduler {
   }
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication first
-  setupAuth(app);
+// Removed duplicate registerRoutes function
 
-  // Authentication endpoints
-  app.get('/auth/user', (req, res) => {
-    if (req.user) {
-      res.json(req.user);
-    } else {
-      res.status(401).json({ message: 'Not authenticated' });
-    }
-  });
-
-  app.post('/auth/logout', (req, res) => {
-    req.logout(() => {
-      res.json({ message: 'Logged out successfully' });
-    });
-  });
-
+function setupAuthEndpoints(app: Express) {
   // Email test endpoint (development only)
   app.post('/auth/test-email', async (req, res) => {
     try {
@@ -5962,10 +5945,8 @@ Return as JSON array: [{"headline": "headline text", "style": "marketing approac
     }
   });
 
-  const httpServer = createServer(app);
-
-  return httpServer;
 }
+  // Close the setupAuthEndpoints function
 
 function generateMovieReasoning(movie: any, preferences: any): string[] {
   const reasons = [];
@@ -6336,6 +6317,14 @@ function getCuratedRecommendations(preferences: any) {
     
     return true;
   });
+}
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication first
+  setupAuth(app);
+
+  // Add auth endpoints
+  setupAuthEndpoints(app);
 
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {
@@ -6468,12 +6457,12 @@ function getCuratedRecommendations(preferences: any) {
       
       // Call OpenAI to process the request
       const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 1000,
+        max_tokens: 1500,
         temperature: 0.7,
       });
 
@@ -6491,7 +6480,9 @@ function getCuratedRecommendations(preferences: any) {
         response: processedResponse.message,
         steps: processedResponse.steps,
         outputs: processedResponse.outputs,
-        estimatedTime: processedResponse.estimatedTime
+        estimatedTime: processedResponse.estimatedTime,
+        confidence: processedResponse.confidence,
+        taskComplexity: processedResponse.taskComplexity
       });
 
     } catch (error) {
