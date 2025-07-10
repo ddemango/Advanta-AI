@@ -193,7 +193,7 @@ export function MobileTaskHistory() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-500">Created:</span>
-                          <p className="font-medium">{task.createdAt.toLocaleTimeString()}</p>
+                          <p className="font-medium">{new Date(task.createdAt).toLocaleTimeString()}</p>
                         </div>
                         {task.actualTime && (
                           <div>

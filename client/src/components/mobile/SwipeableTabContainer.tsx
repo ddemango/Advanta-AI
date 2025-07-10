@@ -1,95 +1,142 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, ReactNode } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 
 interface SwipeableTabContainerProps {
-  children: React.ReactNode[];
+  children: ReactNode[];
 }
 
 export function SwipeableTabContainer({ children }: SwipeableTabContainerProps) {
   const { activeTab, setActiveTab } = useChatStore();
-  const [startX, setStartX] = useState(0);
-  const [currentX, setCurrentX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const tabs = ['chat', 'tasks', 'output', 'settings'];
-  const activeIndex = tabs.indexOf(activeTab);
-  
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [translateX, setTranslateX] = useState(0);
+
+  const tabs = ['chat', 'tasks', 'output', 'settings'] as const;
+  const currentIndex = tabs.indexOf(activeTab);
+
+  // Touch event handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    setStartX(e.touches[0].clientX);
-    setCurrentX(e.touches[0].clientX);
     setIsDragging(true);
+    setStartX(e.touches[0].clientX);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    setCurrentX(e.touches[0].clientX);
+    
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    
+    // Limit drag distance to prevent overscroll
+    const maxDrag = window.innerWidth * 0.3;
+    const limitedDiff = Math.max(-maxDrag, Math.min(maxDrag, diff));
+    
+    setTranslateX(limitedDiff);
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     
-    const diffX = startX - currentX;
-    const threshold = 50; // Minimum swipe distance
+    setIsDragging(false);
+    const threshold = window.innerWidth * 0.15; // 15% of screen width
     
-    if (Math.abs(diffX) > threshold) {
-      if (diffX > 0 && activeIndex < tabs.length - 1) {
-        // Swipe left - next tab
-        setActiveTab(tabs[activeIndex + 1] as any);
-      } else if (diffX < 0 && activeIndex > 0) {
-        // Swipe right - previous tab
-        setActiveTab(tabs[activeIndex - 1] as any);
-      }
+    if (translateX > threshold && currentIndex > 0) {
+      // Swipe right - go to previous tab
+      setActiveTab(tabs[currentIndex - 1]);
+    } else if (translateX < -threshold && currentIndex < tabs.length - 1) {
+      // Swipe left - go to next tab
+      setActiveTab(tabs[currentIndex + 1]);
     }
     
-    setIsDragging(false);
-    setStartX(0);
-    setCurrentX(0);
+    setTranslateX(0);
   };
 
-  // Add momentum scrolling feel
-  const transform = isDragging 
-    ? `translateX(${-activeIndex * 100 + ((currentX - startX) / window.innerWidth) * 100}%)`
-    : `translateX(${-activeIndex * 100}%)`;
+  // Mouse event handlers for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartX(e.clientX);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const currentX = e.clientX;
+    const diff = currentX - startX;
+    
+    const maxDrag = window.innerWidth * 0.3;
+    const limitedDiff = Math.max(-maxDrag, Math.min(maxDrag, diff));
+    
+    setTranslateX(limitedDiff);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    const threshold = window.innerWidth * 0.15;
+    
+    if (translateX > threshold && currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1]);
+    } else if (translateX < -threshold && currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+    
+    setTranslateX(0);
+  };
+
+  // Handle mouse leave to end drag
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setTranslateX(0);
+    }
+  };
+
+  // Calculate the transform for the current tab
+  const baseTransform = `translateX(-${currentIndex * 100}%)`;
+  const dragTransform = isDragging ? `translateX(calc(-${currentIndex * 100}% + ${translateX}px))` : baseTransform;
 
   return (
     <div 
       ref={containerRef}
-      className="relative overflow-hidden h-full"
+      className="h-full overflow-hidden relative select-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
     >
       <div 
-        className="flex h-full transition-transform duration-300 ease-out"
-        style={{ 
-          transform,
-          width: `${tabs.length * 100}%`
+        className={`h-full flex transition-transform ${isDragging ? 'duration-0' : 'duration-300 ease-out'}`}
+        style={{
+          width: `${children.length * 100}%`,
+          transform: dragTransform
         }}
       >
         {children.map((child, index) => (
           <div 
-            key={index} 
-            className="w-full h-full flex-shrink-0"
-            style={{ width: `${100 / tabs.length}%` }}
+            key={index}
+            className="h-full flex-shrink-0"
+            style={{ width: `${100 / children.length}%` }}
           >
             {child}
           </div>
         ))}
       </div>
       
-      {/* Swipe indicator */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-        <div className="flex space-x-2 bg-black/20 rounded-full px-3 py-1 backdrop-blur-sm">
-          {tabs.map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === activeIndex ? 'bg-white' : 'bg-white/40'
-              }`}
-            />
-          ))}
-        </div>
+      {/* Swipe indicator dots */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 pointer-events-none">
+        {tabs.map((_, index) => (
+          <div
+            key={index}
+            className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+              index === currentIndex ? 'bg-blue-500' : 'bg-gray-300'
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
