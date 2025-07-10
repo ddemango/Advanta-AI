@@ -20,6 +20,7 @@ import MyGPTs from "@/pages/MyGPTs";
 import DataIntegrations from "@/pages/DataIntegrations";
 import AccountSettings from "@/pages/AccountSettings";
 import HelpSupport from "@/pages/HelpSupport";
+import ChatbotBuilder from "@/pages/ChatbotBuilder";
 import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
 import TemplateDemo from "@/pages/template-demo";
@@ -140,6 +141,7 @@ function Router() {
       <Route path="/google-ads-oauth" component={GoogleAdsOAuth} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/dashboard" component={ModernDashboard} />
+      <Route path="/chatbot-builder" component={ChatbotBuilder} />
       <Route path="/projects" component={Projects} />
       <Route path="/my-gpts" component={MyGPTs} />
       <Route path="/data-integrations" component={DataIntegrations} />

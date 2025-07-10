@@ -67,6 +67,7 @@ export default function ModernDashboard() {
 
   const navigationItems = [
     { icon: Home, label: 'Home', href: '/dashboard', active: true },
+    { icon: Bot, label: 'AI Chatbot Builder', href: '/chatbot-builder', isNew: true },
     { icon: Workflow, label: 'Projects', href: '/projects' },
     { icon: Bot, label: 'My GPTs', href: '/my-gpts' },
     { icon: Database, label: 'Data & Integrations', href: '/data-integrations' },
@@ -146,13 +147,18 @@ export default function ModernDashboard() {
               <Button
                 key={item.label}
                 variant={item.active ? "default" : "ghost"}
-                className={`w-full justify-start gap-3 ${
+                className={`w-full justify-start gap-3 relative ${
                   item.active ? 'bg-blue-50 text-blue-600 border-blue-200' : ''
                 } ${darkMode && !item.active ? 'text-gray-300 hover:text-white' : ''}`}
                 onClick={() => setLocation(item.href)}
               >
                 <item.icon className="w-4 h-4" />
-                {item.label}
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.isNew && (
+                  <Badge className="bg-green-500 hover:bg-green-500 text-white text-xs px-1.5 py-0.5 h-5">
+                    NEW
+                  </Badge>
+                )}
               </Button>
             ))}
           </nav>
