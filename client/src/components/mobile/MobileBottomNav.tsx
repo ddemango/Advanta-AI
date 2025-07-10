@@ -6,7 +6,8 @@ import {
   History, 
   FolderOpen, 
   Settings,
-  Bot
+  Bot,
+  Play
 } from 'lucide-react';
 
 export function MobileBottomNav() {

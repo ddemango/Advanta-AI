@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useChatStore } from '@/stores/chatStore';
+import { FilePreviewModal } from './FilePreviewModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,21 +54,44 @@ export function MobileOutputViewer() {
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const handleDownload = (output: any) => {
-    if (output.url) {
-      window.open(output.url, '_blank');
-    } else if (output.content) {
-      const blob = new Blob([output.content], { type: output.mimeType || 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = output.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  const handleDownload = async (output: any) => {
+    try {
+      if (output.url && output.url !== '#') {
+        // For real URLs, fetch and download
+        const response = await fetch(output.url);
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = output.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast.success('Download completed');
+        } else {
+          throw new Error('Failed to fetch file');
+        }
+      } else if (output.content) {
+        // For content-based outputs, create blob
+        const blob = new Blob([output.content], { type: output.mimeType || 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = output.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success('Download completed');
+      } else {
+        toast.error('No downloadable content available');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed');
     }
-    toast.success('Download started');
   };
 
   const handleShare = (output: any) => {
@@ -216,24 +240,14 @@ export function MobileOutputViewer() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-                        <DialogTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => openPreview(output)}
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            Preview
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                          <DialogHeader>
-                            <DialogTitle className="truncate">{selectedOutput?.name}</DialogTitle>
-                          </DialogHeader>
-                          {selectedOutput && <PreviewContent output={selectedOutput} />}
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => openPreview(output)}
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        Preview
+                      </Button>
                       
                       <Button 
                         size="sm" 
@@ -258,6 +272,15 @@ export function MobileOutputViewer() {
           ))}
         </div>
       </ScrollArea>
+      
+      {/* File Preview Modal */}
+      {selectedOutput && (
+        <FilePreviewModal
+          file={selectedOutput}
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }

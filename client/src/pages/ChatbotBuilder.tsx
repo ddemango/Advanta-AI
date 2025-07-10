@@ -10,10 +10,11 @@ import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Bot } from "lucide-react";
 import { Toaster } from "react-hot-toast";
+import { SwipeableTabContainer } from "@/components/mobile/SwipeableTabContainer";
 
 export default function ChatbotBuilder() {
   const [, setLocation] = useLocation();
-  const { activeTab, setMobile } = useChatStore();
+  const { activeTab, setActiveTab, setMobile } = useChatStore();
 
   // Detect mobile and update store
   useEffect(() => {
@@ -26,20 +27,8 @@ export default function ChatbotBuilder() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [setMobile]);
 
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'chat':
-        return <MobileChatInterface />;
-      case 'tasks':
-        return <MobileTaskHistory />;
-      case 'output':
-        return <MobileOutputViewer />;
-      case 'settings':
-        return <MobileSettings />;
-      default:
-        return <MobileChatInterface />;
-    }
-  };
+  const tabOrder = ["chat", "tasks", "output", "settings"] as const;
+  const currentTabIndex = tabOrder.indexOf(activeTab);
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -68,9 +57,14 @@ export default function ChatbotBuilder() {
         <div className="w-16" /> {/* Spacer for centering */}
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content Area with Swipeable Views */}
       <div className="flex-1 overflow-hidden bg-gray-50">
-        {renderActiveTab()}
+        <SwipeableTabContainer>
+          <MobileChatInterface />
+          <MobileTaskHistory />
+          <MobileOutputViewer />
+          <MobileSettings />
+        </SwipeableTabContainer>
       </div>
 
       {/* Bottom Navigation */}

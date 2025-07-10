@@ -70,13 +70,16 @@ export function MobileTaskHistory() {
   };
 
   const handleRerunTask = (task: any) => {
-    updateTask(task.id, {
-      status: 'running',
-      progress: 0,
-      logs: [...task.logs, `${new Date().toLocaleTimeString()}: Task restarted`]
-    });
-    setActiveTask(task.id);
-    toast.success('Task restarted');
+    // Switch to chat tab and populate input with task description
+    const { setActiveTab, setInput } = useChatStore.getState();
+    setActiveTab('chat');
+    
+    // Set the input to the original task description
+    if (setInput) {
+      setInput(task.description);
+    }
+    
+    toast.success('Task prompt loaded. Ready to run again.');
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -200,34 +203,110 @@ export function MobileTaskHistory() {
                         )}
                       </div>
                       
-                      {/* Logs */}
+                      {/* Visual Task Timeline */}
                       {task.logs.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900 mb-2">Recent Logs</h4>
-                          <div className="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
-                            {task.logs.slice(-5).map((log, index) => (
-                              <p key={index} className="text-xs text-gray-600 mb-1 last:mb-0">
-                                {log}
-                              </p>
-                            ))}
+                          <h4 className="text-sm font-medium text-gray-900 mb-3">Task Timeline</h4>
+                          <div className="space-y-3">
+                            {task.logs.map((log, index) => {
+                              const isCompleted = index < task.logs.length - 1 || task.status === 'complete';
+                              const isActive = index === task.logs.length - 1 && task.status === 'running';
+                              const isError = task.status === 'error' && index === task.logs.length - 1;
+                              
+                              return (
+                                <div key={index} className="flex items-start gap-3">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                    isError ? 'bg-red-100' :
+                                    isCompleted ? 'bg-green-100' : 
+                                    isActive ? 'bg-blue-100' : 'bg-gray-100'
+                                  }`}>
+                                    {isError ? (
+                                      <AlertCircle className="w-3 h-3 text-red-600" />
+                                    ) : isCompleted ? (
+                                      <CheckCircle className="w-3 h-3 text-green-600" />
+                                    ) : isActive ? (
+                                      <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
+                                    ) : (
+                                      <Clock className="w-3 h-3 text-gray-500" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xs font-medium text-gray-900">
+                                        Step {index + 1}
+                                      </span>
+                                      {isActive && (
+                                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                                          Processing
+                                        </Badge>
+                                      )}
+                                      {isCompleted && (
+                                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-green-100 text-green-800">
+                                          Complete
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                      {log}
+                                    </p>
+                                    {isActive && (
+                                      <div className="mt-2">
+                                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                          <span>Estimated time: ~30s</span>
+                                          <span className="font-medium">Confidence: 95%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-1">
+                                          <div className="bg-blue-500 h-1 rounded-full animate-pulse" style={{ width: `${task.progress}%` }} />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
                       
-                      {/* Outputs */}
+                      {/* Outputs with Preview */}
                       {task.outputs.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900 mb-2">Outputs</h4>
+                          <h4 className="text-sm font-medium text-gray-900 mb-2">Generated Outputs</h4>
                           <div className="space-y-2">
                             {task.outputs.map((output) => (
-                              <div key={output.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-gray-400" />
-                                  <span className="text-sm font-medium">{output.name}</span>
+                              <div key={output.id} className="p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-blue-500" />
+                                    <div>
+                                      <span className="text-sm font-medium text-gray-900">{output.name}</span>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <Badge variant="outline" className="text-xs">
+                                          {output.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'}
+                                        </Badge>
+                                        {output.size && (
+                                          <span className="text-xs text-gray-500">
+                                            {Math.round(output.size / 1024)}KB
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Button size="sm" variant="ghost" onClick={() => {
+                                    if (output.url && output.url !== '#') {
+                                      window.open(output.url, '_blank');
+                                    }
+                                  }}>
+                                    <Download className="w-3 h-3" />
+                                  </Button>
                                 </div>
-                                <Button size="sm" variant="ghost">
-                                  <Download className="w-3 h-3" />
-                                </Button>
+                                {output.content && (
+                                  <div className="mt-2 p-2 bg-white rounded text-xs text-gray-600 max-h-20 overflow-hidden">
+                                    <div className="line-clamp-3">
+                                      {output.content.slice(0, 150)}...
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>

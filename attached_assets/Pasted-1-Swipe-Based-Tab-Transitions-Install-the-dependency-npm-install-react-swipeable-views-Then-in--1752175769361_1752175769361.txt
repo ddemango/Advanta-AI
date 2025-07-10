@@ -1,0 +1,110 @@
+1. Swipe-Based Tab Transitions
+
+Install the dependency:
+
+npm install react-swipeable-views
+
+Then in your file where you manage tab content (e.g. ChatbotBuilder.tsx), import it:
+
+import SwipeableViews from ‘react-swipeable-views’
+
+Now replace your renderActiveTab() logic with:
+
+<SwipeableViews
+ index={[“chat”, “tasks”, “output”, “settings”].indexOf(activeTab)}
+ onChangeIndex={(index) => setActiveTab([“chat”, “tasks”, “output”, “settings”][index])}
+ enableMouseEvents
+
+
+
+ 
+ 
+ 
+ 
+
+
+⸻
+
+✅ 2. GPT Memory of Past Tasks
+
+In your /api/chatbot/process route, modify the GPT call:
+
+First, get recent task memory:
+
+const lastTasks = getLastTasks(userId, 5)
+
+Then build chat history from that:
+
+const historyMessages = lastTasks.map(task => ({
+ role: ‘user’,
+ content: Task: ${task.description}\nSteps: ${task.logs.join('\n')}
+}))
+
+Then send it to OpenAI:
+
+const completion = await openai.chat.completions.create({
+ model: “gpt-4”,
+ messages: [
+  { role: “system”, content: systemPrompt },
+  …historyMessages,
+  { role: “user”, content: message }
+ ],
+ max_tokens: 1000,
+ temperature: 0.7
+})
+
+This gives the assistant memory of past tasks for smarter follow-ups.
+
+⸻
+
+✅ 3. GitHub-Ready Export Project Structure
+
+Create your folders like this:
+
+/advanta-ai-manus-mobile
+ /frontend
+  /pages
+  /components
+  /stores
+  /styles
+  .env
+  package.json
+ /backend
+  /routes
+  /middleware
+  /chatbotProcessor.ts
+  supabaseClient.ts
+  .env
+  package.json
+ README.md
+
+Your README should include:
+
+Advanta AI Mobile Manus Clone
+
+A mobile-first AI automation assistant using GPT-4 and Supabase.
+
+Features
+	•	Swipe tab navigation
+	•	File uploads and preview
+	•	Task logs and rerun
+	•	GPT memory of past tasks
+	•	Supabase file storage
+
+Setup
+	1.	cd frontend && npm install
+	2.	cd ../backend && npm install
+	3.	Add your .env files:
+
+OPENAI_API_KEY=your_openai_key
+NEXT_PUBLIC_SUPABASE_URL=your_url
+NEXT_PUBLIC_SUPABASE_KEY=your_key
+
+Run
+	•	Frontend: npm run dev
+	•	Backend: npm run start
+
+Deploy
+
+Frontend: Vercel or Netlify
+Backend: Render.com or Fly.io

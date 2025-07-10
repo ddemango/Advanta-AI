@@ -1,0 +1,140 @@
+1. FilePreviewModal.tsx
+
+import { Dialog, DialogContent } from “@/components/ui/dialog”
+import { useState } from “react”
+import { FileText, Image as ImageIcon, Code } from “lucide-react”
+
+export function FilePreviewModal({ file, open, onClose }) {
+ const isPDF = file.name.endsWith(’.pdf’)
+ const isImage = /.(png|jpe?g|gif|webp)$/i.test(file.name)
+ const isCode = /.(js|ts|json|py|html|css)$/i.test(file.name)
+
+ return (
+  
+   
+    
+     {isPDF && }
+     {isImage && }
+     {isCode && }
+     {file.name}
+    
+
+    {isPDF && }
+    {isImage && }
+    {isCode && (
+     
+      {file.content || ‘Fetching preview…’}
+     
+    )}
+   
+  
+ )
+}
+
+⸻
+
+✅ 2. parseAIResponse()
+
+export function parseAIResponse(rawText, taskType) {
+ const lines = rawText.split(’\n’).filter(l => l.trim())
+ const steps = lines.filter(l => /^\d+./.test(l)).map(l => l.replace(/^\d+.\s*/, ‘’))
+ const outputs = lines.filter(l => l.includes(“Download”) || l.includes(“file”))
+
+ return {
+  message: rawText,
+  steps: steps,
+  outputs: outputs.map((o, i) => ({
+   name: output-${i + 1}.txt,
+   url: ‘#’,
+   type: ‘file’
+  })),
+  estimatedTime: Math.round(Math.random() * 300 + 60)
+ }
+}
+
+⸻
+
+✅ 3. MobileOutputViewer.tsx
+
+import { useChatStore } from ‘@/stores/chatStore’
+import { Card, CardContent } from ‘@/components/ui/card’
+import { FilePreviewModal } from ‘./FilePreviewModal’
+import { useState } from ‘react’
+
+export function MobileOutputViewer() {
+ const { tasks } = useChatStore()
+ const completedTasks = tasks.filter(t => t.status === ‘complete’)
+ const [selectedFile, setSelectedFile] = useState(null)
+
+ return (
+  
+   {completedTasks.map(task => (
+    
+     
+      {task.title}
+      {task.outputs?.map((file, index) => (
+       <div
+        key={index}
+        className=“text-blue-600 underline cursor-pointer text-sm”
+        onClick={() => setSelectedFile(file)}
+       >
+        {file.name}
+       
+      ))}
+     
+    
+   ))}
+
+   {selectedFile && (
+    <FilePreviewModal
+     file={selectedFile}
+     open={!!selectedFile}
+     onClose={() => setSelectedFile(null)}
+    />
+   )}
+ 
+)
+}
+
+⸻
+
+✅ 4. uploadToSupabase.ts
+
+import { createClient } from ‘@supabase/supabase-js’
+
+const supabase = createClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL,
+ process.env.NEXT_PUBLIC_SUPABASE_KEY
+)
+
+export async function uploadFile(file, filename) {
+ const { data, error } = await supabase.storage
+  .from(‘outputs’)
+  .upload(filename, file, { cacheControl: ‘3600’, upsert: true })
+
+ if (error) throw new Error(error.message)
+
+ const { data: publicURL } = supabase.storage.from(‘outputs’).getPublicUrl(filename)
+ return publicURL.publicUrl
+}
+
+// Example usage:
+const blob = new Blob([gptResponse], { type: ‘text/plain’ })
+const fileUrl = await uploadFile(blob, task-${Date.now()}.txt)
+
+⸻
+
+✅ 5. Rerun Task Button (Inside Task Card)
+
+<Button
+ size=“icon”
+ variant=“ghost”
+ onClick={() => {
+  setInput(task.description)
+  toast.success(“Prompt loaded. Ready to run again.”)
+ }}
+
+
+
+ 
+

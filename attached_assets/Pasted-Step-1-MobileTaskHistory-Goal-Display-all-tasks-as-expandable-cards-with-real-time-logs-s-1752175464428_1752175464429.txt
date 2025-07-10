@@ -1,0 +1,106 @@
+Step 1: <MobileTaskHistory />
+
+🔧 Goal: Display all tasks as expandable cards with real-time logs, status, and actions (rerun/download/delete)
+
+⸻
+
+🧩 Task Card UX Features:
+	•	Title (e.g., “Task: Generate report”)
+	•	Status badge (🟡 Running, ✅ Complete, ❌ Error)
+	•	Progress bar
+	•	Expand/collapse to show logs and output files
+	•	Buttons: “View Output”, “Retry”, “Delete”
+
+⸻
+
+🧠 Log Display:
+
+Each task has logs[], display as:
+	•	Timestamp (or step #)
+	•	Log message (streamed from task updates)
+
+import { useChatStore } from "@/stores/chatStore";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Download, RefreshCw, Trash } from "lucide-react";
+import { useState } from "react";
+
+export function MobileTaskHistory() {
+  const { tasks, deleteTask } = useChatStore();
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedTaskId(prev => (prev === id ? null : id));
+  };
+
+  return (
+    <div className="p-4 space-y-4 overflow-y-auto h-full">
+      {tasks.map((task) => (
+        <Card key={task.id} className="shadow-sm">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-md font-semibold">{task.title}</h3>
+                <Badge variant={
+                  task.status === 'complete' ? 'success' :
+                  task.status === 'error' ? 'destructive' :
+                  'default'
+                }>
+                  {task.status}
+                </Badge>
+              </div>
+
+              <div className="flex gap-2 items-center">
+                <Button size="icon" variant="ghost" onClick={() => deleteTask(task.id)}>
+                  <Trash className="w-4 h-4" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => toggleExpand(task.id)}>
+                  {expandedTaskId === task.id ? '−' : '+'}
+                </Button>
+              </div>
+            </div>
+
+            <Progress value={task.progress} className="h-2" />
+
+            {expandedTaskId === task.id && (
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="font-semibold">Logs:</div>
+                <ul className="bg-gray-100 p-2 rounded max-h-48 overflow-y-auto">
+                  {task.logs.map((log, index) => (
+                    <li key={index} className="text-gray-700">
+                      {log}
+                    </li>
+                  ))}
+                </ul>
+
+                {task.outputs?.length > 0 && (
+                  <div>
+                    <div className="font-semibold mt-2">Outputs:</div>
+                    <ul className="space-y-1">
+                      {task.outputs.map((output, i) => (
+                        <li key={i} className="flex justify-between items-center text-blue-600">
+                          <span>{output.name}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={() => window.open(output.url, "_blank")}
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Download
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
