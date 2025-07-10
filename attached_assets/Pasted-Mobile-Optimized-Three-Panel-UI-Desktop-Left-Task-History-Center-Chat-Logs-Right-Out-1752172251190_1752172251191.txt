@@ -1,0 +1,109 @@
+Mobile-Optimized Three-Panel UI
+
+Desktop:
+	•	Left: Task History
+	•	Center: Chat + Logs
+	•	Right: Output Viewer
+
+Mobile:
+	•	Tab Navigation or Swipeable Panes
+	•	Bottom Nav Bar (or top tabs):
+	•	Tasks → task history
+	•	Chat → chat + live task
+	•	Output → file previews
+
+UI Library:
+	•	Tailwind CSS with grid-cols-1 sm:grid-cols-3
+	•	Use react-swipeable-views or Radix Tabs for transitions
+
+⸻
+
+2. 🧠 Autonomous Agent Logic (Same for Mobile)
+	•	Intent parser stays backend-side
+	•	GPT-4o routes input to correct task module
+	•	Make sure backend replies are mobile-optimized (short messages, links with previews)
+
+⸻
+
+3. 📦 Mobile Task Cards with Collapsible Logs
+
+Each card should:
+	•	Be tappable → expand to reveal logs
+	•	Show icons, color-coded status, elapsed time
+	•	Include small download buttons or preview thumbnails
+
+Design Tip:
+	•	Use accordion style UI (Tailwind UI Accordion or HeadlessUI)
+
+⸻
+
+4. 🔄 Real-Time Updates in Chat (With Mobile Toasts)
+
+On mobile:
+	•	Use bottom-to-top toast messages (react-hot-toast or react-toastify)
+	•	Stream task logs directly into the chat pane or overlay logs when viewing the task
+
+Examples:
+	•	Toast: ✅ Task finished
+	•	Inline: “Scraping done. Creating PDF…”
+
+⸻
+
+5. 📁 Mobile File Upload & Preview Support
+
+Upload Inputs:
+	•	Native file picker
+	•	Drag-and-drop (optional for tablets)
+	•	Paste from clipboard
+
+Previews:
+	•	Full-screen modal for:
+	•	PDFs → PDF.js
+	•	Images → <img /> in modal
+	•	Code → <pre> block or Monaco Viewer
+	•	Tables → responsive scrollable divs
+
+⸻
+
+6. 🧭 Bottom Navigation Bar (Mobile Equivalent of Sidebar)
+
+Tabs to include:
+	•	🏠 Chat
+	•	📄 Tasks
+	•	📁 Output
+	•	⚙️ Settings
+
+Use a sticky bottom nav with icons, visible at all times.
+
+⸻
+
+7. 🧩 Visual Workflow Editor (Optional on Mobile)
+	•	Use vertical drag-and-drop instead of grid
+	•	Keep node sizes large enough for touch
+	•	Fallback option: voice or text to generate workflows
+	•	Ex: “Build me a funnel → scrape → summarize → email”
+
+⸻
+
+8. 🛠️ Actions Menu for Each Task (Mobile-Friendly)
+
+Inside each task card, use a ... menu (or swipe left gesture) to:
+	•	View Details
+	•	Re-run
+	•	Share
+	•	Delete
+	•	Copy Output
+
+⸻
+
+9. 💾 Persistent Workspace for Mobile
+	•	Save user history to localStorage (guest mode) or Supabase (authenticated)
+	•	Auto-name tasks with fallback (e.g., “PDF Report – July 10”)
+	•	Allow re-accessing old tasks from any device
+
+⸻
+
+10. 🧠 GPT Prompt Suggestions Optimized for Mobile
+	•	Provide tap-to-insert suggestions
+	•	Add recent prompt history below chat input
+	•	Voice input for faster task entry (mobile mic support)
