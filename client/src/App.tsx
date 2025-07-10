@@ -130,8 +130,9 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={RedesignedHome} />
+      <Route path="/" component={ModernDashboard} />
       <Route path="/home-original" component={Home} />
+      <Route path="/home" component={RedesignedHome} />
       <Route path="/build-my-ai-stack" component={Calculator} />
       <Route path="/login" component={Login} />
       <Route path="/reset-password" component={ResetPassword} />
