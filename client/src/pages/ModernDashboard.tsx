@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
+import ChatbotWorkflowBuilder from "@/components/ChatbotWorkflowBuilder";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Home, 
   Workflow, 
@@ -36,6 +38,7 @@ export default function ModernDashboard() {
   const [, setLocation] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
@@ -48,6 +51,16 @@ export default function ModernDashboard() {
       console.error('Logout error:', error);
       setLocation('/login');
     }
+  };
+
+  const handleWorkflowCreate = (workflow: any) => {
+    toast({
+      title: "Workflow Created!",
+      description: `"${workflow.title}" has been created successfully. Check your Projects page to configure and deploy it.`,
+    });
+    
+    // In a real app, this would save to the backend
+    console.log('New workflow created:', workflow);
   };
 
   const user = { email: 'D.s.demango@gmail.com', firstName: 'Admin' };
@@ -400,6 +413,9 @@ export default function ModernDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Chatbot Workflow Builder */}
+      <ChatbotWorkflowBuilder onWorkflowCreate={handleWorkflowCreate} />
     </div>
   );
 }

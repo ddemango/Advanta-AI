@@ -1,0 +1,89 @@
+🚀 ADVANTA-AI DASHBOARD — UPDATED REDESIGN INSTRUCTIONS
+
+URL: https://www.advanta-ai.com/dashboard
+Goal: Build a futuristic, mobile-first, modular AI dashboard with a built-in natural language chatbot that creates automations, GPT flows, or integrations from user prompts.
+
+⸻
+
+✅ Core Additions: Chatbot Workflow Builder
+
+Functionality:
+	•	Users can type in prompts like:
+	•	“Create a GPT that summarizes daily emails”
+	•	“Build a Slack bot that sends AI-generated reports every Friday”
+	•	“Automate CRM follow-up with GPT-powered emails”
+	•	The chatbot should:
+	•	Parse the natural language
+	•	Suggest workflow blocks or steps
+	•	Auto-fill components or modules in the dashboard
+	•	Ask follow-up questions to complete the workflow setup
+
+⸻
+
+🧠 Placement & UI of the Chatbot
+	•	Floating chat bubble in bottom-right corner
+	•	Opens a side panel or full-screen modal (depending on device)
+	•	Clean, message-style UX with alternating bot/human bubbles
+	•	Use subtle animation (fade in, typing dots, etc.)
+
+On Desktop:
+	•	Opens a right-side panel overlay or chat drawer
+	•	Keep the dashboard visible underneath or blur background
+
+On Mobile:
+	•	Use a full-screen experience with a fixed input bar and history
+
+⸻
+
+💬 Example Prompt-to-Workflow Interaction
+
+User Types:
+
+“Set up a GPT that writes LinkedIn posts from my meeting notes”
+
+Chatbot Replies:
+
+“✅ Got it! I’ll create a 3-step workflow:
+	1.	Upload or sync your meeting notes
+	2.	Use our GPT to generate a draft
+	3.	Review + schedule for LinkedIn
+Would you like this to run weekly?”
+
+User Responds:
+
+“Yes, every Monday”
+
+Chatbot:
+
+“🎉 All set! You can view and edit the workflow below.”
+
+→ This then populates a new automation tile or takes the user into an editable workflow builder.
+
+⸻
+
+🛠️ Tech & Integration Tips
+	•	Integrate with OpenAI or your in-house GPT agent (fine-tuned)
+	•	Use state management (e.g., Redux, Zustand) to sync chat output to builder
+	•	Store workflows in user profile (database)
+	•	Add conversation memory and “history” for each chat session
+
+⸻
+
+✨ UI Styling Guidelines for Chatbot
+	•	Font: Same as dashboard (Inter or Space Grotesk)
+	•	Use message bubbles, timestamps, and avatar icons
+	•	Add:
+	•	Loading animation (3-dot typing)
+	•	Quick reply chips: “Summarize,” “Automate,” “Schedule,” etc.
+	•	Option to “Save as Workflow,” “Edit Workflow,” or “Run Now”
+	•	Optional: Toggle to dark/light mode, mute, or reset conversation
+
+⸻
+
+✅ Final Deliverables to Request from Designer/Dev/AI Agent
+	•	Chatbot UI component (floating + full-screen)
+	•	Full prompt-to-workflow logic flow
+	•	Workflow card auto-generator based on chat
+	•	Tailwind or React component for chatbot
+	•	Chat history log for user dashboard
+	•	GPT integration backend (via API or Actions)
