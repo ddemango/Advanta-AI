@@ -14,6 +14,7 @@ import Marketplace from "@/pages/marketplace";
 import Dashboard from "@/pages/dashboard";
 import SimpleDashboard from "@/pages/SimpleDashboard";
 import WorkingDashboard from "@/pages/WorkingDashboard";
+import ModernDashboard from "@/pages/ModernDashboard";
 import Onboarding from "@/pages/onboarding";
 import Demo from "@/pages/demo";
 import TemplateDemo from "@/pages/template-demo";
@@ -132,7 +133,7 @@ function Router() {
       <Route path="/oauth-consent" component={OAuthConsent} />
       <Route path="/google-ads-oauth" component={GoogleAdsOAuth} />
       <Route path="/marketplace" component={Marketplace} />
-      <Route path="/dashboard" component={WorkingDashboard} />
+      <Route path="/dashboard" component={ModernDashboard} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/demo" component={Demo} />
       <Route path="/template-demo" component={TemplateDemo} />

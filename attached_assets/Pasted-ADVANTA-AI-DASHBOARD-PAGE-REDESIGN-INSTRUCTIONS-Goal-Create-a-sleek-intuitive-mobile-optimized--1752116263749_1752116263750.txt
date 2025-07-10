@@ -1,0 +1,115 @@
+ADVANTA-AI DASHBOARD PAGE — REDESIGN INSTRUCTIONS
+Goal: Create a sleek, intuitive, mobile-optimized AI dashboard experience where users can access tools, view insights, and manage their workflows with ease.
+
+⸻
+
+1. Page Layout & Structure
+	•	Use a two-column layout on desktop:
+	•	Left: vertical sidebar nav
+	•	Right: main content area
+	•	On mobile, collapse sidebar into a hamburger menu or bottom nav bar
+	•	Use lots of white space and clearly defined sections with subtle borders or cards
+
+⸻
+
+2. Top Bar (Header)
+	•	Include:
+	•	Advanta AI logo or app icon (top-left)
+	•	User profile dropdown (top-right)
+	•	Notifications bell (optional)
+	•	Light/dark mode toggle
+	•	Sticky at top, with subtle shadow
+
+⸻
+
+3. Main Dashboard Sections
+
+Design the dashboard to display cards or widgets for the following:
+
+Example Widget Blocks:
+	•	✨ Recent Projects or Workflows
+“GPT Sales Email Generator” – Last used: 2h ago
+	•	📊 Key Metrics
+Total automations run, response time saved, user activity
+	•	🧠 Your AI Agents
+“Sales Assistant”, “Report Summarizer”, etc.
+	•	⚙️ Quick Actions
+[ Create New GPT ] [ Upload Dataset ] [ Connect App ]
+
+Each block should be modular and responsive.
+
+⸻
+
+4. Navigation Panel (Sidebar or Bottom Tabs)
+
+Include links/icons for:
+	•	Home
+	•	Projects / Workflows
+	•	My GPTs
+	•	Data & Integrations
+	•	Account Settings
+	•	Help / Support
+
+On mobile: switch to bottom icon tab bar or expandable drawer.
+
+⸻
+
+5. User Onboarding (If First Login)
+
+Add a “Welcome Tour” or empty state message with tips:
+	•	“Start by creating your first GPT-powered workflow”
+	•	Add a progress bar or checklist like:
+	•	✅ Connect an app
+	•	✅ Create a prompt
+	•	🔲 Launch a test run
+
+⸻
+
+6. Alerts, Messages, or Announcements
+
+Optional block for:
+	•	Platform updates
+	•	New features
+	•	Chat with support or submit a ticket
+Keep this collapsible or dismissible.
+
+⸻
+
+7. Mobile Optimization
+	•	Cards should stack vertically with 16–24px spacing
+	•	Buttons and icons should be large enough (44x44px min)
+	•	Sticky bottom nav recommended for easy access
+	•	Avoid horizontal scrolls unless it’s for carousel-style cards
+
+⸻
+
+8. UI/UX Style Guide
+	•	Fonts: Inter or Space Grotesk
+	•	Layout: Grid-based, modular, collapsible
+	•	Colors: Neutral base (white/dark), bright accent for CTAs (blue or green)
+	•	Animations: Slide/fade for widget load-ins and menu toggles
+	•	Tailwind spacing: 4/8/16/24/32px scale
+	•	Accessibility: Alt tags, keyboard nav, ARIA labels
+
+⸻
+
+Optional Dashboard Features to Add Later
+	•	Dark mode
+	•	API usage tracking
+	•	Real-time GPT logs or output previews
+	•	Customizable widgets (drag/drop layout)
+	•	Weekly summary email toggle
+	•	Role-based access (if multi-user platform)
+
+⸻
+
+What to Ask Your Designer or AI Agent to Deliver
+	•	Mobile + desktop wireframe of the full dashboard layout
+	•	Responsive sidebar nav + header components
+	•	Widget/card components for:
+	•	Recent GPTs
+	•	Key stats
+	•	Quick actions
+	•	First-login onboarding UX
+	•	Sticky bottom nav for mobile
+	•	Optional: Tailwind, React, or Next.js component templates
