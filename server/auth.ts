@@ -8,22 +8,22 @@ import type { Express } from 'express';
 const memoryStore = MemoryStore(session);
 
 export function setupAuth(app: Express) {
-  // Use memory store for sessions
+  // Use memory store for sessions with 30-day expiration
   const sessionStore = new memoryStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   });
 
-  // Session configuration
+  // Session configuration with 30-day persistence
   app.use(session({
     store: sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: true,
     saveUninitialized: true,
-    rolling: true,
+    rolling: true, // Reset expiration on each request
     cookie: {
       secure: false,
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       sameSite: 'lax'
     },
     name: 'connect.sid'
