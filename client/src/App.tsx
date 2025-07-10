@@ -208,11 +208,14 @@ function Router() {
 }
 
 function App() {
+  const [location] = useLocation();
+  const showChatButton = !location.includes('/chatbot-builder');
+  
   return (
     <TooltipProvider>
       <Toaster />
       <Router />
-      <ChatButton />
+      {showChatButton && <ChatButton />}
     </TooltipProvider>
   );
 }

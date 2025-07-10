@@ -75,7 +75,15 @@ export const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
       // Initial state
-      messages: [],
+      messages: [
+        {
+          id: crypto.randomUUID(),
+          type: 'assistant',
+          content: 'Welcome to your AI Automation Workspace! I can help you create automations, analyze data, generate content, and more. What would you like to build today?',
+          timestamp: new Date(),
+          status: 'complete'
+        }
+      ],
       isTyping: false,
       currentInput: '',
       tasks: [],

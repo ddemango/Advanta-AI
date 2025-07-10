@@ -14,14 +14,14 @@ export function MobileBottomNav() {
   
   const runningTasks = tasks.filter(task => task.status === 'running').length;
   const totalOutputs = tasks.reduce((acc, task) => acc + task.outputs.length, 0);
-  const unreadMessages = messages.filter(msg => msg.status === 'pending').length;
+  const unreadMessages = 0; // No unread count for now
 
   const navItems = [
     {
       id: 'chat' as const,
       label: 'Chat',
       icon: MessageCircle,
-      badge: unreadMessages > 0 ? unreadMessages : null,
+      badge: null,
       badgeColor: 'bg-blue-500'
     },
     {
@@ -35,7 +35,7 @@ export function MobileBottomNav() {
       id: 'output' as const,
       label: 'Output',
       icon: FolderOpen,
-      badge: totalOutputs > 0 ? totalOutputs : null,
+      badge: null,
       badgeColor: 'bg-green-500'
     },
     {
@@ -48,7 +48,7 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-1 safe-area-pb">
+    <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 safe-area-pb z-50">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;

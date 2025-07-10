@@ -69,7 +69,7 @@ export default function ChatbotBuilder() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-gray-50">
         {renderActiveTab()}
       </div>
 
