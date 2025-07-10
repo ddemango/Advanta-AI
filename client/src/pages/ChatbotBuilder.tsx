@@ -153,172 +153,175 @@ export default function ChatbotBuilder() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setLocation('/dashboard')}
+              className="text-gray-600 hover:text-gray-900"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-1" />
               Back to Dashboard
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Bot className="w-8 h-8 text-blue-600" />
-                AI Chatbot Builder
-              </h1>
-              <p className="text-gray-600 mt-1">Create intelligent chatbots with natural language processing</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 ml-auto">
               <Sparkles className="w-3 h-3 mr-1" />
               AI Powered
             </Badge>
           </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Bot className="w-8 h-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">AI Chatbot Builder</h1>
+            </div>
+            <p className="text-gray-600">Create intelligent chatbots with natural language processing</p>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8 max-w-md">
-          {[
-            { id: 'builder', label: 'Builder', icon: Plus },
-            { id: 'my-bots', label: 'My Bots', icon: Bot },
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 }
-          ].map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "ghost"}
-              className={`flex-1 ${
-                activeTab === tab.id 
-                  ? 'bg-white shadow-sm' 
-                  : 'hover:bg-gray-200'
-              }`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <tab.icon className="w-4 h-4 mr-2" />
-              {tab.label}
-            </Button>
-          ))}
+        <div className="flex justify-center mb-8">
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            {[
+              { id: 'builder', label: 'Builder', icon: Plus },
+              { id: 'my-bots', label: 'My Bots', icon: Bot },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+            ].map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? "default" : "ghost"}
+                className={`px-6 py-2 ${
+                  activeTab === tab.id 
+                    ? 'bg-white shadow-sm text-blue-600' 
+                    : 'hover:bg-gray-200 text-gray-600'
+                }`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <tab.icon className="w-4 h-4 mr-2" />
+                {tab.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Builder Tab */}
         {activeTab === 'builder' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Template Selection */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5" />
-                    Choose a Template
-                  </CardTitle>
-                  <CardDescription>
-                    Start with a pre-built template or create from scratch
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {chatbotTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                          selectedTemplate === template.id
-                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setSelectedTemplate(template.id)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="text-2xl">{template.icon}</div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                            <p className="text-sm text-gray-600 mt-1">{template.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {template.category}
-                              </Badge>
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Template Selection */}
+              <div className="lg:col-span-2">
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Brain className="w-5 h-5 text-blue-600" />
+                      Choose a Template
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Start with a pre-built template or create from scratch
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 gap-3">
+                      {chatbotTemplates.map((template) => (
+                        <div
+                          key={template.id}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedTemplate === template.id
+                              ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200'
+                              : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                          }`}
+                          onClick={() => setSelectedTemplate(template.id)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="text-xl">{template.icon}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <h3 className="font-medium text-gray-900 text-sm">{template.name}</h3>
+                                <Badge variant="outline" className="text-xs px-2 py-1">
+                                  {template.category}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2 line-clamp-2">{template.description}</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                {template.features.slice(0, 2).map((feature, index) => (
+                                  <div key={index} className="text-xs text-gray-500 flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                    <span className="truncate">{feature}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                            <ul className="mt-2 space-y-1">
-                              {template.features.slice(0, 2).map((feature, index) => (
-                                <li key={index} className="text-xs text-gray-500 flex items-center gap-1">
-                                  <CheckCircle className="w-3 h-3 text-green-500" />
-                                  {feature}
-                                </li>
-                              ))}
-                            </ul>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Configuration Panel */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="w-5 h-5" />
-                    Configure Bot
-                  </CardTitle>
-                  <CardDescription>
-                    Customize your chatbot settings
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Bot Name
-                    </label>
-                    <Input
-                      placeholder="Enter bot name..."
-                      value={chatbotName}
-                      onChange={(e) => setChatbotName(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Description
-                    </label>
-                    <Textarea
-                      placeholder="Describe what your bot does..."
-                      value={chatbotDescription}
-                      onChange={(e) => setChatbotDescription(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  {selectedTemplate && (
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-2">Selected Template:</h4>
-                      <p className="text-sm text-blue-700">
-                        {chatbotTemplates.find(t => t.id === selectedTemplate)?.name}
-                      </p>
-                      <ul className="mt-2 space-y-1">
-                        {chatbotTemplates.find(t => t.id === selectedTemplate)?.features.map((feature, index) => (
-                          <li key={index} className="text-xs text-blue-600 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
+                      ))}
                     </div>
-                  )}
+                  </CardContent>
+                </Card>
+              </div>
 
-                  <Button 
-                    onClick={handleCreateBot}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={!selectedTemplate || !chatbotName}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Chatbot
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* Configuration Panel */}
+              <div>
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Settings className="w-5 h-5 text-blue-600" />
+                      Configure Bot
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      Customize your chatbot settings
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Bot Name
+                      </label>
+                      <Input
+                        placeholder="Enter bot name..."
+                        value={chatbotName}
+                        onChange={(e) => setChatbotName(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Description
+                      </label>
+                      <Textarea
+                        placeholder="Describe what your bot does..."
+                        value={chatbotDescription}
+                        onChange={(e) => setChatbotDescription(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    {selectedTemplate && (
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <h4 className="font-medium text-blue-900 mb-1 text-sm">Selected Template:</h4>
+                        <p className="text-sm text-blue-700 mb-2">
+                          {chatbotTemplates.find(t => t.id === selectedTemplate)?.name}
+                        </p>
+                        <div className="space-y-1">
+                          {chatbotTemplates.find(t => t.id === selectedTemplate)?.features.map((feature, index) => (
+                            <div key={index} className="text-xs text-blue-600 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                              <span>{feature}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Button 
+                      onClick={handleCreateBot}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      disabled={!selectedTemplate || !chatbotName}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Chatbot
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         )}
