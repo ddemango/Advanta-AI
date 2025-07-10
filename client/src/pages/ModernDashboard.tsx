@@ -94,27 +94,20 @@ export default function ModernDashboard() {
       </Helmet>
 
       {/* Mobile Overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
-      <AnimatePresence>
-        <motion.aside
-          initial={{ x: -280 }}
-          animate={{ x: sidebarOpen ? 0 : -280 }}
-          transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className={`fixed left-0 top-0 z-50 h-full w-70 border-r bg-white shadow-lg lg:translate-x-0 lg:shadow-none ${
-            darkMode ? 'dark:bg-gray-800 dark:border-gray-700' : ''
-          } lg:relative lg:z-auto lg:w-64`}
+      <aside
+        className={`fixed left-0 top-0 z-50 h-full w-64 border-r bg-white shadow-lg transform transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 lg:relative lg:z-auto lg:shadow-none ${
+          darkMode ? 'dark:bg-gray-800 dark:border-gray-700' : ''
+        }`}
         >
           <div className="flex h-16 items-center justify-between border-b px-6">
             <div className="flex items-center gap-2">
@@ -160,8 +153,7 @@ export default function ModernDashboard() {
               Logout
             </Button>
           </div>
-        </motion.aside>
-      </AnimatePresence>
+        </aside>
 
       {/* Main Content */}
       <div className="lg:pl-64">
@@ -208,90 +200,73 @@ export default function ModernDashboard() {
         </header>
 
         {/* Dashboard Content */}
-        <main className="p-6 space-y-8">
+        <main className="p-4 lg:p-6 space-y-6 lg:space-y-8 pb-20 lg:pb-6">
           {/* Welcome Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div>
+            <h2 className={`text-xl lg:text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Welcome back, {user.firstName || 'Admin'}!
             </h2>
-            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-sm lg:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Here's what's happening with your AI workflows today.
             </p>
-          </motion.div>
+          </div>
 
           {/* Key Metrics */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             {keyMetrics.map((metric, index) => (
               <Card key={metric.label} className={darkMode ? 'dark:bg-gray-800 dark:border-gray-700' : ''}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                <CardContent className="p-3 lg:p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-2 lg:space-y-0">
                     <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <p className={`text-xs lg:text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {metric.label}
                       </p>
-                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <p className={`text-lg lg:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                         {metric.value}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="text-green-600 bg-green-100">
+                    <Badge variant="secondary" className="text-green-600 bg-green-100 text-xs lg:text-sm self-start lg:self-auto">
                       {metric.change}
                     </Badge>
                   </div>
                 </CardContent>
               </Card>
             ))}
-          </motion.div>
+          </div>
 
           {/* Quick Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
+          <div>
             <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Quick Actions
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-3 lg:gap-4">
               {quickActions.map((action) => (
                 <Card key={action.label} className={`cursor-pointer transition-all hover:shadow-md ${
                   darkMode ? 'dark:bg-gray-800 dark:border-gray-700 hover:dark:bg-gray-750' : 'hover:bg-gray-50'
                 }`}>
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center`}>
-                      <action.icon className="w-6 h-6 text-white" />
+                  <CardContent className="p-4 lg:p-6 flex items-center gap-4">
+                    <div className={`w-10 h-10 lg:w-12 lg:h-12 ${action.color} rounded-lg flex items-center justify-center`}>
+                      <action.icon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                     </div>
-                    <div>
-                      <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <div className="flex-1">
+                      <h4 className={`font-medium text-sm lg:text-base ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                         {action.label}
                       </h4>
-                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <p className={`text-xs lg:text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         Get started in minutes
                       </p>
                     </div>
-                    <ChevronRight className={`w-4 h-4 ml-auto ${darkMode ? 'text-gray-400' : 'text-gray-400'}`} />
+                    <ChevronRight className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`} />
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Recent Projects & Onboarding */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Recent Projects */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            >
+            <div>
               <Card className={darkMode ? 'dark:bg-gray-800 dark:border-gray-700' : ''}>
                 <CardHeader>
                   <CardTitle className={`flex items-center gap-2 ${darkMode ? 'text-white' : ''}`}>
@@ -323,14 +298,10 @@ export default function ModernDashboard() {
                   </Button>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
 
             {/* Onboarding Progress */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-            >
+            <div>
               <Card className={darkMode ? 'dark:bg-gray-800 dark:border-gray-700' : ''}>
                 <CardHeader>
                   <CardTitle className={`flex items-center gap-2 ${darkMode ? 'text-white' : ''}`}>
@@ -366,15 +337,11 @@ export default function ModernDashboard() {
                   </p>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           </div>
 
           {/* AI Agents */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-          >
+          <div>
             <Card className={darkMode ? 'dark:bg-gray-800 dark:border-gray-700' : ''}>
               <CardHeader>
                 <CardTitle className={`flex items-center gap-2 ${darkMode ? 'text-white' : ''}`}>
@@ -410,7 +377,7 @@ export default function ModernDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </main>
       </div>
 
