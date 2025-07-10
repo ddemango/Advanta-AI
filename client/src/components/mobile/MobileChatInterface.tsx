@@ -265,20 +265,24 @@ export function MobileChatInterface() {
         </Card>
       )}
 
-      {/* Quick Suggestions */}
-      <div className="px-4 pb-2">
-        <div className="flex gap-2 overflow-x-auto">
+      {/* Suggested Builds - Horizontally Scrollable */}
+      <div className="px-4 pb-3">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide">
           {[
-            "Scrape product data from website",
             "Generate marketing copy",
-            "Analyze customer feedback",
-            "Create automation workflow"
+            "Analyze customer data", 
+            "Create automation workflow",
+            "Build data pipeline",
+            "Generate reports",
+            "Process documents",
+            "Scrape product data",
+            "Email automation"
           ].map((suggestion, index) => (
             <Button
               key={index}
               variant="outline"
               size="sm"
-              className="whitespace-nowrap text-xs"
+              className="whitespace-nowrap text-xs px-3 py-2 rounded-full border-gray-200 text-gray-700 hover:bg-gray-50 flex-shrink-0 min-w-fit"
               onClick={() => setInput(suggestion)}
             >
               {suggestion}
@@ -288,23 +292,23 @@ export function MobileChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t bg-white">
-        <div className="flex items-center gap-2">
+      <div className="p-4 bg-white">
+        <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-3">
           <Button
             variant="ghost"
             size="sm"
-            className="text-gray-500"
+            className="text-gray-500 hover:text-gray-700 p-1"
             onClick={() => {}}
           >
-            <Paperclip className="w-4 h-4" />
+            <Paperclip className="w-5 h-5" />
           </Button>
           
-          <Input
+          <input
             ref={inputRef}
             value={currentInput}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your automation request..."
-            className="flex-1"
+            className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500"
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 handleSendMessage();
@@ -315,17 +319,18 @@ export function MobileChatInterface() {
           <Button
             variant="ghost"
             size="sm"
-            className={`text-gray-500 ${isListening ? 'text-red-500' : ''}`}
+            className={`text-gray-500 hover:text-gray-700 p-1 ${isListening ? 'text-red-500' : ''}`}
             onClick={handleVoiceInput}
+            disabled={isListening}
           >
-            <Mic className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />
+            <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
           </Button>
           
           <Button
-            onClick={handleSendMessage}
-            disabled={!currentInput.trim()}
             size="sm"
-            className="bg-blue-500 hover:bg-blue-600"
+            onClick={handleSendMessage}
+            disabled={!currentInput.trim() || isTyping}
+            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2"
           >
             <Send className="w-4 h-4" />
           </Button>
