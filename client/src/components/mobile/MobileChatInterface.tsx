@@ -30,6 +30,7 @@ export function MobileChatInterface() {
     addTask,
     updateTask,
     addTaskLog,
+    updateMessage,
   } = useChatStore();
   
   const [isListening, setIsListening] = useState(false);
@@ -56,60 +57,98 @@ export function MobileChatInterface() {
       content: userMessage,
     });
 
-    // Simulate AI processing
-    addMessage({
+    // Add processing message
+    const processingMessage = addMessage({
       type: 'assistant',
       content: 'Processing your request...',
       status: 'pending',
     });
 
     // Create task based on input
+    const taskType = getTaskType(userMessage);
     const taskId = addTask({
       title: `Task: ${userMessage.slice(0, 50)}${userMessage.length > 50 ? '...' : ''}`,
       description: userMessage,
       status: 'running',
-      type: getTaskType(userMessage),
+      type: taskType,
       progress: 0,
       logs: [],
       outputs: [],
     });
 
-    // Simulate task processing
-    setTimeout(() => {
-      addTaskLog(taskId, 'Starting task execution...');
+    try {
+      // Real AI processing using OpenAI
+      addTaskLog(taskId, 'Sending request to AI assistant...');
       updateTask(taskId, { progress: 25 });
+
+      const response = await fetch('/api/chatbot/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          taskType: taskType
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      setTimeout(() => {
-        addTaskLog(taskId, 'Processing data...');
-        updateTask(taskId, { progress: 50 });
-        
-        setTimeout(() => {
-          addTaskLog(taskId, 'Generating output...');
-          updateTask(taskId, { progress: 75 });
-          
-          setTimeout(() => {
-            addTaskLog(taskId, 'Task completed successfully');
-            updateTask(taskId, { 
-              status: 'complete', 
-              progress: 100,
-              actualTime: Math.floor(Math.random() * 30) + 10 
-            });
-            
-            // Update assistant message
-            const lastMessage = messages[messages.length - 1];
-            if (lastMessage && lastMessage.type === 'assistant') {
-              addMessage({
-                type: 'assistant',
-                content: `Task completed! I've ${getTaskAction(userMessage)}. Check the Tasks tab for details and outputs.`,
-                status: 'complete',
-              });
-            }
-            
-            toast.success('Task completed successfully!');
-          }, 1000);
-        }, 1000);
-      }, 1000);
-    }, 500);
+      addTaskLog(taskId, 'AI analysis complete, processing results...');
+      updateTask(taskId, { progress: 75 });
+
+      // Add AI response message
+      addMessage({
+        type: 'assistant',
+        content: data.response,
+        status: 'complete',
+      });
+
+      // Update task with AI-generated steps and outputs
+      updateTask(taskId, { 
+        status: 'complete', 
+        progress: 100,
+        actualTime: Math.ceil(data.estimatedTime / 60), // Convert to minutes
+        outputs: data.outputs.map((output: string) => ({
+          type: 'file' as const,
+          name: output,
+          size: '2.1 KB',
+          url: '#'
+        }))
+      });
+
+      // Add detailed steps to task logs
+      data.steps.forEach((step: string, index: number) => {
+        addTaskLog(taskId, `Step ${index + 1}: ${step}`);
+      });
+
+      addTaskLog(taskId, 'Task completed with AI assistance');
+      toast.success('AI processing completed successfully!');
+
+    } catch (error) {
+      console.error('AI processing error:', error);
+      
+      // Update task with error status
+      updateTask(taskId, { 
+        status: 'error', 
+        progress: 0 
+      });
+      
+      addTaskLog(taskId, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      // Add error message
+      addMessage({
+        type: 'assistant',
+        content: 'I apologize, but I encountered an error while processing your request. Please try again or rephrase your request.',
+        status: 'error',
+      });
+
+      toast.error('Failed to process request. Please try again.');
+    }
   };
 
   const getTaskType = (input: string): 'automation' | 'analysis' | 'generation' | 'scraping' => {

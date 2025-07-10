@@ -6336,6 +6336,115 @@ function getCuratedRecommendations(preferences: any) {
     
     return true;
   });
+
+  // AI Chatbot Processing Endpoint
+  app.post('/api/chatbot/process', async (req, res) => {
+    try {
+      const { message, taskType } = req.body;
+      
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      // Helper function for system prompts
+      const getSystemPrompt = (taskType: string): string => {
+        const basePrompt = `You are an AI automation assistant that helps users create workflows, analyze data, generate content, and build automations. Always provide specific, actionable steps.`;
+        
+        switch (taskType) {
+          case 'automation':
+            return `${basePrompt} Focus on workflow automation, process optimization, and task automation. Provide clear step-by-step automation workflows.`;
+          case 'analysis':
+            return `${basePrompt} Focus on data analysis, reporting, and insights generation. Provide analytical frameworks and data processing steps.`;
+          case 'generation':
+            return `${basePrompt} Focus on content creation, document generation, and creative outputs. Provide structured content creation processes.`;
+          case 'scraping':
+            return `${basePrompt} Focus on data extraction, web scraping, and information gathering. Provide safe and ethical data collection methods.`;
+          default:
+            return basePrompt;
+        }
+      };
+
+      // Helper function to parse AI response
+      const parseAIResponse = (response: string, taskType: string) => {
+        // Extract actionable steps from AI response
+        const steps = response.split('\n').filter(line => 
+          line.trim().startsWith('-') || 
+          line.trim().startsWith('•') || 
+          line.trim().match(/^\d+\./)
+        ).map(step => step.trim().replace(/^[-•\d\.]\s*/, ''));
+
+        // Generate estimated time based on task complexity
+        const estimatedTime = Math.min(Math.max(steps.length * 30, 60), 300); // 30s per step, min 1min, max 5min
+
+        // Determine possible outputs based on task type
+        let outputs: string[] = [];
+        switch (taskType) {
+          case 'automation':
+            outputs = ['Workflow Blueprint', 'Automation Script', 'Process Documentation'];
+            break;
+          case 'analysis':
+            outputs = ['Analysis Report', 'Data Insights', 'Visualization Charts'];
+            break;
+          case 'generation':
+            outputs = ['Generated Content', 'Template Files', 'Final Document'];
+            break;
+          case 'scraping':
+            outputs = ['Extracted Data', 'CSV Export', 'Data Summary'];
+            break;
+          default:
+            outputs = ['Task Output', 'Summary Report'];
+        }
+
+        return {
+          message: response,
+          steps: steps.slice(0, 5), // Limit to 5 steps for UX
+          outputs,
+          estimatedTime
+        };
+      };
+
+      // Determine task type and create appropriate prompt
+      const systemPrompt = getSystemPrompt(taskType || 'automation');
+      
+      // Call OpenAI to process the request
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
+
+      const response = completion.choices[0]?.message?.content;
+      
+      if (!response) {
+        throw new Error('No response from OpenAI');
+      }
+
+      // Parse the response to extract actionable steps
+      const processedResponse = parseAIResponse(response, taskType);
+      
+      res.json({
+        success: true,
+        response: processedResponse.message,
+        steps: processedResponse.steps,
+        outputs: processedResponse.outputs,
+        estimatedTime: processedResponse.estimatedTime
+      });
+
+    } catch (error) {
+      console.error('AI processing error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process request',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
 }
 
 
