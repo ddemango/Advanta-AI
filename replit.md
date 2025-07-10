@@ -117,6 +117,7 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 10, 2025. HOMEPAGE RESTORED: Fixed critical routing issue - returned original Advanta AI homepage to root URL ("/"), moved dashboard to "/dashboard" route, maintaining proper website structure with AI Chatbot Builder accessible via sidebar navigation
 - July 9, 2025. PASSWORD RESET SYSTEM COMPLETE: Implemented comprehensive password reset functionality with secure token-based email verification, database integration, modern UI forms, and detailed error handling
 - July 9, 2025. EMAIL SERVICE CONFIGURED: Built nodemailer email service with Gmail SMTP support, professional HTML email templates, and comprehensive error logging for password reset notifications
 - July 9, 2025. GOOGLE OAUTH INTEGRATION: Complete Google Sign-In authentication system implemented with real GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET credentials, database integration for user management, and proper redirect URI configuration for Replit domains
