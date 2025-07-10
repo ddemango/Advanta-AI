@@ -56,9 +56,9 @@ export default function ModernDashboard() {
     { icon: Home, label: 'Home', href: '/dashboard', active: true },
     { icon: Workflow, label: 'Projects', href: '/projects' },
     { icon: Bot, label: 'My GPTs', href: '/my-gpts' },
-    { icon: Database, label: 'Data & Integrations', href: '/integrations' },
-    { icon: Settings, label: 'Account Settings', href: '/settings' },
-    { icon: HelpCircle, label: 'Help & Support', href: '/help' },
+    { icon: Database, label: 'Data & Integrations', href: '/data-integrations' },
+    { icon: Settings, label: 'Account Settings', href: '/account-settings' },
+    { icon: HelpCircle, label: 'Help & Support', href: '/help-support' },
   ];
 
   const recentProjects = [
@@ -136,6 +136,7 @@ export default function ModernDashboard() {
                 className={`w-full justify-start gap-3 ${
                   item.active ? 'bg-blue-50 text-blue-600 border-blue-200' : ''
                 } ${darkMode && !item.active ? 'text-gray-300 hover:text-white' : ''}`}
+                onClick={() => setLocation(item.href)}
               >
                 <item.icon className="w-4 h-4" />
                 {item.label}
@@ -391,6 +392,7 @@ export default function ModernDashboard() {
               className={`flex-col gap-1 h-16 ${
                 item.active ? 'text-blue-600' : darkMode ? 'text-gray-400' : 'text-gray-600'
               }`}
+              onClick={() => setLocation(item.href)}
             >
               <item.icon className="w-5 h-5" />
               <span className="text-xs">{item.label}</span>
