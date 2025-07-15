@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
@@ -28,6 +28,8 @@ export default function ROICalculator() {
   const [industry, setIndustry] = useState("eCommerce");
   const [companySize, setCompanySize] = useState(65); // Value 0-100, maps to employee count
   const [currentEfficiency, setCurrentEfficiency] = useState(60); // Percentage 0-100
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   
   // State for calculated results
   const [efficiencyImprovement, setEfficiencyImprovement] = useState("35-45%");
@@ -123,6 +125,25 @@ export default function ROICalculator() {
     setEstimatedROI(`${roiMin}-${roiMax}%`);
   }, [industry, companySize, currentEfficiency]);
 
+  // Close tooltip when clicking outside (mobile support)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+        setShowTooltip(false);
+      }
+    };
+
+    if (showTooltip) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showTooltip]);
+
   return (
     <>
       <Helmet>
@@ -196,21 +217,36 @@ export default function ROICalculator() {
                   <div className="flex justify-between items-end">
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl">Current Process Efficiency</h2>
-                      <Tooltip delayDuration={0}>
-                        <TooltipTrigger asChild>
-                          <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs p-4 text-sm bg-popover border border-border shadow-lg">
-                          <p className="mb-2 font-medium text-foreground">What is Current Process Efficiency?</p>
-                          <p className="text-muted-foreground mb-2">Rate how efficiently your current business processes operate on a scale from 0-100%:</p>
-                          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                            <li>• <strong className="text-foreground">Low (0-30%):</strong> Heavily manual, frequent errors, slow processing</li>
-                            <li>• <strong className="text-foreground">Medium (31-70%):</strong> Some automation, moderate efficiency</li>
-                            <li>• <strong className="text-foreground">High (71-100%):</strong> Highly automated, streamlined processes</li>
-                          </ul>
-                          <p className="mt-2 text-xs text-muted-foreground italic">Lower efficiency = more room for AI-driven improvements</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <div ref={tooltipRef}>
+                        <Tooltip open={showTooltip} onOpenChange={setShowTooltip}>
+                          <TooltipTrigger asChild>
+                            <button 
+                              type="button"
+                              className="p-1 border-0 bg-transparent hover:bg-muted rounded-sm transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                              onClick={() => setShowTooltip(!showTooltip)}
+                              onMouseEnter={() => !('ontouchstart' in window) && setShowTooltip(true)}
+                              onMouseLeave={() => !('ontouchstart' in window) && setShowTooltip(false)}
+                              aria-label="What is Current Process Efficiency?"
+                            >
+                              <Info className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="top" 
+                            className="max-w-xs p-4 text-sm bg-popover border border-border shadow-lg z-50"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <p className="mb-2 font-medium text-foreground">What is Current Process Efficiency?</p>
+                            <p className="text-muted-foreground mb-2">Rate how efficiently your current business processes operate on a scale from 0-100%:</p>
+                            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                              <li>• <strong className="text-foreground">Low (0-30%):</strong> Heavily manual, frequent errors, slow processing</li>
+                              <li>• <strong className="text-foreground">Medium (31-70%):</strong> Some automation, moderate efficiency</li>
+                              <li>• <strong className="text-foreground">High (71-100%):</strong> Highly automated, streamlined processes</li>
+                            </ul>
+                            <p className="mt-2 text-xs text-muted-foreground italic">Lower efficiency = more room for AI-driven improvements</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                     <div className="text-lg">{currentEfficiency}%</div>
                   </div>
