@@ -9,18 +9,11 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
       return false;
     }
 
-    // For testing purposes, only send to verified email in development
-    const isTestingMode = process.env.NODE_ENV === 'development';
-    const verifiedEmail = 'd.s.demango@gmail.com';
-    
-    // In testing mode, only send to verified email address
-    if (isTestingMode && email !== verifiedEmail) {
-      console.log(`Skipping email to ${email} - testing mode only allows ${verifiedEmail}`);
-      return true; // Return true to avoid blocking subscription flow
-    }
+    // Domain is now verified at Resend - emails can be sent to all subscribers
+    console.log(`Sending welcome email to: ${email}`);
 
     const { data, error } = await resend.emails.send({
-      from: 'Advanta AI <onboarding@resend.dev>',
+      from: 'Advanta AI <hello@advanta-ai.com>',
       to: email,
       subject: 'Welcome to Advanta AI - Your AI Journey Starts Here!',
       html: `
@@ -210,7 +203,7 @@ export async function sendTestEmail(email: string): Promise<boolean> {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Advanta AI <onboarding@resend.dev>',
+      from: 'Advanta AI <hello@advanta-ai.com>',
       to: email,
       subject: 'Test Email from Advanta AI',
       html: `
