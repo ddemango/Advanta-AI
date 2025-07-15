@@ -94,3 +94,8 @@ export class EmailService {
 }
 
 export const emailService = new EmailService();
+
+// Create transporter function for newsletter system
+export async function createTransporter() {
+  return emailService['transporter'];
+}

@@ -300,3 +300,20 @@ export const resumeAnalysesRelations = relations(resumeAnalyses, ({ one }) => ({
 
 export type InsertResumeAnalysis = z.infer<typeof insertResumeAnalysisSchema>;
 export type ResumeAnalysis = typeof resumeAnalyses.$inferSelect;
+
+// Newsletter subscribers table
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique().notNull(),
+  isActive: boolean("is_active").default(true),
+  subscribedAt: timestamp("subscribed_at").defaultNow(),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  unsubscribeToken: varchar("unsubscribe_token").unique(),
+});
+
+export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).omit({
+  subscribedAt: true,
+});
+
+export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

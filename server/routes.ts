@@ -21,7 +21,9 @@ declare module 'express-session' {
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema } from "@shared/schema";
+import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber } from "@shared/schema";
+import { eq, sql } from "drizzle-orm";
+import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { DailyBlogScheduler, getAllBlogPosts } from "./daily-blog-system";
 import { workflowEngine } from "./workflow-engine";
@@ -1562,6 +1564,133 @@ function setupAuthEndpoints(app: Express) {
     } catch (error) {
       console.error('Error getting blog status:', error);
       return res.status(500).json({ message: 'Error getting blog status' });
+    }
+  });
+
+  // ---------- Newsletter API Routes ----------
+  
+  // Subscribe to newsletter
+  app.post('/api/newsletter/subscribe', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email address is required' });
+      }
+      
+      // Check if email already exists
+      const existingSubscriber = await db
+        .select()
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.email, email))
+        .limit(1);
+      
+      if (existingSubscriber.length > 0) {
+        if (existingSubscriber[0].isActive) {
+          return res.status(200).json({ 
+            success: true, 
+            message: 'You are already subscribed to our newsletter!' 
+          });
+        } else {
+          // Reactivate subscription
+          await db
+            .update(newsletterSubscribers)
+            .set({ 
+              isActive: true, 
+              subscribedAt: new Date(),
+              unsubscribedAt: null 
+            })
+            .where(eq(newsletterSubscribers.email, email));
+          
+          return res.json({ 
+            success: true, 
+            message: 'Welcome back! Your newsletter subscription has been reactivated.' 
+          });
+        }
+      }
+      
+      // Create new subscription
+      const subscriberId = crypto.randomUUID();
+      const unsubscribeToken = crypto.randomBytes(32).toString('hex');
+      
+      const newSubscriber: InsertNewsletterSubscriber = {
+        id: subscriberId,
+        email: email.toLowerCase().trim(),
+        unsubscribeToken,
+        isActive: true
+      };
+      
+      await db.insert(newsletterSubscribers).values(newSubscriber);
+      
+      return res.json({ 
+        success: true, 
+        message: 'Successfully subscribed! You will receive daily AI insights in your inbox.' 
+      });
+      
+    } catch (error) {
+      console.error('Error subscribing to newsletter:', error);
+      return res.status(500).json({ error: 'Failed to subscribe to newsletter' });
+    }
+  });
+  
+  // Unsubscribe from newsletter
+  app.get('/api/newsletter/unsubscribe', async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token) {
+        return res.status(400).json({ error: 'Unsubscribe token is required' });
+      }
+      
+      const subscriber = await db
+        .select()
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.unsubscribeToken, token as string))
+        .limit(1);
+      
+      if (subscriber.length === 0) {
+        return res.status(404).json({ error: 'Invalid unsubscribe token' });
+      }
+      
+      await db
+        .update(newsletterSubscribers)
+        .set({ 
+          isActive: false, 
+          unsubscribedAt: new Date() 
+        })
+        .where(eq(newsletterSubscribers.unsubscribeToken, token as string));
+      
+      return res.json({ 
+        success: true, 
+        message: 'You have been successfully unsubscribed from our newsletter.' 
+      });
+      
+    } catch (error) {
+      console.error('Error unsubscribing from newsletter:', error);
+      return res.status(500).json({ error: 'Failed to unsubscribe from newsletter' });
+    }
+  });
+  
+  // Get newsletter subscriber count (for admin)
+  app.get('/api/newsletter/stats', async (req, res) => {
+    try {
+      const activeCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(newsletterSubscribers)
+        .where(eq(newsletterSubscribers.isActive, true));
+      
+      const totalCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(newsletterSubscribers);
+      
+      return res.json({
+        activeSubscribers: activeCount[0]?.count || 0,
+        totalSubscribers: totalCount[0]?.count || 0
+      });
+      
+    } catch (error) {
+      console.error('Error getting newsletter stats:', error);
+      return res.status(500).json({ error: 'Failed to get newsletter statistics' });
     }
   });
 

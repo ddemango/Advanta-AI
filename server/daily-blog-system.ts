@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as cron from "node-cron";
 import { log } from "./vite";
+import { scheduleNewsletterSending } from './newsletter-system';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -528,6 +529,14 @@ export class DailyBlogScheduler {
 
     // Generate initial post if no posts exist
     this.generateInitialPostIfNeeded();
+    
+    // Initialize newsletter scheduling
+    try {
+      scheduleNewsletterSending();
+      log("📧 Newsletter scheduling initialized", "blog-scheduler");
+    } catch (error) {
+      log(`❌ Newsletter scheduling failed: ${error}`, "blog-scheduler");
+    }
     
     log("✅ Daily blog scheduler started successfully", "blog-scheduler");
   }

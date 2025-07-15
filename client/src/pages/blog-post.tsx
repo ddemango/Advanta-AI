@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { BlogPost } from '@shared/schema';
+import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
 
 // Function to format date with error handling
 const formatDate = (dateString: string | Date | null | undefined) => {
@@ -336,17 +337,7 @@ export default function BlogPostPage() {
             
             {/* Newsletter CTA */}
             <section className="mt-20">
-              <div className="bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 rounded-xl p-8 border border-primary/30">
-                <div className="max-w-xl mx-auto text-center">
-                  <h2 className="text-2xl font-bold mb-3">Subscribe to Our Newsletter</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Get the latest AI insights and updates delivered to your inbox.
-                  </p>
-                  <Button className="bg-primary hover:bg-primary/90">
-                    Sign Up
-                  </Button>
-                </div>
-              </div>
+              <NewsletterSignup variant="hero" />
             </section>
           </div>
         </div>

@@ -14,6 +14,7 @@ import { CalendarDays, Clock, ArrowRight, Search } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { BlogPost } from '@shared/schema';
 import { useLocation } from 'wouter';
+import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
 
 // Real blog categories - NO MOCK DATA
 const blogCategories = [
@@ -467,26 +468,7 @@ export default function Blog() {
           
           {/* Newsletter Signup */}
           <section className="mt-20">
-            <div className="bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 rounded-xl p-8 md:p-12 border border-primary/30">
-              <div className="max-w-3xl mx-auto text-center">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">Stay Updated with AI Insights</h2>
-                <p className="text-muted-foreground mb-6">
-                  Join our newsletter to receive the latest articles, tutorials, and industry insights directly to your inbox.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                  <Input
-                    placeholder="Enter your email"
-                    className="flex-grow"
-                  />
-                  <Button className="bg-primary hover:bg-primary/90">
-                    Subscribe
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-4">
-                  By subscribing, you agree to our Privacy Policy and consent to receive updates from us.
-                </p>
-              </div>
-            </div>
+            <NewsletterSignup variant="hero" />
           </section>
         </div>
       </main>
