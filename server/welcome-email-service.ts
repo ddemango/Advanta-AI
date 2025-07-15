@@ -9,6 +9,16 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
       return false;
     }
 
+    // For testing purposes, only send to verified email in development
+    const isTestingMode = process.env.NODE_ENV === 'development';
+    const verifiedEmail = 'd.s.demango@gmail.com';
+    
+    // In testing mode, only send to verified email address
+    if (isTestingMode && email !== verifiedEmail) {
+      console.log(`Skipping email to ${email} - testing mode only allows ${verifiedEmail}`);
+      return true; // Return true to avoid blocking subscription flow
+    }
+
     const { data, error } = await resend.emails.send({
       from: 'Advanta AI <onboarding@resend.dev>',
       to: email,
