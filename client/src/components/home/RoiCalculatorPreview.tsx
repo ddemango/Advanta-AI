@@ -31,8 +31,10 @@ export default function RoiCalculatorPreview() {
       
       // Calculate realistic ROI range based on industry
       const roiData = industryROIRanges[selectedIndustry as keyof typeof industryROIRanges];
-      const roiMin = roiData.min + Math.floor(Math.random() * 20);
-      const roiMax = roiData.max - Math.floor(Math.random() * 20);
+      const roiValue1 = roiData.min + Math.floor(Math.random() * 10);
+      const roiValue2 = roiData.max - Math.floor(Math.random() * 5);
+      const roiMin = Math.min(roiValue1, roiValue2);
+      const roiMax = Math.max(roiValue1, roiValue2);
       const roiRange = `${roiMin}-${roiMax}%`;
       setRoi(roiRange);
     }, 3000);

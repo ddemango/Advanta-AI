@@ -86,28 +86,36 @@ export default function ROICalculator() {
     
     // Calculate realistic efficiency improvement (5-25% based on studies)
     const baseEff = indFactors.eff * efficiencyGap * szFactors.multiplier * 100;
-    const effMin = Math.max(5, Math.round(baseEff * 0.8));
-    const effMax = Math.min(25, Math.round(baseEff * 1.2));
+    const effValue1 = Math.max(5, Math.round(baseEff * 0.8));
+    const effValue2 = Math.min(25, Math.round(baseEff * 1.2));
+    const effMin = Math.min(effValue1, effValue2);
+    const effMax = Math.max(effValue1, effValue2);
     setEfficiencyImprovement(`${effMin}-${effMax}%`);
     
     // Calculate cost reduction (3-15% based on studies)
     const baseCost = indFactors.cost * szFactors.multiplier * 100;
-    const costMin = Math.max(3, Math.round(baseCost * 0.8));
-    const costMax = Math.min(15, Math.round(baseCost * 1.2));
+    const costValue1 = Math.max(3, Math.round(baseCost * 0.8));
+    const costValue2 = Math.min(15, Math.round(baseCost * 1.2));
+    const costMin = Math.min(costValue1, costValue2);
+    const costMax = Math.max(costValue1, costValue2);
     setCostReduction(`${costMin}-${costMax}%`);
     
     // Calculate revenue growth (1-8% based on studies - most organizations see ≤5%)
     const baseRev = indFactors.rev * szFactors.multiplier * 100;
-    const revMin = Math.max(1, Math.round(baseRev * 0.8));
-    const revMax = Math.min(8, Math.round(baseRev * 1.2));
+    const revValue1 = Math.max(1, Math.round(baseRev * 0.8));
+    const revValue2 = Math.min(8, Math.round(baseRev * 1.2));
+    const revMin = Math.min(revValue1, revValue2);
+    const revMax = Math.max(revValue1, revValue2);
     setRevenueGrowth(`${revMin}-${revMax}%`);
     
     // Calculate realistic ROI (15-40% over 12-18 months based on 2024 studies)
     // McKinsey: Most don't see transformational returns, PWC: Focus on 20-30% gains
     const avgBenefit = ((effMin + effMax) / 2 + (costMin + costMax) / 2 + (revMin + revMax) / 2) / 3;
     const roiMultiplier = 1.5 + (avgBenefit / 100); // Conservative multiplier
-    const roiMin = Math.max(15, Math.round(avgBenefit * roiMultiplier * 0.8));
-    const roiMax = Math.min(40, Math.round(avgBenefit * roiMultiplier * 1.4));
+    const roiValue1 = Math.max(15, Math.round(avgBenefit * roiMultiplier * 0.8));
+    const roiValue2 = Math.min(40, Math.round(avgBenefit * roiMultiplier * 1.4));
+    const roiMin = Math.min(roiValue1, roiValue2);
+    const roiMax = Math.max(roiValue1, roiValue2);
     
     setEstimatedROI(`${roiMin}-${roiMax}%`);
   }, [industry, companySize, currentEfficiency]);
