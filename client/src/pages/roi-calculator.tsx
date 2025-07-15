@@ -28,6 +28,7 @@ export default function ROICalculator() {
   const [industry, setIndustry] = useState("eCommerce");
   const [companySize, setCompanySize] = useState(65); // Value 0-100, maps to employee count
   const [currentEfficiency, setCurrentEfficiency] = useState(60); // Percentage 0-100
+  const [showTooltip, setShowTooltip] = useState(false);
   
   // State for calculated results
   const [efficiencyImprovement, setEfficiencyImprovement] = useState("35-45%");
@@ -127,7 +128,8 @@ export default function ROICalculator() {
         <meta name="description" content="Calculate the potential return on investment for implementing AI solutions in your business." />
       </Helmet>
       
-      <NewHeader />
+      <TooltipProvider>
+        <NewHeader />
       
       <main className="py-28 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -192,16 +194,27 @@ export default function ROICalculator() {
                   <div className="flex justify-between items-end">
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl">Current Process Efficiency</h2>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p>Rate how efficiently your current processes operate. Lower efficiency means more room for AI-driven improvements. Consider factors like manual tasks, processing time, error rates, and resource utilization.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button 
+                            type="button"
+                            className="p-0 border-0 bg-transparent"
+                            onClick={() => setShowTooltip(!showTooltip)}
+                          >
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs p-4 text-sm">
+                          <p className="mb-2 font-medium">What is Current Process Efficiency?</p>
+                          <p>Rate how efficiently your current business processes operate on a scale from 0-100%:</p>
+                          <ul className="mt-2 space-y-1 text-xs">
+                            <li>• <strong>Low (0-30%):</strong> Heavily manual, frequent errors, slow processing</li>
+                            <li>• <strong>Medium (31-70%):</strong> Some automation, moderate efficiency</li>
+                            <li>• <strong>High (71-100%):</strong> Highly automated, streamlined processes</li>
+                          </ul>
+                          <p className="mt-2 text-xs text-muted-foreground">Lower efficiency = more room for AI-driven improvements</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                     <div className="text-lg">{currentEfficiency}%</div>
                   </div>
@@ -280,6 +293,7 @@ export default function ROICalculator() {
       </main>
       
       <Footer />
+      </TooltipProvider>
     </>
   );
 }
