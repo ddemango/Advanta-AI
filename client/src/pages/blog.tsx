@@ -118,7 +118,17 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => window.open(`/posts/${post.filename}`, '_blank')}
+              onClick={() => {
+                console.log('FileBlogPostCard post data:', post);
+                const filename = post.filename || post.slug || `${post.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
+                console.log('Using filename:', filename);
+                if (filename && filename !== 'undefined') {
+                  window.open(`/posts/${filename}`, '_blank');
+                } else {
+                  console.error('No valid filename available for post:', post);
+                  alert('Sorry, this blog post is not available yet.');
+                }
+              }}
               className="hover:text-blue-600"
             >
               Read More <ArrowRight className="h-4 w-4 ml-1" />
@@ -414,8 +424,8 @@ export default function Blog() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredPosts.map((post: any) => (
-                      <div key={post.id || post.slug}>
-                        {post.slug ? (
+                      <div key={post.id || post.slug || post.filename}>
+                        {post.filename ? (
                           <FileBlogPostCard post={post} />
                         ) : (
                           <BlogPostCard post={post} />
