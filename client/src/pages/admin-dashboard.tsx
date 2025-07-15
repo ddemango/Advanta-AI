@@ -115,23 +115,24 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       <NewHeader />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <div className="flex gap-3">
-            <Button onClick={exportSubscribers} variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export Subscribers
-            </Button>
-            <Button onClick={sendTestNewsletter}>
-              <Send className="w-4 h-4 mr-2" />
-              Send Test Newsletter
-            </Button>
+      <div className="pt-20 pb-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={exportSubscribers} variant="outline" className="w-full sm:w-auto">
+                <Download className="w-4 h-4 mr-2" />
+                Export Subscribers
+              </Button>
+              <Button onClick={sendTestNewsletter} className="w-full sm:w-auto">
+                <Send className="w-4 h-4 mr-2" />
+                Send Test Newsletter
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {/* Analytics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Analytics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
@@ -183,60 +184,61 @@ export default function AdminDashboard() {
               </p>
             </CardContent>
           </Card>
+          </div>
+
+          {/* Recent Subscribers */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Recent Subscribers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {subscribers.slice(0, 10).map((subscriber) => (
+                  <div key={subscriber.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-sm font-medium">
+                          {subscriber.email.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{subscriber.email}</p>
+                        <p className="text-sm text-gray-500">ID: {subscriber.id}</p>
+                      </div>
+                    </div>
+                    <Badge variant={subscriber.is_active ? "default" : "secondary"} className="self-start sm:self-center">
+                      {subscriber.is_active ? "Active" : "Unsubscribed"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Blog Posts */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Blog Posts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {blogPosts.slice(0, 10).map((post) => (
+                  <div key={post.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">{post.title}</p>
+                      <p className="text-sm text-gray-500">
+                        Category: {post.category} • Created: {new Date(post.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge variant={post.published ? "default" : "secondary"} className="self-start sm:self-center">
+                      {post.published ? "Published" : "Draft"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Recent Subscribers */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Recent Subscribers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {subscribers.slice(0, 10).map((subscriber) => (
-                <div key={subscriber.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {subscriber.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{subscriber.email}</p>
-                      <p className="text-sm text-gray-500">ID: {subscriber.id}</p>
-                    </div>
-                  </div>
-                  <Badge variant={subscriber.is_active ? "default" : "secondary"}>
-                    {subscriber.is_active ? "Active" : "Unsubscribed"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Blog Posts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Blog Posts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {blogPosts.slice(0, 10).map((post) => (
-                <div key={post.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{post.title}</p>
-                    <p className="text-sm text-gray-500">
-                      Category: {post.category} • Created: {new Date(post.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Badge variant={post.published ? "default" : "secondary"}>
-                    {post.published ? "Published" : "Draft"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
