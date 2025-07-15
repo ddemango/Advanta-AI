@@ -34,9 +34,15 @@ const featuredTags = [
   'ROI Optimization', 'Enterprise AI', 'Workflow Automation', 'Data Analytics'
 ];
 
-// Function to format date
-const formatDate = (dateString: string | Date) => {
+// Function to format date with error handling
+const formatDate = (dateString: string | Date | null | undefined) => {
+  if (!dateString) return 'Recent';
+  
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return 'Recent';
+  }
+  
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',

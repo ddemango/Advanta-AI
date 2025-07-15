@@ -14,9 +14,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
 import { BlogPost } from '@shared/schema';
 
-// Function to format date
-const formatDate = (dateString: string | Date) => {
+// Function to format date with error handling
+const formatDate = (dateString: string | Date | null | undefined) => {
+  if (!dateString) return 'Recent';
+  
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return 'Recent';
+  }
+  
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -158,7 +164,7 @@ export default function BlogPostPage() {
         <meta property="og:description" content={post.summary} />
         {post.featured_image && <meta property="og:image" content={post.featured_image} />}
         <meta property="og:type" content="article" />
-        <meta property="article:published_time" content={new Date(post.created_at).toISOString()} />
+        <meta property="article:published_time" content={post.created_at ? new Date(post.created_at).toISOString() : new Date().toISOString()} />
         <meta property="article:section" content={post.category} />
         {post.tags?.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
