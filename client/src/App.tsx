@@ -73,6 +73,7 @@ import MovieMatchmaker from "@/pages/movie-matchmaker";
 import TVMatchmaker from "@/pages/tv-matchmaker";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
+import NewsletterTest from "@/pages/newsletter-test";
 import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
@@ -202,6 +203,7 @@ function Router() {
       <Route path="/free-tools" component={FreeTools} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
+      <Route path="/newsletter-test" component={NewsletterTest} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Subscription - Advanta AI</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #1e293b;
+            margin: 0 0 15px 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .features {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .features h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .features li {
+            padding: 8px 0;
+            color: #4b5563;
+            position: relative;
+            padding-left: 25px;
+        }
+        .features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Advanta AI</div>
+            <h1>Join Our Newsletter</h1>
+            <p class="subtitle">Get daily AI insights and exclusive access to cutting-edge tools</p>
+        </div>
+        
+        <form id="newsletter-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" name="email" id="email" placeholder="Enter your email" required>
+            </div>
+            <button type="submit">Subscribe & Get Welcome Email</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Sending welcome email...</span>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="features">
+            <h3>What You'll Get:</h3>
+            <ul>
+                <li>Daily AI insights and industry trends</li>
+                <li>Exclusive access to cutting-edge AI tools</li>
+                <li>Expert analysis on AI automation strategies</li>
+                <li>Case studies from successful AI implementations</li>
+                <li>Early access to new features and resources</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("newsletter-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const email = e.target.email.value;
+            const button = e.target.querySelector('button');
+            const message = document.getElementById('message');
+            const loading = document.getElementById('loading');
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Subscribing...';
+            loading.style.display = 'block';
+            message.style.display = 'none';
+            
+            try {
+                const response = await fetch("/api/newsletter/subscribe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                loading.style.display = 'none';
+                
+                if (response.ok) {
+                    message.className = 'message success';
+                    message.textContent = data.message;
+                    message.style.display = 'block';
+                    
+                    // Clear form
+                    e.target.reset();
+                    
+                    // Show success for 5 seconds, then reset button
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.textContent = 'Subscribe & Get Welcome Email';
+                    }, 3000);
+                } else {
+                    message.className = 'message error';
+                    message.textContent = data.error || 'Failed to subscribe. Please try again.';
+                    message.style.display = 'block';
+                    
+                    button.disabled = false;
+                    button.textContent = 'Subscribe & Get Welcome Email';
+                }
+            } catch (error) {
+                // Hide loading
+                loading.style.display = 'none';
+                
+                message.className = 'message error';
+                message.textContent = 'Network error. Please try again.';
+                message.style.display = 'block';
+                
+                button.disabled = false;
+                button.textContent = 'Subscribe & Get Welcome Email';
+            }
+        });
+    </script>
+</body>
+</html>

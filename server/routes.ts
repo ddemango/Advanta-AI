@@ -22,6 +22,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber } from "@shared/schema";
+import { sendWelcomeEmail, sendTestEmail } from "./welcome-email-service";
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
@@ -1602,9 +1603,15 @@ function setupAuthEndpoints(app: Express) {
             })
             .where(eq(newsletterSubscribers.email, email));
           
+          // Send welcome email for reactivated subscription
+          const emailSent = await sendWelcomeEmail(email);
+          if (emailSent) {
+            console.log(`Welcome email sent to reactivated subscriber ${email}`);
+          }
+          
           return res.json({ 
             success: true, 
-            message: 'Welcome back! Your newsletter subscription has been reactivated.' 
+            message: 'Welcome back! Your newsletter subscription has been reactivated. Check your inbox for the latest AI insights.' 
           });
         }
       }
@@ -1622,9 +1629,17 @@ function setupAuthEndpoints(app: Express) {
       
       await db.insert(newsletterSubscribers).values(newSubscriber);
       
+      // Send welcome email
+      const emailSent = await sendWelcomeEmail(email);
+      if (emailSent) {
+        console.log(`Welcome email sent to ${email}`);
+      } else {
+        console.error(`Failed to send welcome email to ${email}`);
+      }
+      
       return res.json({ 
         success: true, 
-        message: 'Successfully subscribed! You will receive daily AI insights in your inbox.' 
+        message: 'Successfully subscribed! Check your inbox for a welcome email with exclusive AI insights.' 
       });
       
     } catch (error) {
@@ -1691,6 +1706,68 @@ function setupAuthEndpoints(app: Express) {
     } catch (error) {
       console.error('Error getting newsletter stats:', error);
       return res.status(500).json({ error: 'Failed to get newsletter statistics' });
+    }
+  });
+
+  // Test welcome email endpoint
+  app.post('/api/newsletter/test-welcome', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email address is required' });
+      }
+      
+      const emailSent = await sendWelcomeEmail(email);
+      
+      if (emailSent) {
+        return res.json({ 
+          success: true, 
+          message: 'Welcome email sent successfully!' 
+        });
+      } else {
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Failed to send welcome email' 
+        });
+      }
+    } catch (error) {
+      console.error('Error sending test welcome email:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error' 
+      });
+    }
+  });
+
+  // Test basic email endpoint
+  app.post('/api/newsletter/test-email', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email address is required' });
+      }
+      
+      const emailSent = await sendTestEmail(email);
+      
+      if (emailSent) {
+        return res.json({ 
+          success: true, 
+          message: 'Test email sent successfully!' 
+        });
+      } else {
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Failed to send test email' 
+        });
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error' 
+      });
     }
   });
 
