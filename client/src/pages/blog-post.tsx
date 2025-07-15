@@ -30,26 +30,46 @@ const formatDate = (dateString: string | Date | null | undefined) => {
   });
 };
 
-// Related post card component
-const RelatedPostCard = ({ post }: { post: BlogPost }) => {
-  const [, navigate] = useLocation();
+// Related post card component - ONLY FOR REAL FILE-BASED POSTS
+const RelatedPostCard = ({ post }: { post: any }) => {
+  // Generate category-based image URL
+  const getImageUrl = (category: string) => {
+    const categoryImages: { [key: string]: string } = {
+      'ai_technology': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop&auto=format&q=80',
+      'business_strategy': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=300&fit=crop&auto=format&q=80',
+      'automation': 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=600&h=300&fit=crop&auto=format&q=80',
+      'marketing_ai': 'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=600&h=300&fit=crop&auto=format&q=80',
+      'case_studies': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=300&fit=crop&auto=format&q=80',
+      'tutorials': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&h=300&fit=crop&auto=format&q=80',
+      'industry_insights': 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=600&h=300&fit=crop&auto=format&q=80',
+      'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=300&fit=crop&auto=format&q=80',
+      'resources': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=300&fit=crop&auto=format&q=80'
+    };
+    
+    return categoryImages[category] || categoryImages['ai_technology'];
+  };
+
+  const imageUrl = getImageUrl(post.category || 'ai_technology');
   
   return (
     <Card className="overflow-hidden hover:border-primary/50 transition-colors cursor-pointer"
-      onClick={() => navigate(`/blog/${post.slug}`)}>
+      onClick={() => window.open(`/posts/${post.filename}`, '_blank')}>
       <div className="h-40 overflow-hidden">
         <img 
-          src={post.featured_image || '/images/blog-placeholder.jpg'} 
-          alt={post.title} 
+          src={imageUrl}
+          alt={post.title?.replace(/[\*]/g, '') || 'AI Technology'} 
           className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+          loading="lazy"
         />
       </div>
       <CardHeader className="py-3">
-        <CardTitle className="text-lg line-clamp-2 hover:text-primary transition-colors">{post.title}</CardTitle>
+        <CardTitle className="text-lg line-clamp-2 hover:text-primary transition-colors">
+          {post.title?.replace(/[\*]/g, '') || 'AI Insights'}
+        </CardTitle>
       </CardHeader>
       <CardFooter className="pt-0 pb-3 flex justify-between items-center text-sm text-muted-foreground">
-        <span>{formatDate(post.created_at)}</span>
-        <span>{post.reading_time || 5} min read</span>
+        <span>{formatDate(post.date)}</span>
+        <span>5 min read</span>
       </CardFooter>
     </Card>
   );
@@ -66,18 +86,17 @@ export default function BlogPostPage() {
     enabled: !!slug,
   });
   
-  // Fetch all blog posts for related content
+  // Fetch only REAL file-based blog posts for related content - NO DATABASE POSTS
   const { data: allPosts, isLoading: isLoadingAll } = useQuery({
-    queryKey: ['/api/blog'],
+    queryKey: ['/api/blog/posts'],
     enabled: !!post,
   });
   
-  // Get related posts based on category or tags (if available)
-  const relatedPosts = allPosts && post ? 
+  // Get related posts from REAL file-based posts only - NO FAKE DATA
+  const relatedPosts = allPosts ? 
     allPosts
-      .filter((p: BlogPost) => p.id !== post.id)
-      .filter((p: BlogPost) => p.category === post.category || 
-        (p.tags && post.tags && p.tags.some(tag => post.tags.includes(tag))))
+      .filter((p: any) => p.filename && p.filename !== post?.slug) // Only real file-based posts
+      .filter((p: any) => p.category === post?.category) // Same category
       .slice(0, 3) : 
     [];
   
@@ -308,8 +327,8 @@ export default function BlogPostPage() {
               <section className="mt-16">
                 <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {relatedPosts.map((relatedPost: BlogPost) => (
-                    <RelatedPostCard key={relatedPost.id} post={relatedPost} />
+                  {relatedPosts.map((relatedPost: any) => (
+                    <RelatedPostCard key={relatedPost.filename || relatedPost.slug} post={relatedPost} />
                   ))}
                 </div>
               </section>
