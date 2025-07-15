@@ -44,12 +44,12 @@ export default function ROICalculator() {
     return "500+ employees";
   };
 
-  // Calculate ROI based on real AI implementation studies (McKinsey, PWC, Deloitte 2024)
+  // Calculate ROI based on real AI implementation studies (Latest available: McKinsey, PWC 2024)
   useEffect(() => {
-    // Industry factors based on actual 2024 McKinsey/PWC data
-    // McKinsey: 51% expect >5% revenue gains, 34% expect 6-10%, 17% >10%
-    // PWC: 20-30% productivity gains, high performers see 13% ROI
-    // Average enterprise AI ROI: 5.9%, high performers: 13%
+    // Industry factors based on most recent 2024 McKinsey/PWC data
+    // McKinsey 2024: 51% expect >5% revenue gains, 34% expect 6-10%, 17% >10%
+    // PWC 2024: 20-30% productivity gains, high performers see 13% ROI
+    // Note: 2025 comprehensive studies not yet available (mid-year)
     const industryFactors: Record<string, { eff: number, cost: number, rev: number }> = {
       "eCommerce": { eff: 0.25, cost: 0.15, rev: 0.08 }, // High automation potential
       "Financial Services": { eff: 0.30, cost: 0.18, rev: 0.09 }, // Process optimization leaders
