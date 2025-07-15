@@ -7,22 +7,33 @@ import { useLocation } from 'wouter';
 export default function RoiCalculatorPreview() {
   const [, setLocation] = useLocation();
   const [industry, setIndustry] = useState('Technology');
-  const [efficiency, setEfficiency] = useState(25);
-  const [roi, setRoi] = useState('385-412%');
+  const [efficiency, setEfficiency] = useState(35);
+  const [roi, setRoi] = useState('185-245%');
   
-  // Cycle through industries for demo effect
+  // Cycle through industries for demo effect with realistic ROI ranges
   useEffect(() => {
     const industries = ['Technology', 'eCommerce', 'Healthcare', 'Manufacturing', 'Financial Services'];
+    const industryROIRanges = {
+      'Technology': { min: 180, max: 280 },
+      'eCommerce': { min: 140, max: 220 },
+      'Healthcare': { min: 120, max: 180 },
+      'Manufacturing': { min: 150, max: 210 },
+      'Financial Services': { min: 160, max: 240 }
+    };
+    
     const interval = setInterval(() => {
-      setIndustry(industries[Math.floor(Math.random() * industries.length)]);
+      const selectedIndustry = industries[Math.floor(Math.random() * industries.length)];
+      setIndustry(selectedIndustry);
       
-      // Update efficiency and ROI values
+      // Update efficiency realistically (20-60% range)
       const newEfficiency = Math.floor(Math.random() * 40) + 20;
       setEfficiency(newEfficiency);
       
-      // Calculate new ROI range
-      const baseRoi = 340 + Math.floor(Math.random() * 100);
-      const roiRange = `${baseRoi}-${baseRoi + Math.floor(Math.random() * 50)}%`;
+      // Calculate realistic ROI range based on industry
+      const roiData = industryROIRanges[selectedIndustry as keyof typeof industryROIRanges];
+      const roiMin = roiData.min + Math.floor(Math.random() * 20);
+      const roiMax = roiData.max - Math.floor(Math.random() * 20);
+      const roiRange = `${roiMin}-${roiMax}%`;
       setRoi(roiRange);
     }, 3000);
     
