@@ -184,10 +184,12 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
 
     if (error) {
       console.error('Resend email error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return false;
     }
 
     console.log('Welcome email sent successfully to:', email);
+    console.log('Email data:', JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
     console.error('Error sending welcome email:', error);
