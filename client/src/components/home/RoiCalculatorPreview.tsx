@@ -14,11 +14,11 @@ export default function RoiCalculatorPreview() {
   useEffect(() => {
     const industries = ['Technology', 'eCommerce', 'Healthcare', 'Manufacturing', 'Financial Services'];
     const industryROIRanges = {
-      'Technology': { min: 180, max: 250 },
-      'eCommerce': { min: 140, max: 200 },
-      'Healthcare': { min: 120, max: 170 },
-      'Manufacturing': { min: 150, max: 210 },
-      'Financial Services': { min: 160, max: 220 }
+      'Technology': { min: 220, max: 320 },
+      'eCommerce': { min: 180, max: 270 },
+      'Healthcare': { min: 150, max: 240 },
+      'Manufacturing': { min: 190, max: 290 },
+      'Financial Services': { min: 200, max: 300 }
     };
     
     const interval = setInterval(() => {
