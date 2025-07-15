@@ -135,7 +135,7 @@ export function NewHeader() {
               transition={{ duration: 0.2 }}
               className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-lg"
             >
-              <div className="px-4 py-6 space-y-4">
+              <div className="px-4 py-4 space-y-1">
                 {mobileNavigation.map((item) => (
                   <button
                     key={item.name}
@@ -143,12 +143,12 @@ export function NewHeader() {
                       setLocation(item.href);
                       setIsOpen(false);
                     }}
-                    className="block w-full text-left py-3 text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                    className="block w-full text-left py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
                   >
                     {item.name}
                   </button>
                 ))}
-                <div className="pt-4 border-t border-gray-200 space-y-3">
+                <div className="pt-3 border-t border-gray-200 space-y-2">
                   <Button
                     variant="ghost"
                     onClick={() => {
