@@ -28,7 +28,6 @@ export default function ROICalculator() {
   const [industry, setIndustry] = useState("eCommerce");
   const [companySize, setCompanySize] = useState(65); // Value 0-100, maps to employee count
   const [currentEfficiency, setCurrentEfficiency] = useState(60); // Percentage 0-100
-  const [showTooltip, setShowTooltip] = useState(false);
   
   // State for calculated results
   const [efficiencyImprovement, setEfficiencyImprovement] = useState("35-45%");
@@ -197,25 +196,19 @@ export default function ROICalculator() {
                   <div className="flex justify-between items-end">
                     <div className="flex items-center gap-2">
                       <h2 className="text-xl">Current Process Efficiency</h2>
-                      <Tooltip>
+                      <Tooltip delayDuration={0}>
                         <TooltipTrigger asChild>
-                          <button 
-                            type="button"
-                            className="p-0 border-0 bg-transparent"
-                            onClick={() => setShowTooltip(!showTooltip)}
-                          >
-                            <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
-                          </button>
+                          <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs p-4 text-sm">
-                          <p className="mb-2 font-medium">What is Current Process Efficiency?</p>
-                          <p>Rate how efficiently your current business processes operate on a scale from 0-100%:</p>
-                          <ul className="mt-2 space-y-1 text-xs">
-                            <li>• <strong>Low (0-30%):</strong> Heavily manual, frequent errors, slow processing</li>
-                            <li>• <strong>Medium (31-70%):</strong> Some automation, moderate efficiency</li>
-                            <li>• <strong>High (71-100%):</strong> Highly automated, streamlined processes</li>
+                        <TooltipContent side="top" className="max-w-xs p-4 text-sm bg-popover border border-border shadow-lg">
+                          <p className="mb-2 font-medium text-foreground">What is Current Process Efficiency?</p>
+                          <p className="text-muted-foreground mb-2">Rate how efficiently your current business processes operate on a scale from 0-100%:</p>
+                          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                            <li>• <strong className="text-foreground">Low (0-30%):</strong> Heavily manual, frequent errors, slow processing</li>
+                            <li>• <strong className="text-foreground">Medium (31-70%):</strong> Some automation, moderate efficiency</li>
+                            <li>• <strong className="text-foreground">High (71-100%):</strong> Highly automated, streamlined processes</li>
                           </ul>
-                          <p className="mt-2 text-xs text-muted-foreground">Lower efficiency = more room for AI-driven improvements</p>
+                          <p className="mt-2 text-xs text-muted-foreground italic">Lower efficiency = more room for AI-driven improvements</p>
                         </TooltipContent>
                       </Tooltip>
                     </div>
