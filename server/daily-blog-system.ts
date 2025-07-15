@@ -123,7 +123,11 @@ Make sure the content is original, informative, and positions Advanta AI as a th
     
     const title = titleMatch ? titleMatch[1].trim() : topic;
     const category = categoryMatch ? categoryMatch[1].trim() : 'ai_technology';
-    const content = contentMatch ? contentMatch[1].trim() : fullContent;
+    let content = contentMatch ? contentMatch[1].trim() : fullContent;
+    
+    // CRITICAL FIX: Remove ```html``` and ``` markdown code blocks
+    content = content.replace(/^```html\s*/i, '').replace(/\s*```$/, '');
+    content = content.replace(/^```\s*/, '').replace(/\s*```$/, '');
 
     return { title, content, category };
   } catch (error) {

@@ -117,6 +117,8 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 15, 2025. HTML CODE BLOCK ISSUE FIXED: Eliminated ```html``` markdown artifacts from blog posts by adding proper content filtering in daily blog generation system
+- July 15, 2025. RELATED ARTICLES PERFECTED: Fixed Related Articles section to show only real file-based blog posts with category-specific professional images from Unsplash
 - July 15, 2025. ZERO TOLERANCE POLICY ENFORCED: Comprehensive audit and removal of ALL mock data, placeholder content, and synthetic values across entire codebase - replaced with real API integrations and proper error handling
 - July 15, 2025. LANDING PAGE GENERATOR FIXED: Replaced setTimeout mock content with real OpenAI GPT-4o API integration for authentic content generation
 - July 15, 2025. AI QUERY INTERFACE SANITIZED: Removed all fake performance metrics, error statistics, and trend data - now shows clear unavailable states when real data missing
