@@ -56,7 +56,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
         <CardHeader className="space-y-3">
           <div className="flex items-center justify-between">
             <Badge variant="secondary" className="text-xs font-medium">
-              {post.category.replace('_', ' ').toUpperCase()}
+              {post.category?.replace(/[\*_]/g, '').replace('_', ' ').toUpperCase() || 'AI INSIGHTS'}
             </Badge>
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-1" />
@@ -64,12 +64,12 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
             </div>
           </div>
           <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors">
-            {post.title}
+            {post.title?.replace(/[\*]/g, '') || 'Automated AI Insights'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground line-clamp-3 mb-4">
-            {post.preview}
+            {post.preview?.replace(/[\*]/g, '').replace(/\n/g, ' ').substring(0, 200) || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}...
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
@@ -115,7 +115,9 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
             {formatDate(post.created_at)}
           </span>
         </div>
-        <CardTitle className="line-clamp-2 hover:text-primary transition-colors">{post.title}</CardTitle>
+        <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
+          {post.title?.replace(/[\*]/g, '') || 'Legacy Blog Post'}
+        </CardTitle>
       </CardHeader>
       <CardContent className="py-2 flex-grow">
         <p className="text-muted-foreground text-sm line-clamp-3">

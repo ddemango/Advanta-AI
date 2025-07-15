@@ -159,9 +159,24 @@ async function generateBlogPost(category: keyof typeof blogTopics): Promise<Inse
     // Extract content from response
     const content = response.choices[0].message.content?.trim() || "";
     
-    // Extract title from content (assuming it's wrapped in h1 or at the beginning)
-    const titleMatch = content.match(/<h1>(.*?)<\/h1>/) || content.match(/^#\s+(.*?)\n/) || content.split('\n')[0];
-    const title = titleMatch ? titleMatch[1] || titleMatch[0] : topic;
+    // Extract title from content with improved parsing
+    let title = topic; // fallback to the original topic
+    
+    // Try different title extraction patterns
+    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/);
+    const markdownMatch = content.match(/^#\s+(.+?)(?:\n|$)/m);
+    const firstLineMatch = content.split('\n')[0];
+    
+    if (h1Match && h1Match[1]) {
+      title = h1Match[1].trim();
+    } else if (markdownMatch && markdownMatch[1]) {
+      title = markdownMatch[1].trim();
+    } else if (firstLineMatch && firstLineMatch.length > 10 && !firstLineMatch.includes('<')) {
+      title = firstLineMatch.trim();
+    }
+    
+    // Clean up title - remove any HTML tags and excessive symbols
+    title = title.replace(/<[^>]*>/g, '').replace(/[\*\#]+/g, '').trim();
     
     // Extract or generate summary
     const summaryMatch = content.match(/<summary>(.*?)<\/summary>/) || 

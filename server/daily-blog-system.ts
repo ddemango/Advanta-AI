@@ -251,10 +251,10 @@ export function getAllBlogPosts(): Array<{
       const categoryMatch = content.match(/content="([^"]+)"/);
       const dateMatch = filename.match(/^(\d{4}-\d{2}-\d{2})/);
       
-      const title = titleMatch ? titleMatch[1].trim() : filename.replace('.html', '');
+      const title = titleMatch ? titleMatch[1].trim().replace(/[\*\#]+/g, '').trim() : filename.replace('.html', '').replace(/[\*\#]+/g, '').trim();
       const date = dateMatch ? dateMatch[1] : '';
       const category = content.includes('meta name="category"') ? 
-        content.match(/meta name="category" content="([^"]+)"/)?.[1] || 'general' : 'general';
+        content.match(/meta name="category" content="([^"]+)"/)?.[1]?.replace(/[\*]+/g, '') || 'general' : 'general';
       
       // Get preview text (first paragraph)
       const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/);
