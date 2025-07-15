@@ -5,6 +5,8 @@ import Footer from '@/components/layout/Footer';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { Helmet } from 'react-helmet';
 
@@ -41,29 +43,31 @@ export default function ROICalculator() {
     return "500+ employees";
   };
 
-  // Calculate ROI based on input changes using research-based data
+  // Calculate ROI based on real AI implementation studies (McKinsey, PWC, Deloitte 2024)
   useEffect(() => {
-    // Industry factors based on real AI implementation studies
-    // Data sources: McKinsey AI Reports, PWC AI Analysis, Deloitte Technology Studies
-    const industryFactors: Record<string, { eff: number, cost: number, rev: number, baseROI: number }> = {
-      "eCommerce": { eff: 0.25, cost: 0.18, rev: 0.15, baseROI: 1.8 }, // High automation potential
-      "Financial Services": { eff: 0.35, cost: 0.22, rev: 0.12, baseROI: 2.1 }, // Process optimization focus
-      "Healthcare": { eff: 0.20, cost: 0.25, rev: 0.08, baseROI: 1.6 }, // Compliance constraints
-      "Manufacturing": { eff: 0.30, cost: 0.28, rev: 0.10, baseROI: 1.9 }, // Operational efficiency
-      "Real Estate": { eff: 0.15, cost: 0.12, rev: 0.18, baseROI: 1.4 }, // Customer experience focus
-      "Technology": { eff: 0.40, cost: 0.20, rev: 0.25, baseROI: 2.5 }, // Highest AI adoption
-      "Education": { eff: 0.18, cost: 0.15, rev: 0.06, baseROI: 1.3 }, // Budget constraints
-      "Retail": { eff: 0.22, cost: 0.16, rev: 0.14, baseROI: 1.7 }, // Customer analytics
-      "Hospitality": { eff: 0.16, cost: 0.20, rev: 0.12, baseROI: 1.5 }, // Service optimization
-      "Media & Entertainment": { eff: 0.28, cost: 0.14, rev: 0.22, baseROI: 2.0 } // Content automation
+    // Industry factors based on 2024 AI implementation studies
+    // McKinsey: Only 5% see >10% EBIT gains, most see modest returns
+    // PWC: 20-30% productivity gains, revenue increases ≤5% for most
+    // Deloitte: 20% report ROI >30%, 74% meet expectations
+    const industryFactors: Record<string, { eff: number, cost: number, rev: number }> = {
+      "eCommerce": { eff: 0.15, cost: 0.08, rev: 0.03 }, // Moderate automation gains
+      "Financial Services": { eff: 0.20, cost: 0.12, rev: 0.04 }, // Process optimization
+      "Healthcare": { eff: 0.12, cost: 0.06, rev: 0.02 }, // Compliance constraints
+      "Manufacturing": { eff: 0.18, cost: 0.10, rev: 0.03 }, // Operational efficiency
+      "Real Estate": { eff: 0.10, cost: 0.05, rev: 0.04 }, // Limited automation
+      "Technology": { eff: 0.25, cost: 0.15, rev: 0.06 }, // Highest adoption
+      "Education": { eff: 0.08, cost: 0.04, rev: 0.02 }, // Budget constraints
+      "Retail": { eff: 0.14, cost: 0.07, rev: 0.03 }, // Customer analytics
+      "Hospitality": { eff: 0.11, cost: 0.06, rev: 0.03 }, // Service optimization
+      "Media & Entertainment": { eff: 0.16, cost: 0.09, rev: 0.05 } // Content automation
     };
     
-    // Company size factors (research shows larger companies achieve higher efficiency gains)
+    // Company size factors based on research data
     const sizeFactors = {
-      small: { multiplier: 0.8, effBonus: 0.05 }, // Smaller scale, higher relative impact
-      medium: { multiplier: 1.0, effBonus: 0.03 }, // Baseline
-      large: { multiplier: 1.2, effBonus: 0.02 }, // Better resources
-      enterprise: { multiplier: 1.4, effBonus: 0.01 } // Highest efficiency but lower relative gains
+      small: { multiplier: 0.7 }, // Limited resources
+      medium: { multiplier: 1.0 }, // Baseline
+      large: { multiplier: 1.3 }, // Better implementation
+      enterprise: { multiplier: 1.5 } // Best resources and scale
     };
     
     // Determine size category
@@ -73,37 +77,37 @@ export default function ROICalculator() {
     else if (companySize < 75) sizeCat = 'large';
     else sizeCat = 'enterprise';
     
-    // Current efficiency factor (inverse relationship - lower efficiency = more improvement potential)
-    const efficiencyGap = (100 - currentEfficiency) / 100;
-    const improvementPotential = 0.5 + (efficiencyGap * 0.5); // 50% to 100% of theoretical maximum
+    // Current efficiency factor - lower efficiency = more improvement potential
+    const efficiencyGap = Math.max(0.3, (100 - currentEfficiency) / 100);
     
-    // Get industry and size factors
+    // Get factors
     const indFactors = industryFactors[industry] || industryFactors["eCommerce"];
     const szFactors = sizeFactors[sizeCat as keyof typeof sizeFactors];
     
-    // Calculate realistic efficiency improvement (15-45% range based on current efficiency)
-    const baseEfficiencyImprovement = indFactors.eff * improvementPotential * szFactors.multiplier;
-    const effMin = Math.max(10, Math.round(baseEfficiencyImprovement * 80)); // Minimum 10%
-    const effMax = Math.min(50, Math.round(baseEfficiencyImprovement * 120)); // Maximum 50%
+    // Calculate realistic efficiency improvement (5-25% based on studies)
+    const baseEff = indFactors.eff * efficiencyGap * szFactors.multiplier * 100;
+    const effMin = Math.max(5, Math.round(baseEff * 0.8));
+    const effMax = Math.min(25, Math.round(baseEff * 1.2));
     setEfficiencyImprovement(`${effMin}-${effMax}%`);
     
-    // Calculate cost reduction (8-35% range based on industry)
-    const baseCostReduction = indFactors.cost * szFactors.multiplier;
-    const costMin = Math.max(8, Math.round(baseCostReduction * 80));
-    const costMax = Math.min(35, Math.round(baseCostReduction * 120));
+    // Calculate cost reduction (3-15% based on studies)
+    const baseCost = indFactors.cost * szFactors.multiplier * 100;
+    const costMin = Math.max(3, Math.round(baseCost * 0.8));
+    const costMax = Math.min(15, Math.round(baseCost * 1.2));
     setCostReduction(`${costMin}-${costMax}%`);
     
-    // Calculate revenue growth (5-30% range based on industry)
-    const baseRevenueGrowth = indFactors.rev * szFactors.multiplier;
-    const revMin = Math.max(5, Math.round(baseRevenueGrowth * 80));
-    const revMax = Math.min(30, Math.round(baseRevenueGrowth * 120));
+    // Calculate revenue growth (1-8% based on studies - most organizations see ≤5%)
+    const baseRev = indFactors.rev * szFactors.multiplier * 100;
+    const revMin = Math.max(1, Math.round(baseRev * 0.8));
+    const revMax = Math.min(8, Math.round(baseRev * 1.2));
     setRevenueGrowth(`${revMin}-${revMax}%`);
     
-    // Calculate realistic ROI (80-350% range over 12-18 months)
-    const weightedBenefit = (costMin + costMax) / 2 * 0.4 + (revMin + revMax) / 2 * 0.6; // Revenue weighted higher
-    const roiBase = indFactors.baseROI * szFactors.multiplier * (1 + improvementPotential * 0.3);
-    const roiMin = Math.max(80, Math.round(roiBase * weightedBenefit * 0.8));
-    const roiMax = Math.min(350, Math.round(roiBase * weightedBenefit * 1.2));
+    // Calculate realistic ROI (15-40% over 12-18 months based on 2024 studies)
+    // McKinsey: Most don't see transformational returns, PWC: Focus on 20-30% gains
+    const avgBenefit = ((effMin + effMax) / 2 + (costMin + costMax) / 2 + (revMin + revMax) / 2) / 3;
+    const roiMultiplier = 1.5 + (avgBenefit / 100); // Conservative multiplier
+    const roiMin = Math.max(15, Math.round(avgBenefit * roiMultiplier * 0.8));
+    const roiMax = Math.min(40, Math.round(avgBenefit * roiMultiplier * 1.4));
     
     setEstimatedROI(`${roiMin}-${roiMax}%`);
   }, [industry, companySize, currentEfficiency]);
@@ -178,7 +182,19 @@ export default function ROICalculator() {
                 
                 <div className="space-y-4">
                   <div className="flex justify-between items-end">
-                    <h2 className="text-xl">Current Process Efficiency</h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl">Current Process Efficiency</h2>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Rate how efficiently your current processes operate. Lower efficiency means more room for AI-driven improvements. Consider factors like manual tasks, processing time, error rates, and resource utilization.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <div className="text-lg">{currentEfficiency}%</div>
                   </div>
                   <Slider
