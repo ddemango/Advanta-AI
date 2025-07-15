@@ -10,7 +10,7 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Advanta AI <noreply@advantaai.com>',
+      from: 'Advanta AI <onboarding@resend.dev>',
       to: email,
       subject: 'Welcome to Advanta AI - Your AI Journey Starts Here!',
       html: `
@@ -147,16 +147,16 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
               <p>To get you started, here's your first AI blog post that's generating buzz in the industry:</p>
               
               <div style="text-align: center;">
-                <a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/blog` : 'https://advantaai.com/blog'}" class="cta-button">
+                <a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/blog` : 'https://advanta-ai.com/blog'}" class="cta-button">
                   Read Latest AI Insights
                 </a>
               </div>
               
               <p>You can also explore our free AI tools and resources:</p>
               <ul>
-                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/free-tools` : 'https://advantaai.com/free-tools'}">Free AI Tools Collection</a></li>
-                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/resources` : 'https://advantaai.com/resources'}">AI Resources Library</a></li>
-                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/case-studies` : 'https://advantaai.com/case-studies'}">Success Stories</a></li>
+                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/free-tools` : 'https://advanta-ai.com/free-tools'}">Free AI Tools Collection</a></li>
+                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/resources` : 'https://advanta-ai.com/resources'}">AI Resources Library</a></li>
+                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/case-studies` : 'https://advanta-ai.com/case-studies'}">Success Stories</a></li>
               </ul>
               
               <p>Have questions? Simply reply to this email - we'd love to hear from you!</p>
@@ -202,7 +202,7 @@ export async function sendTestEmail(email: string): Promise<boolean> {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Advanta AI <noreply@advantaai.com>',
+      from: 'Advanta AI <onboarding@resend.dev>',
       to: email,
       subject: 'Test Email from Advanta AI',
       html: `

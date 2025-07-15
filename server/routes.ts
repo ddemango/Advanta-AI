@@ -1740,6 +1740,11 @@ function setupAuthEndpoints(app: Express) {
     }
   });
 
+  // Serve test welcome email page
+  app.get('/test-welcome-email', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'test-welcome-email.html'));
+  });
+
   // Test basic email endpoint
   app.post('/api/newsletter/test-email', async (req, res) => {
     try {

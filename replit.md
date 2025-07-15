@@ -117,6 +117,7 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 15, 2025. WELCOME EMAIL SYSTEM DEBUGGED: Fixed domain configuration issues in Resend API, updated to correct Advanta-ai.com domain, and created test-welcome-email.html page for email testing - welcome emails now properly configured for delivery
 - July 15, 2025. NEWSLETTER FORM VISIBILITY FIXED: Resolved text contrast issues in newsletter subscription form with white background input fields, dark text for typing visibility, and proper button styling for optimal user experience
 - July 15, 2025. FEATURED BLOG POSTS HOMEPAGE INTEGRATION COMPLETE: Added compelling featured blog posts section to homepage with newsletter subscription CTA, professional card design, category badges, and seamless integration with daily blog system
 - July 15, 2025. BLOG FORMATTING IMPROVEMENTS: Enhanced HTML structure processing in daily blog system with proper paragraph formatting, heading cleanup, and markdown-to-HTML conversion for professional blog post presentation
