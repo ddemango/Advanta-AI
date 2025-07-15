@@ -98,19 +98,16 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
               margin-right: 10px;
             }
             .cta-button {
-              display: inline-block;
-              background: linear-gradient(135deg, #2563eb, #1d4ed8);
-              color: white;
-              padding: 15px 30px;
-              text-decoration: none;
-              border-radius: 8px;
-              font-weight: 600;
-              text-align: center;
-              margin: 20px 0;
-              transition: transform 0.2s;
-            }
-            .cta-button:hover {
-              transform: translateY(-2px);
+              display: inline-block !important;
+              background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+              color: white !important;
+              padding: 15px 30px !important;
+              text-decoration: none !important;
+              border-radius: 8px !important;
+              font-weight: 600 !important;
+              text-align: center !important;
+              margin: 20px 0 !important;
+              border: none !important;
             }
             .footer {
               margin-top: 40px;
@@ -156,17 +153,18 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
               
               <p>To get you started, here's your first AI blog post that's generating buzz in the industry:</p>
               
-              <div style="text-align: center;">
-                <a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/blog` : 'https://advanta-ai.com/blog'}" class="cta-button">
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://cb0249ca-38a2-4dd9-9ae0-01c5913b584c-00-1xhqttnwsb4v3.janeway.replit.dev/blog" 
+                   style="display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; text-align: center; margin: 20px 0; transition: transform 0.2s;">
                   Read Latest AI Insights
                 </a>
               </div>
               
               <p>You can also explore our free AI tools and resources:</p>
-              <ul>
-                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/free-tools` : 'https://advanta-ai.com/free-tools'}">Free AI Tools Collection</a></li>
-                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/resources` : 'https://advanta-ai.com/resources'}">AI Resources Library</a></li>
-                <li><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/case-studies` : 'https://advanta-ai.com/case-studies'}">Success Stories</a></li>
+              <ul style="list-style: none; padding: 0;">
+                <li style="margin: 10px 0;"><a href="https://cb0249ca-38a2-4dd9-9ae0-01c5913b584c-00-1xhqttnwsb4v3.janeway.replit.dev/free-tools" style="color: #2563eb; text-decoration: none; font-weight: 500;">Free AI Tools Collection</a></li>
+                <li style="margin: 10px 0;"><a href="https://cb0249ca-38a2-4dd9-9ae0-01c5913b584c-00-1xhqttnwsb4v3.janeway.replit.dev/resources" style="color: #2563eb; text-decoration: none; font-weight: 500;">AI Resources Library</a></li>
+                <li style="margin: 10px 0;"><a href="https://cb0249ca-38a2-4dd9-9ae0-01c5913b584c-00-1xhqttnwsb4v3.janeway.replit.dev/case-studies" style="color: #2563eb; text-decoration: none; font-weight: 500;">Success Stories</a></li>
               </ul>
               
               <p>Have questions? Simply reply to this email - we'd love to hear from you!</p>
@@ -183,7 +181,7 @@ export async function sendWelcomeEmail(email: string): Promise<boolean> {
               </div>
               <p>© 2025 Advanta AI. All rights reserved.</p>
               <p>You're receiving this because you subscribed to our newsletter.</p>
-              <p><a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/api/newsletter/unsubscribe` : '#'}">Unsubscribe</a></p>
+              <p><a href="https://cb0249ca-38a2-4dd9-9ae0-01c5913b584c-00-1xhqttnwsb4v3.janeway.replit.dev/api/newsletter/unsubscribe" style="color: #64748b; text-decoration: none;">Unsubscribe</a></p>
             </div>
           </div>
         </body>
