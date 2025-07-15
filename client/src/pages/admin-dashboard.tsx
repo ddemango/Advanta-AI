@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Mail, TrendingUp, Database, Download, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Users, Mail, TrendingUp, Database, Download, Send, Lock } from 'lucide-react';
 import { NewHeader } from '@/components/redesign/NewHeader';
+import { useToast } from '@/hooks/use-toast';
 
 interface Subscriber {
   id: number;
@@ -33,10 +35,40 @@ export default function AdminDashboard() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
-    fetchData();
+    // Check if already authenticated in sessionStorage
+    const authStatus = sessionStorage.getItem('admin_authenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, []);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === 'FamilyStrong42!') {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('admin_authenticated', 'true');
+      fetchData();
+      toast({
+        title: "Access Granted",
+        description: "Welcome to the Admin Dashboard",
+      });
+    } else {
+      toast({
+        title: "Access Denied",
+        description: "Incorrect password. Please try again.",
+        variant: "destructive",
+      });
+      setPassword('');
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -97,6 +129,41 @@ export default function AdminDashboard() {
       alert('Error sending test newsletter');
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <NewHeader />
+        <div className="pt-20 pb-8 flex items-center justify-center min-h-[calc(100vh-5rem)]">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-8 h-8 text-blue-600" />
+              </div>
+              <CardTitle className="text-2xl">Admin Access Required</CardTitle>
+              <p className="text-gray-600">Enter the password to access the admin dashboard</p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Enter admin password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  Access Dashboard
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
