@@ -146,7 +146,7 @@ async function saveBlogPostHTML(title: string, content: string, category: string
       fs.mkdirSync(postsDir, { recursive: true });
     }
 
-    // Create HTML content
+    // Create professional HTML content with enhanced styling
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -156,58 +156,233 @@ async function saveBlogPostHTML(title: string, content: string, category: string
     <meta name="description" content="${content.substring(0, 160).replace(/<[^>]*>/g, '')}...">
     <meta name="category" content="${category}">
     <meta name="date" content="${date}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            line-height: 1.6; 
-            max-width: 800px; 
-            margin: 0 auto; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.7;
+            color: #1f2937;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
-            color: #333;
         }
-        h1 { 
-            color: #2563eb; 
-            border-bottom: 3px solid #2563eb; 
-            padding-bottom: 10px;
-        }
-        h2 { 
-            color: #1f2937; 
-            margin-top: 30px;
-            margin-bottom: 15px;
-        }
-        .meta {
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 20px;
-            padding: 10px;
-            background: #f9fafb;
-            border-left: 4px solid #2563eb;
-        }
-        .category {
-            display: inline-block;
-            background: #2563eb;
-            color: white;
-            padding: 4px 12px;
+        
+        .article-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
             border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .article-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            padding: 60px 40px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .article-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+        
+        .category-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
             font-size: 12px;
-            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .article-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .article-meta {
+            font-size: 14px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .article-content {
+            padding: 60px 40px;
+        }
+        
+        .article-content h2 {
+            color: #1f2937;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 40px 0 20px;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .article-content h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            border-radius: 2px;
+        }
+        
+        .article-content h3 {
+            color: #374151;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 30px 0 15px;
+        }
+        
+        .article-content p {
+            margin-bottom: 24px;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #4b5563;
+        }
+        
+        .article-content ul, .article-content ol {
+            margin: 24px 0;
+            padding-left: 0;
+        }
+        
+        .article-content li {
+            margin-bottom: 12px;
+            padding-left: 30px;
+            position: relative;
+            color: #4b5563;
+            line-height: 1.7;
+        }
+        
+        .article-content ul li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M30 30l15-15v30L30 30zM15 15l15 15L15 45V15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+        
+        .cta-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cta-description {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #1e40af;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .article-header {
+                padding: 40px 20px 30px;
+            }
+            
+            .article-title {
+                font-size: 2rem;
+            }
+            
+            .article-content {
+                padding: 40px 20px;
+            }
+            
+            .cta-section {
+                padding: 40px 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="category">${category.replace('_', ' ').toUpperCase()}</div>
-    <h1>${title}</h1>
-    <div class="meta">
-        <strong>Published:</strong> ${date} | <strong>Advanta AI Blog</strong>
-    </div>
-    ${content.replace(/## /g, '<h2>').replace(/\n\n/g, '</p><p>').replace(/^(.)/g, '<p>$1').replace(/(.*)$/, '$1</p>')}
-    
-    <hr style="margin: 40px 0; border: none; border-top: 1px solid #e5e7eb;">
-    <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center;">
-        <h3 style="color: #2563eb; margin-top: 0;">Ready to Transform Your Business with AI?</h3>
-        <p>Contact Advanta AI today for a free consultation and discover how our custom AI solutions can drive growth and efficiency in your organization.</p>
-        <a href="/contact" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Started Today</a>
-    </div>
+    <article class="article-container">
+        <header class="article-header">
+            <div class="category-badge">${category.replace(/[\*_]/g, '').replace('_', ' ').toUpperCase()}</div>
+            <h1 class="article-title">${title.replace(/[\*]/g, '')}</h1>
+            <div class="article-meta">Published: ${date} | Advanta AI Blog</div>
+        </header>
+        
+        <div class="article-content">
+            ${content.replace(/\*\*/g, '').replace(/## /g, '<h2>').replace(/<h2>/g, '<h2 class="section-heading">').replace(/\n\n/g, '</p><p>').replace(/^([^<])/gm, '<p>$1').replace(/([^>])$/gm, '$1</p>').replace(/<p><\/p>/g, '')}
+        </div>
+        
+        <div class="cta-section">
+            <h3 class="cta-title">Ready to Transform Your Business with AI?</h3>
+            <p class="cta-description">Discover how Advanta AI can help you implement cutting-edge solutions tailored to your industry. Contact our experts today for a personalized consultation.</p>
+            <a href="/contact" class="cta-button">Get Started with Advanta AI →</a>
+        </div>
+    </article>
 </body>
 </html>`;
 

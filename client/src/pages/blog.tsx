@@ -46,30 +46,63 @@ const formatDate = (dateString: string | Date) => {
 
 // Blog Post Card Component for File-Based Posts
 const FileBlogPostCard = ({ post }: { post: any }) => {
+  // Generate category-based image URL
+  const getImageUrl = (category: string, title: string) => {
+    const categoryImages: { [key: string]: string } = {
+      'ai_technology': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80',
+      'business_strategy': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80',
+      'automation': 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80',
+      'marketing_ai': 'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80',
+      'case_studies': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80',
+      'tutorials': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80',
+      'industry_insights': 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80',
+      'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80',
+      'resources': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80'
+    };
+    
+    return categoryImages[category] || categoryImages['ai_technology'];
+  };
+
+  const imageUrl = getImageUrl(post.category || 'ai_technology', post.title || '');
+
   return (
     <motion.div
       variants={fadeInUp}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="h-full hover:shadow-lg transition-shadow duration-300">
-        <CardHeader className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Badge variant="secondary" className="text-xs font-medium">
+      <Card className="h-full hover:shadow-lg transition-all duration-300 overflow-hidden">
+        {/* Featured Image */}
+        <div className="relative h-48 overflow-hidden">
+          <img 
+            src={imageUrl}
+            alt={post.title?.replace(/[\*]/g, '') || 'AI Technology'}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          <div className="absolute top-4 left-4">
+            <Badge variant="secondary" className="bg-white/90 text-black font-medium">
               {post.category?.replace(/[\*_]/g, '').replace('_', ' ').toUpperCase() || 'AI INSIGHTS'}
             </Badge>
+          </div>
+        </div>
+
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-1" />
               {formatDate(post.date)}
             </div>
           </div>
-          <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors">
+          <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors line-clamp-2">
             {post.title?.replace(/[\*]/g, '') || 'Automated AI Insights'}
           </CardTitle>
         </CardHeader>
+        
         <CardContent>
           <p className="text-muted-foreground line-clamp-3 mb-4">
-            {post.preview?.replace(/[\*]/g, '').replace(/\n/g, ' ').substring(0, 200) || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}...
+            {post.preview?.replace(/[\*]/g, '').replace(/\n/g, ' ').substring(0, 180) || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}...
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
@@ -94,7 +127,25 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
 // Legacy Blog Post Card Component
 const BlogPostCard = ({ post }: { post: BlogPost }) => {
   const [, navigate] = useLocation();
-  const imageUrl = post.featured_image || '/images/blog-placeholder.jpg';
+  
+  // Generate category-based image URL
+  const getImageUrl = (category: string, title: string) => {
+    const categoryImages: { [key: string]: string } = {
+      'ai_technology': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80',
+      'business_strategy': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80',
+      'automation': 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80',
+      'marketing_ai': 'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80',
+      'case_studies': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80',
+      'tutorials': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80',
+      'industry_insights': 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80',
+      'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80',
+      'resources': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80'
+    };
+    
+    return categoryImages[category] || categoryImages['ai_technology'];
+  };
+
+  const imageUrl = post.featured_image || getImageUrl(post.category || 'ai_technology', post.title || '');
   
   return (
     <Card className="overflow-hidden h-full flex flex-col hover:border-primary/50 transition-colors cursor-pointer"
@@ -104,6 +155,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
           src={imageUrl} 
           alt={post.title} 
           className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+          loading="lazy"
         />
       </div>
       <CardHeader className="pb-2">
