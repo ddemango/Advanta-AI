@@ -79,7 +79,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => window.open(`/posts/${post.slug}.html`, '_blank')}
+              onClick={() => window.open(`/posts/${post.filename}`, '_blank')}
               className="hover:text-blue-600"
             >
               Read More <ArrowRight className="h-4 w-4 ml-1" />

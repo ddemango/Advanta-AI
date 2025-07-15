@@ -6700,6 +6700,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve blog post HTML files directly from posts directory
+  const postsPath = path.join(process.cwd(), 'posts');
+  app.use('/posts', (req: Request, res: Response, next) => {
+    const filePath = path.join(postsPath, req.path);
+    if (fs.existsSync(filePath) && filePath.endsWith('.html')) {
+      res.sendFile(filePath);
+    } else {
+      next();
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
