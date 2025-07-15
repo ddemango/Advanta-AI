@@ -80,7 +80,7 @@ export default function AIQueryInterface({ workflowId }: AIQueryInterfaceProps) 
       const assistantMessage: Message = {
         id: `assistant_${Date.now()}`,
         type: 'assistant',
-        content: data.answer || generateMockAnswer(queryText),
+        content: data.answer || 'Unable to analyze workflow data. Please ensure your workflow has sufficient execution history.',
         timestamp: new Date(),
         metadata: {
           workflowId,
@@ -100,34 +100,10 @@ export default function AIQueryInterface({ workflowId }: AIQueryInterfaceProps) 
     }
   };
 
+  // REMOVED: Mock insights violate zero-tolerance policy
+  // All insights must come from real workflow analytics data
   const generateInsights = (query: string) => {
-    const insights = [];
-    
-    if (query.toLowerCase().includes('performance')) {
-      insights.push(
-        { type: 'performance', title: 'Success Rate', value: '94.2%', icon: 'CheckCircle' },
-        { type: 'performance', title: 'Avg. Execution Time', value: '2.3s', icon: 'Clock' },
-        { type: 'trend', title: 'Weekly Trend', value: '+12%', icon: 'TrendingUp' }
-      );
-    }
-    
-    if (query.toLowerCase().includes('error')) {
-      insights.push(
-        { type: 'error', title: 'Error Rate', value: '5.8%', icon: 'AlertCircle' },
-        { type: 'error', title: 'Most Common', value: 'Timeout', icon: 'Clock' },
-        { type: 'optimization', title: 'Potential Fix', value: 'Increase timeout', icon: 'CheckCircle' }
-      );
-    }
-    
-    if (query.toLowerCase().includes('trend')) {
-      insights.push(
-        { type: 'trend', title: 'Monthly Growth', value: '+23%', icon: 'TrendingUp' },
-        { type: 'trend', title: 'Peak Hours', value: '9-11 AM', icon: 'Clock' },
-        { type: 'performance', title: 'Best Day', value: 'Tuesday', icon: 'CheckCircle' }
-      );
-    }
-
-    return insights as any;
+    return []; // Return empty until real analytics API is connected
   };
 
   const generateMockAnswer = (query: string) => {

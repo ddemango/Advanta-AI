@@ -1546,7 +1546,7 @@ function setupAuthEndpoints(app: Express) {
   // Manual trigger for blog generation (admin use)
   app.post('/api/blog/generate', async (req, res) => {
     try {
-      await blogScheduler.generateNow();
+      await dailyBlogScheduler.generateNow();
       return res.json({ success: true, message: 'Blog post generated successfully' });
     } catch (error) {
       console.error('Error generating blog post:', error);
@@ -1557,11 +1557,52 @@ function setupAuthEndpoints(app: Express) {
   // Get blog system status
   app.get('/api/blog/status', async (req, res) => {
     try {
-      const status = blogScheduler.getStatus();
+      const status = dailyBlogScheduler.getStatus();
       return res.json(status);
     } catch (error) {
       console.error('Error getting blog status:', error);
       return res.status(500).json({ message: 'Error getting blog status' });
+    }
+  });
+
+  // Real landing page content generation (NO MOCK DATA)
+  app.post('/api/generate-landing-content', async (req, res) => {
+    try {
+      const { productName, targetAudience, keyBenefit, industry } = req.body;
+      
+      if (!productName || !targetAudience) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const prompt = `Generate professional landing page content for:
+Product: ${productName}
+Target Audience: ${targetAudience}
+Key Benefit: ${keyBenefit || 'improved efficiency'}
+Industry: ${industry || 'general business'}
+
+Generate realistic, professional content including:
+- Compelling headline
+- Engaging subheading  
+- 6 core features
+- 5 CTA options
+- 5 value propositions
+- Hero section copy
+
+Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, heroSection`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1500,
+      });
+
+      const content = JSON.parse(completion.choices[0].message.content);
+      return res.json(content);
+      
+    } catch (error) {
+      console.error('Landing page generation error:', error);
+      return res.status(500).json({ error: 'Failed to generate content from AI service' });
     }
   });
   
@@ -6374,7 +6415,7 @@ function getCuratedRecommendations(preferences: any) {
 }
 
 // Initialize daily blog scheduler
-const blogScheduler = new DailyBlogScheduler();
+const dailyBlogScheduler = new DailyBlogScheduler();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first
@@ -6384,7 +6425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuthEndpoints(app);
   
   // Start the daily blog automation system
-  blogScheduler.start();
+  dailyBlogScheduler.start();
 
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {

@@ -31,39 +31,33 @@ export default function LandingPageBuilder() {
     
     setIsGenerating(true);
     
-    // This would integrate with OpenAI API for real content generation
-    setTimeout(() => {
-      const mockContent: LandingPageContent = {
-        headline: `Transform Your ${targetAudience} Experience with ${productName}`,
-        subhead: `The complete solution that helps ${targetAudience.toLowerCase()} achieve ${keyBenefit || 'better results'} 3x faster than traditional methods`,
-        features: [
-          "Advanced AI-powered automation",
-          "Real-time analytics and insights",
-          "Seamless integration with existing tools",
-          "24/7 customer support",
-          "Enterprise-grade security",
-          "Custom workflow builder"
-        ],
-        ctaOptions: [
-          "Start Your Free Trial",
-          "Get Instant Access",
-          "Book a Free Demo",
-          "Try Risk-Free Today",
-          "See It in Action"
-        ],
-        valueProps: [
-          "Save 10+ hours per week",
-          "Increase efficiency by 75%",
-          "Reduce costs by up to 40%",
-          "Trusted by 10,000+ businesses",
-          "ROI in first 30 days"
-        ],
-        heroSection: `Ready to revolutionize how ${targetAudience.toLowerCase()} handle their workflow? ${productName} is the game-changing solution that eliminates manual tasks and delivers results that matter. Join thousands of satisfied customers who've already transformed their business.`
-      };
+    try {
+      // Real OpenAI API integration for content generation
+      const response = await fetch('/api/generate-landing-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName,
+          targetAudience,
+          keyBenefit,
+          industry: selectedIndustry
+        })
+      });
       
-      setContent(mockContent);
+      if (!response.ok) {
+        throw new Error('Failed to generate content from AI service');
+      }
+      
+      const generatedContent = await response.json();
+      setContent(generatedContent);
       setIsGenerating(false);
-    }, 2500);
+    } catch (error) {
+      console.error('Content generation failed:', error);
+      setIsGenerating(false);
+      // Clear error state instead of showing fake data
+      setContent(null);
+      alert('Unable to generate content. Please check your internet connection and try again.');
+    }
   };
 
   const copyToClipboard = (text: string) => {

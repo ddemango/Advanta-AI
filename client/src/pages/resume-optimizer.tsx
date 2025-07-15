@@ -121,7 +121,7 @@ export default function ResumeOptimizer() {
       original: originalContent,
       optimized: optimizedText,
       improvements,
-      keywordScore: Math.floor(Math.random() * 30) + 70, // 70-100 score
+      keywordScore: null, // Real scoring from AI analysis only
       tips
     };
   };

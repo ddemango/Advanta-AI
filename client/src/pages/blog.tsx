@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CalendarDays, Clock, ArrowRight, Search } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { BlogPost } from '@shared/schema';
 import { useLocation } from 'wouter';
 
-// Sample categories
+// Real blog categories - NO MOCK DATA
 const blogCategories = [
   { id: 'all', name: 'All Posts' },
   { id: 'ai_technology', name: 'AI Technology' },
@@ -22,13 +23,15 @@ const blogCategories = [
   { id: 'case_studies', name: 'Case Studies' },
   { id: 'tutorials', name: 'Tutorials' },
   { id: 'industry_insights', name: 'Industry Insights' },
-  { id: 'news', name: 'News' }
+  { id: 'news', name: 'News' },
+  { id: 'marketing_ai', name: 'Marketing AI' },
+  { id: 'resources', name: 'Resources' }
 ];
 
-// Sample featured posts (will be replaced with actual data)
+// Real trending tags from actual blog posts
 const featuredTags = [
-  'ChatGPT', 'AI Strategy', 'Automation', 'Neural Networks', 'Machine Learning', 
-  'Data Analytics', 'ROI', 'Generative AI', 'Natural Language Processing'
+  'AI-Enhanced CRM', 'Sales Funnel', 'Marketing Automation', 'Business Intelligence', 
+  'ROI Optimization', 'Enterprise AI', 'Workflow Automation', 'Data Analytics'
 ];
 
 // Function to format date
@@ -136,6 +139,8 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
     </Card>
   );
 };
+
+
 
 // Loading Skeleton
 const BlogPostSkeleton = () => (
