@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
-import { ArrowRight, Clock, TrendingUp, Zap } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowRight, Clock, TrendingUp, Zap, Check } from 'lucide-react';
 import { Link } from 'wouter';
 
 interface BlogPost {
@@ -16,12 +17,67 @@ interface BlogPost {
 }
 
 export function FeaturedBlogPosts() {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const { toast } = useToast();
+
   const { data: blogPosts, isLoading } = useQuery<BlogPost[]>({
     queryKey: ['/api/blog'],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const featuredPosts = blogPosts?.slice(0, 3) || [];
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setIsSubscribed(true);
+        setEmail('');
+        toast({
+          title: "Welcome to the AI Revolution!",
+          description: "Check your email for a welcome message with exclusive content.",
+        });
+      } else {
+        toast({
+          title: "Subscription Failed",
+          description: data.error || "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Network Error",
+        description: "Unable to subscribe. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -166,7 +222,30 @@ export function FeaturedBlogPosts() {
               </div>
               
               <div className="max-w-md mx-auto">
-                <NewsletterSignup variant="hero" />
+                {isSubscribed ? (
+                  <div className="flex items-center justify-center gap-3 text-white bg-white/20 backdrop-blur-sm rounded-lg p-4">
+                    <Check className="h-5 w-5 text-green-300" />
+                    <span className="font-medium">Thanks for subscribing! Check your email.</span>
+                  </div>
+                ) : (
+                  <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 py-3 rounded-lg bg-white text-gray-900 placeholder:text-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-white/30 text-base disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Subscribing..." : "Sign Up"}
+                    </button>
+                  </form>
+                )}
               </div>
               
               <div className="text-center mt-6">

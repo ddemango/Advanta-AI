@@ -145,7 +145,7 @@ export function NewsletterSignup({ variant = 'default', className = '' }: Newsle
           
           {isSubscribed ? (
             <motion.div 
-              className="flex items-center justify-center gap-3 text-green-600"
+              className="flex items-center justify-center gap-3 text-green-400"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
@@ -166,13 +166,13 @@ export function NewsletterSignup({ variant = 'default', className = '' }: Newsle
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1"
+                className="flex-1 bg-white text-gray-900 placeholder:text-gray-500 border-white/20 focus:border-white focus:ring-2 focus:ring-white/20"
                 disabled={isLoading}
               />
               <Button 
                 type="submit" 
                 disabled={isLoading}
-                className="bg-primary hover:bg-primary/90 whitespace-nowrap"
+                className="bg-white text-blue-600 hover:bg-gray-100 font-semibold whitespace-nowrap"
               >
                 {isLoading ? "Subscribing..." : "Sign Up"}
               </Button>
