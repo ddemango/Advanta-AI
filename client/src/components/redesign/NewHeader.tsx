@@ -25,7 +25,8 @@ export function NewHeader() {
     { name: 'Blog', href: '/blog' },
     { name: 'Resources', href: '/resources' },
     { name: 'Free Tools', href: '/free-tools' },
-    { name: 'ROI Calculator', href: '/roi-calculator' }
+    { name: 'ROI Calculator', href: '/roi-calculator' },
+    { name: 'Admin Dashboard', href: '/admin-dashboard' }
   ];
 
 
@@ -38,6 +39,7 @@ export function NewHeader() {
     { name: 'Resources', href: '/resources' },
     { name: 'Free Tools', href: '/free-tools' },
     { name: 'ROI Calculator', href: '/roi-calculator' },
+    { name: 'Admin Dashboard', href: '/admin-dashboard' },
     { name: 'Contact', href: '/contact' },
     { name: 'Client Suite Portal', href: '/login' }
   ];
