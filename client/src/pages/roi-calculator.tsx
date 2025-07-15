@@ -45,23 +45,23 @@ export default function ROICalculator() {
     return "500+ employees";
   };
 
-  // Calculate ROI based on real AI implementation studies (Latest available: McKinsey, PWC 2024)
+  // Calculate ROI based on actual 2025 implementation data (McKinsey, PWC, Deloitte)
   useEffect(() => {
-    // Industry factors based on most recent 2024 McKinsey/PWC data
-    // McKinsey 2024: 51% expect >5% revenue gains, 34% expect 6-10%, 17% >10%
-    // PWC 2024: 20-30% productivity gains, high performers see 13% ROI
-    // Note: 2025 comprehensive studies not yet available (mid-year)
+    // Industry factors based on actual 2025 implementation data
+    // Reality: 80% of companies report NO material earnings contribution from AI
+    // Only 20% report ROI >30%, median ROI is just 10%
+    // Financial Services: 4.2x return, Healthcare: 3.3x, Technology: 4.7x projected
     const industryFactors: Record<string, { eff: number, cost: number, rev: number }> = {
-      "eCommerce": { eff: 0.25, cost: 0.15, rev: 0.08 }, // High automation potential
-      "Financial Services": { eff: 0.30, cost: 0.18, rev: 0.09 }, // Process optimization leaders
-      "Healthcare": { eff: 0.18, cost: 0.12, rev: 0.05 }, // Compliance but strong efficiency
-      "Manufacturing": { eff: 0.28, cost: 0.20, rev: 0.07 }, // Operational excellence
-      "Real Estate": { eff: 0.15, cost: 0.10, rev: 0.06 }, // Growing automation
-      "Technology": { eff: 0.35, cost: 0.22, rev: 0.12 }, // Highest AI adoption
-      "Education": { eff: 0.12, cost: 0.08, rev: 0.04 }, // Budget constraints
-      "Retail": { eff: 0.22, cost: 0.14, rev: 0.07 }, // Customer analytics & automation
-      "Hospitality": { eff: 0.16, cost: 0.11, rev: 0.06 }, // Service optimization
-      "Media & Entertainment": { eff: 0.24, cost: 0.16, rev: 0.09 } // Content automation
+      "eCommerce": { eff: 0.12, cost: 0.08, rev: 0.03 }, // Emerging benefits
+      "Financial Services": { eff: 0.18, cost: 0.12, rev: 0.06 }, // Best performer in 2025
+      "Healthcare": { eff: 0.15, cost: 0.10, rev: 0.04 }, // Strong but regulated
+      "Manufacturing": { eff: 0.14, cost: 0.09, rev: 0.03 }, // Gradual adoption
+      "Real Estate": { eff: 0.08, cost: 0.05, rev: 0.02 }, // Limited automation
+      "Technology": { eff: 0.20, cost: 0.14, rev: 0.07 }, // High investment but variable ROI
+      "Education": { eff: 0.06, cost: 0.04, rev: 0.02 }, // Budget constraints
+      "Retail": { eff: 0.10, cost: 0.07, rev: 0.03 }, // Conservative adoption
+      "Hospitality": { eff: 0.09, cost: 0.06, rev: 0.03 }, // Service optimization
+      "Media & Entertainment": { eff: 0.13, cost: 0.08, rev: 0.05 } // Content automation
     };
     
     // Company size factors based on research data
@@ -86,39 +86,38 @@ export default function ROICalculator() {
     const indFactors = industryFactors[industry] || industryFactors["eCommerce"];
     const szFactors = sizeFactors[sizeCat as keyof typeof sizeFactors];
     
-    // Calculate efficiency improvement (20-35% based on PWC 20-30% productivity gains)
-    // Higher efficiency gap = more improvement potential
-    const baseEff = (indFactors.eff + efficiencyGap * 0.5) * szFactors.multiplier * 100;
-    const effValue1 = Math.max(20, Math.round(baseEff * 1.1));
-    const effValue2 = Math.min(35, Math.round(baseEff * 1.4));
+    // Calculate efficiency improvement (8-20% based on 2025 reality)
+    // Most companies see modest gains, not transformational changes
+    const baseEff = (indFactors.eff + efficiencyGap * 0.3) * szFactors.multiplier * 100;
+    const effValue1 = Math.max(8, Math.round(baseEff * 1.0));
+    const effValue2 = Math.min(20, Math.round(baseEff * 1.2));
     const effMin = Math.min(effValue1, effValue2);
     const effMax = Math.max(effValue1, effValue2);
     setEfficiencyImprovement(`${effMin}-${effMax}%`);
     
-    // Calculate cost reduction (12-25% based on actual implementations)
-    const baseCost = (indFactors.cost + efficiencyGap * 0.3) * szFactors.multiplier * 100;
-    const costValue1 = Math.max(12, Math.round(baseCost * 1.1));
-    const costValue2 = Math.min(25, Math.round(baseCost * 1.4));
+    // Calculate cost reduction (5-15% based on actual 2025 implementations)
+    const baseCost = (indFactors.cost + efficiencyGap * 0.2) * szFactors.multiplier * 100;
+    const costValue1 = Math.max(5, Math.round(baseCost * 1.0));
+    const costValue2 = Math.min(15, Math.round(baseCost * 1.2));
     const costMin = Math.min(costValue1, costValue2);
     const costMax = Math.max(costValue1, costValue2);
     setCostReduction(`${costMin}-${costMax}%`);
     
-    // Calculate revenue growth (6-15% based on McKinsey data: 51% see >5%, 34% see 6-10%)
-    const baseRev = (indFactors.rev + efficiencyGap * 0.2) * szFactors.multiplier * 100;
-    const revValue1 = Math.max(6, Math.round(baseRev * 1.2));
-    const revValue2 = Math.min(15, Math.round(baseRev * 1.6));
+    // Calculate revenue growth (2-8% based on 2025 data - most see limited gains)
+    const baseRev = (indFactors.rev + efficiencyGap * 0.1) * szFactors.multiplier * 100;
+    const revValue1 = Math.max(2, Math.round(baseRev * 1.0));
+    const revValue2 = Math.min(8, Math.round(baseRev * 1.3));
     const revMin = Math.min(revValue1, revValue2);
     const revMax = Math.max(revValue1, revValue2);
     setRevenueGrowth(`${revMin}-${revMax}%`);
     
-    // Calculate ROI (150-350% over 12-18 months based on actual data)
-    // Average: 5.9% annually = 125% over 18 months
-    // High performers: 13% annually = 235% over 18 months
-    // Best cases: 20% annually = 360% over 18 months
-    const combinedBenefit = ((effMin + effMax) / 2 * 0.35) + ((costMin + costMax) / 2 * 0.35) + ((revMin + revMax) / 2 * 0.30);
-    const roiMultiplier = 8 + (combinedBenefit / 100) * 4; // Enhanced multiplier for 18-month projection
-    const roiValue1 = Math.max(150, Math.round(combinedBenefit * roiMultiplier * 0.9));
-    const roiValue2 = Math.min(350, Math.round(combinedBenefit * roiMultiplier * 1.1));
+    // Calculate ROI (15-45% over 12-18 months based on 2025 reality)
+    // Median ROI: 10%, Only 20% see >30%, 80% see no material earnings impact
+    // Financial Services best at 4.2x, Healthcare 3.3x, Technology 4.7x
+    const combinedBenefit = ((effMin + effMax) / 2 * 0.4) + ((costMin + costMax) / 2 * 0.4) + ((revMin + revMax) / 2 * 0.2);
+    const roiMultiplier = 2.5 + (combinedBenefit / 100) * 1.5; // Realistic multiplier based on 2025 data
+    const roiValue1 = Math.max(15, Math.round(combinedBenefit * roiMultiplier * 0.8));
+    const roiValue2 = Math.min(45, Math.round(combinedBenefit * roiMultiplier * 1.2));
     const roiMin = Math.min(roiValue1, roiValue2);
     const roiMax = Math.max(roiValue1, roiValue2);
     
