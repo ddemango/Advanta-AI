@@ -436,10 +436,32 @@ export function getAllBlogPosts(): Array<{
       const category = content.includes('meta name="category"') ? 
         content.match(/meta name="category" content="([^"]+)"/)?.[1]?.replace(/[\*]+/g, '') || 'general' : 'general';
       
-      // Get preview text (first paragraph)
+      // Extract clean preview text from the first paragraph
       const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/);
       const bodyContent = bodyMatch ? bodyMatch[1] : '';
-      const preview = bodyContent.replace(/<[^>]*>/g, '').substring(0, 200) + '...';
+      
+      // Find the first paragraph content
+      const paragraphMatch = bodyContent.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+      let cleanText = '';
+      
+      if (paragraphMatch) {
+        // Extract text from first paragraph
+        cleanText = paragraphMatch[1]
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+          .replace(/^\s+|\s+$/g, '') // Trim whitespace
+          .substring(0, 200);
+      } else {
+        // Fallback: extract from entire body
+        cleanText = bodyContent
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+          .replace(/^\s+|\s+$/g, '') // Trim whitespace
+          .substring(0, 200);
+      }
+      
+      // Add ellipsis if text was truncated
+      const preview = cleanText.length === 200 ? cleanText + '...' : cleanText;
       
       // Generate slug from filename
       const slug = filename.replace('.html', '');
