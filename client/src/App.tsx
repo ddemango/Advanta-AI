@@ -78,6 +78,7 @@ import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
 import RedesignedHome from "@/pages/redesigned-home";
+import AdminDashboard from "@/pages/admin-dashboard";
 import NotFound from "@/pages/not-found";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
@@ -204,6 +205,7 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/newsletter-test" component={NewsletterTest} />
+      <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );

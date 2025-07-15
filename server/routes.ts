@@ -6922,6 +6922,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoints for dashboard
+  app.get('/api/admin/subscribers', async (req, res) => {
+    try {
+      const subscribers = await db
+        .select()
+        .from(newsletterSubscribers)
+        .orderBy(sql`${newsletterSubscribers.id} DESC`)
+        .limit(100);
+      
+      res.json(subscribers);
+    } catch (error) {
+      console.error('Error fetching subscribers:', error);
+      res.status(500).json({ error: 'Failed to fetch subscribers' });
+    }
+  });
+
+  app.get('/api/admin/blog-posts', async (req, res) => {
+    try {
+      const posts = await getAllBlogPosts();
+      res.json(posts.slice(0, 50)); // Return last 50 posts
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      res.status(500).json({ error: 'Failed to fetch blog posts' });
+    }
+  });
+
+  app.get('/api/admin/analytics', async (req, res) => {
+    try {
+      // Get subscriber stats
+      const subscriberStats = await db
+        .select({
+          total_subscribers: sql<number>`COUNT(*)`,
+          active_subscribers: sql<number>`COUNT(CASE WHEN ${newsletterSubscribers.isActive} = true THEN 1 END)`,
+          unsubscribed: sql<number>`COUNT(CASE WHEN ${newsletterSubscribers.isActive} = false THEN 1 END)`
+        })
+        .from(newsletterSubscribers);
+
+      // Get blog post stats
+      const blogPosts = await getAllBlogPosts();
+      const publishedPosts = blogPosts.filter(post => post.published);
+
+      const analytics = {
+        ...subscriberStats[0],
+        total_blog_posts: blogPosts.length,
+        published_posts: publishedPosts.length
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+  });
+
+  app.post('/api/admin/send-test-newsletter', async (req, res) => {
+    try {
+      // Import the newsletter sending function
+      const { sendDailyNewsletter } = await import('./newsletter-system');
+      await sendDailyNewsletter();
+      res.json({ success: true, message: 'Test newsletter sent successfully!' });
+    } catch (error) {
+      console.error('Error sending test newsletter:', error);
+      res.status(500).json({ error: 'Failed to send test newsletter' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
