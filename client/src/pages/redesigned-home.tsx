@@ -3,6 +3,7 @@ import { NewHeader } from '@/components/redesign/NewHeader';
 import { NewHero } from '@/components/redesign/NewHero';
 import { NewServices } from '@/components/redesign/NewServices';
 import { NewTrustSection } from '@/components/redesign/NewTrustSection';
+import { FeaturedBlogPosts } from '@/components/redesign/FeaturedBlogPosts';
 import { NewCTA } from '@/components/redesign/NewCTA';
 import { NewFooter } from '@/components/redesign/NewFooter';
 
@@ -61,6 +62,7 @@ export default function RedesignedHome() {
           <NewHero />
           <NewServices />
           <NewTrustSection />
+          <FeaturedBlogPosts />
           <NewCTA />
         </main>
         <NewFooter />

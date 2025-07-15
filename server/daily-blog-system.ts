@@ -64,6 +64,31 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
 
+// Function to convert markdown to HTML
+function convertMarkdownToHtml(content: string): string {
+  // Convert markdown headings to HTML
+  content = content.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  content = content.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  
+  // Convert markdown bold to HTML
+  content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  
+  // Convert markdown italic to HTML
+  content = content.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  
+  // Convert line breaks to paragraphs
+  const paragraphs = content.split('\n\n');
+  content = paragraphs.map(p => {
+    p = p.trim();
+    if (p.startsWith('<h2>') || p.startsWith('<h3>')) {
+      return p;
+    }
+    return p ? `<p>${p}</p>` : '';
+  }).filter(p => p).join('\n\n');
+  
+  return content;
+}
+
 // Function to get current date in YYYY-MM-DD format
 function getCurrentDate(): string {
   return new Date().toISOString().split('T')[0];
@@ -129,6 +154,20 @@ Make sure the content is original, informative, and positions Advanta AI as a th
     // CRITICAL FIX: Remove ```html``` and ``` markdown code blocks
     content = content.replace(/^```html\s*/i, '').replace(/\s*```$/, '');
     content = content.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    
+    // Convert markdown to HTML and fix structure
+    content = convertMarkdownToHtml(content);
+    
+    // FIX: Clean up malformed HTML structure
+    content = content.replace(/<p><h2>/g, '</p><h2>');
+    content = content.replace(/<\/h2><\/p>/g, '</h2><p>');
+    content = content.replace(/<p><h3>/g, '</p><h3>');
+    content = content.replace(/<\/h3><\/p>/g, '</h3><p>');
+    
+    // Ensure proper paragraph structure
+    content = content.replace(/(<\/p>)\s*(<p>)/g, '$1\n$2');
+    content = content.replace(/(<\/h[1-6]>)\s*(<p>)/g, '$1\n$2');
+    content = content.replace(/(<\/p>)\s*(<h[1-6]>)/g, '$1\n$2');
 
     return { title, content, category };
   } catch (error) {
@@ -185,6 +224,55 @@ async function saveBlogPostHTML(title: string, content: string, category: string
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .article-content {
+            padding: 60px 40px;
+        }
+        
+        .article-content h2 {
+            color: #1e40af;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .article-content h3 {
+            color: #374151;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 30px 0 15px 0;
+        }
+        
+        .article-content p {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #4b5563;
+        }
+        
+        .article-content ul, .article-content ol {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+        
+        .article-content li {
+            margin-bottom: 10px;
+            font-size: 16px;
+            line-height: 1.7;
+            color: #4b5563;
+        }
+        
+        .article-content strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .article-content em {
+            font-style: italic;
+            color: #6b7280;
         }
         
         .article-header {
