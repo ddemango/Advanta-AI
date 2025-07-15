@@ -41,7 +41,54 @@ const formatDate = (dateString: string | Date) => {
   });
 };
 
-// Blog Post Card Component
+// Blog Post Card Component for File-Based Posts
+const FileBlogPostCard = ({ post }: { post: any }) => {
+  return (
+    <motion.div
+      variants={fadeInUp}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card className="h-full hover:shadow-lg transition-shadow duration-300">
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Badge variant="secondary" className="text-xs font-medium">
+              {post.category.replace('_', ' ').toUpperCase()}
+            </Badge>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <CalendarDays className="h-4 w-4 mr-1" />
+              {formatDate(post.date)}
+            </div>
+          </div>
+          <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors">
+            {post.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground line-clamp-3 mb-4">
+            {post.preview}
+          </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 mr-1" />
+              5 min read
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => window.open(`/posts/${post.slug}.html`, '_blank')}
+              className="hover:text-blue-600"
+            >
+              Read More <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+// Legacy Blog Post Card Component
 const BlogPostCard = ({ post }: { post: BlogPost }) => {
   const [, navigate] = useLocation();
   const imageUrl = post.featured_image || '/images/blog-placeholder.jpg';
@@ -120,22 +167,36 @@ export default function Blog() {
   const [currentCategory, setCurrentCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
-  // Fetch blog posts
+  // Fetch automated blog posts from file system (priority)
+  const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
+    queryKey: ['/api/blog/posts'],
+    staleTime: 30 * 1000, // 30 seconds - refresh frequently to show new automated posts
+  });
+
+  // Fetch blog system status
+  const { data: blogStatus } = useQuery({
+    queryKey: ['/api/blog/status'],
+    refetchInterval: 60 * 1000, // Check every minute
+  });
+
+  // Legacy database posts (fallback)
   const { data: blogPosts, isLoading, error } = useQuery({
     queryKey: ['/api/blog'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
-  // Filter posts based on current category and search query
-  const filteredPosts = blogPosts ? blogPosts.filter((post: BlogPost) => {
+  // Combine and filter posts (prioritize automated posts)
+  const allPosts = [...(filePosts || []), ...(blogPosts || [])];
+  
+  const filteredPosts = allPosts.filter((post: any) => {
     const matchesCategory = currentCategory === 'all' || post.category === currentCategory;
     const matchesSearch = searchQuery === '' || 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      (post.preview && post.preview.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (post.summary && post.summary.toLowerCase().includes(searchQuery.toLowerCase()));
     
     return matchesCategory && matchesSearch;
-  }) : [];
+  });
   
   // Featured posts - get top 3 by view count
   const featuredPosts = blogPosts ? 
@@ -167,8 +228,20 @@ export default function Blog() {
               AI Insights <span className="gradient-text">Blog</span>
             </motion.h1>
             <motion.p variants={fadeInUp} className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-              Discover the latest trends, strategies, and innovations in AI technology and applications
+              Discover the latest trends, strategies, and innovations in AI technology and applications. 
+              Our fully automated AI system generates 3 high-quality blog posts daily at 8 AM, 1 PM, and 6 PM.
             </motion.p>
+            
+            {blogStatus && (
+              <motion.div variants={fadeIn} className="mb-8">
+                <div className="inline-flex items-center px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
+                  <div className="flex items-center space-x-2 text-sm text-green-700 dark:text-green-300">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Live Blog System: {blogStatus.postsCount} automated posts generated</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
             
             {/* Search Bar */}
             <motion.div variants={fadeIn} className="max-w-md mx-auto">
@@ -244,7 +317,7 @@ export default function Blog() {
               
               {/* Blog Posts Grid */}
               <div className="mt-6">
-                {isLoading ? (
+                {(isLoading || filePostsLoading) ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => (
                       <BlogPostSkeleton key={i} />
@@ -263,11 +336,26 @@ export default function Blog() {
                         `No results for "${searchQuery}"` : 
                         "No posts available for this category yet"}
                     </p>
+                    {blogStatus && (
+                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          Daily Blog System: {blogStatus.isRunning ? '🟢 Active' : '🔴 Inactive'} | 
+                          {blogStatus.postsCount} automated posts | 
+                          {blogStatus.schedulesCount} daily schedules
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPosts.map((post: BlogPost) => (
-                      <BlogPostCard key={post.id} post={post} />
+                    {filteredPosts.map((post: any) => (
+                      <div key={post.id || post.slug}>
+                        {post.slug ? (
+                          <FileBlogPostCard post={post} />
+                        ) : (
+                          <BlogPostCard post={post} />
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

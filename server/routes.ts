@@ -2,6 +2,8 @@ import type { Express, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import OpenAI from "openai";
 import crypto from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 import { emailService } from "./email-service";
 
 // Extend session interface
@@ -21,6 +23,7 @@ import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema } from "@shared/schema";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
+import { DailyBlogScheduler, getAllBlogPosts } from "./daily-blog-system";
 import { workflowEngine } from "./workflow-engine";
 import { getWorkflowAnalytics, generatePerformanceReport } from "./workflow-analytics";
 import { triggerSystem, parseAdvancedSchedule } from "./advanced-triggers";
@@ -1511,7 +1514,58 @@ function setupAuthEndpoints(app: Express) {
 
   // ---------- Blog API Routes ----------
   
-  // Get all blog posts (with optional filtering)
+  // Get all blog posts from file system (HTML files in /posts)
+  app.get('/api/blog/posts', async (req, res) => {
+    try {
+      const posts = getAllBlogPosts();
+      return res.json(posts);
+    } catch (error) {
+      console.error('Error fetching file-based blog posts:', error);
+      return res.status(500).json({ message: 'Error fetching blog posts' });
+    }
+  });
+  
+  // Get a specific blog post HTML file
+  app.get('/api/blog/posts/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const postPath = path.join(process.cwd(), 'posts', `${slug}.html`);
+      
+      if (!fs.existsSync(postPath)) {
+        return res.status(404).json({ message: 'Blog post not found' });
+      }
+      
+      const htmlContent = fs.readFileSync(postPath, 'utf8');
+      return res.send(htmlContent);
+    } catch (error) {
+      console.error('Error fetching blog post:', error);
+      return res.status(500).json({ message: 'Error fetching blog post' });
+    }
+  });
+  
+  // Manual trigger for blog generation (admin use)
+  app.post('/api/blog/generate', async (req, res) => {
+    try {
+      await blogScheduler.generateNow();
+      return res.json({ success: true, message: 'Blog post generated successfully' });
+    } catch (error) {
+      console.error('Error generating blog post:', error);
+      return res.status(500).json({ message: 'Error generating blog post' });
+    }
+  });
+  
+  // Get blog system status
+  app.get('/api/blog/status', async (req, res) => {
+    try {
+      const status = blogScheduler.getStatus();
+      return res.json(status);
+    } catch (error) {
+      console.error('Error getting blog status:', error);
+      return res.status(500).json({ message: 'Error getting blog status' });
+    }
+  });
+  
+  // Get all blog posts (database version - legacy)
   app.get('/api/blog', async (req, res) => {
     try {
       const { limit, offset, category, tag, published } = req.query;
@@ -6319,12 +6373,18 @@ function getCuratedRecommendations(preferences: any) {
   });
 }
 
+// Initialize daily blog scheduler
+const blogScheduler = new DailyBlogScheduler();
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first
   setupAuth(app);
 
   // Add auth endpoints
   setupAuthEndpoints(app);
+  
+  // Start the daily blog automation system
+  blogScheduler.start();
 
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {

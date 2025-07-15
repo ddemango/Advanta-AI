@@ -22,6 +22,7 @@ export function NewHeader() {
   const navigation = [
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
+    { name: 'Blog', href: '/blog' },
     { name: 'Resources', href: '/resources' },
     { name: 'Free Tools', href: '/free-tools' },
     { name: 'ROI Calculator', href: '/roi-calculator' }
@@ -33,6 +34,7 @@ export function NewHeader() {
     { name: 'Home', href: '/' },
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
+    { name: 'Blog', href: '/blog' },
     { name: 'Resources', href: '/resources' },
     { name: 'Free Tools', href: '/free-tools' },
     { name: 'ROI Calculator', href: '/roi-calculator' },

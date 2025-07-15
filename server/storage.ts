@@ -189,72 +189,31 @@ export class DatabaseStorage implements IStorage {
   // Blog operations
   async getBlogPosts(options?: { limit?: number, offset?: number, category?: string, tag?: string, published?: boolean }): Promise<BlogPost[]> {
     try {
-      // Generate some dummy blog posts to ensure the UI works
-      const dummyPosts: BlogPost[] = [
-        {
-          id: 1,
-          title: "Transforming Business with AI Automation",
-          slug: "transforming-business-with-ai-automation",
-          summary: "How AI automation is creating unprecedented efficiencies in modern enterprises.",
-          excerpt: "How AI automation is creating unprecedented efficiencies in modern enterprises.",
-          content: "Content about AI automation in business...",
-          authorId: 1,
-          category: "business_strategy",
-          tags: ["automation", "efficiency", "digital transformation"],
-          imageUrl: null,
-          featuredImage: null,
-          readingTime: 5,
-          published: true,
-          featured: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          viewCount: 120
-        },
-        {
-          id: 2,
-          title: "The Future of Conversational AI",
-          slug: "future-of-conversational-ai",
-          summary: "Exploring how conversational AI is evolving and its implications for customer service.",
-          excerpt: "Exploring how conversational AI is evolving and its implications for customer service.",
-          content: "Content about conversational AI...",
-          authorId: 1,
-          category: "ai_technology",
-          tags: ["chatbots", "customer service", "NLP"],
-          imageUrl: null,
-          featuredImage: null,
-          readingTime: 4,
-          published: true,
-          featured: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          viewCount: 85
-        },
-        {
-          id: 3,
-          title: "AI Implementation: A Case Study",
-          slug: "ai-implementation-case-study",
-          summary: "A real-world case study showing measurable results from AI implementation.",
-          excerpt: "A real-world case study showing measurable results from AI implementation.",
-          content: "Content about AI case study...",
-          authorId: 1,
-          category: "case_studies",
-          tags: ["ROI", "implementation", "success story"],
-          imageUrl: null,
-          featuredImage: null,
-          readingTime: 7,
-          published: true,
-          featured: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          viewCount: 210
-        }
-      ];
+      let query = db.select().from(blogPosts);
       
-      if (options?.category) {
-        return dummyPosts.filter(post => post.category === options.category);
+      // Apply filters
+      if (options?.published !== undefined) {
+        query = query.where(eq(blogPosts.published, options.published));
       }
       
-      return dummyPosts;
+      if (options?.category) {
+        query = query.where(eq(blogPosts.category, options.category));
+      }
+      
+      // Order by created date (newest first)
+      query = query.orderBy(sql`${blogPosts.createdAt} DESC`);
+      
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      
+      if (options?.offset) {
+        query = query.offset(options.offset);
+      }
+      
+      const posts = await query.execute();
+      return posts;
     } catch (error) {
       console.error("Error in getBlogPosts:", error);
       return [];
@@ -263,9 +222,8 @@ export class DatabaseStorage implements IStorage {
 
   async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
     try {
-      // Since we're using dummy data for blog posts, do the same for this function
-      const dummyPosts = await this.getBlogPosts();
-      return dummyPosts.find(post => post.slug === slug);
+      const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
+      return post || undefined;
     } catch (error) {
       console.error("Error in getBlogPostBySlug:", error);
       return undefined;
@@ -274,9 +232,8 @@ export class DatabaseStorage implements IStorage {
 
   async getBlogPostById(id: number): Promise<BlogPost | undefined> {
     try {
-      // Since we're using dummy data for blog posts, do the same for this function
-      const dummyPosts = await this.getBlogPosts();
-      return dummyPosts.find(post => post.id === id);
+      const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+      return post || undefined;
     } catch (error) {
       console.error("Error in getBlogPostById:", error);
       return undefined;

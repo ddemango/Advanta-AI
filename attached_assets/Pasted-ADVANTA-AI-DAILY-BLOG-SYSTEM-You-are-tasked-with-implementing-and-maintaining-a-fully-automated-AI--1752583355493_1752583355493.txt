@@ -1,0 +1,84 @@
+ADVANTA AI DAILY BLOG SYSTEM
+
+You are tasked with implementing and maintaining a fully automated AI-focused blog engine for the Advanta AI website. The system must generate and publish 3 high-quality, AI-related blog posts per day.
+
+⸻
+
+✅ SYSTEM PURPOSE
+
+This blog system is designed to consistently educate, attract, and convert digital marketers, SaaS builders, and entrepreneurs by publishing relevant content on AI tools, trends, business use cases, and automation strategies.
+
+⸻
+
+📅 DAILY WORKFLOW (3 POSTS PER DAY)
+
+Every day, this system should:
+	1.	Trigger 3 times per day using cron jobs (suggested: 8 AM, 1 PM, 6 PM).
+	2.	For each run:
+	•	Choose a fresh, AI-related topic:
+	•	You may pull from: Google Trends (keywords: “AI”, “GPT”, “automation”, “marketing AI”, etc.), Reddit (e.g. r/ArtificialIntelligence, r/GPT3, r/Marketing), or a predefined rotating list of AI blog topics.
+	•	Generate a blog post using GPT-4o with the following format:
+	•	Title: engaging and SEO-optimized
+	•	Introduction paragraph
+	•	3 key headers (H2)
+	•	Conclusion with optional call to action (CTA)
+	•	Save the post to /posts as an .html file using this format:
+YYYY-MM-DD-title-slug.html
+	•	Log the post title and filename to the console for tracking.
+
+⸻
+
+🧠 BLOG CONTENT GUIDELINES
+	•	Must be AI-related only. Examples:
+	•	“How GPT-4o Is Changing SaaS”
+	•	“Top 5 AI Tools for Marketing in 2025”
+	•	“The Future of AI Client Portals”
+	•	“AI vs Manual Workflows: A Cost Comparison”
+	•	“Build Your First AI Stack in 24 Hours”
+	•	Target audience: marketers, solopreneurs, agency owners, SaaS startups
+	•	Tone: helpful, slightly conversational, educational
+	•	Keywords: AI tools, GPT, automation, marketing AI, SaaS growth
+
+⸻
+
+🗂 FILE SYSTEM ORGANIZATION
+	•	Blog files are saved in /posts/
+	•	Each file includes:
+	•	<title> tag
+	•	<h1> main header
+	•	HTML body with line breaks and headers
+	•	File name should be lowercase, slugified:
+Example: 2025-07-15-how-ai-can-scale-your-agency.html
+
+⸻
+
+🌐 BLOG PAGE REQUIREMENTS
+	•	Website must include a /blog page that:
+	•	Automatically lists all blog posts from /posts
+	•	Sorts them newest to oldest
+	•	Displays the title, date, and preview text
+	•	Links to the full .html blog page
+	•	Individual post URLs should follow this format:
+/blog/2025-07-15-title.html
+
+⸻
+
+⚙️ TECHNOLOGY & OPERATIONAL SETUP
+	•	Platform: Replit
+	•	Language: Node.js
+	•	GPT Model: GPT-4o (via OpenAI API)
+	•	Scheduling: node-cron (3 triggers/day)
+	•	Publishing: HTML file output into /posts/
+	•	Frontend: Static blog index + viewer, or integrated into Advanta AI frontend
+	•	Logging: Each run should log post title and file path
+
+⸻
+
+🛠 AI AGENT TO-DO SUMMARY
+	1.	Schedule 3 daily cron tasks (8am, 1pm, 6pm).
+	2.	Select or generate an AI-focused blog topic.
+	3.	Prompt GPT-4o with structured SEO format.
+	4.	Save content to a formatted .html file in /posts.
+	5.	Ensure the blog is listed on the site’s /blog page.
+	6.	Sanitize all file names for URL safety.
+	7.	Handle error logging and retries if OpenAI fails.
