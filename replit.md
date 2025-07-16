@@ -117,6 +117,7 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 16, 2025. NEWSLETTER SYSTEM FULLY OPERATIONAL: Fixed automated daily newsletter system - switched from nodemailer to Resend API with verified domain (hello@advanta-ai.com), implemented proper cron scheduling (8:00 AM daily), and confirmed successful delivery to all 12 active subscribers with yesterday's blog posts
 - July 15, 2025. ADMIN DASHBOARD PASSWORD PROTECTION COMPLETE: Secured /admin-dashboard with password "FamilyStrong42!" - includes professional login form, session-based authentication, toast notifications, and responsive design for mobile/desktop access
 - July 15, 2025. MOBILE NAVIGATION OPTIMIZATION: Reduced spacing between navigation tabs in mobile sidebar for improved user experience and better touch accessibility
 - July 15, 2025. ADMIN DASHBOARD SECURITY: Completely removed admin dashboard from public navigation (both mobile and desktop) - now accessible only via direct URL with password protection

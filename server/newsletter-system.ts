@@ -1,9 +1,10 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { db } from './db';
 import { newsletterSubscribers, blogPosts } from '@shared/schema';
 import { eq, and, desc, gte } from 'drizzle-orm';
 import fs from 'fs';
 import path from 'path';
+import * as cron from 'node-cron';
 
 // Function to get yesterday's blog posts from file system
 async function getYesterdaysBlogPosts(): Promise<any[]> {
@@ -202,20 +203,8 @@ export async function sendDailyNewsletter(): Promise<void> {
     // Create email template
     const emailTemplate = createNewsletterTemplate(yesterdayPosts);
     
-    // Create email transporter
-    const transporter = nodemailer.createTransporter({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER || 'D.s.demango@gmail.com',
-        pass: process.env.EMAIL_PASS || 'admin1',
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    // Create Resend client
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const today = new Date().toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -233,8 +222,8 @@ export async function sendDailyNewsletter(): Promise<void> {
           subscriber.unsubscribeToken || 'invalid'
         );
         
-        await transporter.sendMail({
-          from: '"Advanta AI" <noreply@advantaai.com>',
+        await resend.emails.send({
+          from: 'Advanta AI <hello@advanta-ai.com>',
           to: subscriber.email,
           subject: `🤖 Your Daily AI Insights - ${today}`,
           html: personalizedTemplate,
@@ -256,28 +245,26 @@ export async function sendDailyNewsletter(): Promise<void> {
 
 // Function to schedule daily newsletter (called from main scheduler)
 export function scheduleNewsletterSending(): void {
-  // Send newsletter every day at 8:00 AM
-  const scheduleNewsletterJob = () => {
-    const now = new Date();
-    const scheduledTime = new Date();
-    scheduledTime.setHours(8, 0, 0, 0); // 8:00 AM
-    
-    // If it's past 8 AM today, schedule for tomorrow
-    if (now > scheduledTime) {
-      scheduledTime.setDate(scheduledTime.getDate() + 1);
-    }
-    
-    const timeUntilNext = scheduledTime.getTime() - now.getTime();
-    
-    setTimeout(async () => {
-      await sendDailyNewsletter();
-      
-      // Schedule the next newsletter (24 hours later)
-      setInterval(sendDailyNewsletter, 24 * 60 * 60 * 1000);
-    }, timeUntilNext);
-    
-    console.log(`📧 Newsletter scheduled for ${scheduledTime.toLocaleString()}`);
-  };
+  // Send newsletter every day at 8:00 AM using cron
+  cron.schedule('0 8 * * *', async () => {
+    console.log('📧 Daily newsletter cron job triggered at 8:00 AM');
+    await sendDailyNewsletter();
+  }, {
+    scheduled: true,
+    timezone: "America/New_York"
+  });
   
-  scheduleNewsletterJob();
+  const nextRun = new Date();
+  nextRun.setHours(8, 0, 0, 0);
+  if (nextRun <= new Date()) {
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+  
+  console.log(`📧 Newsletter scheduled for ${nextRun.toLocaleString()}`);
+}
+
+// Function to manually send newsletter (for testing)
+export async function sendTestNewsletter(): Promise<void> {
+  console.log('📧 Manual newsletter test initiated');
+  await sendDailyNewsletter();
 }

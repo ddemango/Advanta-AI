@@ -6979,8 +6979,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/send-test-newsletter', async (req, res) => {
     try {
       // Import the newsletter sending function
-      const { sendDailyNewsletter } = await import('./newsletter-system');
-      await sendDailyNewsletter();
+      const { sendTestNewsletter } = await import('./newsletter-system');
+      await sendTestNewsletter();
       res.json({ success: true, message: 'Test newsletter sent successfully!' });
     } catch (error) {
       console.error('Error sending test newsletter:', error);
