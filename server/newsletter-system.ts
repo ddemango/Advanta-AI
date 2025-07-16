@@ -32,12 +32,16 @@ async function getYesterdaysBlogPosts(): Promise<any[]> {
         const dateMatch = content.match(/meta name="date" content="([^"]+)"/);
         
         if (titleMatch) {
+          // Convert filename to slug format for blog URL
+          const slug = file.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '');
+          
           yesterdayPosts.push({
             filename: file,
             title: titleMatch[1].trim(),
             category: categoryMatch ? categoryMatch[1] : 'ai_technology',
             date: dateMatch ? dateMatch[1] : yesterdayStr,
-            url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/posts/${file}`
+            slug: slug,
+            url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/blog/${slug}`
           });
         }
       }
@@ -77,7 +81,7 @@ function createNewsletterTemplate(posts: any[]): string {
           <tr>
             <td style="padding-bottom: 10px;">
               <h2 style="margin: 0; font-size: 18px; line-height: 1.4; color: #1f2937;">
-                <a href="${baseUrl}/posts/${post.filename}" style="color: #1f2937; text-decoration: none;">
+                <a href="${baseUrl}/blog/${post.slug}" style="color: #1f2937; text-decoration: none;">
                   ${post.title}
                 </a>
               </h2>
@@ -85,7 +89,7 @@ function createNewsletterTemplate(posts: any[]): string {
           </tr>
           <tr>
             <td>
-              <a href="${baseUrl}/posts/${post.filename}" 
+              <a href="${baseUrl}/blog/${post.slug}" 
                  style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
                 Read Article →
               </a>
