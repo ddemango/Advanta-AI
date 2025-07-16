@@ -1545,6 +1545,70 @@ function setupAuthEndpoints(app: Express) {
       return res.status(500).json({ message: 'Error fetching blog post' });
     }
   });
+
+  // Get file-based blog post by slug with metadata
+  app.get('/api/blog/file/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const postsDir = path.join(process.cwd(), 'posts');
+      
+      if (!fs.existsSync(postsDir)) {
+        return res.status(404).json({ error: 'Blog post not found' });
+      }
+      
+      const files = fs.readdirSync(postsDir);
+      const postFile = files.find(file => 
+        file.endsWith('.html') && file.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '') === slug
+      );
+      
+      if (!postFile) {
+        return res.status(404).json({ error: 'Blog post not found' });
+      }
+      
+      const filepath = path.join(postsDir, postFile);
+      const content = fs.readFileSync(filepath, 'utf-8');
+      
+      // Extract metadata from HTML
+      const titleMatch = content.match(/<title>(.*?)\|/);
+      const categoryMatch = content.match(/meta name="category" content="([^"]+)"/);
+      const dateMatch = content.match(/meta name="date" content="([^"]+)"/);
+      const descriptionMatch = content.match(/meta name="description" content="([^"]+)"/);
+      
+      // Extract body content and make it professional
+      const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      let bodyContent = bodyMatch ? bodyMatch[1] : content;
+      
+      // Clean up the content and add professional styling
+      bodyContent = bodyContent
+        .replace(/<h1[^>]*>.*?<\/h1>/gi, '') // Remove h1 tags (we'll use title)
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
+        .trim();
+      
+      const post = {
+        slug,
+        filename: postFile,
+        title: titleMatch ? titleMatch[1].trim() : 'AI Insights',
+        category: categoryMatch ? categoryMatch[1].replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'AI Technology',
+        created_at: dateMatch ? dateMatch[1] : new Date().toISOString(),
+        summary: descriptionMatch ? descriptionMatch[1] : 'Latest AI insights and technology updates',
+        content: bodyContent,
+        reading_time: Math.ceil(bodyContent.replace(/<[^>]*>/g, '').split(' ').length / 200),
+        author: {
+          firstName: 'Advanta',
+          lastName: 'AI',
+          profileImageUrl: ''
+        },
+        tags: [],
+        featured_image: `https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80`
+      };
+      
+      res.json(post);
+    } catch (error) {
+      console.error('Error fetching file-based blog post:', error);
+      res.status(500).json({ error: 'Failed to fetch blog post' });
+    }
+  });
   
   // Manual trigger for blog generation (admin use)
   app.post('/api/blog/generate', async (req, res) => {

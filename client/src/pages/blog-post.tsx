@@ -12,7 +12,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { BlogPost } from '@shared/schema';
 import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
 
 // Function to format date with error handling
@@ -52,9 +51,11 @@ const RelatedPostCard = ({ post }: { post: any }) => {
 
   const imageUrl = getImageUrl(post.category || 'ai_technology');
   
+  const postSlug = post.filename ? post.filename.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '') : post.slug;
+  
   return (
     <Card className="overflow-hidden hover:border-primary/50 transition-colors cursor-pointer"
-      onClick={() => window.open(`/posts/${post.filename}`, '_blank')}>
+      onClick={() => window.open(`/blog/${postSlug}`, '_blank')}>
       <div className="h-40 overflow-hidden">
         <img 
           src={imageUrl}
@@ -81,22 +82,22 @@ export default function BlogPostPage() {
   const [location] = useLocation();
   const slug = location.split('/').pop() || '';
   
-  // Fetch current blog post by slug
+  // Fetch file-based blog post by slug
   const { data: post, isLoading: isLoadingPost, error: postError } = useQuery({
-    queryKey: [`/api/blog/${slug}`],
+    queryKey: [`/api/blog/file/${slug}`],
     enabled: !!slug,
   });
   
-  // Fetch only REAL file-based blog posts for related content - NO DATABASE POSTS
+  // Fetch related file-based blog posts
   const { data: allPosts, isLoading: isLoadingAll } = useQuery({
     queryKey: ['/api/blog/posts'],
     enabled: !!post,
   });
   
-  // Get related posts from REAL file-based posts only - NO FAKE DATA
+  // Get related posts from the same category
   const relatedPosts = allPosts ? 
     allPosts
-      .filter((p: any) => p.filename && p.filename !== post?.slug) // Only real file-based posts
+      .filter((p: any) => p.filename && p.slug !== slug) // Exclude current post
       .filter((p: any) => p.category === post?.category) // Same category
       .slice(0, 3) : 
     [];
@@ -213,7 +214,7 @@ export default function BlogPostPage() {
               </motion.div>
               
               {/* Post Header */}
-              <motion.h1 variants={fadeInUp} className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
+              <motion.h1 variants={fadeInUp} className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
                 {post.title}
               </motion.h1>
               
@@ -248,11 +249,11 @@ export default function BlogPostPage() {
               
               {/* Featured Image */}
               {post.featured_image && (
-                <motion.div variants={fadeInUp} className="mb-10 rounded-lg overflow-hidden shadow-lg">
+                <motion.div variants={fadeInUp} className="mb-10 rounded-xl overflow-hidden shadow-lg">
                   <img 
                     src={post.featured_image} 
                     alt={post.title}
-                    className="w-full object-cover max-h-96"
+                    className="w-full object-cover h-72 md:h-96"
                   />
                 </motion.div>
               )}
@@ -260,7 +261,7 @@ export default function BlogPostPage() {
               {/* Content */}
               <motion.div 
                 variants={fadeInUp} 
-                className="prose prose-lg dark:prose-invert max-w-none"
+                className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-a:text-primary prose-blockquote:border-primary prose-blockquote:text-foreground/80"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
               
