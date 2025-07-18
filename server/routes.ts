@@ -1242,7 +1242,7 @@ class BlogScheduler {
   private lastRun: Date | null = null;
   private isRunning: boolean = false;
   
-  constructor(private articlesPerDay: number = 2) {}
+  constructor(private articlesPerDay: number = 3) {}
   
   start() {
     if (this.interval) {
@@ -1408,9 +1408,9 @@ function setupAuthEndpoints(app: Express) {
     }
   });
 
-  // Start the blog scheduler to generate 2 articles daily
-  const blogScheduler = new BlogScheduler(2);
-  blogScheduler.start();
+  // OLD SCHEDULER DISABLED - Using new DailyBlogScheduler with 3x daily posts (8am, 12pm, 6pm)
+  // const blogScheduler = new BlogScheduler(3);
+  // blogScheduler.start();
   // API route for contact form submissions - sends leads to HubSpot
   app.post('/api/contact', async (req, res) => {
     try {
@@ -1610,6 +1610,17 @@ function setupAuthEndpoints(app: Express) {
     }
   });
   
+  // Get daily blog scheduler status
+  app.get('/api/blog/scheduler/status', (req, res) => {
+    try {
+      const status = dailyBlogScheduler.getStatus();
+      res.json(status);
+    } catch (error) {
+      console.error('Error getting scheduler status:', error);
+      res.status(500).json({ error: 'Failed to get scheduler status' });
+    }
+  });
+
   // Manual trigger for blog generation (admin use)
   app.post('/api/blog/generate', async (req, res) => {
     try {
