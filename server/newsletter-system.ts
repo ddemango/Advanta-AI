@@ -154,15 +154,15 @@ function createNewsletterTemplate(posts: any[]): string {
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding: 30px 20px 20px;">
-                      <h3 style="margin: 0 0 20px 0; font-size: 20px; color: #1f2937;">Latest Articles</h3>
+                      <h3 style="margin: 0 0 20px 0; font-size: 20px; color: #1f2937;">Recent AI Insights</h3>
                     </td>
                   </tr>
                   ${postsHtml}
                 </table>
               ` : `
                 <div style="padding: 40px 20px; text-align: center;">
-                  <h3 style="color: #1f2937; margin-bottom: 10px;">No New Articles Yesterday</h3>
-                  <p style="color: #6b7280; margin: 0;">Check back tomorrow for more AI insights!</p>
+                  <h3 style="color: #1f2937; margin-bottom: 10px;">No Recent Articles</h3>
+                  <p style="color: #6b7280; margin: 0;">New AI insights coming soon!</p>
                 </div>
               `}
             </td>
