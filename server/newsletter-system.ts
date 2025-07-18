@@ -6,50 +6,70 @@ import fs from 'fs';
 import path from 'path';
 import * as cron from 'node-cron';
 
-// Function to get yesterday's blog posts from file system
-async function getYesterdaysBlogPosts(): Promise<any[]> {
+// Function to get recent blog posts from file system (last 7 days)
+async function getRecentBlogPosts(): Promise<any[]> {
   try {
     const postsDir = path.join(process.cwd(), 'posts');
     if (!fs.existsSync(postsDir)) {
+      console.log('📧 Posts directory not found');
       return [];
     }
 
     const files = fs.readdirSync(postsDir);
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD format
-
-    const yesterdayPosts = [];
+    console.log(`📧 Found ${files.length} files in posts directory:`, files);
+    const recentPosts = [];
+    
+    // Get posts from the last 7 days (expanded to ensure we always have content)
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0); // Start of 7 days ago
     
     for (const file of files) {
-      if (file.endsWith('.html') && file.includes(yesterdayStr)) {
-        const filepath = path.join(postsDir, file);
-        const content = fs.readFileSync(filepath, 'utf-8');
-        
-        // Extract metadata from HTML
-        const titleMatch = content.match(/<title>(.*?)\|/);
-        const categoryMatch = content.match(/meta name="category" content="([^"]+)"/);
-        const dateMatch = content.match(/meta name="date" content="([^"]+)"/);
-        
-        if (titleMatch) {
-          // Convert filename to slug format for blog URL
-          const slug = file.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '');
+      if (file.endsWith('.html')) {
+        // Extract date from filename (YYYY-MM-DD format)
+        const dateMatch = file.match(/^(\d{4}-\d{2}-\d{2})-/);
+        if (dateMatch) {
+          const fileDate = new Date(dateMatch[1]);
+          fileDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
           
-          yesterdayPosts.push({
-            filename: file,
-            title: titleMatch[1].trim(),
-            category: categoryMatch ? categoryMatch[1] : 'ai_technology',
-            date: dateMatch ? dateMatch[1] : yesterdayStr,
-            slug: slug,
-            url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/blog/${slug}`
-          });
+          // Only include posts from the last 7 days
+          if (fileDate >= sevenDaysAgo && fileDate <= today) {
+            const filepath = path.join(postsDir, file);
+            const content = fs.readFileSync(filepath, 'utf-8');
+            
+            // Extract metadata from HTML
+            const titleMatch = content.match(/<title>(.*?)\|/);
+            const categoryMatch = content.match(/meta name="category" content="([^"]+)"/);
+            const dateMatchContent = content.match(/meta name="date" content="([^"]+)"/);
+            
+            if (titleMatch) {
+              // Convert filename to slug format for blog URL
+              const slug = file.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '');
+              
+              recentPosts.push({
+                filename: file,
+                title: titleMatch[1].trim(),
+                category: categoryMatch ? categoryMatch[1] : 'ai_technology',
+                date: dateMatchContent ? dateMatchContent[1] : dateMatch[1],
+                slug: slug,
+                url: `${process.env.REPLIT_DOMAINS?.split(',')[0] ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000'}/blog/${slug}`,
+                fileDate: fileDate
+              });
+            }
+          }
         }
       }
     }
 
-    return yesterdayPosts;
+    // Sort by date (newest first) and return up to 3 most recent posts
+    return recentPosts
+      .sort((a, b) => b.fileDate.getTime() - a.fileDate.getTime())
+      .slice(0, 3);
+      
   } catch (error) {
-    console.log(`Error fetching yesterday's blog posts: ${error}`);
+    console.log(`Error fetching recent blog posts: ${error}`);
     return [];
   }
 }
@@ -187,9 +207,9 @@ export async function sendDailyNewsletter(): Promise<void> {
   try {
     console.log('📧 Starting daily newsletter sending process');
     
-    // Get yesterday's blog posts
-    const yesterdayPosts = await getYesterdaysBlogPosts();
-    console.log(`📧 Found ${yesterdayPosts.length} blog posts from yesterday`);
+    // Get recent blog posts (last 3 days)
+    const recentPosts = await getRecentBlogPosts();
+    console.log(`📧 Found ${recentPosts.length} recent blog posts from the last 7 days`);
     
     // Get all active subscribers
     const subscribers = await db
@@ -205,7 +225,7 @@ export async function sendDailyNewsletter(): Promise<void> {
     }
     
     // Create email template
-    const emailTemplate = createNewsletterTemplate(yesterdayPosts);
+    const emailTemplate = createNewsletterTemplate(recentPosts);
     
     // Create Resend client
     const resend = new Resend(process.env.RESEND_API_KEY);
