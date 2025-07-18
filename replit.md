@@ -117,6 +117,7 @@ This is a full-stack web application for Advanta AI, an AI consultancy company o
 
 ```
 Changelog:
+- July 18, 2025. CRITICAL FIX: DAILY BLOG SYSTEM NOW GENERATES 3 POSTS PER DAY: Fixed scheduler conflict by disabling old BlogScheduler (2 posts) and ensuring new DailyBlogScheduler runs with proper 3x daily schedule (8am, 12pm, 6pm EST) - system now generates exactly 3 authentic AI blog posts daily as specified
 - July 16, 2025. NEWSLETTER SYSTEM FULLY OPERATIONAL: Fixed automated daily newsletter system - switched from nodemailer to Resend API with verified domain (hello@advanta-ai.com), implemented proper cron scheduling (8:00 AM daily), and confirmed successful delivery to all 12 active subscribers with yesterday's blog posts
 - July 15, 2025. ADMIN DASHBOARD PASSWORD PROTECTION COMPLETE: Secured /admin-dashboard with password "FamilyStrong42!" - includes professional login form, session-based authentication, toast notifications, and responsive design for mobile/desktop access
 - July 15, 2025. MOBILE NAVIGATION OPTIMIZATION: Reduced spacing between navigation tabs in mobile sidebar for improved user experience and better touch accessibility
