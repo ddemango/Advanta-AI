@@ -38,6 +38,7 @@ export function NewHeader() {
     { name: 'Resources', href: '/resources' },
     { name: 'Free Tools', href: '/free-tools' },
     { name: 'ROI Calculator', href: '/roi-calculator' },
+    { name: 'AI Marketplace', href: '/marketplace' },
     { name: 'Contact', href: '/contact' },
     { name: 'Client Suite Portal', href: '/client-suite-waitlist' }
   ];
@@ -95,13 +96,6 @@ export function NewHeader() {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             <Button
-              variant="ghost"
-              onClick={() => setLocation('/contact')}
-              className="text-gray-700 hover:text-blue-600 hover:bg-blue-50"
-            >
-              Book a Demo
-            </Button>
-            <Button
               onClick={() => setLocation('/services')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
             >
@@ -147,16 +141,6 @@ export function NewHeader() {
                   </button>
                 ))}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setLocation('/contact');
-                      setIsOpen(false);
-                    }}
-                    className="w-full justify-center text-gray-700 hover:text-blue-600 hover:bg-blue-50"
-                  >
-                    Book a Demo
-                  </Button>
                   <Button
                     onClick={() => {
                       setLocation('/services');
