@@ -84,36 +84,86 @@ export default function ServicesPage() {
     {
       id: 'ai-workflow-automation',
       title: 'AI Workflow Automation',
-      description: 'Automate daily tasks across departments using AI-powered workflows. Free your team from manual work.',
+      description: 'Replaces repetitive tasks with automated flows, reduces human error, saves time.',
       icon: Workflow,
       link: '/workflow-automation',
       detailedInfo: {
-        whatItDoes: "Automates repetitive tasks, reduces manual data entry, and streamlines operations.",
+        whatItDoes: "Replaces repetitive tasks with automated flows, reduces human error, saves time.",
         industries: [
           {
             industry: "E-commerce",
             icon: Building2,
-            description: "Automate order tracking, inventory updates, and abandoned cart follow-ups."
+            description: "Automates abandoned cart emails, shipping updates, and product tagging."
           },
           {
             industry: "Healthcare", 
             icon: Heart,
-            description: "Auto-schedule appointments, process patient forms, and send reminders."
+            description: "Auto-schedules appointments, sends reminders, and follows up with post-visit instructions."
           },
           {
             industry: "Real Estate",
             icon: Home,
-            description: "Generate property listings from MLS data, automate client follow-up emails."
+            description: "Sends lead nurture emails, follows up after showings, automates listing input."
+          },
+          {
+            industry: "Finance & Accounting",
+            icon: DollarSign,
+            description: "Auto-generates invoices, reconciles transactions, flags anomalies."
           },
           {
             industry: "Hospitality",
             icon: UtensilsCrossed,
-            description: "Automate booking confirmations, guest check-in instructions, and upsell campaigns."
+            description: "Handles guest check-ins, upsells room add-ons, automates concierge responses."
           },
           {
-            industry: "Finance",
-            icon: DollarSign,
-            description: "Reconcile transactions, auto-generate expense reports, and trigger compliance alerts."
+            industry: "Marketing Agencies",
+            icon: Building2,
+            description: "Automates campaign reporting, client updates, and performance alerts."
+          },
+          {
+            industry: "Legal Services",
+            icon: Building2,
+            description: "Automates document intake, reminders for court dates or filings."
+          },
+          {
+            industry: "Education & eLearning",
+            icon: Building2,
+            description: "Sends enrollment confirmations, follow-up lessons, and certificate issuance."
+          },
+          {
+            industry: "Construction",
+            icon: Building2,
+            description: "Automates bid submissions, change order tracking, and project timelines."
+          },
+          {
+            industry: "SaaS Companies",
+            icon: Building2,
+            description: "Onboards users with automated walkthroughs, sends renewal alerts."
+          },
+          {
+            industry: "Recruitment/HR",
+            icon: Building2,
+            description: "Schedules interviews, sends onboarding paperwork, updates candidate status."
+          },
+          {
+            industry: "Insurance",
+            icon: Building2,
+            description: "Automates claims intake, document requests, and status updates."
+          },
+          {
+            industry: "Retail (In-store + Online)",
+            icon: Building2,
+            description: "Manages stock alerts, loyalty programs, and order confirmations."
+          },
+          {
+            industry: "Nonprofits",
+            icon: Building2,
+            description: "Automates donor acknowledgments, event invites, and grant tracking."
+          },
+          {
+            industry: "Travel Agencies",
+            icon: Building2,
+            description: "Automates itineraries, visa reminders, and upsell of excursions or upgrades."
           }
         ]
       }
@@ -121,36 +171,93 @@ export default function ServicesPage() {
     {
       id: 'api-integrations',
       title: 'Custom API & ChatGPT Integrations',
-      description: 'Embed AI assistants, chatbots, and automation tools directly into your website or business systems. Smarter websites and systems.',
+      description: 'Connects your backend tools and websites to ChatGPT and other AI models to provide smart, interactive capabilities.',
       icon: Brain,
       link: '/build-my-ai-stack',
       detailedInfo: {
-        whatItDoes: "Embeds AI-driven assistants and connects business tools into one seamless system.",
+        whatItDoes: "Connects your backend tools and websites to ChatGPT and other AI models to provide smart, interactive capabilities.",
         industries: [
           {
             industry: "E-commerce",
             icon: Building2,
-            description: "Integrate AI chatbots with Shopify or BigCommerce to answer product questions in real-time."
+            description: "ChatGPT product assistant, order lookup via API integration, upsell recommendations."
           },
           {
             industry: "Healthcare", 
             icon: Heart,
-            description: "Link AI to EMR systems for instant patient record retrieval or symptom triage."
-          },
-          {
-            industry: "Real Estate",
-            icon: Home,
-            description: "AI property search assistants embedded on websites that respond to buyer criteria."
-          },
-          {
-            industry: "Hospitality",
-            icon: UtensilsCrossed,
-            description: "Connect AI to booking engines to upsell rooms or provide 24/7 guest support."
+            description: "Virtual assistant for symptom triage, integrated with EMRs to access schedules."
           },
           {
             industry: "Finance",
             icon: DollarSign,
-            description: "Integrate AI into CRM or accounting tools to provide instant financial summaries or forecast reports."
+            description: "Personal finance advisor bot connected to bank feeds or QuickBooks APIs."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "Smart lead qualifier that integrates with MLS data and CRM tools."
+          },
+          {
+            industry: "Hospitality",
+            icon: UtensilsCrossed,
+            description: "24/7 guest support chatbot integrated with booking platforms like Booking.com or Cloudbeds."
+          },
+          {
+            industry: "Education",
+            icon: Building2,
+            description: "AI tutor or chatbot that answers curriculum-related questions and checks homework."
+          },
+          {
+            industry: "SaaS",
+            icon: Building2,
+            description: "In-app support bots connected to ticketing systems like Zendesk or Intercom."
+          },
+          {
+            industry: "Insurance",
+            icon: Building2,
+            description: "AI that checks policy status, coverage options, or claim progress through CRM APIs."
+          }
+        ]
+      }
+    },
+    {
+      id: 'industry-ai-learning',
+      title: 'Industry-Specific AI Learning',
+      description: 'Our AI adapts to your industry, learning from your unique processes for better results.',
+      icon: Zap,
+      link: '/industry-ai-learning',
+      detailedInfo: {
+        whatItDoes: "AI models are fine-tuned on your processes, terms, workflows, and customer scenarios—so they speak your industry language.",
+        industries: [
+          {
+            industry: "Healthcare",
+            icon: Heart,
+            description: "Learns HIPAA-compliant protocols, diagnosis terms, and insurance codes."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "Adapts to neighborhood nuances, property types, and buyer behavior."
+          },
+          {
+            industry: "Marketing Agencies",
+            icon: Building2,
+            description: "Understands campaign types, funnel stages, and performance metrics."
+          },
+          {
+            industry: "Legal",
+            icon: Building2,
+            description: "Learns legal terminology, case types, and document workflows."
+          },
+          {
+            industry: "Finance",
+            icon: DollarSign,
+            description: "Adapts to accounting workflows, reporting standards, and tax codes."
+          },
+          {
+            industry: "Education",
+            icon: Building2,
+            description: "Learns course content, student behavior patterns, and progress metrics."
           }
         ]
       }
@@ -158,36 +265,41 @@ export default function ServicesPage() {
     {
       id: 'customer-interactions',
       title: 'AI-Powered Customer Interactions',
-      description: 'Transform your website into an interactive experience where customers can chat, book, and get answers instantly. 24/7 automated engagement.',
+      description: 'Transforms your website into an interactive assistant—available 24/7 to answer questions, book services, and guide users.',
       icon: Bot,
       link: '/customer-interactions',
       detailedInfo: {
-        whatItDoes: "Turns websites into interactive, AI-driven customer service and sales hubs.",
+        whatItDoes: "Transforms your website into an interactive assistant—available 24/7 to answer questions, book services, and guide users.",
         industries: [
           {
             industry: "E-commerce",
             icon: Building2,
-            description: "Real-time product Q&A bots that help shoppers choose the right item."
-          },
-          {
-            industry: "Healthcare", 
-            icon: Heart,
-            description: "Virtual intake assistants that collect patient info before their visit."
-          },
-          {
-            industry: "Real Estate",
-            icon: Home,
-            description: "Chat-based virtual tours or scheduling for property showings."
+            description: "AI chats for sizing help, restock notifications, and order status updates."
           },
           {
             industry: "Hospitality",
             icon: UtensilsCrossed,
-            description: "AI concierge bots to recommend dining, activities, or loyalty perks."
+            description: "Guests can ask for late checkout, restaurant recs, or book spa services."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "Leads can book showings, ask neighborhood Qs, and receive dynamic property suggestions."
+          },
+          {
+            industry: "Education",
+            icon: Building2,
+            description: "Prospective students can ask about courses, tuition, and register instantly."
           },
           {
             industry: "Finance",
             icon: DollarSign,
-            description: "AI-guided financial planning tools that suggest budgeting or investment steps."
+            description: "Visitors can ask for budgeting tips, investment insights, or tax prep info."
+          },
+          {
+            industry: "Healthcare",
+            icon: Heart,
+            description: "Patients can check symptoms, reschedule visits, or request refills."
           }
         ]
       }
@@ -195,36 +307,73 @@ export default function ServicesPage() {
     {
       id: 'data-optimization',
       title: 'Data-Driven Optimization',
-      description: 'Continuously improve workflows with analytics and machine learning feedback loops.',
+      description: 'Tracks user interactions and automations, identifies trends, and helps improve workflows using feedback loops.',
       icon: BarChart3,
       link: '/data-optimization',
       detailedInfo: {
-        whatItDoes: "Uses analytics and machine learning feedback loops to improve results over time.",
+        whatItDoes: "Tracks user interactions and automations, identifies trends, and helps improve workflows using feedback loops.",
         industries: [
           {
             industry: "E-commerce",
             icon: Building2,
-            description: "Identify best-performing campaigns and automatically scale them."
+            description: "Tracks product views vs conversions to suggest better product placement."
           },
           {
             industry: "Healthcare", 
             icon: Heart,
-            description: "Track patient follow-up rates and optimize scheduling for fewer no-shows."
+            description: "Tracks no-show rates, treatment completion, and optimizes reminder timing."
           },
           {
-            industry: "Real Estate",
-            icon: Home,
-            description: "Analyze lead sources to focus on high-converting marketing channels."
+            industry: "Marketing",
+            icon: Building2,
+            description: "Monitors ad performance by platform and shifts budget in real time."
           },
           {
-            industry: "Hospitality",
-            icon: UtensilsCrossed,
-            description: "Optimize booking funnel performance and monitor guest satisfaction trends."
+            industry: "SaaS",
+            icon: Building2,
+            description: "Tracks feature usage to prioritize development."
+          },
+          {
+            industry: "Retail",
+            icon: Building2,
+            description: "Uses sales patterns to predict inventory needs."
           },
           {
             industry: "Finance",
             icon: DollarSign,
-            description: "Provide predictive cash flow and profitability forecasts for smarter planning."
+            description: "Analyzes revenue trends and automates financial insights."
+          }
+        ]
+      }
+    },
+    {
+      id: 'free-ai-resources',
+      title: 'Free AI Resources & Tools',
+      description: 'Access templates, playbooks, and resources to start automating today.',
+      icon: CheckCircle,
+      link: '/free-resources',
+      detailedInfo: {
+        whatItDoes: "Access templates, playbooks, and resources to start automating today.",
+        industries: [
+          {
+            industry: "All Industries",
+            icon: Building2,
+            description: "Get started with free automation templates, step-by-step playbooks, and resource guides tailored to your business needs."
+          },
+          {
+            industry: "Small Business",
+            icon: Building2,
+            description: "Free tools and templates for email automation, customer onboarding, and basic workflow setup."
+          },
+          {
+            industry: "Startups",
+            icon: Building2,
+            description: "Resource library with growth automation playbooks, customer acquisition workflows, and scaling guides."
+          },
+          {
+            industry: "Enterprises",
+            icon: Building2,
+            description: "Advanced automation frameworks, integration guides, and best practices for large-scale deployment."
           }
         ]
       }
