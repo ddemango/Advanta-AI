@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
+import { NewHeader } from '@/components/redesign/NewHeader';
 
 export default function GoogleAdsOAuth() {
   const [, setLocation] = useWouterLocation();
@@ -315,10 +316,13 @@ export default function GoogleAdsOAuth() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      {currentStep === 1 && renderStep1()}
-      {currentStep === 2 && renderStep2()}
-      {currentStep === 3 && renderStep3()}
+    <div className="min-h-screen bg-gray-100">
+      <NewHeader />
+      <div className="flex items-center justify-center p-4 pt-20">
+        {currentStep === 1 && renderStep1()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
+      </div>
     </div>
   );
 }

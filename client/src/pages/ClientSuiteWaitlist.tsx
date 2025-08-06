@@ -9,6 +9,7 @@ import { CheckCircle, Lock, Star, Users, Zap, Crown, ArrowRight, Shield, Sparkle
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { motion } from 'framer-motion';
+import { NewHeader } from '@/components/redesign/NewHeader';
 
 export default function ClientSuiteWaitlist() {
   const [email, setEmail] = useState('');
@@ -46,11 +47,13 @@ export default function ClientSuiteWaitlist() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Helmet>
           <title>Welcome to the Exclusive List - Advanta AI Client Suite</title>
           <meta name="description" content="You're now on the exclusive waitlist for Advanta AI's Client Suite Portal" />
         </Helmet>
+        <NewHeader />
+        <div className="flex items-center justify-center p-4 pt-20">
         
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -93,16 +96,19 @@ export default function ClientSuiteWaitlist() {
             Keep an eye on your inbox - something amazing is coming very soon.
           </p>
         </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Helmet>
         <title>Exclusive Access - Advanta AI Client Suite Portal</title>
         <meta name="description" content="Join the exclusive waitlist for Advanta AI's premium Client Suite Portal. Limited early access for select businesses." />
       </Helmet>
+      <NewHeader />
+      <div className="flex items-center justify-center p-4 pt-20">
       
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
@@ -267,6 +273,7 @@ export default function ClientSuiteWaitlist() {
             <span className="text-yellow-400 font-medium">Limited to 50 founding members.</span> Join the exclusive list before spots fill up.
           </p>
         </motion.div>
+        </div>
       </div>
     </div>
   );

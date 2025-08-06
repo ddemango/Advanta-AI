@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
+import { NewHeader } from '@/components/redesign/NewHeader';
 
 export default function OAuthConsent() {
   const [, setLocation] = useWouterLocation();
@@ -359,17 +360,20 @@ export default function OAuthConsent() {
   );
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-lg"
-      >
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-      </motion.div>
+    <div className="min-h-screen bg-white">
+      <NewHeader />
+      <div className="flex items-center justify-center p-4 pt-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-lg"
+        >
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </motion.div>
+      </div>
     </div>
   );
 }

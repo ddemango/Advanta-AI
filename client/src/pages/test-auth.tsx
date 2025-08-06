@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+import { NewHeader } from '@/components/redesign/NewHeader';
 
 export default function TestAuth() {
   const [, setLocation] = useLocation();
@@ -54,15 +55,18 @@ export default function TestAuth() {
   }, [setLocation]);
 
   return (
-    <div style={{ padding: '20px', background: '#000', color: '#fff', minHeight: '100vh' }}>
-      <h1>Authentication Test</h1>
-      <p>{status}</p>
-      <button onClick={() => setLocation('/dashboard')} style={{ padding: '10px', margin: '10px' }}>
-        Go to Dashboard Directly
-      </button>
-      <button onClick={() => setLocation('/login')} style={{ padding: '10px', margin: '10px' }}>
-        Go to Login
-      </button>
+    <div style={{ background: '#000', color: '#fff', minHeight: '100vh' }}>
+      <NewHeader />
+      <div style={{ padding: '20px', paddingTop: '80px' }}>
+        <h1>Authentication Test</h1>
+        <p>{status}</p>
+        <button onClick={() => setLocation('/dashboard')} style={{ padding: '10px', margin: '10px' }}>
+          Go to Dashboard Directly
+        </button>
+        <button onClick={() => setLocation('/login')} style={{ padding: '10px', margin: '10px' }}>
+          Go to Login
+        </button>
+      </div>
     </div>
   );
 }

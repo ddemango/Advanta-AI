@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { LogOut, User, Settings, Shield, Zap, Bot, Workflow, Clock, Play, CheckCircle, AlertCircle, Plus } from "lucide-react";
+import { NewHeader } from "@/components/redesign/NewHeader";
 
 interface User {
   id: number;
@@ -68,11 +69,13 @@ export default function SimpleDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <Helmet>
         <title>Dashboard - Advanta AI</title>
         <meta name="description" content="Your AI automation workspace dashboard" />
       </Helmet>
+      <NewHeader />
+      <div className="p-4 pt-20">
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -215,6 +218,7 @@ export default function SimpleDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </div>
       </div>
     </div>
   );

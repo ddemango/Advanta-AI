@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Sparkles
 } from 'lucide-react';
+import { NewHeader } from '@/components/redesign/NewHeader';
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
@@ -93,8 +94,8 @@ export default function ResetPassword() {
           <title>Password Reset Successful | Advanta AI</title>
           <meta name="description" content="Your password has been successfully reset." />
         </Helmet>
-
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+        <NewHeader />
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4 pt-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -130,8 +131,8 @@ export default function ResetPassword() {
         <title>Reset Password | Advanta AI</title>
         <meta name="description" content="Create a new password for your Advanta AI account." />
       </Helmet>
-
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <NewHeader />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4 pt-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

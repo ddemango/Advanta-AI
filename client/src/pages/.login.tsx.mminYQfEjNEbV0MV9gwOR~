@@ -146,8 +146,8 @@ export default function Login() {
         <meta name="description" content="Sign in to your Advanta AI workspace and access powerful AI automation tools." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
       </Helmet>
-
-      <div className="min-h-screen bg-white">
+      <NewHeader />
+      <div className="min-h-screen bg-white pt-16">
         {/* Desktop: Two-panel layout */}
         <div className="hidden lg:flex min-h-screen">
           {/* Left Panel - Brand & Message */}

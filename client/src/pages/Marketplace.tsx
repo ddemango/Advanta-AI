@@ -23,6 +23,7 @@ import {
 import { motion } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { NewHeader } from '@/components/redesign/NewHeader';
 
 export default function Marketplace() {
   const [email, setEmail] = useState('');
@@ -103,6 +104,7 @@ export default function Marketplace() {
         <meta property="og:description" content="The world's first comprehensive AI marketplace. Get notified when we launch." />
         <meta property="og:type" content="website" />
       </Helmet>
+      <NewHeader />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
