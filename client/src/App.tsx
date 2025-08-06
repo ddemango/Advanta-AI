@@ -84,6 +84,8 @@ import WebsiteAIAssistants from "@/pages/website-ai-assistants";
 import APIIntegrations from "@/pages/api-integrations";
 import IndustrySpecificAI from "@/pages/industry-specific-ai";
 import ClientSuiteWaitlist from "@/pages/ClientSuiteWaitlist";
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminSignup from "@/pages/admin/AdminSignup";
 import NotFound from "@/pages/not-found";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
@@ -142,7 +144,9 @@ function Router() {
       <Route path="/home-original" component={Home} />
       <Route path="/home" component={RedesignedHome} />
       <Route path="/build-my-ai-stack" component={Calculator} />
-      <Route path="/login" component={Login} />
+      {/* Remove public login/signup - these are now admin-only */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/signup" component={AdminSignup} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/oauth-consent" component={OAuthConsent} />
       <Route path="/google-ads-oauth" component={GoogleAdsOAuth} />

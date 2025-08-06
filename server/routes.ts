@@ -7063,6 +7063,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin authentication endpoints
+  app.post('/api/admin/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      // Admin credentials validation
+      const adminEmail = 'admin@advanta-ai.com';
+      const adminPassword = 'AdvantaAI2025!'; // In production, this should be hashed
+
+      if (email === adminEmail && password === adminPassword) {
+        // Set admin session
+        req.session.isAdmin = true;
+        req.session.adminEmail = email;
+
+        res.json({ 
+          success: true, 
+          message: 'Admin login successful',
+          user: { email, role: 'admin' }
+        });
+      } else {
+        res.status(401).json({ error: 'Invalid admin credentials' });
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  app.post('/api/admin/signup', async (req, res) => {
+    try {
+      const { firstName, lastName, email, password, adminCode } = req.body;
+
+      // Admin code validation
+      const validAdminCode = 'ADVANTA2025';
+      
+      if (adminCode !== validAdminCode) {
+        return res.status(401).json({ error: 'Invalid admin code' });
+      }
+
+      // For now, we'll just validate the admin code and allow signup
+      // In the future, this would create an admin user in the database
+      req.session.isAdmin = true;
+      req.session.adminEmail = email;
+
+      res.json({ 
+        success: true, 
+        message: 'Admin account created successfully',
+        user: { email, firstName, lastName, role: 'admin' }
+      });
+    } catch (error) {
+      console.error('Admin signup error:', error);
+      res.status(500).json({ error: 'Signup failed' });
+    }
+  });
+
   // Client Suite Waitlist endpoint
   app.post('/api/waitlist/client-suite', async (req, res) => {
     try {
