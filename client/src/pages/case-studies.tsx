@@ -142,18 +142,18 @@ export default function CaseStudiesPage() {
       featured: true
     },
     {
-      id: 'startup-free-resources',
+      id: 'startup-workflow-automation',
       company: 'TechStartup Inc',
       logo: 'TS',
       industry: 'SaaS',
       industryIcon: Rocket,
-      category: 'free-resources',
-      headline: 'Free AI resources accelerated automation by 6 months',
-      summary: 'Free AI Resources & Tools provided templates and playbooks that enabled rapid implementation of customer onboarding and support automation.',
+      category: 'workflow-automation',
+      headline: 'Automated customer onboarding reduced time-to-value by 73%',
+      summary: 'AI Workflow Automation streamlined new customer setup, payment processing, and account activation, transforming a manual 3-week process into automated 5-day experience.',
       metrics: [
-        { label: 'Implementation Speed', value: '6 months faster' },
-        { label: 'Setup Cost', value: '$0 initial' },
-        { label: 'Automation Coverage', value: '85%' }
+        { label: 'Time-to-Value', value: '-73%' },
+        { label: 'Manual Tasks', value: '-85%' },
+        { label: 'Customer Satisfaction', value: '+92%' }
       ],
       link: '/case-studies/techstartup'
     },
