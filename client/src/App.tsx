@@ -79,6 +79,10 @@ import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
 import RedesignedHome from "@/pages/redesigned-home";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AIWorkflowAutomation from "@/pages/ai-workflow-automation";
+import WebsiteAIAssistants from "@/pages/website-ai-assistants";
+import APIIntegrations from "@/pages/api-integrations";
+import IndustrySpecificAI from "@/pages/industry-specific-ai";
 import NotFound from "@/pages/not-found";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
@@ -154,6 +158,10 @@ function Router() {
       <Route path="/template-demo" component={TemplateDemo} />
       <Route path="/sandbox" component={Sandbox} />
       <Route path="/services" component={ServicesPage} />
+      <Route path="/services/ai-workflow-automation" component={AIWorkflowAutomation} />
+      <Route path="/services/website-ai-assistants" component={WebsiteAIAssistants} />
+      <Route path="/services/api-integrations" component={APIIntegrations} />
+      <Route path="/services/industry-specific-ai" component={IndustrySpecificAI} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/case-studies" component={CaseStudiesPage} />
       <Route path="/roi-calculator" component={ROICalculator} />

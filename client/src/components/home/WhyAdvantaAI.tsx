@@ -31,24 +31,24 @@ const FeatureCard = ({ icon, title, description, delay = 0 }: FeatureCardProps) 
 export default function WhyAdvantaAI() {
   const features = [
     {
+      icon: 'fas fa-rocket',
+      title: '7-Day Deployment Guarantee',
+      description: 'While others take 6+ months, we deploy fully functional AI workflows in just 7 days with zero downtime.',
+    },
+    {
+      icon: 'fas fa-plug',
+      title: 'Universal Integration Engine',
+      description: 'Our proprietary framework connects with 500+ business tools instantly - no API knowledge required.',
+    },
+    {
       icon: 'fas fa-paint-brush',
-      title: 'Built for Your Brand',
-      description: 'Full customization of tone, avatar, and UI to match your brand identity and voice.',
+      title: 'Full Brand Customization',
+      description: 'Complete white-label solution with custom UI, tone matching, and branded user portals.',
     },
     {
-      icon: 'fas fa-bolt',
-      title: 'Speed to Deployment',
-      description: 'Get your custom AI solution up and running in under 7 days, not months.',
-    },
-    {
-      icon: 'fas fa-building',
-      title: 'Platform + Agency Support',
-      description: 'Combines cutting-edge technology with expert strategic guidance and implementation.',
-    },
-    {
-      icon: 'fas fa-copyright',
-      title: 'Fully White-Label Ready',
-      description: 'Offer AI solutions under your own brand with custom portals and dashboards.',
+      icon: 'fas fa-headset',
+      title: 'Dedicated AI Implementation Team',
+      description: 'Unlike DIY platforms, you get a dedicated team handling strategy, deployment, and optimization.',
     },
   ];
 
@@ -80,10 +80,10 @@ export default function WhyAdvantaAI() {
         >
           <motion.div variants={fadeInUp}>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why <GradientText>Advanta AI</GradientText>
+              What Makes <GradientText>Advanta AI</GradientText> Different
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Enterprise-grade AI solutions tailored to your specific needs
+              Unlike generic AI tools or 6-month consulting projects, we deliver production-ready AI workflows in days, not months
             </p>
           </motion.div>
         </motion.div>

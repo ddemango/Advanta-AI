@@ -9,32 +9,32 @@ import { SectionDivider } from '@/components/ui/section-divider';
 const caseStudies = [
   {
     id: 1,
-    title: 'Personalization Engine Overhaul',
-    client: 'FashionGo',
-    logo: 'FG',
-    industry: 'eCommerce',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
+    title: 'Medical Practice Automation Success',
+    client: 'Wellness Medical Group',
+    logo: 'WM',
+    industry: 'Healthcare',
+    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
     metrics: [
-      { label: 'Conversion Rate', value: '+38%' },
-      { label: 'Average Order Value', value: '+22%' },
-      { label: 'Customer Retention', value: '+47%' }
+      { label: 'Appointment No-shows', value: '-40%' },
+      { label: 'Patient Wait Times', value: '-35%' },
+      { label: 'Staff Productivity', value: '+50%' }
     ],
-    quote: 'The AI recommendations are so accurate that customers ask if we\'re reading their minds.',
+    quote: 'Our AI assistant handles patient scheduling and follow-ups better than our previous manual process.',
     color: 'primary'
   },
   {
     id: 2,
-    title: 'AI Task Prioritization & Assignment',
-    client: 'TaskMaster',
-    logo: 'TM',
-    industry: 'SaaS',
-    image: 'https://images.unsplash.com/photo-1639762681057-408e52192e55?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
+    title: 'Real Estate Lead Generation AI',
+    client: 'Premium Properties Team',
+    logo: 'PP',
+    industry: 'Real Estate',
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb&w=800&h=500',
     metrics: [
-      { label: 'Team Productivity', value: '+41%' },
-      { label: 'Project Completion Time', value: '-28%' },
-      { label: 'User Engagement', value: '+63%' }
+      { label: 'Qualified Leads', value: '+300%' },
+      { label: 'Response Time', value: '-85%' },
+      { label: 'Conversion Rate', value: '+45%' }
     ],
-    quote: 'We\'ve eliminated endless planning meetings with AI that learns team patterns.',
+    quote: 'The AI pre-qualifies leads so well that we only spend time with serious buyers and sellers.',
     color: 'accent'
   },
   {

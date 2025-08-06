@@ -99,10 +99,10 @@ export function NewHeader() {
               onClick={() => setLocation('/contact')}
               className="text-gray-700 hover:text-blue-600 hover:bg-blue-50"
             >
-              Book Demo
+              Book a Demo
             </Button>
             <Button
-              onClick={() => setLocation('/build-my-ai-stack')}
+              onClick={() => setLocation('/services')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
             >
               Get Started
@@ -155,11 +155,11 @@ export function NewHeader() {
                     }}
                     className="w-full justify-center text-gray-700 hover:text-blue-600 hover:bg-blue-50"
                   >
-                    Book Demo
+                    Book a Demo
                   </Button>
                   <Button
                     onClick={() => {
-                      setLocation('/build-my-ai-stack');
+                      setLocation('/services');
                       setIsOpen(false);
                     }}
                     className="w-full justify-center bg-blue-600 hover:bg-blue-700 text-white"

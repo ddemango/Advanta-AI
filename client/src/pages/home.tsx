@@ -3,6 +3,7 @@ import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
 import HowItWorks from '@/components/home/HowItWorks';
+import HowItWorksVisual from '@/components/home/HowItWorksVisual';
 import ServicesPreview from '@/components/home/ServicesPreview';
 import WhyAdvantaAI from '@/components/home/WhyAdvantaAI';
 import Services from '@/components/home/Services';
@@ -15,11 +16,11 @@ import AiProductSandbox from '@/components/sandbox/AiProductSandbox';
 import RoiCalculatorPreview from '@/components/home/RoiCalculatorPreview';
 import EmailCapture from '@/components/home/EmailCapture';
 import AiUseCases from '@/components/home/AiUseCases';
+import { CookieConsent } from '@/components/ui/cookie-consent';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { fadeIn, fadeInUp } from '@/lib/animations';
-import { CookieConsent } from '@/components/ui/cookie-consent';
 import { GradientText } from '@/components/ui/gradient-text';
 import { Helmet } from 'react-helmet';
 
@@ -102,12 +103,59 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>Advanta AI - Unlock AI-Powered Growth—No Code. No Delay.</title>
-        <meta name="description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
-        <meta name="keywords" content="GPT agents, AI automations, chatbots, machine learning, AI consulting, predictive dashboards, white-label AI" />
-        <meta property="og:title" content="Advanta AI - Unlock AI-Powered Growth—No Code. No Delay." />
-        <meta property="og:description" content="GPT agents, automations, and dashboards built to scale your brand—fast. Deploy custom AI solutions in days, not months." />
+        <title>Advanta AI - AI Automation for Your Business – Build, Launch, and Scale AI Workflows in Days, Not Months</title>
+        <meta name="description" content="Skip the 6-month AI implementation timeline. We deploy custom AI assistants, automations, and workflows that integrate with your existing tools in under 7 days. No coding required, full brand customization included." />
+        <meta name="keywords" content="AI automation, business AI workflows, AI assistants, process automation, AI integration, business transformation, AI consulting" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Advanta AI - AI Automation for Your Business – Build, Launch, and Scale AI Workflows" />
+        <meta property="og:description" content="Deploy custom AI assistants, automations, and workflows in under 7 days. No coding required, full brand customization included." />
         <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://advanta-ai.com" />
+        <meta property="og:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
+        <meta property="og:site_name" content="Advanta AI" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Advanta AI - AI Automation for Your Business" />
+        <meta name="twitter:description" content="Deploy custom AI assistants, automations, and workflows in under 7 days. No coding required." />
+        <meta name="twitter:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
+        <meta name="twitter:site" content="@advanta_ai" />
+        
+        {/* Additional SEO */}
+        <meta name="author" content="Advanta AI" />
+        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+        <link rel="canonical" href="https://advanta-ai.com/" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Advanta AI",
+            "url": "https://advanta-ai.com",
+            "logo": "https://advanta-ai.com/logo.png",
+            "description": "AI automation solutions for businesses - deploy custom AI assistants and workflows in 7 days",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+1-800-ADVANTA",
+              "contactType": "Customer Service"
+            },
+            "sameAs": [
+              "https://twitter.com/advanta_ai",
+              "https://linkedin.com/company/advanta-ai"
+            ],
+            "offers": {
+              "@type": "Service",
+              "name": "AI Workflow Automation",
+              "description": "Custom AI assistants and automation workflows for businesses",
+              "provider": {
+                "@type": "Organization",
+                "name": "Advanta AI"
+              }
+            }
+          })}
+        </script>
       </Helmet>
       
       <NewHeader />
@@ -240,6 +288,9 @@ export default function Home() {
         <section id="why-advanta">
           <WhyAdvantaAI />
         </section>
+
+        {/* How It Works Visual Section */}
+        <HowItWorksVisual />
         
         {/* ROI Calculator Preview */}
         <section id="roi-calculator" className="py-10 bg-muted/30">
@@ -373,6 +424,7 @@ export default function Home() {
         </section>
       </main>
       
+      <CookieConsent />
       <Footer />
       <CookieConsent />
     </>

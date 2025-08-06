@@ -1,70 +1,83 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function CookieConsent() {
-  const [showBanner, setShowBanner] = useState(false);
-  
+  const [showConsent, setShowConsent] = useState(false);
+
   useEffect(() => {
     // Check if user has already given consent
-    const hasConsent = localStorage.getItem('cookie-consent');
-    
-    if (!hasConsent) {
-      // Show banner after a short delay for better UX
+    const consent = localStorage.getItem('cookie-consent');
+    if (!consent) {
+      // Show banner after a slight delay
       const timer = setTimeout(() => {
-        setShowBanner(true);
-      }, 1500);
-      
+        setShowConsent(true);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, []);
-  
-  const acceptAll = () => {
+
+  const acceptCookies = () => {
     localStorage.setItem('cookie-consent', 'accepted');
-    setShowBanner(false);
+    setShowConsent(false);
   };
-  
-  const acceptNecessary = () => {
-    localStorage.setItem('cookie-consent', 'necessary');
-    setShowBanner(false);
+
+  const declineCookies = () => {
+    localStorage.setItem('cookie-consent', 'declined');
+    setShowConsent(false);
   };
-  
-  if (!showBanner) return null;
-  
+
   return (
     <AnimatePresence>
-      {showBanner && (
+      {showConsent && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-0 left-0 right-0 z-50 px-4 py-3 bg-black/90 backdrop-blur-md border-t border-gray-700"
+          transition={{ duration: 0.3 }}
+          className="fixed bottom-4 left-4 right-4 md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-md z-50 bg-background border border-border rounded-lg shadow-lg p-4"
         >
-          <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-300 pr-4 max-w-3xl">
-              <p>
-                We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies. 
-                <a href="#privacy-policy" className="text-primary hover:underline ml-1">Learn more</a>
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm mb-2">We use cookies</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. By clicking "Accept All", you consent to our use of cookies.
               </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={acceptCookies}
+                  size="sm"
+                  className="text-xs"
+                >
+                  Accept All
+                </Button>
+                <Button
+                  onClick={declineCookies}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  Decline
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  asChild
+                >
+                  <a href="/privacy">Privacy Policy</a>
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={acceptNecessary}
-                className="whitespace-nowrap"
-              >
-                Necessary Only
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={acceptAll}
-                className="whitespace-nowrap"
-              >
-                Accept All
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowConsent(false)}
+              className="p-1 h-auto"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </div>
         </motion.div>
       )}
