@@ -10,7 +10,7 @@ import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import Login from "@/pages/login";
 import ResetPassword from "@/pages/reset-password";
-import Marketplace from "@/pages/marketplace";
+// Removed duplicate Marketplace import
 import Dashboard from "@/pages/dashboard";
 import SimpleDashboard from "@/pages/SimpleDashboard";
 import WorkingDashboard from "@/pages/WorkingDashboard";
@@ -84,6 +84,7 @@ import WebsiteAIAssistants from "@/pages/website-ai-assistants";
 import APIIntegrations from "@/pages/api-integrations";
 import IndustrySpecificAI from "@/pages/industry-specific-ai";
 import ClientSuiteWaitlist from "@/pages/ClientSuiteWaitlist";
+import Marketplace from "@/pages/Marketplace";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminSignup from "@/pages/admin/AdminSignup";
 import NotFound from "@/pages/not-found";
@@ -219,6 +220,7 @@ function Router() {
       <Route path="/terms" component={TermsOfService} />
       <Route path="/newsletter-test" component={NewsletterTest} />
       <Route path="/client-suite-waitlist" component={ClientSuiteWaitlist} />
+      <Route path="/marketplace" component={Marketplace} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

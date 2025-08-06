@@ -21,8 +21,8 @@ declare module 'express-session' {
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist } from "@shared/schema";
-import { sendWelcomeEmail, sendTestEmail } from "./welcome-email-service";
+import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist } from "@shared/schema";
+import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail } from "./welcome-email-service";
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
@@ -7115,6 +7115,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Admin signup error:', error);
       res.status(500).json({ error: 'Signup failed' });
+    }
+  });
+
+  // Marketplace notification endpoint
+  app.post('/api/marketplace/notify', async (req, res) => {
+    try {
+      const { email, source } = req.body;
+
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Valid email is required' });
+      }
+
+      // Check if email already exists
+      const existingEntry = await db
+        .select()
+        .from(marketplaceWaitlist)
+        .where(eq(marketplaceWaitlist.email, email))
+        .limit(1);
+
+      if (existingEntry.length > 0) {
+        return res.json({ 
+          success: true, 
+          message: 'Email already registered for marketplace notifications',
+          alreadyRegistered: true 
+        });
+      }
+
+      // Add to marketplace waitlist
+      const newEntry = await db
+        .insert(marketplaceWaitlist)
+        .values({
+          id: crypto.randomUUID(),
+          email: email.toLowerCase(),
+          source: source || 'marketplace_page',
+          joinedAt: new Date(),
+          notified: false,
+          priority: 1
+        })
+        .returning();
+
+      console.log(`✓ New marketplace notification signup: ${email}`);
+
+      // Send welcome email for marketplace
+      try {
+        const emailSent = await sendMarketplaceWelcomeEmail(email);
+        if (emailSent) {
+          console.log(`✓ Marketplace welcome email sent to ${email}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send marketplace welcome email:', emailError);
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Successfully added to marketplace notification list',
+        entry: newEntry[0]
+      });
+
+    } catch (error) {
+      console.error('Marketplace notification signup error:', error);
+      res.status(500).json({ error: 'Failed to add to notification list' });
     }
   });
 

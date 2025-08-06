@@ -272,6 +272,25 @@ export type Connection = typeof connections.$inferSelect;
 export type InsertWorkflowLog = z.infer<typeof insertWorkflowLogSchema>;
 export type WorkflowLog = typeof workflowLogs.$inferSelect;
 
+// Waitlist tables
+export const clientSuiteWaitlist = pgTable("client_suite_waitlist", {
+  id: varchar("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  source: varchar("source").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  notified: boolean("notified").default(false),
+  priority: integer("priority").default(1),
+});
+
+export const marketplaceWaitlist = pgTable("marketplace_waitlist", {
+  id: varchar("id").primaryKey(),
+  email: varchar("email").unique().notNull(),
+  source: varchar("source").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  notified: boolean("notified").default(false),
+  priority: integer("priority").default(1),
+});
+
 // ATS Resume Analysis Tables
 export const resumeAnalyses = pgTable("resume_analyses", {
   id: varchar("id").primaryKey().notNull(),
@@ -318,20 +337,4 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 
-// Client Suite Waitlist table
-export const clientSuiteWaitlist = pgTable("client_suite_waitlist", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique().notNull(),
-  source: varchar("source").notNull(), // where they signed up from
-  joinedAt: timestamp("joined_at").defaultNow(),
-  notified: boolean("notified").default(false), // has been notified of launch
-  priority: integer("priority").default(1), // 1=normal, 2=high priority
-});
-
-export const insertClientSuiteWaitlistSchema = createInsertSchema(clientSuiteWaitlist).omit({
-  joinedAt: true,
-  notified: true,
-});
-
-export type InsertClientSuiteWaitlist = z.infer<typeof insertClientSuiteWaitlistSchema>;
-export type ClientSuiteWaitlist = typeof clientSuiteWaitlist.$inferSelect;
+// Client Suite Waitlist schema and types already defined above

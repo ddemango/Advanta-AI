@@ -430,6 +430,243 @@ export async function sendWaitlistWelcomeEmail(email: string): Promise<boolean> 
   }
 }
 
+export async function sendMarketplaceWelcomeEmail(email: string): Promise<boolean> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured');
+      return false;
+    }
+
+    console.log(`Sending marketplace welcome email to: ${email}`);
+
+    const { data, error } = await resend.emails.send({
+      from: 'Advanta AI <hello@advanta-ai.com>',
+      to: email,
+      subject: '🚀 You\'re First in Line for the AI Marketplace Revolution!',
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Welcome to AI Marketplace - Advanta AI</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .container {
+              background: white;
+              border-radius: 16px;
+              padding: 40px;
+              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: bold;
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              margin-bottom: 10px;
+            }
+            .rocket-emoji {
+              font-size: 48px;
+              margin-bottom: 20px;
+            }
+            .exclusive-badge {
+              background: linear-gradient(135deg, #ff6b6b, #ffa726);
+              color: white;
+              padding: 8px 20px;
+              border-radius: 25px;
+              font-weight: 600;
+              font-size: 14px;
+              display: inline-block;
+              margin-bottom: 20px;
+            }
+            .welcome-title {
+              font-size: 32px;
+              font-weight: 700;
+              color: #1e293b;
+              margin-bottom: 15px;
+            }
+            .subtitle {
+              font-size: 18px;
+              color: #64748b;
+              margin-bottom: 30px;
+            }
+            .content {
+              margin-bottom: 30px;
+            }
+            .features-list {
+              background: #f8fafc;
+              border-radius: 12px;
+              padding: 25px;
+              margin: 20px 0;
+              border-left: 4px solid #667eea;
+            }
+            .features-list h3 {
+              color: #1e293b;
+              margin-bottom: 15px;
+              font-size: 20px;
+            }
+            .feature-item {
+              display: flex;
+              align-items: center;
+              margin-bottom: 12px;
+              padding: 8px 0;
+            }
+            .feature-icon {
+              color: #667eea;
+              margin-right: 12px;
+              font-weight: bold;
+            }
+            .timeline-section {
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              color: white;
+              padding: 30px;
+              border-radius: 12px;
+              text-align: center;
+              margin: 30px 0;
+            }
+            .timeline-title {
+              font-size: 24px;
+              font-weight: 700;
+              margin-bottom: 15px;
+            }
+            .timeline-text {
+              font-size: 16px;
+              margin-bottom: 20px;
+              opacity: 0.9;
+            }
+            .stats {
+              display: flex;
+              justify-content: space-around;
+              margin: 25px 0;
+              padding: 20px;
+              background: #f1f5f9;
+              border-radius: 12px;
+            }
+            .stat {
+              text-align: center;
+            }
+            .stat-number {
+              font-size: 24px;
+              font-weight: bold;
+              color: #667eea;
+            }
+            .stat-label {
+              font-size: 12px;
+              color: #64748b;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              color: #64748b;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">Advanta AI</div>
+              <div class="rocket-emoji">🚀</div>
+              <div class="exclusive-badge">FIRST IN LINE</div>
+              <h1 class="welcome-title">Welcome to History!</h1>
+              <p class="subtitle">You're part of the world's first AI marketplace launch</p>
+            </div>
+
+            <div class="content">
+              <p>Congratulations! You've secured early access to the world's first comprehensive AI marketplace. This isn't just another platform – it's the beginning of a new era in business automation.</p>
+              
+              <div class="features-list">
+                <h3>What You'll Get First Access To:</h3>
+                <div class="feature-item">
+                  <span class="feature-icon">🤖</span>
+                  <span>10,000+ pre-built AI agents ready for instant deployment</span>
+                </div>
+                <div class="feature-item">
+                  <span class="feature-icon">⚡</span>
+                  <span>Drag-and-drop workflow builder with AI integrations</span>
+                </div>
+                <div class="feature-item">
+                  <span class="feature-icon">💰</span>
+                  <span>Marketplace to buy, sell, and monetize AI solutions</span>
+                </div>
+                <div class="feature-item">
+                  <span class="feature-icon">🏢</span>
+                  <span>Enterprise-grade security and compliance</span>
+                </div>
+                <div class="feature-item">
+                  <span class="feature-icon">📊</span>
+                  <span>Advanced analytics and ROI tracking</span>
+                </div>
+                <div class="feature-item">
+                  <span class="feature-icon">🎯</span>
+                  <span>Founding member pricing (up to 60% off regular rates)</span>
+                </div>
+              </div>
+
+              <div class="stats">
+                <div class="stat">
+                  <div class="stat-number">500+</div>
+                  <div class="stat-label">AI Agents Ready</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-number">50+</div>
+                  <div class="stat-label">Industry Categories</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-number">Q2 2025</div>
+                  <div class="stat-label">Launch Window</div>
+                </div>
+              </div>
+
+              <div class="timeline-section">
+                <h3 class="timeline-title">What Happens Next?</h3>
+                <p class="timeline-text">
+                  Over the next few weeks, you'll receive exclusive updates on our progress, sneak peeks of the platform, and early access invitations as we approach launch. You're literally witnessing the birth of the AI marketplace industry.
+                </p>
+              </div>
+
+              <p>Want to learn more about what we're building? Check out our <a href="https://advanta-ai.com/marketplace" style="color: #667eea;">marketplace preview page</a> or reply to this email with any questions.</p>
+            </div>
+
+            <div class="footer">
+              <p>This email was sent to you because you signed up for early access to the world's first AI marketplace.</p>
+              <p>© 2025 Advanta AI. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send marketplace welcome email:', error);
+      return false;
+    }
+
+    console.log(`✓ Marketplace welcome email sent successfully to ${email}`);
+    return true;
+
+  } catch (error) {
+    console.error('Error sending marketplace welcome email:', error);
+    return false;
+  }
+}
+
 export async function sendTestEmail(email: string): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {
