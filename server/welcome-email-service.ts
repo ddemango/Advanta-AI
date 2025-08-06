@@ -667,6 +667,416 @@ export async function sendMarketplaceWelcomeEmail(email: string): Promise<boolea
   }
 }
 
+export async function sendContactConfirmationEmail(email: string, name: string, message: string): Promise<boolean> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured');
+      return false;
+    }
+
+    console.log(`Sending contact confirmation email to: ${email}`);
+
+    const { data, error } = await resend.emails.send({
+      from: 'Advanta AI <hello@advanta-ai.com>',
+      to: email,
+      subject: 'Thank You for Contacting Advanta AI - We\'ll Be in Touch Soon!',
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Thank You for Contacting Us</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .container {
+              background: white;
+              border-radius: 16px;
+              padding: 40px;
+              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: bold;
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              margin-bottom: 10px;
+            }
+            .thank-you-title {
+              font-size: 28px;
+              font-weight: 700;
+              color: #1e293b;
+              margin-bottom: 15px;
+            }
+            .subtitle {
+              font-size: 16px;
+              color: #64748b;
+              margin-bottom: 30px;
+            }
+            .content {
+              margin-bottom: 30px;
+            }
+            .message-box {
+              background: #f1f5f9;
+              border-left: 4px solid #667eea;
+              padding: 20px;
+              margin: 20px 0;
+              border-radius: 8px;
+            }
+            .next-steps {
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              color: white;
+              padding: 25px;
+              border-radius: 12px;
+              text-align: center;
+              margin: 25px 0;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              color: #64748b;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">Advanta AI</div>
+              <h1 class="thank-you-title">Thank You, ${name}!</h1>
+              <p class="subtitle">Your message has been received</p>
+            </div>
+
+            <div class="content">
+              <p>Thank you for reaching out to Advanta AI! We've received your message and our team is already reviewing your inquiry.</p>
+              
+              <div class="message-box">
+                <h3 style="color: #667eea; margin-bottom: 10px;">Your Message:</h3>
+                <p style="margin: 0; font-style: italic;">"${message.substring(0, 200)}${message.length > 200 ? '...' : ''}"</p>
+              </div>
+
+              <div class="next-steps">
+                <h3 style="margin-bottom: 15px;">What Happens Next?</h3>
+                <p style="margin-bottom: 15px; opacity: 0.9;">
+                  Our AI automation experts will review your inquiry and get back to you within 24 hours with personalized insights and next steps.
+                </p>
+                <p style="margin: 0; font-weight: 600;">
+                  Response Time: Within 24 hours
+                </p>
+              </div>
+
+              <p>In the meantime, feel free to explore our <a href="https://advanta-ai.com/blog" style="color: #667eea;">latest AI insights</a> or check out our <a href="https://advanta-ai.com/free-tools" style="color: #667eea;">free AI tools</a>.</p>
+            </div>
+
+            <div class="footer">
+              <p>This email was sent because you contacted us through our website.</p>
+              <p>© 2025 Advanta AI. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send contact confirmation email:', error);
+      return false;
+    }
+
+    console.log(`✓ Contact confirmation email sent successfully to ${email}`);
+    return true;
+
+  } catch (error) {
+    console.error('Error sending contact confirmation email:', error);
+    return false;
+  }
+}
+
+export async function sendQuoteRequestConfirmationEmail(email: string, name: string, services: string[], budget: string): Promise<boolean> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured');
+      return false;
+    }
+
+    console.log(`Sending quote confirmation email to: ${email}`);
+
+    const servicesList = services.join(', ');
+
+    const { data, error } = await resend.emails.send({
+      from: 'Advanta AI <hello@advanta-ai.com>',
+      to: email,
+      subject: 'Your AI Solution Quote Request - Advanta AI Team is Preparing Your Custom Proposal',
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Your Quote Request Received</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .container {
+              background: white;
+              border-radius: 16px;
+              padding: 40px;
+              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 28px;
+              font-weight: bold;
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              margin-bottom: 10px;
+            }
+            .quote-badge {
+              background: linear-gradient(135deg, #10b981, #059669);
+              color: white;
+              padding: 8px 20px;
+              border-radius: 25px;
+              font-weight: 600;
+              font-size: 14px;
+              display: inline-block;
+              margin-bottom: 20px;
+            }
+            .title {
+              font-size: 28px;
+              font-weight: 700;
+              color: #1e293b;
+              margin-bottom: 15px;
+            }
+            .subtitle {
+              font-size: 16px;
+              color: #64748b;
+              margin-bottom: 30px;
+            }
+            .content {
+              margin-bottom: 30px;
+            }
+            .quote-details {
+              background: #f8fafc;
+              border-radius: 12px;
+              padding: 25px;
+              margin: 20px 0;
+              border-left: 4px solid #10b981;
+            }
+            .detail-item {
+              margin-bottom: 15px;
+            }
+            .detail-label {
+              font-weight: 600;
+              color: #374151;
+              display: block;
+              margin-bottom: 5px;
+            }
+            .detail-value {
+              color: #6b7280;
+            }
+            .timeline-section {
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              color: white;
+              padding: 25px;
+              border-radius: 12px;
+              text-align: center;
+              margin: 25px 0;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              color: #64748b;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">Advanta AI</div>
+              <div class="quote-badge">QUOTE REQUEST RECEIVED</div>
+              <h1 class="title">Thank You, ${name}!</h1>
+              <p class="subtitle">Your custom AI solution quote is being prepared</p>
+            </div>
+
+            <div class="content">
+              <p>Excellent! We've received your quote request and our AI solutions architects are already working on your custom proposal.</p>
+              
+              <div class="quote-details">
+                <h3 style="color: #374151; margin-bottom: 20px;">Quote Request Summary:</h3>
+                <div class="detail-item">
+                  <span class="detail-label">Requested Services:</span>
+                  <span class="detail-value">${servicesList}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Budget Range:</span>
+                  <span class="detail-value">${budget}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Request ID:</span>
+                  <span class="detail-value">#${Date.now().toString().slice(-6)}</span>
+                </div>
+              </div>
+
+              <div class="timeline-section">
+                <h3 style="margin-bottom: 15px;">Your Custom Proposal Timeline</h3>
+                <p style="margin-bottom: 15px; opacity: 0.9;">
+                  Our team will analyze your requirements and prepare a detailed proposal with pricing, timeline, and implementation strategy.
+                </p>
+                <p style="margin: 0; font-weight: 600;">
+                  Delivery: Within 48 hours
+                </p>
+              </div>
+
+              <p>Have questions while you wait? Reply to this email or schedule a <a href="https://advanta-ai.com/contact" style="color: #667eea;">free consultation call</a>.</p>
+            </div>
+
+            <div class="footer">
+              <p>This email was sent because you requested a quote for AI solutions.</p>
+              <p>© 2025 Advanta AI. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send quote confirmation email:', error);
+      return false;
+    }
+
+    console.log(`✓ Quote confirmation email sent successfully to ${email}`);
+    return true;
+
+  } catch (error) {
+    console.error('Error sending quote confirmation email:', error);
+    return false;
+  }
+}
+
+export async function sendAdminNotificationEmail(formType: string, email: string, details: any): Promise<boolean> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not configured');
+      return false;
+    }
+
+    const adminEmail = 'contact@advanta-ai.com'; // Admin notifications email
+
+    let subject = '';
+    let content = '';
+
+    switch (formType) {
+      case 'contact':
+        subject = `New Contact Form Submission - ${details.name}`;
+        content = `
+          <h3>New Contact Form Submission</h3>
+          <p><strong>Name:</strong> ${details.name}</p>
+          <p><strong>Email:</strong> ${details.email}</p>
+          <p><strong>Company:</strong> ${details.company || 'Not provided'}</p>
+          <p><strong>Industry:</strong> ${details.industry || 'Not provided'}</p>
+          <p><strong>Message:</strong></p>
+          <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 10px 0;">
+            ${details.message}
+          </div>
+        `;
+        break;
+      case 'quote':
+        subject = `New Quote Request - ${details.name} (${details.budget})`;
+        content = `
+          <h3>New Quote Request</h3>
+          <p><strong>Name:</strong> ${details.name}</p>
+          <p><strong>Email:</strong> ${details.email}</p>
+          <p><strong>Company:</strong> ${details.company || 'Not provided'}</p>
+          <p><strong>Phone:</strong> ${details.phone || 'Not provided'}</p>
+          <p><strong>Budget:</strong> ${details.budget}</p>
+          <p><strong>Timeline:</strong> ${details.timeline || 'Not provided'}</p>
+          <p><strong>Services Requested:</strong></p>
+          <ul>
+            ${details.services.map((service: string) => `<li>${service}</li>`).join('')}
+          </ul>
+        `;
+        break;
+      default:
+        return false;
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: 'Advanta AI <hello@advanta-ai.com>',
+      to: adminEmail,
+      subject: subject,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #667eea; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+            .content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2 style="margin: 0;">Advanta AI - Admin Notification</h2>
+            </div>
+            <div class="content">
+              ${content}
+              <hr style="margin: 20px 0;">
+              <p><strong>Submitted at:</strong> ${new Date().toLocaleString()}</p>
+              <p><strong>IP:</strong> Contact logged in CRM</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send admin notification email:', error);
+      return false;
+    }
+
+    console.log(`✓ Admin notification email sent for ${formType} submission`);
+    return true;
+
+  } catch (error) {
+    console.error('Error sending admin notification email:', error);
+    return false;
+  }
+}
+
 export async function sendTestEmail(email: string): Promise<boolean> {
   try {
     if (!process.env.RESEND_API_KEY) {

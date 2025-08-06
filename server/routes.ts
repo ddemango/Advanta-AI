@@ -22,7 +22,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist } from "@shared/schema";
-import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail } from "./welcome-email-service";
+import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail, sendContactConfirmationEmail, sendQuoteRequestConfirmationEmail, sendAdminNotificationEmail } from "./welcome-email-service";
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
@@ -1460,6 +1460,26 @@ function setupAuthEndpoints(app: Express) {
           console.log('⚠️ HubSpot sync failed, but contact saved locally');
         }
       }
+
+      // Send confirmation email to user
+      try {
+        const emailSent = await sendContactConfirmationEmail(formData.email, formData.name, formData.message);
+        if (emailSent) {
+          console.log(`✓ Contact confirmation email sent to ${formData.email}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send contact confirmation email:', emailError);
+      }
+
+      // Send admin notification email
+      try {
+        const adminEmailSent = await sendAdminNotificationEmail('contact', formData.email, formData);
+        if (adminEmailSent) {
+          console.log(`✓ Admin notification email sent for contact form`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send admin notification email:', emailError);
+      }
       
       return res.status(200).json({ 
         message: 'Contact submitted and sent to your CRM!',
@@ -1506,6 +1526,31 @@ function setupAuthEndpoints(app: Express) {
         } catch (error) {
           console.log('⚠️ Quote saved locally, HubSpot sync issue');
         }
+      }
+
+      // Send confirmation email to user
+      try {
+        const emailSent = await sendQuoteRequestConfirmationEmail(
+          quoteData.email, 
+          quoteData.name, 
+          quoteData.services || [], 
+          quoteData.budget || 'Not specified'
+        );
+        if (emailSent) {
+          console.log(`✓ Quote confirmation email sent to ${quoteData.email}`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send quote confirmation email:', emailError);
+      }
+
+      // Send admin notification email
+      try {
+        const adminEmailSent = await sendAdminNotificationEmail('quote', quoteData.email, quoteData);
+        if (adminEmailSent) {
+          console.log(`✓ Admin notification email sent for quote request`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send admin notification email:', emailError);
       }
       
       res.json({ success: true, message: 'Quote request submitted to your CRM!' });
