@@ -39,7 +39,7 @@ export function NewHeader() {
     { name: 'Free Tools', href: '/free-tools' },
     { name: 'ROI Calculator', href: '/roi-calculator' },
     { name: 'Contact', href: '/contact' },
-    { name: 'Client Suite Portal', href: '/login' }
+    { name: 'Client Suite Portal', href: '/client-suite-waitlist' }
   ];
 
   const mobileMenuVariants = {
