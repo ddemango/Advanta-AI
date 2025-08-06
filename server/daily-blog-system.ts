@@ -98,16 +98,33 @@ function getCurrentDate(): string {
 async function generateBlogContent(topic: string): Promise<{ title: string, content: string, category: string }> {
   try {
     const prompt = `
-You are a professional AI and technology writer for Advanta AI, a leading AI consultancy company. 
+You are a professional AI and technology writer for Advanta AI, a leading AI consultancy company that delivers enterprise-grade AI solutions in 7 days instead of 6+ months.
 
 Generate a comprehensive, SEO-optimized blog post on the topic: "${topic}"
 
-Requirements:
+**Company Context - Advanta AI Core Capabilities:**
+1. **AI Workflow Automation** – Automate daily tasks across departments using AI-powered workflows
+2. **Custom API & ChatGPT Integrations** – Embed AI assistants, chatbots, and automation tools directly into your website or business systems
+3. **Industry-Specific AI Learning** – Our AI adapts to your industry, learning from your unique processes for better results
+4. **AI-Powered Customer Interactions** – Transform your website into an interactive experience where customers can chat, book, and get answers instantly
+5. **Data-Driven Optimization** – Continuously improve workflows with analytics and machine learning feedback loops
+6. **Free AI Resources & Tools** – Access templates, playbooks, and resources to start automating today
+
+**How Advanta AI Changes Businesses:**
+- Reduces manual work so teams can focus on growth
+- Improves customer experience through AI-driven self-service and support
+- Speeds up decision-making with intelligent data insights
+- Connects your tech stack so everything works seamlessly in one ecosystem
+- Gives you a competitive edge by using AI as a practical, daily business tool—not just a trend
+
+**Content Requirements:**
 - Target audience: Digital marketers, SaaS builders, entrepreneurs, agency owners
 - Tone: Professional yet conversational, educational, actionable
 - Length: 1200-1500 words
 - Include specific examples and practical insights
 - Focus on business value and ROI
+- **IMPORTANT**: Naturally weave in 2-3 of Advanta AI's core capabilities throughout the content
+- Reference how Advanta AI helps businesses implement these solutions in days, not months
 
 Structure the blog post exactly as follows:
 
