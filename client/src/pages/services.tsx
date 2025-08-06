@@ -322,36 +322,78 @@ export default function ServicesPage() {
             </div>
           </section>
 
-          {/* Services Cards Section */}
+          {/* Core Capabilities with Industry Applications */}
           <section className="py-20 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {/* Unified Grid Layout for All Screen Sizes */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                {services.map((service, index) => (
-                  <motion.div
-                    key={service.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300"
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
-                      <service.icon className="w-8 h-8 text-blue-600" />
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+              {services.map((service, serviceIndex) => (
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: serviceIndex * 0.2 }}
+                  className="bg-gray-50 rounded-3xl p-8 md:p-12"
+                >
+                  {/* Service Header */}
+                  <div className="flex items-center space-x-6 mb-8">
+                    <div className="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      <service.icon className="w-10 h-10 text-blue-600" />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-4">{service.title}</h3>
-                    <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                    <div className="flex-1">
+                      <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{service.title}</h2>
+                      <p className="text-xl text-gray-600 leading-relaxed mb-2">{service.detailedInfo.whatItDoes}</p>
+                      <p className="text-lg text-gray-500 leading-relaxed">{service.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Industry Applications */}
+                  <div>
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-8">Industry Applications</h3>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {service.detailedInfo.industries.map((industry, index) => (
+                        <motion.div
+                          key={industry.industry}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: (serviceIndex * 0.1) + (index * 0.05) }}
+                          className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300"
+                        >
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <industry.icon className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-lg font-semibold text-gray-900 mb-3">{industry.industry}</h4>
+                              <p className="text-gray-600 leading-relaxed">{industry.description}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Service CTA */}
+                  <div className="mt-8 pt-8 border-t border-gray-200 flex flex-col sm:flex-row gap-4 justify-center">
                     <Button
-                      onClick={() => setSelectedService(service.id)}
-                      variant="outline"
-                      className="group"
+                      onClick={() => setLocation('/demo')}
+                      size="lg"
+                      className="px-8 py-3 text-lg font-semibold"
                     >
-                      Learn more
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      Book a Demo
+                      <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
-                  </motion.div>
-                ))}
-              </div>
+                    <Button
+                      onClick={() => setLocation('/contact')}
+                      variant="outline"
+                      size="lg"
+                      className="px-8 py-3 text-lg font-semibold"
+                    >
+                      Get Started
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </section>
 
@@ -526,124 +568,7 @@ export default function ServicesPage() {
           </motion.div>
         )}
 
-        {/* Detailed Service Modal */}
-        <AnimatePresence>
-          {selectedService && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => setSelectedService(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {(() => {
-                  const service = services.find(s => s.id === selectedService);
-                  if (!service) return null;
 
-                  return (
-                    <div className="p-6 md:p-8">
-                      {/* Modal Header */}
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <service.icon className="w-8 h-8 text-blue-600" />
-                          </div>
-                          <div>
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">{service.title}</h2>
-                            <p className="text-gray-600 text-lg">{service.detailedInfo.whatItDoes}</p>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => setSelectedService(null)}
-                          variant="ghost"
-                          size="sm"
-                          className="flex-shrink-0 p-2"
-                        >
-                          <X className="w-6 h-6" />
-                        </Button>
-                      </div>
-
-                      {/* Industry Applications */}
-                      <div className="mb-8">
-                        <h3 className="text-2xl font-semibold text-gray-900 mb-6">Industry Applications</h3>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {service.detailedInfo.industries.map((industry, index) => (
-                            <motion.div
-                              key={industry.industry}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              className="bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-colors cursor-pointer"
-                              onClick={() => setExpandedIndustry(expandedIndustry === industry.industry ? null : industry.industry)}
-                            >
-                              <div className="flex items-start space-x-4">
-                                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <industry.icon className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h4 className="text-lg font-semibold text-gray-900">{industry.industry}</h4>
-                                    {expandedIndustry === industry.industry ? 
-                                      <ChevronUp className="w-5 h-5 text-gray-400" /> : 
-                                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                                    }
-                                  </div>
-                                  <AnimatePresence>
-                                    {expandedIndustry === industry.industry ? (
-                                      <motion.p
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="text-gray-600 leading-relaxed"
-                                      >
-                                        {industry.description}
-                                      </motion.p>
-                                    ) : (
-                                      <p className="text-gray-600 leading-relaxed line-clamp-2">
-                                        {industry.description}
-                                      </p>
-                                    )}
-                                  </AnimatePresence>
-                                </div>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Call to Action */}
-                      <div className="border-t pt-6 flex flex-col sm:flex-row gap-4 justify-center">
-                        <Button
-                          onClick={() => setLocation('/demo')}
-                          size="lg"
-                          className="px-8 py-3 text-lg font-semibold"
-                        >
-                          Book a Demo
-                          <ArrowRight className="w-5 h-5 ml-2" />
-                        </Button>
-                        <Button
-                          onClick={() => setLocation('/contact')}
-                          variant="outline"
-                          size="lg"
-                          className="px-8 py-3 text-lg font-semibold"
-                        >
-                          Get Started
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <NewFooter />
       </div>
