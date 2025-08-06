@@ -317,3 +317,21 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
 
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+// Client Suite Waitlist table
+export const clientSuiteWaitlist = pgTable("client_suite_waitlist", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique().notNull(),
+  source: varchar("source").notNull(), // where they signed up from
+  joinedAt: timestamp("joined_at").defaultNow(),
+  notified: boolean("notified").default(false), // has been notified of launch
+  priority: integer("priority").default(1), // 1=normal, 2=high priority
+});
+
+export const insertClientSuiteWaitlistSchema = createInsertSchema(clientSuiteWaitlist).omit({
+  joinedAt: true,
+  notified: true,
+});
+
+export type InsertClientSuiteWaitlist = z.infer<typeof insertClientSuiteWaitlistSchema>;
+export type ClientSuiteWaitlist = typeof clientSuiteWaitlist.$inferSelect;

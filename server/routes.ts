@@ -21,7 +21,7 @@ declare module 'express-session' {
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber } from "@shared/schema";
+import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist } from "@shared/schema";
 import { sendWelcomeEmail, sendTestEmail } from "./welcome-email-service";
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db";
@@ -7060,6 +7060,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error sending test newsletter:', error);
       res.status(500).json({ error: 'Failed to send test newsletter' });
+    }
+  });
+
+  // Client Suite Waitlist endpoint
+  app.post('/api/waitlist/client-suite', async (req, res) => {
+    try {
+      const { email, source } = req.body;
+
+      if (!email || !source) {
+        return res.status(400).json({ error: 'Email and source are required' });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+
+      // Import the schema
+      const { clientSuiteWaitlist } = await import('@shared/schema');
+      const crypto = await import('crypto');
+
+      // Generate unique ID
+      const id = crypto.randomUUID();
+
+      try {
+        // Insert into waitlist
+        await db.insert(clientSuiteWaitlist).values({
+          id,
+          email: email.toLowerCase().trim(),
+          source,
+          priority: 1
+        });
+
+        console.log(`[waitlist] New signup: ${email} from ${source}`);
+
+        // Send welcome email for waitlist
+        try {
+          const { sendWaitlistWelcomeEmail } = await import('./welcome-email-service');
+          await sendWaitlistWelcomeEmail(email);
+        } catch (emailError) {
+          console.error('Failed to send waitlist welcome email:', emailError);
+          // Don't fail the request if email fails
+        }
+
+        res.json({ 
+          success: true, 
+          message: 'Successfully joined the waitlist!',
+          waitlistPosition: 'You\'ll be among the first to know when we launch'
+        });
+
+      } catch (dbError: any) {
+        if (dbError.code === '23505') { // Unique constraint violation
+          return res.status(409).json({ error: 'Email already on waitlist' });
+        }
+        throw dbError;
+      }
+
+    } catch (error) {
+      console.error('Error adding to waitlist:', error);
+      res.status(500).json({ error: 'Failed to join waitlist. Please try again.' });
     }
   });
 

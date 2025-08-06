@@ -85,7 +85,7 @@ export function NewHeader() {
             
             {/* Client Suite Portal Button */}
             <button
-              onClick={() => setLocation('/login')}
+              onClick={() => setLocation('/client-suite-waitlist')}
               className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200"
             >
               Client Suite Portal

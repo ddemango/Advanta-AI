@@ -83,6 +83,7 @@ import AIWorkflowAutomation from "@/pages/ai-workflow-automation";
 import WebsiteAIAssistants from "@/pages/website-ai-assistants";
 import APIIntegrations from "@/pages/api-integrations";
 import IndustrySpecificAI from "@/pages/industry-specific-ai";
+import ClientSuiteWaitlist from "@/pages/ClientSuiteWaitlist";
 import NotFound from "@/pages/not-found";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
@@ -213,6 +214,7 @@ function Router() {
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
       <Route path="/newsletter-test" component={NewsletterTest} />
+      <Route path="/client-suite-waitlist" component={ClientSuiteWaitlist} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
