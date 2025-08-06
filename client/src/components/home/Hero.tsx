@@ -9,6 +9,7 @@ import { FlowingData } from '@/components/ui/flowing-data';
 import { AIBrain } from '@/components/ui/ai-brain';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { useRef } from 'react';
+import ValueProps from './ValueProps';
 
 export default function Hero() {
   const { ref, inView } = useIntersectionObserver({ threshold: 0.1 });
@@ -43,10 +44,9 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black mb-4 sm:mb-6 leading-tight">
-              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[55px]">AI Automation for Your Business –</span>
-              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[55px]">Build, Launch, and</span>
-              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[65px]">Scale AI Workflows</GradientText>
-              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[52px]">in Days, Not Months.</span>
+              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[48px]">Turn Your Business Into an</span>
+              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[58px]">AI-Powered</GradientText>
+              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[48px]">Revenue Machine</span>
             </h1>
             <motion.p 
               className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 leading-relaxed"
@@ -54,7 +54,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business. Eliminate repetitive tasks and provide seamless ways for customers to interact with your company using AI.
+              Stop doing repetitive tasks manually. We create AI assistants that handle your customer support, lead generation, and data analysis—so you can focus on growing your business.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
@@ -69,6 +69,9 @@ export default function Hero() {
                 <a href="#services">Get Started</a>
               </Button>
             </motion.div>
+            
+            {/* Value Props */}
+            <ValueProps />
           </motion.div>
           
           {/* Advanced Data Visualization */}

@@ -219,8 +219,11 @@ export default function Home() {
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-white">
                 What <GradientText>Advanta AI</GradientText> Does
               </h2>
+              <div className="mb-6 px-4 py-2 bg-blue-500/20 rounded-full inline-flex items-center text-blue-300 text-sm font-medium">
+                ⭐ Trusted by 500+ businesses
+              </div>
               <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-8 sm:mb-12">
-                Advanta AI is an AI-driven automation and workflow integration agency designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
+                <strong>Advanta AI is an AI-driven automation and workflow integration agency</strong> designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
               </p>
             </motion.div>
 
