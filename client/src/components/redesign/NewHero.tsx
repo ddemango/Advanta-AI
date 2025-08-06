@@ -91,7 +91,7 @@ export function NewHero() {
               className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
             >
               <Button
-                onClick={() => setLocation('#contact')}
+                onClick={() => setLocation('/build-my-ai-stack')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105"
               >
                 <span>Start Automating Today</span>
