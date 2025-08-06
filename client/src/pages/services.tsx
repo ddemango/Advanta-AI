@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NewHeader } from '@/components/redesign/NewHeader';
 import { NewFooter } from '@/components/redesign/NewFooter';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,15 @@ import {
   ArrowRight,
   Quote,
   Star,
-  Play
+  Play,
+  Building2,
+  Heart,
+  Home,
+  UtensilsCrossed,
+  DollarSign,
+  X,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 interface Service {
@@ -24,6 +32,16 @@ interface Service {
   description: string;
   icon: any;
   link: string;
+  detailedInfo: {
+    whatItDoes: string;
+    industries: IndustryApplication[];
+  };
+}
+
+interface IndustryApplication {
+  industry: string;
+  icon: any;
+  description: string;
 }
 
 interface Benefit {
@@ -48,6 +66,8 @@ interface Testimonial {
 export default function ServicesPage() {
   const [, setLocation] = useLocation();
   const [showStickyCTA, setShowStickyCTA] = useState(false);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [expandedIndustry, setExpandedIndustry] = useState<string | null>(null);
 
   // Handle sticky CTA bar visibility
   useEffect(() => {
@@ -62,39 +82,152 @@ export default function ServicesPage() {
 
   const services: Service[] = [
     {
-      id: 'ai-assistants',
-      title: 'AI Assistants',
-      description: 'Custom GPT agents that understand your business and handle customer support, sales, and operations 24/7.',
-      icon: Bot,
-      link: '/custom-gpt-generator'
-    },
-    {
-      id: 'gpt-apps',
-      title: 'GPT Apps',
-      description: 'Specialized AI applications for content creation, data analysis, and workflow automation.',
-      icon: Brain,
-      link: '/build-my-ai-stack'
-    },
-    {
-      id: 'marketing-tools',
-      title: 'Marketing Tools',
-      description: 'AI-powered content generation, campaign optimization, and customer insight tools.',
-      icon: BarChart3,
-      link: '/marketing-copy-generator'
-    },
-    {
-      id: 'workflow-automation',
-      title: 'Workflow Automation',
-      description: 'Intelligent process automation that learns and adapts to your business needs.',
+      id: 'ai-workflow-automation',
+      title: 'AI Workflow Automation',
+      description: 'Automate daily tasks across departments using AI-powered workflows. Free your team from manual work.',
       icon: Workflow,
-      link: '/automation-builder'
+      link: '/workflow-automation',
+      detailedInfo: {
+        whatItDoes: "Automates repetitive tasks, reduces manual data entry, and streamlines operations.",
+        industries: [
+          {
+            industry: "E-commerce",
+            icon: Building2,
+            description: "Automate order tracking, inventory updates, and abandoned cart follow-ups."
+          },
+          {
+            industry: "Healthcare", 
+            icon: Heart,
+            description: "Auto-schedule appointments, process patient forms, and send reminders."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "Generate property listings from MLS data, automate client follow-up emails."
+          },
+          {
+            industry: "Hospitality",
+            icon: UtensilsCrossed,
+            description: "Automate booking confirmations, guest check-in instructions, and upsell campaigns."
+          },
+          {
+            industry: "Finance",
+            icon: DollarSign,
+            description: "Reconcile transactions, auto-generate expense reports, and trigger compliance alerts."
+          }
+        ]
+      }
     },
     {
-      id: 'analytics-insights',
-      title: 'Analytics & Insights',
-      description: 'Real-time business intelligence and predictive analytics powered by AI.',
-      icon: Zap,
-      link: '/roi-calculator'
+      id: 'api-integrations',
+      title: 'Custom API & ChatGPT Integrations',
+      description: 'Embed AI assistants, chatbots, and automation tools directly into your website or business systems. Smarter websites and systems.',
+      icon: Brain,
+      link: '/build-my-ai-stack',
+      detailedInfo: {
+        whatItDoes: "Embeds AI-driven assistants and connects business tools into one seamless system.",
+        industries: [
+          {
+            industry: "E-commerce",
+            icon: Building2,
+            description: "Integrate AI chatbots with Shopify or BigCommerce to answer product questions in real-time."
+          },
+          {
+            industry: "Healthcare", 
+            icon: Heart,
+            description: "Link AI to EMR systems for instant patient record retrieval or symptom triage."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "AI property search assistants embedded on websites that respond to buyer criteria."
+          },
+          {
+            industry: "Hospitality",
+            icon: UtensilsCrossed,
+            description: "Connect AI to booking engines to upsell rooms or provide 24/7 guest support."
+          },
+          {
+            industry: "Finance",
+            icon: DollarSign,
+            description: "Integrate AI into CRM or accounting tools to provide instant financial summaries or forecast reports."
+          }
+        ]
+      }
+    },
+    {
+      id: 'customer-interactions',
+      title: 'AI-Powered Customer Interactions',
+      description: 'Transform your website into an interactive experience where customers can chat, book, and get answers instantly. 24/7 automated engagement.',
+      icon: Bot,
+      link: '/customer-interactions',
+      detailedInfo: {
+        whatItDoes: "Turns websites into interactive, AI-driven customer service and sales hubs.",
+        industries: [
+          {
+            industry: "E-commerce",
+            icon: Building2,
+            description: "Real-time product Q&A bots that help shoppers choose the right item."
+          },
+          {
+            industry: "Healthcare", 
+            icon: Heart,
+            description: "Virtual intake assistants that collect patient info before their visit."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "Chat-based virtual tours or scheduling for property showings."
+          },
+          {
+            industry: "Hospitality",
+            icon: UtensilsCrossed,
+            description: "AI concierge bots to recommend dining, activities, or loyalty perks."
+          },
+          {
+            industry: "Finance",
+            icon: DollarSign,
+            description: "AI-guided financial planning tools that suggest budgeting or investment steps."
+          }
+        ]
+      }
+    },
+    {
+      id: 'data-optimization',
+      title: 'Data-Driven Optimization',
+      description: 'Continuously improve workflows with analytics and machine learning feedback loops.',
+      icon: BarChart3,
+      link: '/data-optimization',
+      detailedInfo: {
+        whatItDoes: "Uses analytics and machine learning feedback loops to improve results over time.",
+        industries: [
+          {
+            industry: "E-commerce",
+            icon: Building2,
+            description: "Identify best-performing campaigns and automatically scale them."
+          },
+          {
+            industry: "Healthcare", 
+            icon: Heart,
+            description: "Track patient follow-up rates and optimize scheduling for fewer no-shows."
+          },
+          {
+            industry: "Real Estate",
+            icon: Home,
+            description: "Analyze lead sources to focus on high-converting marketing channels."
+          },
+          {
+            industry: "Hospitality",
+            icon: UtensilsCrossed,
+            description: "Optimize booking funnel performance and monitor guest satisfaction trends."
+          },
+          {
+            industry: "Finance",
+            icon: DollarSign,
+            description: "Provide predictive cash flow and profitability forecasts for smarter planning."
+          }
+        ]
+      }
     }
   ];
 
@@ -175,13 +308,15 @@ export default function ServicesPage() {
                 className="text-center max-w-4xl mx-auto"
               >
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-                  Custom AI Solutions That{' '}
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Scale With You
+                    Core Capabilities
                   </span>
                 </h1>
+                <p className="text-xl text-gray-600 leading-relaxed mb-4">
+                  <strong>Advanta AI is an AI-driven automation and workflow integration agency</strong> designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
+                </p>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Explore automation tools, GPT apps, and analytics designed to simplify your workflow and accelerate growth
+                  We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business.
                 </p>
               </motion.div>
             </div>
@@ -211,7 +346,7 @@ export default function ServicesPage() {
                       </div>
                       <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
                       <Button
-                        onClick={() => setLocation(service.link)}
+                        onClick={() => setSelectedService(service.id)}
                         variant="outline"
                         className="w-full group"
                       >
@@ -240,7 +375,7 @@ export default function ServicesPage() {
                     <h3 className="text-2xl font-semibold text-gray-900 mb-4">{service.title}</h3>
                     <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
                     <Button
-                      onClick={() => setLocation(service.link)}
+                      onClick={() => setSelectedService(service.id)}
                       variant="outline"
                       className="group"
                     >
@@ -423,6 +558,125 @@ export default function ServicesPage() {
             </div>
           </motion.div>
         )}
+
+        {/* Detailed Service Modal */}
+        <AnimatePresence>
+          {selectedService && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedService(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {(() => {
+                  const service = services.find(s => s.id === selectedService);
+                  if (!service) return null;
+
+                  return (
+                    <div className="p-6 md:p-8">
+                      {/* Modal Header */}
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <service.icon className="w-8 h-8 text-blue-600" />
+                          </div>
+                          <div>
+                            <h2 className="text-3xl font-bold text-gray-900 mb-2">{service.title}</h2>
+                            <p className="text-gray-600 text-lg">{service.detailedInfo.whatItDoes}</p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setSelectedService(null)}
+                          variant="ghost"
+                          size="sm"
+                          className="flex-shrink-0 p-2"
+                        >
+                          <X className="w-6 h-6" />
+                        </Button>
+                      </div>
+
+                      {/* Industry Applications */}
+                      <div className="mb-8">
+                        <h3 className="text-2xl font-semibold text-gray-900 mb-6">Industry Applications</h3>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {service.detailedInfo.industries.map((industry, index) => (
+                            <motion.div
+                              key={industry.industry}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-colors cursor-pointer"
+                              onClick={() => setExpandedIndustry(expandedIndustry === industry.industry ? null : industry.industry)}
+                            >
+                              <div className="flex items-start space-x-4">
+                                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <industry.icon className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-lg font-semibold text-gray-900">{industry.industry}</h4>
+                                    {expandedIndustry === industry.industry ? 
+                                      <ChevronUp className="w-5 h-5 text-gray-400" /> : 
+                                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                                    }
+                                  </div>
+                                  <AnimatePresence>
+                                    {expandedIndustry === industry.industry ? (
+                                      <motion.p
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="text-gray-600 leading-relaxed"
+                                      >
+                                        {industry.description}
+                                      </motion.p>
+                                    ) : (
+                                      <p className="text-gray-600 leading-relaxed line-clamp-2">
+                                        {industry.description}
+                                      </p>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Call to Action */}
+                      <div className="border-t pt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                        <Button
+                          onClick={() => setLocation('/demo')}
+                          size="lg"
+                          className="px-8 py-3 text-lg font-semibold"
+                        >
+                          Book a Demo
+                          <ArrowRight className="w-5 h-5 ml-2" />
+                        </Button>
+                        <Button
+                          onClick={() => setLocation('/contact')}
+                          variant="outline"
+                          size="lg"
+                          className="px-8 py-3 text-lg font-semibold"
+                        >
+                          Get Started
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <NewFooter />
       </div>
