@@ -94,7 +94,7 @@ export default function APIIntegrations() {
                   Connect Your AI with <GradientText>Everything</GradientText>
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8">
-                  Seamlessly integrate your AI workflows with 500+ business tools and systems. From CRM to analytics, we connect your AI with the tools you already use.
+                  Custom API & ChatGPT integrations that connect your tech stack so everything works seamlessly in one ecosystem. We specialize in combining APIs with intelligent automation tools for smarter, more connected workflows.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" className="bg-primary hover:bg-primary/90">

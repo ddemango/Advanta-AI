@@ -31,24 +31,24 @@ const FeatureCard = ({ icon, title, description, delay = 0 }: FeatureCardProps) 
 export default function WhyAdvantaAI() {
   const features = [
     {
-      icon: 'fas fa-rocket',
-      title: '7-Day Deployment Guarantee',
-      description: 'While others take 6+ months, we deploy fully functional AI workflows in just 7 days with zero downtime.',
+      icon: 'fas fa-tasks',
+      title: 'Reduces Manual Work',
+      description: 'Teams can focus on growth while AI handles repetitive tasks across all departments.',
     },
     {
-      icon: 'fas fa-plug',
-      title: 'Universal Integration Engine',
-      description: 'Our proprietary framework connects with 500+ business tools instantly - no API knowledge required.',
+      icon: 'fas fa-users',
+      title: 'Improves Customer Experience',
+      description: 'AI-driven self-service and support transforms how customers interact with your business.',
     },
     {
-      icon: 'fas fa-paint-brush',
-      title: 'Full Brand Customization',
-      description: 'Complete white-label solution with custom UI, tone matching, and branded user portals.',
+      icon: 'fas fa-tachometer-alt',
+      title: 'Speeds Up Decision-Making',
+      description: 'Intelligent data insights help you make faster, more informed business decisions.',
     },
     {
-      icon: 'fas fa-headset',
-      title: 'Dedicated AI Implementation Team',
-      description: 'Unlike DIY platforms, you get a dedicated team handling strategy, deployment, and optimization.',
+      icon: 'fas fa-link',
+      title: 'Connects Your Tech Stack',
+      description: 'Everything works seamlessly in one ecosystem - no more disconnected tools.',
     },
   ];
 
@@ -80,10 +80,10 @@ export default function WhyAdvantaAI() {
         >
           <motion.div variants={fadeInUp}>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              What Makes <GradientText>Advanta AI</GradientText> Different
+              How <GradientText>Advanta AI</GradientText> Changes Businesses
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Unlike generic AI tools or 6-month consulting projects, we deliver production-ready AI workflows in days, not months
+              We transform how businesses operate by reducing manual work, improving customer experience through AI-driven self-service, and connecting your tech stack so everything works seamlessly in one ecosystem.
             </p>
           </motion.div>
         </motion.div>
@@ -120,9 +120,9 @@ export default function WhyAdvantaAI() {
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold mb-2">Proprietary Integration Framework</h3>
+              <h3 className="text-2xl font-bold mb-2">Industry-Specific AI Learning</h3>
               <p className="text-gray-300">
-                Our custom-built integration framework allows your AI solutions to connect seamlessly with your existing business tools and workflows, ensuring minimal disruption and maximum efficiency.
+                Our AI adapts to your industry, learning from your unique processes for better results. This gives you a competitive edge by using AI as a practical, daily business tool—not just a trend.
               </p>
             </div>
           </div>

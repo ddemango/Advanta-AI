@@ -16,6 +16,7 @@ import AiProductSandbox from '@/components/sandbox/AiProductSandbox';
 import RoiCalculatorPreview from '@/components/home/RoiCalculatorPreview';
 import EmailCapture from '@/components/home/EmailCapture';
 import AiUseCases from '@/components/home/AiUseCases';
+import CoreCapabilities from '@/components/home/CoreCapabilities';
 import { CookieConsent } from '@/components/ui/cookie-consent';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -103,13 +104,13 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>Advanta AI - AI Automation for Your Business – Build, Launch, and Scale AI Workflows in Days, Not Months</title>
-        <meta name="description" content="Skip the 6-month AI implementation timeline. We deploy custom AI assistants, automations, and workflows that integrate with your existing tools in under 7 days. No coding required, full brand customization included." />
-        <meta name="keywords" content="AI automation, business AI workflows, AI assistants, process automation, AI integration, business transformation, AI consulting" />
+        <title>Advanta AI - AI-Driven Automation & Workflow Integration Agency</title>
+        <meta name="description" content="Streamline operations, eliminate repetitive tasks, and transform customer interactions with AI. We specialize in combining APIs, ChatGPT, and intelligent automation tools for smarter, more connected workflows that scale with your business." />
+        <meta name="keywords" content="AI automation, workflow integration, ChatGPT integration, API automation, business process automation, AI-driven workflows, intelligent automation tools" />
         
         {/* Open Graph */}
-        <meta property="og:title" content="Advanta AI - AI Automation for Your Business – Build, Launch, and Scale AI Workflows" />
-        <meta property="og:description" content="Deploy custom AI assistants, automations, and workflows in under 7 days. No coding required, full brand customization included." />
+        <meta property="og:title" content="Advanta AI - AI-Driven Automation & Workflow Integration Agency" />
+        <meta property="og:description" content="Streamline operations and eliminate repetitive tasks with AI. Combining APIs, ChatGPT, and intelligent automation for smarter workflows." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://advanta-ai.com" />
         <meta property="og:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
@@ -117,8 +118,8 @@ export default function Home() {
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Advanta AI - AI Automation for Your Business" />
-        <meta name="twitter:description" content="Deploy custom AI assistants, automations, and workflows in under 7 days. No coding required." />
+        <meta name="twitter:title" content="Advanta AI - AI-Driven Automation & Workflow Integration" />
+        <meta name="twitter:description" content="Streamline operations and eliminate repetitive tasks with AI automation tools and ChatGPT integrations." />
         <meta name="twitter:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
         <meta name="twitter:site" content="@advanta_ai" />
         
@@ -135,7 +136,7 @@ export default function Home() {
             "name": "Advanta AI",
             "url": "https://advanta-ai.com",
             "logo": "https://advanta-ai.com/logo.png",
-            "description": "AI automation solutions for businesses - deploy custom AI assistants and workflows in 7 days",
+            "description": "AI-driven automation and workflow integration agency helping businesses streamline operations, eliminate repetitive tasks, and provide seamless customer interactions using AI",
             "contactPoint": {
               "@type": "ContactPoint",
               "telephone": "+1-800-ADVANTA",
@@ -147,8 +148,8 @@ export default function Home() {
             ],
             "offers": {
               "@type": "Service",
-              "name": "AI Workflow Automation",
-              "description": "Custom AI assistants and automation workflows for businesses",
+              "name": "AI-Driven Automation & Workflow Integration",
+              "description": "Combining APIs, ChatGPT, and intelligent automation tools for smarter business workflows",
               "provider": {
                 "@type": "Organization",
                 "name": "Advanta AI"
@@ -219,7 +220,7 @@ export default function Home() {
                 What <GradientText>Advanta AI</GradientText> Does
               </h2>
               <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-8 sm:mb-12">
-                We're like having a team of AI experts build custom software for your business - without the complexity or cost.
+                Advanta AI is an AI-driven automation and workflow integration agency designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
               </p>
             </motion.div>
 
@@ -291,6 +292,9 @@ export default function Home() {
 
         {/* How It Works Visual Section */}
         <HowItWorksVisual />
+
+        {/* Core Capabilities Section */}
+        <CoreCapabilities />
         
         {/* ROI Calculator Preview */}
         <section id="roi-calculator" className="py-10 bg-muted/30">

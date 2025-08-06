@@ -85,7 +85,7 @@ export default function IndustrySpecificAI() {
                   AI Solutions Built for <GradientText>Your Industry</GradientText>
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8">
-                  Get AI automations designed specifically for your industry's unique requirements, compliance standards, and specialized workflows. From healthcare to manufacturing, we speak your language.
+                  Our AI adapts to your industry, learning from your unique processes for better results. Get automation solutions designed specifically for your industry's requirements, compliance standards, and specialized workflows.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" className="bg-primary hover:bg-primary/90">

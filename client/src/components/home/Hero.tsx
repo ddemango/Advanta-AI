@@ -54,7 +54,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Skip the 6-month AI implementation timeline. We deploy custom AI assistants, automations, and workflows that integrate with your existing tools in under 7 days. No coding required, full brand customization included.
+              We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business. Eliminate repetitive tasks and provide seamless ways for customers to interact with your company using AI.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"

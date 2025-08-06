@@ -61,7 +61,7 @@ export default function WebsiteAIAssistants() {
                   <GradientText>Intelligent Virtual Assistants</GradientText> for Your Website
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8">
-                  Transform your website visitors into customers with AI assistants that provide instant support, qualify leads, and guide prospects through your sales process 24/7.
+                  Transform your website into an interactive experience where customers can chat, book, and get answers instantly. Embed AI assistants, chatbots, and automation tools directly into your website for AI-powered customer interactions.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" className="bg-primary hover:bg-primary/90">
