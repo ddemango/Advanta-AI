@@ -6,6 +6,8 @@ import HowItWorks from '@/components/home/HowItWorks';
 import HowItWorksVisual from '@/components/home/HowItWorksVisual';
 import ServicesPreview from '@/components/home/ServicesPreview';
 import WhyAdvantaAI from '@/components/home/WhyAdvantaAI';
+import WhatIsAdvantaAI from '@/components/home/WhatIsAdvantaAI';
+import FutureVision from '@/components/home/FutureVision';
 import Services from '@/components/home/Services';
 import CaseStudies from '@/components/home/CaseStudies';
 import AiAssessment from '@/components/home/AiAssessment';
@@ -296,8 +298,14 @@ export default function Home() {
         {/* How It Works Visual Section */}
         <HowItWorksVisual />
 
+        {/* What is Advanta AI Section */}
+        <WhatIsAdvantaAI />
+
         {/* Core Capabilities Section */}
         <CoreCapabilities />
+
+        {/* Future Vision Section */}
+        <FutureVision />
         
         {/* ROI Calculator Preview */}
         <section id="roi-calculator" className="py-10 bg-muted/30">

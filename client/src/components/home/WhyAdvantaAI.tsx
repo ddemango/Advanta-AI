@@ -83,7 +83,7 @@ export default function WhyAdvantaAI() {
               How <GradientText>Advanta AI</GradientText> Changes Businesses
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We transform how businesses operate by reducing manual work, improving customer experience through AI-driven self-service, and connecting your tech stack so everything works seamlessly in one ecosystem.
+              Reduces manual work so teams can focus on growth. Improves customer experience through AI-driven self-service and support. Speeds up decision-making with intelligent data insights. Connects your tech stack so everything works seamlessly in one ecosystem. Gives you a competitive edge by using AI as a practical, daily business tool—not just a trend.
             </p>
           </motion.div>
         </motion.div>
