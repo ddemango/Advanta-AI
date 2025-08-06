@@ -17,7 +17,7 @@ export default function ClientSuiteWaitlist() {
 
   const submitWaitlist = useMutation({
     mutationFn: async (email: string) => {
-      return apiRequest('/api/waitlist/client-suite', 'POST', { 
+      return apiRequest('POST', '/api/waitlist/client-suite', { 
         email, 
         source: 'client-suite-portal' 
       });
