@@ -3,15 +3,17 @@ import { Check } from 'lucide-react';
 
 export default function ValueProps() {
   const props = [
-    { text: "Deploy in days, not months", icon: "⚡" },
-    { text: "No technical expertise required", icon: "✨" },
-    { text: "Scales with your business", icon: "📈" },
-    { text: "Enterprise-grade security", icon: "🔒" }
+    { text: "AI Workflow Automation: Free your team from manual work", icon: "⚡" },
+    { text: "Custom API & ChatGPT Integrations: Smarter websites and systems", icon: "🔗" },
+    { text: "Industry-Specific AI Learning: AI tailored to your business", icon: "🧠" },
+    { text: "AI-Powered Customer Interactions: 24/7 automated engagement", icon: "💬" },
+    { text: "Data-Driven Optimization: Improve performance continuously", icon: "📊" },
+    { text: "Free AI Resources: Templates and tools to start automating today", icon: "🎯" }
   ];
 
   return (
     <motion.div 
-      className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8"
+      className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, duration: 0.8 }}
@@ -19,12 +21,12 @@ export default function ValueProps() {
       {props.map((prop, index) => (
         <motion.div
           key={index}
-          className="flex items-center space-x-2 text-sm text-gray-300"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
+          className="flex items-start space-x-3 text-sm text-gray-300 bg-gray-800/30 p-4 rounded-lg backdrop-blur-sm border border-gray-700/50"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 + index * 0.1 }}
         >
-          <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+          <span className="text-lg flex-shrink-0">{prop.icon}</span>
           <span>{prop.text}</span>
         </motion.div>
       ))}

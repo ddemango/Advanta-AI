@@ -104,13 +104,13 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>Advanta AI - AI-Driven Automation & Workflow Integration Agency</title>
-        <meta name="description" content="Streamline operations, eliminate repetitive tasks, and transform customer interactions with AI. We specialize in combining APIs, ChatGPT, and intelligent automation tools for smarter, more connected workflows that scale with your business." />
+        <title>Advanta AI - Automate. Optimize. Scale. | AI-Powered Workflows Built for Your Business</title>
+        <meta name="description" content="Advanta AI transforms business operations by combining APIs, ChatGPT, and intelligent automation tools. Eliminate repetitive tasks, streamline operations, and create seamless customer interactions directly from your website." />
         <meta name="keywords" content="AI automation, workflow integration, ChatGPT integration, API automation, business process automation, AI-driven workflows, intelligent automation tools" />
         
         {/* Open Graph */}
-        <meta property="og:title" content="Advanta AI - AI-Driven Automation & Workflow Integration Agency" />
-        <meta property="og:description" content="Streamline operations and eliminate repetitive tasks with AI. Combining APIs, ChatGPT, and intelligent automation for smarter workflows." />
+        <meta property="og:title" content="Advanta AI - Automate. Optimize. Scale. | AI-Powered Workflows" />
+        <meta property="og:description" content="Transform your business operations with AI. We combine APIs, ChatGPT, and intelligent automation to eliminate repetitive tasks and create seamless customer interactions." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://advanta-ai.com" />
         <meta property="og:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
@@ -118,8 +118,8 @@ export default function Home() {
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Advanta AI - AI-Driven Automation & Workflow Integration" />
-        <meta name="twitter:description" content="Streamline operations and eliminate repetitive tasks with AI automation tools and ChatGPT integrations." />
+        <meta name="twitter:title" content="Advanta AI - Automate. Optimize. Scale." />
+        <meta name="twitter:description" content="Transform business operations with AI-powered workflows. Combine APIs, ChatGPT, and intelligent automation to eliminate repetitive tasks." />
         <meta name="twitter:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
         <meta name="twitter:site" content="@advanta_ai" />
         

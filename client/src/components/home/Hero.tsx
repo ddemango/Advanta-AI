@@ -44,9 +44,9 @@ export default function Hero() {
             className="lg:w-1/2 lg:pr-12 mb-12 lg:mb-0"
           >
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black mb-4 sm:mb-6 leading-tight">
-              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[48px]">Turn Your Business Into an</span>
-              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[58px]">AI-Powered</GradientText>
-              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[48px]">Revenue Machine</span>
+              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[40px]">Automate. Optimize. Scale.</span>
+              <GradientText className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[50px]">AI-Powered Workflows</GradientText>
+              <span className="block mb-1 sm:mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[44px]">Built for Your Business</span>
             </h1>
             <motion.p 
               className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 leading-relaxed"
@@ -54,7 +54,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              Stop doing repetitive tasks manually. We create AI assistants that handle your customer support, lead generation, and data analysis—so you can focus on growing your business.
+              Advanta AI transforms the way businesses operate. We combine APIs, ChatGPT, and intelligent automation tools to eliminate repetitive tasks, streamline operations, and create seamless ways for customers to interact with your brand—directly from your website.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4"
@@ -63,10 +63,10 @@ export default function Hero() {
               transition={{ delay: 1.2, duration: 0.5 }}
             >
               <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-sm sm:text-base">
-                <a href="#contact">Book a Demo</a>
+                <a href="#contact">Start Automating Today</a>
               </Button>
               <Button asChild size="lg" variant="outline" className="text-sm sm:text-base">
-                <a href="#services">Get Started</a>
+                <a href="#services">Explore Our AI Solutions</a>
               </Button>
             </motion.div>
             
