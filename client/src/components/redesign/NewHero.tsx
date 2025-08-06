@@ -14,10 +14,12 @@ export function NewHero() {
   ];
 
   const features = [
-    'Deploy in days, not months',
-    'No technical expertise required',
-    'Scales with your business',
-    'Enterprise-grade security'
+    'AI Workflow Automation: Free your team from manual work',
+    'Custom API & ChatGPT Integrations: Smarter websites and systems',
+    'Industry-Specific AI Learning: AI tailored to your business',
+    'AI-Powered Customer Interactions: 24/7 automated engagement',
+    'Data-Driven Optimization: Improve performance continuously',
+    'Free AI Resources: Templates and tools to start automating today'
   ];
 
   return (
@@ -49,11 +51,11 @@ export function NewHero() {
               transition={{ delay: 0.3 }}
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight"
             >
-              Turn Your Business Into an{' '}
+              Automate. Optimize. Scale.{' '}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AI-Powered
+                AI-Powered Workflows
               </span>{' '}
-              Revenue Machine
+              Built for Your Business
             </motion.h1>
 
             {/* Subheadline */}
@@ -63,7 +65,7 @@ export function NewHero() {
               transition={{ delay: 0.4 }}
               className="text-xl text-gray-600 leading-relaxed max-w-2xl"
             >
-              Stop doing repetitive tasks manually. We create AI assistants that handle your customer support, lead generation, and data analysis—so you can focus on growing your business.
+              Advanta AI transforms the way businesses operate. We combine APIs, ChatGPT, and intelligent automation tools to eliminate repetitive tasks, streamline operations, and create seamless ways for customers to interact with your brand—directly from your website.
             </motion.p>
 
             {/* Feature List */}
@@ -71,7 +73,7 @@ export function NewHero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 gap-3"
             >
               {features.map((feature, index) => (
                 <div key={index} className="flex items-center space-x-2">
@@ -89,19 +91,19 @@ export function NewHero() {
               className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
             >
               <Button
-                onClick={() => setLocation('/build-my-ai-stack')}
+                onClick={() => setLocation('#contact')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105"
               >
-                <span>Get Started Free</span>
+                <span>Start Automating Today</span>
                 <ArrowRight className="w-5 h-5" />
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setLocation('/demo')}
+                onClick={() => setLocation('#services')}
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 rounded-lg font-semibold text-lg flex items-center justify-center space-x-2 transition-all duration-200"
               >
                 <Play className="w-5 h-5" />
-                <span>Watch Demo</span>
+                <span>Explore Our AI Solutions</span>
               </Button>
             </motion.div>
 
