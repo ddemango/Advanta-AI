@@ -9,30 +9,30 @@ export function NewServices() {
   const services = [
     {
       icon: Bot,
-      title: 'AI Assistants',
-      description: 'Custom chatbots and virtual assistants that handle customer support, lead qualification, and sales conversations 24/7.',
-      features: ['Natural language processing', 'Multi-channel support', 'Lead scoring', 'Automated responses'],
+      title: 'AI Workflow Automation',
+      description: 'Automate daily tasks across departments using AI-powered workflows. Free your team from manual work.',
+      features: ['Workflow automation', 'Cross-department integration', 'Task scheduling', 'Process optimization'],
       color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: Zap,
-      title: 'Process Automation',
-      description: 'Streamline repetitive tasks with intelligent workflows that connect your favorite tools and eliminate manual work.',
-      features: ['Workflow automation', 'Data synchronization', 'Email marketing', 'CRM integration'],
+      title: 'Custom API & ChatGPT Integrations',
+      description: 'Embed AI assistants, chatbots, and automation tools directly into your website or business systems. Smarter websites and systems.',
+      features: ['ChatGPT integration', 'API connections', 'Website chatbots', 'System automation'],
       color: 'from-purple-500 to-pink-500'
     },
     {
       icon: BarChart3,
-      title: 'Analytics & Insights',
-      description: 'Transform raw data into actionable insights with AI-powered analytics and predictive dashboards.',
-      features: ['Predictive analytics', 'Custom dashboards', 'Real-time reporting', 'ROI tracking'],
+      title: 'AI-Powered Customer Interactions',
+      description: 'Transform your website into an interactive experience where customers can chat, book, and get answers instantly. 24/7 automated engagement.',
+      features: ['Live chat automation', 'Booking systems', 'Customer support', 'Lead qualification'],
       color: 'from-green-500 to-emerald-500'
     },
     {
       icon: Shield,
-      title: 'Enterprise Security',
-      description: 'Enterprise-grade security and compliance features that protect your data and ensure regulatory compliance.',
-      features: ['Data encryption', 'Access controls', 'Audit trails', 'Compliance reporting'],
+      title: 'Data-Driven Optimization',
+      description: 'Continuously improve workflows with analytics and machine learning feedback loops.',
+      features: ['Performance analytics', 'AI learning', 'Process improvement', 'ROI tracking'],
       color: 'from-orange-500 to-red-500'
     }
   ];
@@ -49,14 +49,15 @@ export function NewServices() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Everything You Need to{' '}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Scale with AI
+              Core Capabilities
             </span>
           </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
+            <strong>Advanta AI is an AI-driven automation and workflow integration agency</strong> designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
+          </p>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Our comprehensive AI platform provides all the tools you need to automate processes, 
-            enhance customer experiences, and drive business growth.
+            We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business.
           </p>
         </motion.div>
 
