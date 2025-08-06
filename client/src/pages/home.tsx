@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NewHeader } from '@/components/redesign/NewHeader';
+import { NewHero } from '@/components/redesign/NewHero';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
 import HowItWorks from '@/components/home/HowItWorks';
@@ -204,9 +205,9 @@ export default function Home() {
       </motion.div>
       
       <main>
-        {/* Main Hero Section */}
+        {/* Main Hero Section with Updated Messaging */}
         <section id="hero">
-          <Hero />
+          <NewHero />
         </section>
         
         {/* What We Do Section - Simple Explanation */}
@@ -224,8 +225,11 @@ export default function Home() {
               <div className="mb-6 px-4 py-2 bg-blue-500/20 rounded-full inline-flex items-center text-blue-300 text-sm font-medium">
                 ⭐ Trusted by 500+ businesses
               </div>
-              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-8 sm:mb-12">
+              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-4 sm:mb-6">
                 <strong>Advanta AI is an AI-driven automation and workflow integration agency</strong> designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
+              </p>
+              <p className="text-lg sm:text-xl text-gray-300 leading-relaxed mb-8 sm:mb-12">
+                We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business.
               </p>
             </motion.div>
 
@@ -238,9 +242,9 @@ export default function Home() {
                 transition={{ delay: 0.1 }}
               >
                 <div className="text-4xl mb-4">🤖</div>
-                <h3 className="text-xl font-bold text-white mb-4">Custom AI Assistants</h3>
+                <h3 className="text-xl font-bold text-white mb-4">AI Workflow Automation</h3>
                 <p className="text-gray-300">
-                  We build AI chatbots and assistants that handle your customer support, sales conversations, and routine tasks - available 24/7.
+                  Automate daily tasks across departments using AI-powered workflows. Free your team from manual work.
                 </p>
               </motion.div>
 
@@ -251,10 +255,10 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="text-4xl mb-4">⚡</div>
-                <h3 className="text-xl font-bold text-white mb-4">Workflow Automation</h3>
+                <div className="text-4xl mb-4">🔗</div>
+                <h3 className="text-xl font-bold text-white mb-4">Custom API & ChatGPT Integrations</h3>
                 <p className="text-gray-300">
-                  Stop doing repetitive tasks. We create AI systems that automatically handle data entry, email responses, scheduling, and more.
+                  Embed AI assistants, chatbots, and automation tools directly into your website or business systems. Smarter websites and systems.
                 </p>
               </motion.div>
 
@@ -265,10 +269,10 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
               >
-                <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-xl font-bold text-white mb-4">Smart Analytics</h3>
+                <div className="text-4xl mb-4">💬</div>
+                <h3 className="text-xl font-bold text-white mb-4">AI-Powered Customer Interactions</h3>
                 <p className="text-gray-300">
-                  Get insights from your data instantly. Our AI analyzes your business metrics and tells you exactly what actions to take.
+                  Transform your website into an interactive experience where customers can chat, book, and get answers instantly. 24/7 automated engagement.
                 </p>
               </motion.div>
             </div>
@@ -281,10 +285,10 @@ export default function Home() {
               transition={{ delay: 0.4 }}
             >
               <p className="text-lg text-gray-400 mb-6">
-                <strong className="text-white">The Result:</strong> You save 10-20 hours per week and increase revenue by focusing on what matters most.
+                <strong className="text-white">The Result:</strong> Your business scales with AI automation while reducing manual work and increasing productivity across all departments.
               </p>
               <Button asChild size="lg" className="bg-green-600 hover:bg-green-700">
-                <a href="/build-my-ai-stack">See What AI Tools You Need →</a>
+                <a href="#contact">Start Automating Today →</a>
               </Button>
             </motion.div>
           </div>
