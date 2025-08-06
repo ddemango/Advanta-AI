@@ -49,128 +49,181 @@ export default function CaseStudiesPage() {
 
   const categories = [
     { id: 'all', label: 'All', icon: Filter },
-    { id: 'retail', label: 'Retail', icon: Store },
-    { id: 'healthcare', label: 'Healthcare', icon: Heart },
-    { id: 'sales', label: 'Sales Ops', icon: BarChart3 },
-    { id: 'chatbot', label: 'AI Chatbot', icon: MessageSquare }
+    { id: 'workflow-automation', label: 'Workflow Automation', icon: CheckCircle },
+    { id: 'api-integration', label: 'API Integration', icon: MessageSquare },
+    { id: 'ai-learning', label: 'Industry AI Learning', icon: TrendingUp },
+    { id: 'customer-interaction', label: 'Customer Interactions', icon: Users },
+    { id: 'data-optimization', label: 'Data Optimization', icon: BarChart3 },
+    { id: 'free-resources', label: 'Free Resources', icon: Rocket }
   ];
 
   const caseStudies: CaseStudy[] = [
     {
-      id: 'globalshop-ecommerce',
-      company: 'GlobalShop',
-      logo: 'GS',
-      industry: 'E-commerce',
-      industryIcon: Store,
-      category: 'retail',
-      headline: 'Reduced cart abandonment by 42%',
-      summary: 'Custom GPT agent trained on product catalog and customer service history, handling 78% of inquiries while increasing average order value by 23%.',
-      metrics: [
-        { label: 'Cart Abandonment', value: '-42%' },
-        { label: 'Order Value', value: '+23%' },
-        { label: 'Customer Satisfaction', value: '4.7/5' }
-      ],
-      link: '/case-studies/globalshop',
-      featured: true
-    },
-    {
-      id: 'healthplus-patient',
-      company: 'HealthPlus',
-      logo: 'HP',
-      industry: 'Healthcare',
-      industryIcon: Heart,
-      category: 'healthcare',
-      headline: 'Automated 85% of appointment scheduling',
-      summary: 'AI-powered patient communication system reduced wait times, improved appointment efficiency, and enhanced patient experience across multiple clinics.',
-      metrics: [
-        { label: 'Scheduling Automation', value: '85%' },
-        { label: 'Wait Time Reduction', value: '-60%' },
-        { label: 'Patient Satisfaction', value: '+40%' }
-      ],
-      link: '/case-studies/healthplus'
-    },
-    {
-      id: 'cloudsoft-onboarding',
-      company: 'CloudSoft Solutions',
-      logo: 'CS',
-      industry: 'SaaS',
-      industryIcon: Briefcase,
-      category: 'sales',
-      headline: 'Reduced onboarding time from 28 to 4 days',
-      summary: 'AI workflow automation system streamlined client onboarding with intelligent document processing and conditional logic workflows.',
-      metrics: [
-        { label: 'Onboarding Time', value: '-86%' },
-        { label: 'Processing Errors', value: '-94%' },
-        { label: 'Cost Savings', value: '$1.8M' }
-      ],
-      link: '/case-studies/cloudsoft',
-      featured: true
-    },
-    {
-      id: 'retailmax-support',
-      company: 'RetailMax',
-      logo: 'RM',
-      industry: 'Retail',
-      industryIcon: Store,
-      category: 'chatbot',
-      headline: 'Cut support response time by 89%',
-      summary: 'Intelligent chatbot system handling customer inquiries, order tracking, and product recommendations with human-like accuracy.',
-      metrics: [
-        { label: 'Response Time', value: '-89%' },
-        { label: 'Resolution Rate', value: '92%' },
-        { label: 'Support Cost', value: '-65%' }
-      ],
-      link: '/case-studies/retailmax'
-    },
-    {
-      id: 'salesforce-leads',
-      company: 'SalesForce Pro',
-      logo: 'SP',
-      industry: 'Sales',
-      industryIcon: BarChart3,
-      category: 'sales',
-      headline: 'Increased qualified leads by 156%',
-      summary: 'AI-powered lead scoring and nurturing system that identifies high-value prospects and automates personalized outreach campaigns.',
-      metrics: [
-        { label: 'Qualified Leads', value: '+156%' },
-        { label: 'Conversion Rate', value: '+73%' },
-        { label: 'Sales Cycle', value: '-45%' }
-      ],
-      link: '/case-studies/salesforce'
-    },
-    {
-      id: 'meditech-diagnostics',
-      company: 'MediTech Labs',
+      id: 'medtech-workflow-automation',
+      company: 'MedTech Solutions',
       logo: 'MT',
       industry: 'Healthcare',
       industryIcon: Heart,
       category: 'healthcare',
-      headline: 'Improved diagnostic accuracy by 34%',
-      summary: 'AI-assisted diagnostic system that analyzes medical imaging and patient data to support healthcare professionals in making faster, more accurate decisions.',
+      headline: 'Automated 92% of appointment workflows in 7 days',
+      summary: 'AI Workflow Automation eliminated manual scheduling, automated patient reminders, and streamlined follow-up communications across 5 clinic locations.',
       metrics: [
-        { label: 'Diagnostic Accuracy', value: '+34%' },
-        { label: 'Analysis Time', value: '-58%' },
-        { label: 'Patient Outcomes', value: '+29%' }
+        { label: 'Workflow Automation', value: '92%' },
+        { label: 'Manual Tasks Reduced', value: '-75%' },
+        { label: 'Implementation Time', value: '7 days' }
       ],
-      link: '/case-studies/meditech',
+      link: '/case-studies/medtech',
       featured: true
+    },
+    {
+      id: 'proptech-api-integration',
+      company: 'PropTech Realty',
+      logo: 'PT',
+      industry: 'Real Estate',
+      industryIcon: Briefcase,
+      category: 'api-integration',
+      headline: 'Custom ChatGPT integration boosted lead conversion 67%',
+      summary: 'Custom API & ChatGPT Integration connected MLS data with intelligent lead qualification, providing instant property recommendations and scheduling showings.',
+      metrics: [
+        { label: 'Lead Conversion', value: '+67%' },
+        { label: 'Response Time', value: '24/7 instant' },
+        { label: 'Qualified Leads', value: '+45%' }
+      ],
+      link: '/case-studies/proptech',
+      featured: true
+    },
+    {
+      id: 'fintech-industry-learning',
+      company: 'FinanceFlow Corp',
+      logo: 'FF',
+      industry: 'Finance',
+      industryIcon: BarChart3,
+      category: 'ai-learning',
+      headline: 'Industry-specific AI learned complex compliance in 5 days',
+      summary: 'Industry-Specific AI Learning adapted to financial regulations, compliance requirements, and customer scenarios, processing 94% of inquiries accurately.',
+      metrics: [
+        { label: 'Compliance Accuracy', value: '94%' },
+        { label: 'Learning Time', value: '5 days' },
+        { label: 'Manual Review Reduced', value: '-80%' }
+      ],
+      link: '/case-studies/fintech'
+    },
+    {
+      id: 'ecommerce-customer-interaction',
+      company: 'ShopSmart',
+      logo: 'SS',
+      industry: 'E-commerce',
+      industryIcon: Store,
+      category: 'customer-interaction',
+      headline: 'AI-powered interactions increased sales 54%',
+      summary: 'AI-Powered Customer Interactions transformed website into 24/7 sales assistant, helping customers find products, check inventory, and complete purchases.',
+      metrics: [
+        { label: 'Sales Increase', value: '+54%' },
+        { label: 'Cart Abandonment', value: '-38%' },
+        { label: 'Customer Satisfaction', value: '4.8/5' }
+      ],
+      link: '/case-studies/shopsmart'
+    },
+    {
+      id: 'marketing-data-optimization',
+      company: 'GrowthTech Agency',
+      logo: 'GT',
+      industry: 'Marketing',
+      industryIcon: TrendingUp,
+      category: 'data-optimization',
+      headline: 'Data-driven optimization improved ROI 89%',
+      summary: 'Data-Driven Optimization continuously analyzed campaign performance, automatically adjusted budgets, and identified high-converting audiences in real-time.',
+      metrics: [
+        { label: 'ROI Improvement', value: '+89%' },
+        { label: 'Budget Efficiency', value: '+72%' },
+        { label: 'Decision Speed', value: 'Real-time' }
+      ],
+      link: '/case-studies/growthtech',
+      featured: true
+    },
+    {
+      id: 'startup-free-resources',
+      company: 'TechStartup Inc',
+      logo: 'TS',
+      industry: 'SaaS',
+      industryIcon: Rocket,
+      category: 'free-resources',
+      headline: 'Free AI resources accelerated automation by 6 months',
+      summary: 'Free AI Resources & Tools provided templates and playbooks that enabled rapid implementation of customer onboarding and support automation.',
+      metrics: [
+        { label: 'Implementation Speed', value: '6 months faster' },
+        { label: 'Setup Cost', value: '$0 initial' },
+        { label: 'Automation Coverage', value: '85%' }
+      ],
+      link: '/case-studies/techstartup'
+    },
+    {
+      id: 'retail-workflow-automation',
+      company: 'RetailMax Chain',
+      logo: 'RM',
+      industry: 'Retail',
+      industryIcon: Store,
+      category: 'workflow-automation',
+      headline: 'Automated inventory management saved 25 hours/week',
+      summary: 'AI Workflow Automation eliminated manual stock tracking, automated reorder alerts, and streamlined supplier communications across 12 locations.',
+      metrics: [
+        { label: 'Time Saved', value: '25 hrs/week' },
+        { label: 'Stock Accuracy', value: '+94%' },
+        { label: 'Reorder Efficiency', value: '+78%' }
+      ],
+      link: '/case-studies/retailmax'
+    },
+    {
+      id: 'legal-api-integration',
+      company: 'LawTech Partners',
+      logo: 'LP',
+      industry: 'Legal',
+      industryIcon: Briefcase,
+      category: 'api-integration',
+      headline: 'Custom AI integration reduced document review time 73%',
+      summary: 'Custom API & ChatGPT Integration connected case management system with intelligent document analysis and legal research capabilities.',
+      metrics: [
+        { label: 'Review Time', value: '-73%' },
+        { label: 'Accuracy Rate', value: '97%' },
+        { label: 'Client Satisfaction', value: '+85%' }
+      ],
+      link: '/case-studies/lawtech'
+    },
+    {
+      id: 'education-ai-learning',
+      company: 'EduTech Academy',
+      logo: 'EA',
+      industry: 'Education',
+      industryIcon: Users,
+      category: 'ai-learning',
+      headline: 'AI learned curriculum specifics and improved student engagement 91%',
+      summary: 'Industry-Specific AI Learning adapted to educational content, student behavior patterns, and course requirements for personalized learning experiences.',
+      metrics: [
+        { label: 'Student Engagement', value: '+91%' },
+        { label: 'Completion Rate', value: '+67%' },
+        { label: 'Learning Efficiency', value: '+52%' }
+      ],
+      link: '/case-studies/edutech'
     }
   ];
 
   const resultStats: ResultStat[] = [
-    { number: '80+', label: 'Businesses Transformed', icon: Users },
-    { number: '30-50%', label: 'Average Time Savings', icon: TrendingUp },
-    { number: '100+', label: 'AI Workflows Deployed', icon: Rocket },
-    { number: '4.9/5', label: 'Client Satisfaction', icon: CheckCircle }
+    { number: '120+', label: 'Businesses Automated', icon: Users },
+    { number: '7 days', label: 'Average Implementation', icon: Rocket },
+    { number: '200+', label: 'AI Workflows Deployed', icon: CheckCircle },
+    { number: '89%', label: 'Average ROI Improvement', icon: TrendingUp }
   ];
 
   const trustedCompanies = [
-    { name: 'GlobalShop', industry: 'E-commerce' },
-    { name: 'HealthPlus', industry: 'Healthcare' },
-    { name: 'CloudSoft', industry: 'SaaS' },
-    { name: 'RetailMax', industry: 'Retail' },
-    { name: 'MediTech', industry: 'Healthcare' },
-    { name: 'SalesForce Pro', industry: 'Sales' }
+    { name: 'MedTech Solutions', industry: 'Healthcare' },
+    { name: 'PropTech Realty', industry: 'Real Estate' },
+    { name: 'FinanceFlow Corp', industry: 'Finance' },
+    { name: 'ShopSmart', industry: 'E-commerce' },
+    { name: 'GrowthTech Agency', industry: 'Marketing' },
+    { name: 'TechStartup Inc', industry: 'SaaS' },
+    { name: 'RetailMax Chain', industry: 'Retail' },
+    { name: 'LawTech Partners', industry: 'Legal' },
+    { name: 'EduTech Academy', industry: 'Education' }
   ];
 
   const filteredCaseStudies = activeFilter === 'all' 
@@ -213,8 +266,11 @@ export default function CaseStudiesPage() {
                     Advanta AI
                   </span>
                 </h1>
-                <p className="text-xl text-gray-600 leading-relaxed">
-                  Discover how businesses are scaling faster, saving time, and boosting productivity with AI-powered solutions
+                <p className="text-xl text-gray-600 leading-relaxed mb-4">
+                  See how our 6 core capabilities transform businesses across industries with measurable outcomes
+                </p>
+                <p className="text-lg text-gray-500">
+                  AI Workflow Automation • Custom API Integrations • Industry-Specific Learning • Customer Interactions • Data Optimization • Free Resources
                 </p>
               </motion.div>
             </div>
