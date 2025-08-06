@@ -35,7 +35,6 @@ export function NewHeader() {
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Resources', href: '/resources' },
     { name: 'Free Tools', href: '/free-tools' },
     { name: 'ROI Calculator', href: '/roi-calculator' },
     { name: 'AI Marketplace', href: '/marketplace' },
