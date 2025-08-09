@@ -406,7 +406,7 @@ export default function FantasyFootballTools() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-blue-900 to-purple-900">
+    <div className="min-h-screen bg-white">
       <Helmet>
         <title>Fantasy Football Tools - AI Draft Advisor & Start/Sit Analyzer | Advanta AI</title>
         <meta name="description" content="AI-powered fantasy football tools including draft advisor, start/sit analyzer, and weekly matchup insights. Make smarter fantasy decisions with real NFL data." />
@@ -434,24 +434,24 @@ export default function FantasyFootballTools() {
             className="text-center mb-12"
           >
             <div className="flex items-center justify-center mb-6">
-              <Trophy className="w-12 h-12 text-green-400 mr-4" />
-              <h1 className="text-4xl md:text-5xl font-bold text-white">
+              <Trophy className="w-12 h-12 text-green-600 mr-4" />
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
                 Fantasy Football Tools
               </h1>
             </div>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               AI-powered draft advisor and start/sit analyzer using real NFL data. 
               Make smarter fantasy decisions with advanced analytics and matchup insights.
             </p>
             
             <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+              <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-100">
                 🧠 AI Draft Advisor
               </Badge>
-              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+              <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-100">
                 📊 Start/Sit Analyzer
               </Badge>
-              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+              <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-100">
                 🏈 Live NFL Data
               </Badge>
             </div>
@@ -466,24 +466,24 @@ export default function FantasyFootballTools() {
               transition={{ delay: 0.2 }}
             >
               <Tabs defaultValue="draft" className="w-full" onValueChange={handleTabChange}>
-                <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-md border-white/20">
-                  <TabsTrigger value="draft" className="text-white data-[state=active]:bg-white/20">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-100 border-gray-200">
+                  <TabsTrigger value="draft" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-gray-900">
                     <Target className="w-4 h-4 mr-2" />
                     Draft Advisor
                   </TabsTrigger>
-                  <TabsTrigger value="startsit" className="text-white data-[state=active]:bg-white/20">
+                  <TabsTrigger value="startsit" className="text-gray-700 data-[state=active]:bg-white data-[state=active]:text-gray-900">
                     <Users className="w-4 h-4 mr-2" />
                     Start/Sit
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="draft" className="mt-6">
-                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                  <Card className="bg-gray-50 border-gray-200 shadow-lg">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center">
+                      <CardTitle className="text-gray-900 flex items-center">
                         🎯 AI Draft Advisor
                       </CardTitle>
-                      <CardDescription className="text-gray-300">
+                      <CardDescription className="text-gray-600">
                         Get AI-powered draft recommendations based on league settings and available players
                       </CardDescription>
                     </CardHeader>

@@ -143,7 +143,7 @@ export default function MovieMatchmaker() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-white">
       <Helmet>
         <title>AI Movie Matchmaker - Personalized Film Recommendations | Advanta AI</title>
         <meta name="description" content="Discover your next favorite movie with our AI-powered recommendation engine. Get personalized film suggestions based on your preferences, mood, and viewing history." />
@@ -172,12 +172,12 @@ export default function MovieMatchmaker() {
             className="text-center mb-12"
           >
             <div className="flex items-center justify-center mb-6">
-              <Film className="w-12 h-12 text-purple-400 mr-4" />
-              <h1 className="text-4xl md:text-6xl font-bold text-white">
+              <Film className="w-12 h-12 text-purple-600 mr-4" />
+              <h1 className="text-4xl md:text-6xl font-bold text-gray-900">
                 Movie Matchmaker
               </h1>
             </div>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Discover your next favorite film with AI-powered recommendations tailored to your unique taste and mood
             </p>
           </motion.div>
@@ -191,26 +191,26 @@ export default function MovieMatchmaker() {
               transition={{ delay: 0.2 }}
               className="lg:col-span-1"
             >
-              <Card className="bg-white/10 backdrop-blur-md border-white/20 sticky top-8">
+              <Card className="bg-gray-50 border-gray-200 sticky top-8 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Sparkles className="w-5 h-5 mr-2 text-purple-400" />
+                  <CardTitle className="text-gray-900 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
                     Your Preferences
                   </CardTitle>
-                  <CardDescription className="text-gray-300">
+                  <CardDescription className="text-gray-600">
                     Tell us what you're in the mood for
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Movie Search */}
                   <div>
-                    <Label className="text-white text-sm font-medium">Quick Movie Search</Label>
+                    <Label className="text-gray-900 text-sm font-medium">Quick Movie Search</Label>
                     <div className="flex mt-2">
                       <Input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search for a specific movie..."
-                        className="bg-white/10 border-white/20 text-white placeholder-gray-400 flex-1"
+                        className="bg-white border-gray-300 text-gray-900 placeholder-gray-500 flex-1"
                         onKeyPress={(e) => e.key === 'Enter' && handleMovieSearch()}
                       />
                       <Button 
@@ -225,7 +225,7 @@ export default function MovieMatchmaker() {
 
                   {/* Genres */}
                   <div>
-                    <Label className="text-white text-sm font-medium">Genres</Label>
+                    <Label className="text-gray-900 text-sm font-medium">Genres</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {genres.map(genre => (
                         <div key={genre} className="flex items-center space-x-2">
@@ -233,9 +233,9 @@ export default function MovieMatchmaker() {
                             id={genre}
                             checked={preferences.genres.includes(genre)}
                             onCheckedChange={() => handleGenreToggle(genre)}
-                            className="border-white/20"
+                            className="border-gray-300"
                           />
-                          <Label htmlFor={genre} className="text-gray-300 text-xs">
+                          <Label htmlFor={genre} className="text-gray-700 text-xs">
                             {genre}
                           </Label>
                         </div>

@@ -177,7 +177,7 @@ export default function TravelHackerAI() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+    <div className="min-h-screen bg-white">
       <Helmet>
         <title>Travel Hacker AI - Cheap Flights & Budget Travel Deals | Advanta AI</title>
         <meta name="description" content="Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search. Save money on flights and travel with smart hacks." />
@@ -207,24 +207,24 @@ export default function TravelHackerAI() {
             className="text-center mb-12"
           >
             <div className="flex items-center justify-center mb-6">
-              <Plane className="w-12 h-12 text-blue-400 mr-4" />
-              <h1 className="text-4xl md:text-5xl font-bold text-white">
+              <Plane className="w-12 h-12 text-blue-600 mr-4" />
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
                 Travel Hacker AI
               </h1>
             </div>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Let Travel Hacker AI do all the heavy lifting and remove the headaches of planning a trip. 
               Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search.
             </p>
             
             <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+              <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-100">
                 💸 Ultra-cheap roundtrip flights
               </Badge>
-              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+              <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-100">
                 ⚡ Rare mistake fares
               </Badge>
-              <Badge variant="outline" className="text-white border-white/30 bg-white/10">
+              <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-100">
                 🧳 Full budget travel plans
               </Badge>
             </div>
@@ -238,9 +238,9 @@ export default function TravelHackerAI() {
               animate="show"
               transition={{ delay: 0.2 }}
             >
-              <Card className="bg-white/10 backdrop-blur-md border-white/20">
+              <Card className="bg-gray-50 border-gray-200 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-white flex items-center">
+                  <CardTitle className="text-gray-900 flex items-center">
                     <Search className="w-5 h-5 mr-2" />
                     Find My Travel Deal
                   </CardTitle>
@@ -249,37 +249,37 @@ export default function TravelHackerAI() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="departure" className="text-white">Departure City</Label>
+                        <Label htmlFor="departure" className="text-gray-900">Departure City</Label>
                         <Input
                           id="departure"
                           placeholder="e.g., Nashville, New York"
                           value={formData.departureCity}
                           onChange={(e) => setFormData(prev => ({ ...prev, departureCity: e.target.value }))}
-                          className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                          className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="destination" className="text-white">Destination (Optional)</Label>
+                        <Label htmlFor="destination" className="text-gray-900">Destination (Optional)</Label>
                         <Input
                           id="destination"
                           placeholder="Leave empty for anywhere"
                           value={formData.destinationCity}
                           onChange={(e) => setFormData(prev => ({ ...prev, destinationCity: e.target.value }))}
-                          className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                          className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <Label className="text-white mb-3 block">When do you want to travel?</Label>
+                      <Label className="text-gray-900 mb-3 block">When do you want to travel?</Label>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
-                            formData.datePreset === 'spontaneous' ? 'bg-purple-600 border-purple-500' : ''
+                          className={`border-gray-300 text-gray-700 hover:bg-gray-100 bg-white ${
+                            formData.datePreset === 'spontaneous' ? 'bg-purple-600 border-purple-500 text-white' : ''
                           }`}
                           onClick={() => {
                             setFormData(prev => ({ 
