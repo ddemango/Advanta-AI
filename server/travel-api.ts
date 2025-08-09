@@ -363,6 +363,18 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
         getRealisticPrice(fromCode, dest.code)
       );
 
+      // Generate best deal dates throughout the year when no specific date selected
+      const generateBestDealDates = () => {
+        const bestDealMonths = [
+          '2025-09-15', // September - low season for Europe
+          '2025-10-22', // October - shoulder season 
+          '2025-11-12'  // November - cheapest time to fly
+        ];
+        return bestDealMonths;
+      };
+      
+      const bestDealDates = departDate === '2025-07-08' ? generateBestDealDates() : [departDate, departDate, departDate];
+      
       return popularDestinations.map((dest, index) => {
         return {
           airline: ['Virgin Atlantic', 'Air France', 'Japan Airlines'][index],
@@ -372,11 +384,11 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
           duration: ['7h 45m', '8h 15m', '13h 15m'][index],
           stops: [0, 0, 1][index],
           route: `${fromCode} → ${dest.code}`,
-          departureDate: departDate, // Use the exact date user selected
+          departureDate: bestDealDates[index],
           links: {
             googleFlights: `https://flights.google.com/search?f=0&tfs=CBwQAhojEgoyMDI1LTA4LTE1agcIARID${fromCode}cgcIARID${dest.code}GgJKUw`,
-            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${dest.code}/${departDate}`,
-            momondo: `https://www.momondo.com/flight-search/${fromCode}-${dest.code}/${departDate}`
+            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${dest.code}/${bestDealDates[index]}`,
+            momondo: `https://www.momondo.com/flight-search/${fromCode}-${dest.code}/${bestDealDates[index]}`
           }
         };
       });

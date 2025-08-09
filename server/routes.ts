@@ -5402,7 +5402,7 @@ Please provide analysis in this exact JSON format (no additional text):
       const userBudget = budget || undefined;
       
       // Use structured dates when available
-      let departDate = req.body.departDate || '2025-07-08'; // Use provided departDate first, then fallback
+      let departDate = req.body.departDate || null; // Don't use fallback date if none provided
       let returnDate = req.body.returnDate || '';
       
       console.log(`🐛 Date debug: req.body.departDate=${req.body.departDate}, startDate=${startDate}, endDate=${endDate}`);
@@ -5458,9 +5458,17 @@ Please provide analysis in this exact JSON format (no additional text):
               };
               const month = monthMap[monthName as keyof typeof monthMap];
               departDate = `${year}-${month}-15`;
+            } else {
+              // If no date found anywhere, use fallback for API compatibility
+              departDate = '2025-07-08';
             }
           }
         }
+      }
+      
+      // If still no departDate, use fallback for API compatibility
+      if (!departDate) {
+        departDate = '2025-07-08';
       }
 
       // Get unified travel data from all sources
