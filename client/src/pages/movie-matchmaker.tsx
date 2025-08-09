@@ -189,9 +189,9 @@ export default function MovieMatchmaker() {
               initial="hidden"
               animate="show"
               transition={{ delay: 0.2 }}
-              className="lg:col-span-1"
+              className="lg:col-span-1 order-2 lg:order-1"
             >
-              <Card className="bg-gray-50 border-gray-200 sticky top-8 shadow-lg">
+              <Card className="bg-gray-50 border-gray-200 lg:sticky lg:top-8 shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-gray-900 flex items-center">
                     <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
@@ -246,9 +246,9 @@ export default function MovieMatchmaker() {
                   {/* Rating & Runtime */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-white text-sm">Min Rating</Label>
+                      <Label className="text-gray-900 text-sm">Min Rating</Label>
                       <Select value={preferences.minRating.toString()} onValueChange={(value) => setPreferences(prev => ({ ...prev, minRating: parseFloat(value) }))}>
-                        <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
+                        <SelectTrigger className="bg-white border-gray-300 text-gray-900 mt-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -262,9 +262,9 @@ export default function MovieMatchmaker() {
                     </div>
                     
                     <div>
-                      <Label className="text-white text-sm">Max Runtime</Label>
+                      <Label className="text-gray-900 text-sm">Max Runtime</Label>
                       <Select value={preferences.maxRuntime.toString()} onValueChange={(value) => setPreferences(prev => ({ ...prev, maxRuntime: parseInt(value) }))}>
-                        <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
+                        <SelectTrigger className="bg-white border-gray-300 text-gray-900 mt-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -280,9 +280,9 @@ export default function MovieMatchmaker() {
 
                   {/* Decade & Mood */}
                   <div>
-                    <Label className="text-white text-sm">Decade Preference</Label>
+                    <Label className="text-gray-900 text-sm">Decade Preference</Label>
                     <Select value={preferences.decadePreference} onValueChange={(value) => setPreferences(prev => ({ ...prev, decadePreference: value }))}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
+                      <SelectTrigger className="bg-white border-gray-300 text-gray-900 mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -296,9 +296,9 @@ export default function MovieMatchmaker() {
                   </div>
 
                   <div>
-                    <Label className="text-white text-sm">Mood</Label>
+                    <Label className="text-gray-900 text-sm">Mood</Label>
                     <Select value={preferences.moodPreference} onValueChange={(value) => setPreferences(prev => ({ ...prev, moodPreference: value }))}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white mt-1">
+                      <SelectTrigger className="bg-white border-gray-300 text-gray-900 mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -338,16 +338,16 @@ export default function MovieMatchmaker() {
               initial="hidden"
               animate="show"
               transition={{ delay: 0.4 }}
-              className="lg:col-span-2"
+              className="lg:col-span-2 order-1 lg:order-2"
             >
               {error && (
-                <Card className="bg-red-500/10 backdrop-blur-md border-red-500/30 mb-6">
+                <Card className="bg-red-50 border-red-200 mb-6">
                   <CardContent className="text-center py-8">
-                    <div className="text-red-400 text-6xl mb-4">🎬</div>
-                    <h3 className="text-lg font-medium text-red-300 mb-2">
+                    <div className="text-red-500 text-6xl mb-4">🎬</div>
+                    <h3 className="text-lg font-medium text-red-700 mb-2">
                       Recommendations Unavailable
                     </h3>
-                    <p className="text-sm text-red-200 mb-4">{error}</p>
+                    <p className="text-sm text-red-600 mb-4">{error}</p>
                     <Button 
                       onClick={() => setError(null)}
                       className="bg-red-600 hover:bg-red-700 text-white"
@@ -359,13 +359,13 @@ export default function MovieMatchmaker() {
               )}
 
               {recommendations.length === 0 && !error && !isSearching && (
-                <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                <Card className="bg-gray-50 border-gray-200">
                   <CardContent className="text-center py-16">
                     <Film className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                    <h3 className="text-lg font-medium text-white mb-2">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
                       Ready to Discover Amazing Movies?
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-600">
                       Set your preferences and get personalized recommendations
                     </p>
                   </CardContent>
@@ -374,11 +374,11 @@ export default function MovieMatchmaker() {
 
               {recommendations.length > 0 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
                     Perfect Matches for You
                   </h2>
                   {recommendations.map((movie, index) => (
-                    <Card key={index} className="bg-white/10 backdrop-blur-md border-white/20">
+                    <Card key={index} className="bg-gray-50 border-gray-200 shadow-lg">
                       <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row gap-6">
                           {/* Movie Poster */}
@@ -386,10 +386,10 @@ export default function MovieMatchmaker() {
                             <img
                               src={movie.poster}
                               alt={movie.title}
-                              className="w-32 h-48 object-cover rounded-lg border border-white/20"
+                              className="w-32 h-48 object-cover rounded-lg border border-gray-300"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = 'https://via.placeholder.com/200x300/333/fff?text=No+Image';
+                                target.src = 'https://via.placeholder.com/200x300/f0f0f0/666?text=No+Image';
                               }}
                             />
                           </div>
@@ -398,10 +398,10 @@ export default function MovieMatchmaker() {
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-3">
                               <div>
-                                <h3 className="text-xl font-bold text-white mb-1">
+                                <h3 className="text-xl font-bold text-gray-900 mb-1">
                                   {movie.title}
                                 </h3>
-                                <div className="flex items-center space-x-4 text-sm text-gray-300">
+                                <div className="flex items-center space-x-4 text-sm text-gray-600">
                                   <span className="flex items-center">
                                     <Calendar className="w-4 h-4 mr-1" />
                                     {movie.year}
@@ -411,7 +411,7 @@ export default function MovieMatchmaker() {
                                     {movie.runtime}m
                                   </span>
                                   <span className="flex items-center">
-                                    <Star className="w-4 h-4 mr-1 text-yellow-400" />
+                                    <Star className="w-4 h-4 mr-1 text-yellow-500" />
                                     {movie.rating}
                                   </span>
                                 </div>
@@ -426,19 +426,19 @@ export default function MovieMatchmaker() {
                             {/* Genres */}
                             <div className="flex flex-wrap gap-2 mb-3">
                               {movie.genre.map(g => (
-                                <Badge key={g} variant="outline" className="border-purple-400 text-purple-300">
+                                <Badge key={g} variant="outline" className="border-purple-300 text-purple-600">
                                   {g}
                                 </Badge>
                               ))}
                             </div>
 
                             {/* Plot */}
-                            <p className="text-gray-300 text-sm mb-3 line-clamp-3">
+                            <p className="text-gray-700 text-sm mb-3 line-clamp-3">
                               {movie.plot}
                             </p>
 
                             {/* Cast & Director */}
-                            <div className="text-sm text-gray-400 mb-3">
+                            <div className="text-sm text-gray-600 mb-3">
                               <p><strong>Director:</strong> {movie.director}</p>
                               <p><strong>Cast:</strong> {movie.cast.slice(0, 3).join(', ')}</p>
                             </div>
@@ -446,7 +446,7 @@ export default function MovieMatchmaker() {
                             {/* Streaming Platforms */}
                             {movie.streamingPlatforms && movie.streamingPlatforms.length > 0 && (
                               <div className="mb-3">
-                                <p className="text-sm font-semibold text-gray-300 mb-2 flex items-center">
+                                <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                                   </svg>
@@ -454,7 +454,7 @@ export default function MovieMatchmaker() {
                                 </p>
                                 <div className="flex flex-wrap gap-1">
                                   {movie.streamingPlatforms.map((platform, pIndex) => (
-                                    <Badge key={pIndex} className="bg-green-600/80 text-white text-xs px-2 py-1">
+                                    <Badge key={pIndex} className="bg-green-600 text-white text-xs px-2 py-1">
                                       {platform}
                                     </Badge>
                                   ))}
@@ -464,10 +464,10 @@ export default function MovieMatchmaker() {
 
                             {/* Reasoning */}
                             {movie.reasoning && movie.reasoning.length > 0 && (
-                              <div className="mt-4 p-3 bg-white/5 rounded-lg">
-                                <h4 className="text-white font-semibold mb-2 text-sm">Why This Movie?</h4>
+                              <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+                                <h4 className="text-gray-900 font-semibold mb-2 text-sm">Why This Movie?</h4>
                                 {movie.reasoning.map((reason, i) => (
-                                  <p key={i} className="text-gray-300 text-xs mb-1">• {reason}</p>
+                                  <p key={i} className="text-gray-700 text-xs mb-1">• {reason}</p>
                                 ))}
                               </div>
                             )}
