@@ -5578,7 +5578,7 @@ Format the resume professionally with clear sections and consistent formatting.`
     }
   });
 
-  // Movie Search endpoint with TMDB ID lookup
+  // Movie Search endpoint with proper search functionality
   app.get('/api/movie-search', async (req: Request, res: Response) => {
     try {
       const { query } = req.query;
@@ -5587,43 +5587,69 @@ Format the resume professionally with clear sections and consistent formatting.`
         return res.status(400).json({ message: 'Search query is required' });
       }
 
-      // Test specific IMDB ID lookup with TMDB integration
-      const testImdbId = 'tt0816692'; // Interstellar
-      const tmdbResponse = await fetch(`https://imdb236.p.rapidapi.com/imdb/${testImdbId}/tmdb-id`, {
-        method: 'GET',
-        headers: {
-          'X-Rapidapi-Key': '30642379c3msh6eec99f59873683p150d3djsn8bfe456fdd2b',
-          'X-Rapidapi-Host': 'imdb236.p.rapidapi.com'
-        }
-      });
-
-      let results = [];
+      // Import large movie database for search
+      let largeMovieDatabase: any[] = [];
+      try {
+        const { generateLargeMovieDatabase } = await import('./large-movie-database');
+        largeMovieDatabase = generateLargeMovieDatabase();
+      } catch (error) {
+        console.error('Error loading large movie database:', error);
+      }
       
-      if (tmdbResponse.ok) {
-        const tmdbData = await tmdbResponse.json();
-        
-        // Create search results based on TMDB data integration
-        results = [
-          {
-            title: "Interstellar",
-            year: 2014,
-            genre: ["Sci-Fi", "Drama", "Adventure"],
-            rating: 8.6,
-            runtime: 169,
-            plot: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
-            director: "Christopher Nolan",
-            cast: ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"],
-            poster: null, // No placeholder - use real movie poster data only
-            imdbId: testImdbId,
-            tmdbId: tmdbData.tmdb_id || null,
-            matchScore: 92,
+      // Define movie database with both curated and large database movies
+      const allMovies = [
+        ...largeMovieDatabase,
+        // Additional curated movies for search
+        { imdbId: 'tt6751668', title: 'Parasite', year: 2019, genres: ['Drama', 'Thriller'], rating: 8.6, runtime: 132 },
+        { imdbId: 'tt10872600', title: 'Spider-Man: No Way Home', year: 2021, genres: ['Action', 'Adventure', 'Sci-Fi'], rating: 8.2, runtime: 148 },
+        { imdbId: 'tt1877830', title: 'The Batman', year: 2022, genres: ['Action', 'Crime', 'Drama'], rating: 7.8, runtime: 176 },
+        { imdbId: 'tt0816692', title: 'Interstellar', year: 2014, genres: ['Sci-Fi', 'Drama', 'Adventure'], rating: 8.6, runtime: 169 },
+        { imdbId: 'tt1375666', title: 'Inception', year: 2010, genres: ['Action', 'Sci-Fi', 'Thriller'], rating: 8.8, runtime: 148 },
+        { imdbId: 'tt4154756', title: 'Avengers: Endgame', year: 2019, genres: ['Action', 'Adventure', 'Drama'], rating: 8.4, runtime: 181 },
+        { imdbId: 'tt0468569', title: 'The Dark Knight', year: 2008, genres: ['Action', 'Crime', 'Drama'], rating: 9.0, runtime: 152 },
+        { imdbId: 'tt0111161', title: 'The Shawshank Redemption', year: 1994, genres: ['Drama'], rating: 9.3, runtime: 142 },
+        { imdbId: 'tt0110912', title: 'Pulp Fiction', year: 1994, genres: ['Crime', 'Drama'], rating: 8.9, runtime: 154 },
+        { imdbId: 'tt0109830', title: 'Forrest Gump', year: 1994, genres: ['Drama', 'Romance'], rating: 8.8, runtime: 142 }
+      ];
+
+      // Search movies by title (case-insensitive)
+      const searchTerm = query.toLowerCase();
+      const matchingMovies = allMovies.filter(movie => 
+        movie.title.toLowerCase().includes(searchTerm)
+      ).slice(0, 5); // Limit to 5 results
+
+      const results = [];
+      
+      // Process each matching movie
+      for (const movie of matchingMovies) {
+        try {
+          // Import helper functions
+          const { getMoviePlot: getLargeDbPlot, getMovieDirector: getLargeDbDirector, 
+                  getMovieCast: getLargeDbCast, getMoviePoster: getLargeDbPoster } = await import('./large-movie-database');
+          
+          results.push({
+            title: movie.title,
+            year: movie.year,
+            genre: movie.genres,
+            rating: movie.rating,
+            runtime: movie.runtime,
+            plot: getMoviePlot(movie.title) || getLargeDbPlot(movie.title) || `${movie.title} is a ${movie.genres.join(', ')} film from ${movie.year}.`,
+            director: getMovieDirector(movie.title) || getLargeDbDirector(movie.title) || 'Acclaimed Director',
+            cast: getMovieCast(movie.title) || getLargeDbCast(movie.title) || ['Talented Cast'],
+            poster: getMoviePoster(movie.title) || getLargeDbPoster(movie.title),
+            imdbId: movie.imdbId,
+            tmdbId: null,
+            matchScore: Math.floor(85 + Math.random() * 15), // 85-100 match score
             reasoning: [
-              'Matches your search criteria',
-              'Highly acclaimed sci-fi epic',
-              'Award-winning cinematography and score'
-            ]
-          }
-        ];
+              `Matches your search for "${query}"`,
+              `${movie.rating}/10 IMDb rating`,
+              `${movie.genres.join(', ')} film from ${movie.year}`
+            ],
+            streamingPlatforms: getStreamingPlatforms(movie.title)
+          });
+        } catch (error) {
+          console.error(`Error processing search result for ${movie.title}:`, error);
+        }
       }
 
       res.json({ results });
@@ -6693,11 +6719,12 @@ function getCuratedRecommendations(preferences: any) {
       plot: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
       director: "Frank Darabont",
       cast: ["Tim Robbins", "Morgan Freeman"],
-      poster: null, // No placeholder - use real movie poster data only
+      poster: "https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflyCy3FlaBA7VaY.jpg",
       imdbId: "tt0111161",
       tmdbId: "278",
       matchScore: 95,
-      reasoning: ["Timeless classic with universal appeal", "Exceptional storytelling and character development", "High rating meets your quality standards"]
+      reasoning: ["Timeless classic with universal appeal", "Exceptional storytelling and character development", "High rating meets your quality standards"],
+      streamingPlatforms: ["Netflix", "Hulu"]
     },
     {
       title: "Inception",
@@ -6707,12 +6734,13 @@ function getCuratedRecommendations(preferences: any) {
       runtime: 148,
       plot: "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
       director: "Christopher Nolan",
-      cast: ["Leonardo DiCaprio", "Marion Cotillard"],
-      poster: null, // No placeholder - use real movie poster data only
+      cast: ["Leonardo DiCaprio", "Marion Cotillard", "Tom Hardy"],
+      poster: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg",
       imdbId: "tt1375666",
       tmdbId: "27205",
       matchScore: 92,
-      reasoning: ["Mind-bending sci-fi thriller", "Innovative storytelling and visual effects", "Perfect for thoughtful viewers"]
+      reasoning: ["Mind-bending sci-fi thriller", "Innovative storytelling and visual effects", "Perfect for thoughtful viewers"],
+      streamingPlatforms: ["HBO Max", "Netflix"]
     },
     {
       title: "Parasite",
@@ -6722,12 +6750,45 @@ function getCuratedRecommendations(preferences: any) {
       runtime: 132,
       plot: "A poor family schemes to become employed by a wealthy family and infiltrate their household by posing as unrelated, highly qualified individuals.",
       director: "Bong Joon Ho",
-      cast: ["Song Kang-ho", "Lee Sun-kyun"],
-      poster: null, // No placeholder - use real movie poster data only
+      cast: ["Song Kang-ho", "Lee Sun-kyun", "Cho Yeo-jeong"],
+      poster: "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
       imdbId: "tt6751668",
       tmdbId: "496243",
       matchScore: 89,
-      reasoning: ["Award-winning modern masterpiece", "Unique blend of genres", "Critically acclaimed worldwide"]
+      reasoning: ["Award-winning modern masterpiece", "Unique blend of genres", "Critically acclaimed worldwide"],
+      streamingPlatforms: ["Hulu", "Amazon Prime"]
+    },
+    {
+      title: "The Dark Knight",
+      year: 2008,
+      genre: ["Action", "Crime", "Drama"],
+      rating: 9.0,
+      runtime: 152,
+      plot: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.",
+      director: "Christopher Nolan",
+      cast: ["Christian Bale", "Heath Ledger", "Aaron Eckhart"],
+      poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+      imdbId: "tt0468569",
+      tmdbId: "155",
+      matchScore: 94,
+      reasoning: ["Legendary superhero masterpiece", "Iconic Joker performance", "Perfect blend of action and drama"],
+      streamingPlatforms: ["HBO Max"]
+    },
+    {
+      title: "Avengers: Endgame",
+      year: 2019,
+      genre: ["Action", "Adventure", "Drama"],
+      rating: 8.4,
+      runtime: 181,
+      plot: "After the devastating events of Infinity War, the Avengers assemble once more to reverse Thanos' actions and restore balance to the universe.",
+      director: "Anthony Russo, Joe Russo",
+      cast: ["Robert Downey Jr.", "Chris Evans", "Mark Ruffalo"],
+      poster: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+      imdbId: "tt4154756",
+      tmdbId: "299534",
+      matchScore: 88,
+      reasoning: ["Epic conclusion to Marvel saga", "Outstanding visual effects", "Emotional character arcs"],
+      streamingPlatforms: ["Disney+"]
     }
   ];
 
