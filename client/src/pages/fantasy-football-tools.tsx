@@ -130,7 +130,7 @@ export default function FantasyFootballTools() {
     queryKey: ['/api/nfl-players'],
     enabled: true,
     staleTime: 0, // Force fresh data to prevent position corruption
-    cacheTime: 0  // No caching to ensure real-time data integrity
+    gcTime: 0  // No caching to ensure real-time data integrity
   });
 
   // Helper functions
@@ -491,9 +491,9 @@ export default function FantasyFootballTools() {
                       <form onSubmit={handleDraftAnalysis} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="leagueType" className="text-white">League Type</Label>
+                            <Label htmlFor="leagueType" className="text-gray-900">League Type</Label>
                             <Select value={draftData.leagueType} onValueChange={(value) => setDraftData(prev => ({ ...prev, leagueType: value }))}>
-                              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                              <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                                 <SelectValue placeholder="Select league type" />
                               </SelectTrigger>
                               <SelectContent>
@@ -506,9 +506,9 @@ export default function FantasyFootballTools() {
                           </div>
 
                           <div>
-                            <Label htmlFor="scoringSettings" className="text-white">Scoring Format</Label>
+                            <Label htmlFor="scoringSettings" className="text-gray-900">Scoring Format</Label>
                             <Select value={draftData.scoringSettings} onValueChange={(value) => setDraftData(prev => ({ ...prev, scoringSettings: value }))}>
-                              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                              <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                                 <SelectValue placeholder="Scoring format" />
                               </SelectTrigger>
                               <SelectContent>
@@ -522,28 +522,28 @@ export default function FantasyFootballTools() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="currentRound" className="text-white">Current Round</Label>
+                            <Label htmlFor="currentRound" className="text-gray-900">Current Round</Label>
                             <Input
                               value={draftData.currentRound}
                               onChange={(e) => setDraftData(prev => ({ ...prev, currentRound: e.target.value }))}
                               placeholder="e.g., 3"
-                              className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                              className="bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                             />
                           </div>
 
                           <div>
-                            <Label htmlFor="pickNumber" className="text-white">Pick Number in Round</Label>
+                            <Label htmlFor="pickNumber" className="text-gray-900">Pick Number in Round</Label>
                             <Input
                               value={draftData.pickNumber}
                               onChange={(e) => setDraftData(prev => ({ ...prev, pickNumber: e.target.value }))}
                               placeholder="e.g., 8"
-                              className="bg-white/10 border-white/20 text-white placeholder-gray-400"
+                              className="bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <Label className="text-white mb-3 block">Roster Needs (select all that apply)</Label>
+                          <Label className="text-gray-900 mb-3 block">Roster Needs (select all that apply)</Label>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map((position) => (
                               <div key={position} className="flex items-center space-x-2">
@@ -551,9 +551,9 @@ export default function FantasyFootballTools() {
                                   id={position}
                                   checked={draftData.rosterNeeds.includes(position)}
                                   onCheckedChange={(checked) => handleRosterNeedChange(position, !!checked)}
-                                  className="border-white/20"
+                                  className="border-gray-300"
                                 />
-                                <Label htmlFor={position} className="text-white text-sm">{position}</Label>
+                                <Label htmlFor={position} className="text-gray-700 text-sm">{position}</Label>
                               </div>
                             ))}
                           </div>
@@ -581,44 +581,44 @@ export default function FantasyFootballTools() {
                       {/* Draft Results */}
                       {draftResult && (
                         <div className="mt-6">
-                          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                          <Card className="bg-gray-50 border-gray-200 shadow-lg">
                             <CardHeader className="text-center">
                               <div className="flex items-center justify-center mb-2">
-                                <Trophy className="w-6 h-6 text-yellow-400 mr-2" />
-                                <CardTitle className="text-yellow-400 text-xl">Draft Recommendation</CardTitle>
+                                <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
+                                <CardTitle className="text-gray-900 text-xl">Draft Recommendation</CardTitle>
                               </div>
                             </CardHeader>
                             <CardContent>
                               {/* Best Pick */}
-                              <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg p-4 mb-4">
+                              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 mb-4 border border-gray-200">
                                 <div className="flex items-center justify-between mb-2">
-                                  <h3 className="text-lg font-semibold text-white">Best Pick: {draftResult.bestPick.name}</h3>
-                                  <span className="bg-green-500 text-white px-2 py-1 rounded text-sm">{draftResult.bestPick.confidence}% Confidence</span>
+                                  <h3 className="text-lg font-semibold text-gray-900">Best Pick: {draftResult.bestPick.name}</h3>
+                                  <span className="bg-green-600 text-white px-2 py-1 rounded text-sm">{draftResult.bestPick.confidence}% Confidence</span>
                                 </div>
-                                <p className="text-sm text-gray-300 mb-2">
-                                  <span className="font-semibold text-blue-300">{draftResult.bestPick.position}</span> - <span className="font-semibold text-green-300">{draftResult.bestPick.team}</span>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  <span className="font-semibold text-blue-700">{draftResult.bestPick.position}</span> - <span className="font-semibold text-green-700">{draftResult.bestPick.team}</span>
                                 </p>
-                                <p className="text-gray-300">{draftResult.bestPick.analysis}</p>
+                                <p className="text-gray-700">{draftResult.bestPick.analysis}</p>
                               </div>
 
                               {/* Alternative Picks */}
-                              <h4 className="text-white font-semibold mb-3">Alternative Picks:</h4>
+                              <h4 className="text-gray-900 font-semibold mb-3">Alternative Picks:</h4>
                               {draftResult.alternatives.map((alt, index) => (
-                                <div key={index} className="bg-blue-500/20 rounded-lg p-3 mb-2">
+                                <div key={index} className="bg-blue-50 rounded-lg p-3 mb-2 border border-blue-200">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-white font-medium">{alt.name} ({alt.position} - {alt.team})</span>
+                                    <span className="text-gray-900 font-medium">{alt.name} ({alt.position} - {alt.team})</span>
                                   </div>
-                                  <p className="text-gray-300 text-sm mt-1">{alt.reason}</p>
+                                  <p className="text-gray-600 text-sm mt-1">{alt.reason}</p>
                                 </div>
                               ))}
 
                               {/* Strategy Tips */}
                               {draftResult.strategyTips && draftResult.strategyTips.length > 0 && (
                                 <div className="mt-4">
-                                  <h4 className="text-white font-semibold mb-2">Strategy Tips:</h4>
+                                  <h4 className="text-gray-900 font-semibold mb-2">Strategy Tips:</h4>
                                   {draftResult.strategyTips.map((tip, index) => (
-                                    <div key={index} className="p-2 bg-yellow-500/20 rounded border border-yellow-500/30 mb-2">
-                                      <p className="text-yellow-200 text-sm">{tip}</p>
+                                    <div key={index} className="p-2 bg-yellow-50 rounded border border-yellow-200 mb-2">
+                                      <p className="text-yellow-800 text-sm">{tip}</p>
                                     </div>
                                   ))}
                                 </div>
@@ -627,10 +627,10 @@ export default function FantasyFootballTools() {
                               {/* Positional Scarcity */}
                               {draftResult.positionalScarcity && draftResult.positionalScarcity.length > 0 && (
                                 <div className="mt-4">
-                                  <h4 className="text-white font-semibold mb-2">Position Alerts:</h4>
+                                  <h4 className="text-gray-900 font-semibold mb-2">Position Alerts:</h4>
                                   {draftResult.positionalScarcity.map((alert, index) => (
-                                    <div key={index} className="p-2 bg-orange-500/20 rounded border border-orange-500/30 mb-2">
-                                      <p className="text-orange-200 text-sm">{alert}</p>
+                                    <div key={index} className="p-2 bg-orange-50 rounded border border-orange-200 mb-2">
+                                      <p className="text-orange-800 text-sm">{alert}</p>
                                     </div>
                                   ))}
                                 </div>
@@ -644,12 +644,12 @@ export default function FantasyFootballTools() {
                 </TabsContent>
 
                 <TabsContent value="startsit" className="mt-6">
-                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                  <Card className="bg-gray-50 border-gray-200 shadow-lg">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center">
+                      <CardTitle className="text-gray-900 flex items-center">
                         ⚡ Start/Sit Analyzer
                       </CardTitle>
-                      <CardDescription className="text-gray-300">
+                      <CardDescription className="text-gray-600">
                         AI-powered weekly lineup decisions based on matchups and projections
                       </CardDescription>
                     </CardHeader>
@@ -657,9 +657,9 @@ export default function FantasyFootballTools() {
                       <form onSubmit={handleStartSitAnalysis} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="position" className="text-white">Position</Label>
+                            <Label htmlFor="position" className="text-gray-900">Position</Label>
                             <Select value={startSitData.position} onValueChange={(value) => setStartSitData(prev => ({ ...prev, position: value }))}>
-                              <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                              <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                                 <SelectValue placeholder="Select position" />
                               </SelectTrigger>
                               <SelectContent>

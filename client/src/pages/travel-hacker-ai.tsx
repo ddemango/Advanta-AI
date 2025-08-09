@@ -296,8 +296,8 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
-                            formData.datePreset === 'this-month' ? 'bg-purple-600 border-purple-500' : ''
+                          className={`border-gray-300 text-gray-700 hover:bg-gray-100 bg-white ${
+                            formData.datePreset === 'this-month' ? 'bg-purple-600 border-purple-500 text-white' : ''
                           }`}
                           onClick={() => {
                             const now = new Date();
@@ -316,8 +316,8 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
-                            formData.datePreset === 'next-month' ? 'bg-purple-600 border-purple-500' : ''
+                          className={`border-gray-300 text-gray-700 hover:bg-gray-100 bg-white ${
+                            formData.datePreset === 'next-month' ? 'bg-purple-600 border-purple-500 text-white' : ''
                           }`}
                           onClick={() => {
                             const now = new Date();
@@ -337,8 +337,8 @@ export default function TravelHackerAI() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className={`border-white/30 text-white hover:bg-white/10 bg-white/5 ${
-                            formData.datePreset === 'this-year' ? 'bg-purple-600 border-purple-500' : ''
+                          className={`border-gray-300 text-gray-700 hover:bg-gray-100 bg-white ${
+                            formData.datePreset === 'this-year' ? 'bg-purple-600 border-purple-500 text-white' : ''
                           }`}
                           onClick={() => {
                             const now = new Date();
@@ -357,24 +357,24 @@ export default function TravelHackerAI() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="startDate" className="text-white">Departure Date</Label>
+                          <Label htmlFor="startDate" className="text-gray-900">Departure Date</Label>
                           <Input
                             id="startDate"
                             type="date"
                             value={formData.startDate}
                             onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value, datePreset: 'custom' }))}
-                            className="bg-white/10 border-white/30 text-white"
+                            className="bg-white border-gray-300 text-gray-900"
                             required={formData.datePreset !== 'spontaneous'}
                           />
                         </div>
                         <div>
-                          <Label htmlFor="endDate" className="text-white">Return Date</Label>
+                          <Label htmlFor="endDate" className="text-gray-900">Return Date</Label>
                           <Input
                             id="endDate"
                             type="date"
                             value={formData.endDate}
                             onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value, datePreset: 'custom' }))}
-                            className="bg-white/10 border-white/30 text-white"
+                            className="bg-white border-gray-300 text-gray-900"
                           />
                         </div>
                       </div>
@@ -382,19 +382,19 @@ export default function TravelHackerAI() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="budget" className="text-white">Budget (Optional)</Label>
+                        <Label htmlFor="budget" className="text-gray-900">Budget (Optional)</Label>
                         <Input
                           id="budget"
                           placeholder="e.g., $500"
                           value={formData.budget}
                           onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                          className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+                          className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="flexibility" className="text-white">Date Flexibility</Label>
+                        <Label htmlFor="flexibility" className="text-gray-900">Date Flexibility</Label>
                         <Select value={formData.flexibility} onValueChange={(value) => setFormData(prev => ({ ...prev, flexibility: value }))}>
-                          <SelectTrigger className="bg-white/10 border-white/30 text-white">
+                          <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -408,7 +408,7 @@ export default function TravelHackerAI() {
                     </div>
 
                     <div>
-                      <Label className="text-white mb-3 block">Preferences</Label>
+                      <Label className="text-gray-900 mb-3 block">Preferences</Label>
                       <div className="space-y-3">
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -420,8 +420,9 @@ export default function TravelHackerAI() {
                                 preferences: { ...prev.preferences, flightsOnly: !!checked }
                               }))
                             }
+                            className="border-gray-300"
                           />
-                          <Label htmlFor="flightsOnly" className="text-white">✈️ Flights only</Label>
+                          <Label htmlFor="flightsOnly" className="text-gray-700">✈️ Flights only</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -433,8 +434,9 @@ export default function TravelHackerAI() {
                                 preferences: { ...prev.preferences, includeHotels: !!checked }
                               }))
                             }
+                            className="border-gray-300"
                           />
-                          <Label htmlFor="includeHotels" className="text-white">🏨 Include hotels</Label>
+                          <Label htmlFor="includeHotels" className="text-gray-700">🏨 Include hotels</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -446,8 +448,9 @@ export default function TravelHackerAI() {
                                 preferences: { ...prev.preferences, includeCarRentals: !!checked }
                               }))
                             }
+                            className="border-gray-300"
                           />
-                          <Label htmlFor="includeCarRentals" className="text-white">🚗 Include car rentals</Label>
+                          <Label htmlFor="includeCarRentals" className="text-gray-700">🚗 Include car rentals</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -459,8 +462,9 @@ export default function TravelHackerAI() {
                                 preferences: { ...prev.preferences, mistakeFares: !!checked }
                               }))
                             }
+                            className="border-gray-300"
                           />
-                          <Label htmlFor="mistakeFares" className="text-white">⚡ Mistake fares</Label>
+                          <Label htmlFor="mistakeFares" className="text-gray-700">⚡ Mistake fares</Label>
                         </div>
                       </div>
                     </div>
@@ -498,16 +502,16 @@ export default function TravelHackerAI() {
                 <div className="space-y-6">
                   {/* Error State Display */}
                   {result.error && (
-                    <Card className="bg-red-500/10 backdrop-blur-md border-red-500/30">
+                    <Card className="bg-red-50 border-red-200">
                       <CardHeader>
-                        <CardTitle className="text-red-300 flex items-center">
+                        <CardTitle className="text-red-700 flex items-center">
                           <Zap className="w-5 h-5 mr-2" />
                           Travel Data Unavailable
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-red-200 mb-4">{result.error}</p>
-                        <p className="text-gray-300 text-sm">
+                        <p className="text-red-600 mb-4">{result.error}</p>
+                        <p className="text-gray-700 text-sm">
                           You can still find great travel deals using these recommended platforms:
                         </p>
                       </CardContent>
@@ -515,49 +519,46 @@ export default function TravelHackerAI() {
                   )}
 
                   {/* Flight Deals */}
-                  <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                  <Card className="bg-gray-50 border-gray-200 shadow-lg">
                     <CardHeader>
-                      <CardTitle className="text-white flex items-center">
+                      <CardTitle className="text-gray-900 flex items-center">
                         ✈️ Best Flight Deals
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {result.flightDeals && result.flightDeals.length > 0 ? result.flightDeals.map((deal, index) => (
-                        <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
+                        <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
                           <div className="flex justify-between items-start">
-                            <div className="font-semibold text-white text-lg">{deal.route}: {deal.price}</div>
+                            <div className="font-semibold text-gray-900 text-lg">{deal.route}: {deal.price}</div>
                             {deal.dealQuality && (
                               <Badge 
                                 variant="outline" 
                                 className={`text-xs ${
-                                  deal.dealQuality.includes('AMAZING') ? 'text-green-300 border-green-300/50 bg-green-500/10' :
-                                  deal.dealQuality.includes('GREAT') ? 'text-blue-300 border-blue-300/50 bg-blue-500/10' :
-                                  deal.dealQuality.includes('GOOD') ? 'text-yellow-300 border-yellow-300/50 bg-yellow-500/10' :
-                                  deal.dealQuality.includes('FAIR') ? 'text-gray-300 border-gray-300/50 bg-gray-500/10' :
-                                  'text-orange-300 border-orange-300/50 bg-orange-500/10'
+                                  deal.dealQuality.includes('AMAZING') ? 'text-green-700 border-green-300 bg-green-50' :
+                                  deal.dealQuality.includes('GREAT') ? 'text-blue-700 border-blue-300 bg-blue-50' :
+                                  deal.dealQuality.includes('GOOD') ? 'text-yellow-700 border-yellow-300 bg-yellow-50' :
+                                  deal.dealQuality.includes('FAIR') ? 'text-gray-700 border-gray-300 bg-gray-50' :
+                                  'text-orange-700 border-orange-300 bg-orange-50'
                                 }`}
                               >
                                 {deal.dealQuality}
                               </Badge>
                             )}
                           </div>
-                          <div className="text-gray-300 text-sm">Dates: {deal.dates} • {deal.airline || deal.source}</div>
+                          <div className="text-gray-600 text-sm">Dates: {deal.dates} • {deal.airline || deal.source}</div>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {(deal.tools || ['Skyscanner', 'Google Flights']).map((tool, i) => (
-                              <Badge key={i} variant="outline" className="text-xs text-blue-300 border-blue-300/50">
+                              <Badge key={i} variant="outline" className="text-xs text-blue-700 border-blue-300 bg-blue-50">
                                 {tool}
                               </Badge>
                             ))}
                           </div>
                         </div>
                       )) : (
-                        <div className="text-center text-gray-300 py-8">
+                        <div className="text-center text-gray-600 py-8">
                           <Plane className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                          <div className="mb-2">No flights found for this search</div>
-                          <p className="text-sm mb-4">Try adjusting your travel dates or destinations for better results.</p>
-                          <div className="text-xs text-gray-400">
-                            <p>Search different routes or check back later for updated flight data.</p>
-                          </div>
+                          <div className="mb-2">Enter your travel details to find the best deals</div>
+                          <p className="text-sm mb-4">We'll search for ultra-cheap flights and mistake fares for you.</p>
                         </div>
                       )}
                     </CardContent>
@@ -565,9 +566,9 @@ export default function TravelHackerAI() {
 
                   {/* Hotels */}
                   {formData.preferences.includeHotels && (
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <Card className="bg-gray-50 border-gray-200 shadow-lg">
                       <CardHeader>
-                        <CardTitle className="text-white flex items-center">
+                        <CardTitle className="text-gray-900 flex items-center">
                           🏨 Best Hotel Deals
                         </CardTitle>
                       </CardHeader>
