@@ -5402,8 +5402,10 @@ Please provide analysis in this exact JSON format (no additional text):
       const userBudget = budget || undefined;
       
       // Use structured dates when available
-      let departDate = '2025-07-08'; // Today's date as fallback
-      let returnDate = '';
+      let departDate = req.body.departDate || '2025-07-08'; // Use provided departDate first, then fallback
+      let returnDate = req.body.returnDate || '';
+      
+      console.log(`🐛 Date debug: req.body.departDate=${req.body.departDate}, startDate=${startDate}, endDate=${endDate}`);
       
       if (startDate && endDate) {
         // Convert MM/DD/YYYY to YYYY-MM-DD if needed
@@ -5429,7 +5431,7 @@ Please provide analysis in this exact JSON format (no additional text):
         } else {
           departDate = startDate;
         }
-      } else {
+      } else if (!req.body.departDate) {
         // Fallback to parsing from prompt
         const specificDateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
         if (specificDateMatch) {
@@ -5439,17 +5441,24 @@ Please provide analysis in this exact JSON format (no additional text):
             departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
           }
         } else {
-          const monthMatch = prompt.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{4})?/i);
-          if (monthMatch) {
-            const monthName = monthMatch[1].toLowerCase();
-            const year = monthMatch[2] || '2025';
-            const monthMap = {
-              january: '01', february: '02', march: '03', april: '04',
-              may: '05', june: '06', july: '07', august: '08',
-              september: '09', october: '10', november: '11', december: '12'
-            };
-            const month = monthMap[monthName as keyof typeof monthMap];
-            departDate = `${year}-${month}-15`;
+          // Try to extract specific date from prompt (e.g., "August 29", "29th", etc.)
+          const dayMatch = prompt.match(/(?:august|aug)\s*(\d{1,2})(?:th|st|nd|rd)?/i);
+          if (dayMatch) {
+            const day = dayMatch[1].padStart(2, '0');
+            departDate = `2025-08-${day}`;
+          } else {
+            const monthMatch = prompt.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{4})?/i);
+            if (monthMatch) {
+              const monthName = monthMatch[1].toLowerCase();
+              const year = monthMatch[2] || '2025';
+              const monthMap = {
+                january: '01', february: '02', march: '03', april: '04',
+                may: '05', june: '06', july: '07', august: '08',
+                september: '09', october: '10', november: '11', december: '12'
+              };
+              const month = monthMap[monthName as keyof typeof monthMap];
+              departDate = `${year}-${month}-15`;
+            }
           }
         }
       }

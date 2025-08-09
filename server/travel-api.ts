@@ -171,23 +171,23 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
     
     // Generate different departure dates when user selects a date range
     const generateDateSpread = (startDate: string, returnDate?: string) => {
+      // Always use the exact date the user selected as the primary date
+      const userSelectedDate = startDate;
+      
+      // If no return date, use the selected date for all three options
       if (!returnDate || startDate === returnDate) {
-        return [startDate, startDate, startDate];
+        return [userSelectedDate, userSelectedDate, userSelectedDate];
       }
       
+      // If return date provided, create a small spread around the selected date
       const start = new Date(startDate);
-      const end = new Date(returnDate);
-      const diffTime = end.getTime() - start.getTime();
-      
-      // Generate 3 dates spread across the range 
-      const date1 = new Date(start.getTime() + (diffTime * 0.1));  // Early in range
-      const date2 = new Date(start.getTime() + (diffTime * 0.4));  // Middle
-      const date3 = new Date(start.getTime() + (diffTime * 0.8));  // Later in range
+      const dayBefore = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+      const dayAfter = new Date(start.getTime() + 24 * 60 * 60 * 1000);
       
       return [
-        date1.toISOString().split('T')[0],
-        date2.toISOString().split('T')[0], 
-        date3.toISOString().split('T')[0]
+        dayBefore.toISOString().split('T')[0],
+        userSelectedDate, // Always include the exact date user selected
+        dayAfter.toISOString().split('T')[0]
       ];
     };
 
@@ -372,11 +372,11 @@ async function fetchFlightsSearchAPI(from: string, to: string, departDate: strin
           duration: ['7h 45m', '8h 15m', '13h 15m'][index],
           stops: [0, 0, 1][index],
           route: `${fromCode} → ${dest.code}`,
-          departureDate: flightDates[index],
+          departureDate: departDate, // Use the exact date user selected
           links: {
             googleFlights: `https://flights.google.com/search?f=0&tfs=CBwQAhojEgoyMDI1LTA4LTE1agcIARID${fromCode}cgcIARID${dest.code}GgJKUw`,
-            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${dest.code}/${flightDates[index]}`,
-            momondo: `https://www.momondo.com/flight-search/${fromCode}-${dest.code}/${flightDates[index]}`
+            skyscanner: `https://www.skyscanner.com/flights/${fromCode}/${dest.code}/${departDate}`,
+            momondo: `https://www.momondo.com/flight-search/${fromCode}-${dest.code}/${departDate}`
           }
         };
       });
