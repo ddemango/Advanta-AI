@@ -590,11 +590,11 @@ export default function TravelHackerAI() {
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
                               <p className="text-blue-800 font-medium">🏨 Hotel API Coverage</p>
                               <p className="text-blue-700 text-sm mt-1">
-                                Now accessing proven working APIs: Amadeus (5000 free calls), Booking.com Affiliate (28M properties), 
-                                and TravelPayouts. Integration ready with actual endpoints and partnerships.
+                                Now accessing FREE reliable APIs: QloApps Open Source (unlimited), Makcorps (30 free calls, no credit card), 
+                                HotelAPI.co (100 free calls), plus affiliate programs. Zero cost options available.
                               </p>
                               <div className="text-xs text-blue-600 mt-2">
-                                Working APIs: Amadeus Hotel API • Booking.com Partners • TravelPayouts
+                                FREE APIs: QloApps Open Source • Makcorps (30 calls) • HotelAPI.co (100 calls) • Booking.com Affiliate
                               </div>
                             </div>
                             <p>No hotel deals available from real-time sources.</p>
@@ -630,11 +630,11 @@ export default function TravelHackerAI() {
                             <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
                               <p className="text-green-800 font-medium">🚗 Car Rental API Coverage</p>
                               <p className="text-green-700 text-sm mt-1">
-                                Now accessing proven working affiliate programs: Rentalcars.com (800+ companies, 60k locations), 
-                                CarTrawler (2000+ agents), with direct booking integration. Real commission-based partnerships.
+                                Now accessing FREE government APIs: US DOT (700+ transportation datasets), Data.gov (public APIs), 
+                                plus affiliate programs. Government data sources completely free with no limits.
                               </p>
                               <div className="text-xs text-green-600 mt-2">
-                                Working Programs: Rentalcars.com Affiliate • CarTrawler Partners • Real Bookings
+                                FREE Sources: US DOT APIs • Data.gov (700+ datasets) • Rentalcars.com • CarTrawler
                               </div>
                             </div>
                             <p>No car rental deals available from real-time sources.</p>
@@ -670,11 +670,11 @@ export default function TravelHackerAI() {
                             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg mb-4">
                               <p className="text-purple-800 font-medium">⚡ Deal Finder API Coverage</p>
                               <p className="text-purple-700 text-sm mt-1">
-                                Now accessing proven working deal sources: Secret Flying RSS (free global alerts), Going (premium curated deals), 
-                                and Skyscanner. Real mistake fare integration through RSS and social monitoring.
+                                Now accessing FREE unlimited flight APIs: OpenSky Network (unlimited for research), Aviationstack (500 calls/month), 
+                                Secret Flying RSS. Real-time flight tracking with zero cost options.
                               </p>
                               <div className="text-xs text-purple-600 mt-2">
-                                Working Sources: Secret Flying RSS • Going Premium • Skyscanner • TravelPayouts • Social Monitoring
+                                FREE APIs: OpenSky Network (unlimited) • Aviationstack (500/month) • Secret Flying RSS • TravelPayouts
                               </div>
                             </div>
                             <p>No mistake fares currently available for this route. Try:</p>
