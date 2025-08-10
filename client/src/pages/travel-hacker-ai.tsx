@@ -590,11 +590,11 @@ export default function TravelHackerAI() {
                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
                               <p className="text-blue-800 font-medium">🏨 Hotel API Coverage</p>
                               <p className="text-blue-700 text-sm mt-1">
-                                Now accessing 8+ hotel APIs including RateHawk (free B2B), Hotelbeds (300k properties), 
-                                Agoda (Asia specialist), Amadeus, and Priceline. Real-time data only - no placeholders.
+                                Now accessing proven working APIs: Amadeus (5000 free calls), Booking.com Affiliate (28M properties), 
+                                and TravelPayouts. Integration ready with actual endpoints and partnerships.
                               </p>
                               <div className="text-xs text-blue-600 mt-2">
-                                APIs: RateHawk • Hotelbeds • Agoda • Amadeus • Priceline • Booking.com • TravelPayouts
+                                Working APIs: Amadeus Hotel API • Booking.com Partners • TravelPayouts
                               </div>
                             </div>
                             <p>No hotel deals available from real-time sources.</p>
@@ -630,11 +630,11 @@ export default function TravelHackerAI() {
                             <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
                               <p className="text-green-800 font-medium">🚗 Car Rental API Coverage</p>
                               <p className="text-green-700 text-sm mt-1">
-                                Now accessing 4+ car rental APIs including Lyko Multi-Operator (Enterprise/Hertz/Budget), 
-                                Discover Cars (10k locations), and additional providers. Real-time rates only.
+                                Now accessing proven working affiliate programs: Rentalcars.com (800+ companies, 60k locations), 
+                                CarTrawler (2000+ agents), with direct booking integration. Real commission-based partnerships.
                               </p>
                               <div className="text-xs text-green-600 mt-2">
-                                APIs: Lyko Multi-Operator • Discover Cars • Alternative Providers • Kayak Integration
+                                Working Programs: Rentalcars.com Affiliate • CarTrawler Partners • Real Bookings
                               </div>
                             </div>
                             <p>No car rental deals available from real-time sources.</p>
@@ -670,11 +670,11 @@ export default function TravelHackerAI() {
                             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg mb-4">
                               <p className="text-purple-800 font-medium">⚡ Deal Finder API Coverage</p>
                               <p className="text-purple-700 text-sm mt-1">
-                                Now accessing 6+ deal APIs including Secret Flying (free deals), Going (Scott's Cheap Flights), 
-                                Skyscanner, and additional sources. Real-time mistake fares only.
+                                Now accessing proven working deal sources: Secret Flying RSS (free global alerts), Going (premium curated deals), 
+                                and Skyscanner. Real mistake fare integration through RSS and social monitoring.
                               </p>
                               <div className="text-xs text-purple-600 mt-2">
-                                APIs: Secret Flying • Going Deals • Skyscanner • Cheap Flights • TravelPayouts • Travel Hack
+                                Working Sources: Secret Flying RSS • Going Premium • Skyscanner • TravelPayouts • Social Monitoring
                               </div>
                             </div>
                             <p>No mistake fares currently available for this route. Try:</p>
