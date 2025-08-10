@@ -13,6 +13,7 @@ const GOOGLE_FLIGHTS_HOST = 'google-flights4.p.rapidapi.com';
 const BOOKING_HOST = 'booking-com-api5.p.rapidapi.com';
 const FLIGHTS_SEARCH_HOST = 'flights-search3.p.rapidapi.com';
 const TRAVELPAYOUTS_HOST = 'travelpayouts-travelpayouts-flight-data-v1.p.rapidapi.com';
+const CAR_RENTAL_HOST = 'kayak-com.p.rapidapi.com';
 const KIWI_BASE_URL = `https://${KIWI_HOST}`;
 const TRAVEL_HACK_BASE_URL = `https://${TRAVEL_HACK_HOST}`;
 const PRICELINE_BASE_URL = `https://${PRICELINE_HOST}`;
@@ -25,6 +26,7 @@ const GOOGLE_FLIGHTS_BASE_URL = `https://${GOOGLE_FLIGHTS_HOST}`;
 const BOOKING_BASE_URL = `https://${BOOKING_HOST}`;
 const FLIGHTS_SEARCH_BASE_URL = `https://${FLIGHTS_SEARCH_HOST}`;
 const TRAVELPAYOUTS_BASE_URL = `https://${TRAVELPAYOUTS_HOST}`;
+const CAR_RENTAL_BASE_URL = `https://${CAR_RENTAL_HOST}`;
 
 interface Flight {
   airline: string;
@@ -144,143 +146,26 @@ export async function fetchUnifiedTravelData(
       deal.price !== 'Check airline'
     );
     
-    // Generate realistic hotel deals when none found from APIs
-    const generateHotelDeals = (destination: string) => {
-      const destinationLower = (destination || 'city').toLowerCase();
-      
-      // Location-specific hotel chains and pricing
-      const getLocationData = (dest: string) => {
-        // Asia-Pacific
-        if (dest.includes('tokyo') || dest.includes('japan')) {
-          return { hotels: ['Tokyo Bay Hilton', 'Park Hyatt Tokyo', 'Hotel New Otani'], prices: ['$180', '$320', '$150'], location: 'Tokyo' };
-        } else if (dest.includes('singapore')) {
-          return { hotels: ['Marina Bay Sands', 'Raffles Singapore', 'Holiday Inn Singapore'], prices: ['$340', '$580', '$120'], location: 'Singapore' };
-        } else if (dest.includes('bangkok') || dest.includes('thailand')) {
-          return { hotels: ['The Peninsula Bangkok', 'Lebua at State Tower', 'Ibis Bangkok'], prices: ['$200', '$350', '$45'], location: 'Bangkok' };
-        } else if (dest.includes('sydney') || dest.includes('australia')) {
-          return { hotels: ['Park Hyatt Sydney', 'Four Seasons Sydney', 'YHA Sydney'], prices: ['$450', '$380', '$85'], location: 'Sydney' };
-        }
-        
-        // Europe
-        else if (dest.includes('paris') || dest.includes('france')) {
-          return { hotels: ['Le Meurice', 'Hotel des Grands Boulevards', 'Ibis Paris Centre'], prices: ['$450', '$280', '$120'], location: 'Paris' };
-        } else if (dest.includes('london') || dest.includes('uk') || dest.includes('england')) {
-          return { hotels: ['The Langham London', 'Premier Inn London', 'Travelodge London'], prices: ['$280', '$95', '$65'], location: 'London' };
-        } else if (dest.includes('berlin') || dest.includes('germany')) {
-          return { hotels: ['Hotel Adlon Berlin', 'Meininger Hotel Berlin', 'A&O Berlin'], prices: ['$220', '$75', '$45'], location: 'Berlin' };
-        } else if (dest.includes('rome') || dest.includes('italy')) {
-          return { hotels: ['Hotel de Russie', 'Hotel Artemide', 'Generator Rome'], prices: ['$380', '$150', '$65'], location: 'Rome' };
-        } else if (dest.includes('barcelona') || dest.includes('madrid') || dest.includes('spain')) {
-          return { hotels: ['Hotel Arts Barcelona', 'NH Collection Barcelona', 'Generator Barcelona'], prices: ['$320', '$140', '$75'], location: 'Barcelona' };
-        } else if (dest.includes('amsterdam') || dest.includes('netherlands')) {
-          return { hotels: ['Waldorf Astoria Amsterdam', 'NH Collection Amsterdam', 'ClinkNOORD'], prices: ['$450', '$180', '$85'], location: 'Amsterdam' };
-        }
-        
-        // Americas
-        else if (dest.includes('new york') || dest.includes('nyc') || dest.includes('manhattan')) {
-          return { hotels: ['The Plaza New York', 'Pod Hotels', 'HI New York City'], prices: ['$650', '$180', '$95'], location: 'New York' };
-        } else if (dest.includes('miami') || dest.includes('florida')) {
-          return { hotels: ['The Setai Miami Beach', 'Fontainebleau Miami', 'Holiday Inn Miami'], prices: ['$350', '$180', '$85'], location: 'Miami' };
-        } else if (dest.includes('los angeles') || dest.includes('la') || dest.includes('california')) {
-          return { hotels: ['The Beverly Hills Hotel', 'Hollywood Roosevelt', 'Pod Hotels LA'], prices: ['$550', '$220', '$120'], location: 'Los Angeles' };
-        } else if (dest.includes('toronto') || dest.includes('vancouver') || dest.includes('canada')) {
-          return { hotels: ['Fairmont Royal York', 'Thompson Toronto', 'HI Toronto'], prices: ['$280', '$195', '$75'], location: 'Toronto' };
-        } else if (dest.includes('mexico') || dest.includes('cancun')) {
-          return { hotels: ['Rosewood Mayakoba', 'Moon Palace Cancun', 'Hostel Mundo Joven'], prices: ['$850', '$320', '$25'], location: 'Cancun' };
-        }
-        
-        // Middle East & Africa
-        else if (dest.includes('dubai') || dest.includes('uae')) {
-          return { hotels: ['Burj Al Arab', 'Atlantis The Palm', 'Citymax Hotels'], prices: ['$1200', '$450', '$85'], location: 'Dubai' };
-        } else if (dest.includes('cairo') || dest.includes('egypt')) {
-          return { hotels: ['Four Seasons Cairo', 'Sofitel Cairo', 'Safari Hostel'], prices: ['$180', '$120', '$25'], location: 'Cairo' };
-        }
-        
-        // Default
-        else {
-          return { hotels: ['Marriott Downtown', 'Hilton Garden Inn', 'Best Western Plus'], prices: ['$89', '$112', '$76'], location: destination || 'City Center' };
-        }
-      };
-      
-      const locationData = getLocationData(destinationLower);
-      const ratings = [4.2, 4.5, 4.1];
-      
-      return locationData.hotels.slice(0, 3).map((name, index) => ({
-        name: name,
-        location: locationData.location,
-        price: locationData.prices[index],
-        rating: ratings[index],
-        amenities: ['Free WiFi', 'Pool', 'Gym', 'Breakfast'],
-        links: {
-          booking: 'https://booking.com',
-          expedia: 'https://expedia.com'
-        }
-      }));
-    };
+    // REMOVED: Mock hotel data generation - ONLY use real-time API data
 
-    // Generate realistic car rental deals
-    const generateCarRentalDeals = (destination: string) => {
-      const destinationLower = (destination || 'city').toLowerCase();
-      
-      // Location-specific pricing based on regional economics
-      const getLocationPricing = (dest: string) => {
-        // Expensive regions
-        if (dest.includes('tokyo') || dest.includes('singapore') || dest.includes('sydney')) {
-          return ['$75/day', '$95/day', '$85/day']; // Asia-Pacific expensive
-        } else if (dest.includes('dubai') || dest.includes('switzerland') || dest.includes('norway')) {
-          return ['$85/day', '$110/day', '$95/day']; // Most expensive
-        } else if (dest.includes('paris') || dest.includes('london') || dest.includes('amsterdam') || dest.includes('berlin') || dest.includes('rome') || dest.includes('barcelona')) {
-          return ['$55/day', '$75/day', '$65/day']; // Europe expensive
-        } else if (dest.includes('new york') || dest.includes('los angeles') || dest.includes('miami') || dest.includes('canada')) {
-          return ['$35/day', '$55/day', '$45/day']; // North America
-        }
-        
-        // Moderate regions
-        else if (dest.includes('bangkok') || dest.includes('mexico') || dest.includes('cairo')) {
-          return ['$18/day', '$28/day', '$22/day']; // Emerging markets
-        }
-        
-        // Default
-        else {
-          return ['$29/day', '$45/day', '$35/day'];
-        }
-      };
-      
-      const companies = ['Enterprise', 'Hertz', 'Budget'];
-      const vehicleTypes = ['Economy Car', 'Compact SUV', 'Mid-size Car'];
-      const prices = getLocationPricing(destinationLower);
-      
-      return companies.map((company, index) => ({
-        company: company,
-        location: `${destination || 'City'} Airport`,
-        price: prices[index],
-        vehicleType: vehicleTypes[index],
-        features: ['Unlimited Miles', 'Free Cancellation', 'GPS Available']
-      }));
-    };
+    // REMOVED: Mock car rental data generation - ONLY use real-time API data
 
-    // Generate realistic mistake fare deals
-    const generateMistakeFareDeals = (fromCode: string) => {
-      const routes = [`${fromCode} → LAX`, `${fromCode} → MIA`, `${fromCode} → DEN`];
-      const prices = ['$89', '$156', '$134'];
-      const originalPrices = ['$429', '$445', '$379'];
-      const savings = ['Save $340', 'Save $289', 'Save $245'];
-      
-      return routes.map((route, index) => ({
-        route: route,
-        price: prices[index],
-        originalPrice: originalPrices[index],
-        savings: savings[index],
-        source: 'Airline Error',
-        expiresIn: ['2 hours', '4 hours', '1 hour'][index],
-        airline: ['Delta', 'American', 'United'][index]
-      }));
-    };
+    // REMOVED: Mock mistake fare data generation - ONLY use real-time API data
 
-    // Use generated data if APIs return no results
-    const finalHotels = validHotels.length > 0 ? validHotels : generateHotelDeals(to);
-    const finalCarRentals = generateCarRentalDeals(to);
-    const finalMistakeFares = validDeals.length > 0 ? validDeals : generateMistakeFareDeals(await getAirportCode(from));
+    // CRITICAL: ONLY return real API data - NO fallback to mock data
+    if (validHotels.length === 0) {
+      console.error('❌ BLOCKED: No real hotel data available from APIs');
+    }
+    if (validDeals.length === 0) {
+      console.error('❌ BLOCKED: No real mistake fare data available from APIs');
+    }
+    
+    // Get real car rental data from RapidAPI
+    const carRentalData = await fetchRealCarRentals(to, departDate, returnDate);
+    
+    const finalHotels = validHotels; // ONLY real data
+    const finalCarRentals = carRentalData; // ONLY real data
+    const finalMistakeFares = validDeals; // ONLY real data
 
     return {
       flights: validFlights,
@@ -1433,6 +1318,48 @@ async function fetchBookingHotels(destination: string, checkIn: string, checkOut
     return [];
   } catch (error) {
     console.error('Booking.com hotels API error:', error);
+    return [];
+  }
+}
+
+async function fetchRealCarRentals(destination: string, pickupDate: string, returnDate?: string): Promise<CarRental[]> {
+  console.log('Fetching real car rental data:', { destination, pickupDate, returnDate });
+  
+  try {
+    const headers = {
+      'X-RapidAPI-Key': RAPIDAPI_KEY!,
+      'X-RapidAPI-Host': CAR_RENTAL_HOST
+    };
+
+    // Use Kayak API for real car rental data
+    const response = await fetch(
+      `${CAR_RENTAL_BASE_URL}/cars/search?destination=${encodeURIComponent(destination)}&pickup_date=${pickupDate}&return_date=${returnDate || pickupDate}`,
+      { headers }
+    );
+
+    if (!response.ok) {
+      console.error(`Car rental API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data = await response.json();
+    console.log('Car rental API response:', data);
+
+    if (data && Array.isArray(data)) {
+      return data.slice(0, 3).map((rental: any) => ({
+        company: rental.company || 'Car Rental Company',
+        price: rental.price ? `$${rental.price}/day` : 'Price on request',
+        vehicleType: rental.vehicleType || rental.car_type || 'Vehicle',
+        location: rental.location || `${destination} Airport`,
+        features: rental.features || ['GPS Available', 'Insurance Options']
+      }));
+    }
+
+    // If no real data available, return empty array (DO NOT GENERATE MOCK DATA)
+    console.error('❌ BLOCKED: No real car rental data available from API');
+    return [];
+  } catch (error) {
+    console.error('Car rental API error:', error);
     return [];
   }
 }
