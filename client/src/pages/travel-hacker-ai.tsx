@@ -70,8 +70,8 @@ export default function TravelHackerAI() {
     datePreset: 'custom',
     preferences: {
       flightsOnly: true,
-      includeHotels: false,
-      includeCarRentals: false,
+      includeHotels: true,
+      includeCarRentals: true,
       mistakeFares: true
     }
   });
@@ -574,19 +574,19 @@ export default function TravelHackerAI() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {result?.hotels && result.hotels.length > 0 ? result.hotels.map((hotel, index) => (
-                          <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
-                            <div className="font-semibold text-white text-lg">{hotel.location}: {hotel.price}</div>
-                            <div className="text-gray-300 text-sm">{hotel.hotel} • {hotel.rating}</div>
+                          <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                            <div className="font-semibold text-gray-900 text-lg">{hotel.name}: {hotel.price}/night</div>
+                            <div className="text-gray-600 text-sm">{hotel.location} • ⭐ {hotel.rating}</div>
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {hotel.tips.map((tip, i) => (
-                                <Badge key={i} variant="outline" className="text-xs text-purple-300 border-purple-300/50">
-                                  {tip}
+                              {hotel.amenities && hotel.amenities.map((amenity, i) => (
+                                <Badge key={i} variant="outline" className="text-xs text-blue-700 border-blue-300 bg-blue-50">
+                                  {amenity}
                                 </Badge>
                               ))}
                             </div>
                           </div>
                         )) : (
-                          <div className="text-center text-gray-300 py-8">
+                          <div className="text-center text-gray-600 py-8">
                             <p>No hotel deals available from real-time sources.</p>
                           </div>
                         )}
@@ -596,27 +596,27 @@ export default function TravelHackerAI() {
 
                   {/* Car Rentals */}
                   {formData.preferences.includeCarRentals && (
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                    <Card className="bg-gray-50 border-gray-200 shadow-lg">
                       <CardHeader>
-                        <CardTitle className="text-white flex items-center">
-                          🚗 Best Car Rental Deals
+                        <CardTitle className="text-gray-900 flex items-center">
+                          🚗 Car Rental Deals
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {result?.carRentals && result.carRentals.length > 0 ? result.carRentals.map((rental, index) => (
-                          <div key={index} className="p-4 bg-white/5 rounded-lg border border-white/10">
-                            <div className="font-semibold text-white text-lg">{rental.location}: {rental.price}</div>
-                            <div className="text-gray-300 text-sm">{rental.vehicleType} • {rental.company}</div>
+                          <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                            <div className="font-semibold text-gray-900 text-lg">{rental.company}: {rental.price}</div>
+                            <div className="text-gray-600 text-sm">{rental.vehicleType} • {rental.location}</div>
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {rental.tips.map((tip, i) => (
-                                <Badge key={i} variant="outline" className="text-xs text-green-300 border-green-300/50">
-                                  {tip}
+                              {rental.features && rental.features.map((feature, i) => (
+                                <Badge key={i} variant="outline" className="text-xs text-green-700 border-green-300 bg-green-50">
+                                  {feature}
                                 </Badge>
                               ))}
                             </div>
                           </div>
                         )) : (
-                          <div className="text-center text-gray-300 py-8">
+                          <div className="text-center text-gray-600 py-8">
                             <p>No car rental deals available from real-time sources.</p>
                           </div>
                         )}
@@ -624,47 +624,37 @@ export default function TravelHackerAI() {
                     </Card>
                   )}
 
-                  {/* Mistake Fares - Only show if real fares exist */}
-                  {(result?.mistakeFares && result.mistakeFares.length > 0) ? (
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
+                  {/* Mistake Fares */}
+                  {formData.preferences.mistakeFares && (
+                    <Card className="bg-gray-50 border-gray-200 shadow-lg">
                       <CardHeader>
-                        <CardTitle className="text-white flex items-center">
-                          ⚡ Real Mistake Fares Found
+                        <CardTitle className="text-gray-900 flex items-center">
+                          ⚡ Mistake Fare Deals
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {result.mistakeFares.map((fare, index) => (
-                          <div key={index} className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                            <div className="font-semibold text-orange-300 text-lg">🚨 {fare.route}: {fare.price}</div>
-                            <div className="text-gray-300 text-sm">{fare.urgency} via {fare.source}</div>
-                            {fare.departureDistance && (
-                              <div className="text-xs text-orange-300 mt-1 flex items-center">
-                                <span className="mr-1">📍</span>
-                                {fare.departureDistance}
-                              </div>
-                            )}
+                        {result?.mistakeFares && result.mistakeFares.length > 0 ? result.mistakeFares.map((fare, index) => (
+                          <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                            <div className="font-semibold text-gray-900 text-lg">{fare.route}: {fare.price}</div>
+                            <div className="text-gray-600 text-sm">
+                              <span className="line-through text-gray-400">{fare.originalPrice}</span> → 
+                              <span className="text-green-600 font-medium ml-1">{fare.savings}</span>
+                            </div>
+                            <div className="text-gray-600 text-sm">{fare.airline} • Expires in {fare.expiresIn}</div>
+                            <Badge variant="outline" className="text-xs text-red-700 border-red-300 bg-red-50 mt-2">
+                              {fare.source}
+                            </Badge>
                           </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card className="bg-white/10 backdrop-blur-md border-white/20">
-                      <CardHeader>
-                        <CardTitle className="text-white flex items-center">
-                          ⚡ Mistake Fare Search
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="p-4 bg-gray-500/10 rounded-lg border border-gray-500/20">
-                          <div className="text-gray-300">
-                            🔍 No mistake fares currently available for this route. Try:
+                        )) : (
+                          <div className="text-center text-gray-600 py-8">
+                            <p>No mistake fares currently available for this route. Try:</p>
+                            <ul className="text-gray-500 text-sm mt-2">
+                              <li>• Checking nearby airports</li>
+                              <li>• Flexible travel dates</li>
+                              <li>• Secret Flying alerts</li>
+                            </ul>
                           </div>
-                          <ul className="text-gray-400 text-sm mt-2 ml-4">
-                            <li>• Checking nearby airports</li>
-                            <li>• Flexible travel dates</li>
-                            <li>• Secret Flying alerts</li>
-                          </ul>
-                        </div>
+                        )}
                       </CardContent>
                     </Card>
                   )}
