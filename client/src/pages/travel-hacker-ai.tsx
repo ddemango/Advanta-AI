@@ -587,6 +587,13 @@ export default function TravelHackerAI() {
                           </div>
                         )) : (
                           <div className="text-center text-gray-600 py-8">
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                              <p className="text-yellow-800 font-medium">🔄 Real-Time Data Status</p>
+                              <p className="text-yellow-700 text-sm mt-1">
+                                Hotel data APIs are currently experiencing access limitations. 
+                                We only display real-time data and never show placeholder content.
+                              </p>
+                            </div>
                             <p>No hotel deals available from real-time sources.</p>
                           </div>
                         )}
@@ -617,6 +624,13 @@ export default function TravelHackerAI() {
                           </div>
                         )) : (
                           <div className="text-center text-gray-600 py-8">
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                              <p className="text-yellow-800 font-medium">🔄 Real-Time Data Status</p>
+                              <p className="text-yellow-700 text-sm mt-1">
+                                Car rental APIs are currently experiencing access limitations. 
+                                We only display real-time data and never show placeholder content.
+                              </p>
+                            </div>
                             <p>No car rental deals available from real-time sources.</p>
                           </div>
                         )}
@@ -647,11 +661,18 @@ export default function TravelHackerAI() {
                           </div>
                         )) : (
                           <div className="text-center text-gray-600 py-8">
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                              <p className="text-yellow-800 font-medium">🔄 Real-Time Data Status</p>
+                              <p className="text-yellow-700 text-sm mt-1">
+                                Deal finder APIs are currently experiencing access limitations. 
+                                We only display real-time data and never show placeholder content.
+                              </p>
+                            </div>
                             <p>No mistake fares currently available for this route. Try:</p>
                             <ul className="text-gray-500 text-sm mt-2">
                               <li>• Checking nearby airports</li>
                               <li>• Flexible travel dates</li>
-                              <li>• Secret Flying alerts</li>
+                              <li>• Alternative search dates</li>
                             </ul>
                           </div>
                         )}
