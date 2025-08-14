@@ -1,0 +1,830 @@
+0) Monorepo layout
+your-project/
+  frontend/                # Next.js 14 (App Router)
+    app/
+      (marketing)/
+      [slug]/
+        page.tsx
+      api/
+        status/route.ts
+        trigger-deploy/route.ts
+    lib/
+      data.ts
+      tenants.ts
+      theme.ts
+    middleware.ts
+    next.config.js
+    package.json
+    tailwind.config.ts
+    postcss.config.js
+    vercel.json
+  backend/
+    src/
+      server.ts            # Express API
+      routes/
+        workflows.ts       # /workflows/generate | /workflows/deploy | /workflows/status (SSE)
+      worker/
+        index.ts           # BullMQ worker
+        deploy.ts          # deploy job processor
+        n8nTranslator.ts   # maps generic nodes -> n8n
+      db.ts
+      rateLimit.ts
+      schema.ts
+      logger.ts
+    prisma/
+      schema.prisma
+    Dockerfile
+    fly.toml               # (api)
+    fly.worker.toml        # (worker)
+    package.json
+    tsconfig.json
+  shared/
+    workflow.schema.json
+    types.ts
+  .env.example
+  README.md
+
+1) Shared types & schema
+
+shared/workflow.schema.json
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Workflow",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name","description","env","nodes","edges","triggers"],
+  "properties": {
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "env": { "type": "object", "additionalProperties": { "type": ["string","number","boolean"] } },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id","type","action","inputs","outputs"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "action": { "type": "string" },
+          "inputs": { "type": "object" },
+          "outputs": { "type": "array", "items": { "type": "string" } },
+          "authRef": { "type": "string" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fromNodeId","fromPort","toNodeId","toPort"],
+        "properties": {
+          "fromNodeId": { "type": "string" },
+          "fromPort": { "type": "string" },
+          "toNodeId": { "type": "string" },
+          "toPort": { "type": "string" }
+        }
+      }
+    },
+    "triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type","config"],
+        "properties": {
+          "type": { "enum": ["webhook","schedule","event"] },
+          "config": { "type": "object" }
+        }
+      }
+    }
+  }
+}
+
+
+shared/types.ts
+
+export type KV = Record<string, string | number | boolean>;
+export type Node = { id:string; type:string; action:string; inputs:KV; outputs:string[]; authRef?:string };
+export type Edge = { fromNodeId:string; fromPort:string; toNodeId:string; toPort:string };
+export type Trigger = { type:'webhook'|'schedule'|'event'; config:KV };
+
+export type Workflow = {
+  name:string;
+  description:string;
+  env:KV;
+  nodes:Node[];
+  edges:Edge[];
+  triggers:Trigger[];
+};
+
+export type WorkflowStatus = 'idle'|'deploying'|'live'|'error';
+
+2) Backend (API + Worker, Node + Express + BullMQ)
+2.1 Prisma schema (Postgres / Neon)
+
+backend/prisma/schema.prisma
+
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+model Tenant {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  logoUrl   String?
+  themeJson Json
+  pages     Page[]
+  workflows Workflow[]
+  createdAt DateTime @default(now())
+}
+
+model Page {
+  id         String  @id @default(cuid())
+  tenantId   String
+  json       Json
+  isPublished Boolean @default(false)
+  updatedAt  DateTime @updatedAt
+  Tenant     Tenant  @relation(fields: [tenantId], references: [id])
+}
+
+model Workflow {
+  id          String  @id @default(cuid())
+  tenantId    String
+  json        Json
+  status      String  @default("idle") // 'idle' | 'deploying' | 'live' | 'error'
+  lastRunUrl  String?
+  updatedAt   DateTime @updatedAt
+  Tenant      Tenant  @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+
+Run:
+
+cd backend
+npm i prisma @prisma/client
+npx prisma generate
+npx prisma migrate dev -n init
+
+2.2 Express server
+
+backend/src/server.ts
+
+import express from "express";
+import cors from "cors";
+import { rateLimiter } from "./rateLimit";
+import workflowsRouter from "./routes/workflows";
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient();
+const app = express();
+
+app.use(cors({ origin: [/\.yourdomain\.com$/, "https://yourdomain.com"], credentials: false }));
+app.use(express.json({ limit: "1mb" }));
+app.use(rateLimiter);
+
+app.get("/healthz", (_, res) => res.json({ ok: true }));
+
+app.use("/workflows", workflowsRouter);
+
+const port = process.env.PORT || 8080;
+app.listen(port, () => console.log(`API listening on :${port}`));
+
+
+backend/src/rateLimit.ts
+
+import rateLimit from "express-rate-limit";
+export const rateLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+
+backend/src/logger.ts
+
+export const log = (...a:any[]) => console.log(new Date().toISOString(), ...a);
+
+2.3 OpenAI strict JSON + SSE status + deploy queue
+
+backend/src/schema.ts
+
+import fs from "fs";
+import path from "path";
+export const workflowJsonSchema = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "../../shared/workflow.schema.json"), "utf8")
+);
+
+
+backend/src/db.ts
+
+import { createClient } from "redis";
+import { Queue } from "bullmq";
+
+export const redis = createClient({ url: process.env.REDIS_URL! });
+export const queues = {
+  deploy: new Queue("deploy", { connection: { url: process.env.REDIS_URL! } })
+};
+
+
+backend/src/routes/workflows.ts
+
+import { Router } from "express";
+import fetch from "node-fetch";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
+import { workflowJsonSchema } from "../schema";
+import { queues } from "../db";
+import { prisma } from "../server";
+import { log } from "../logger";
+
+const ajv = new Ajv({ allErrors: true, strict: true });
+addFormats(ajv);
+const validate = ajv.compile(workflowJsonSchema);
+
+const r = Router();
+
+/** NL -> strict JSON workflow */
+r.post("/generate", async (req, res) => {
+  const { prompt, tenantSlug } = req.body ?? {};
+  if (!prompt || !tenantSlug) return res.status(400).json({ error: "prompt and tenantSlug required" });
+
+  const sys = `You are a Workflow Architect. Transform the user's natural-language goal into a strictly valid workflow graph that our automation engine can execute. Prefer generic node types (http.request, transform, condition, delay, email.send, slack.postMessage, webhook.trigger). Use authRef rather than secrets. Output JSON that matches the provided schema exactly.`;
+
+  const body = {
+    model: "gpt-4o-mini",
+    input: [
+      { role: "system", content: sys },
+      { role: "user", content: prompt }
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "Workflow",
+        strict: true,
+        schema: workflowJsonSchema
+      }
+    },
+    temperature: 0.2
+  };
+
+  const resp = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await resp.json();
+  const raw = data?.output?.[0]?.content?.[0]?.text;
+  if (!raw) return res.status(500).json({ error: "No model output" });
+
+  let workflow;
+  try { workflow = JSON.parse(raw); } catch { return res.status(500).json({ error: "Invalid JSON from model" }); }
+
+  const ok = validate(workflow);
+  if (!ok) return res.status(400).json({ error: "Schema validation failed", details: validate.errors });
+
+  // persist as 'idle'
+  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug }});
+  if (!tenant) return res.status(404).json({ error: "Tenant not found" });
+
+  const wf = await prisma.workflow.create({
+    data: { tenantId: tenant.id, json: workflow, status: "idle" }
+  });
+
+  res.json({ workflowId: wf.id, workflow });
+});
+
+/** Enqueue deploy */
+r.post("/deploy", async (req, res) => {
+  const { workflowId } = req.body ?? {};
+  if (!workflowId) return res.status(400).json({ error: "workflowId required" });
+
+  const wf = await prisma.workflow.findUnique({ where: { id: workflowId }});
+  if (!wf) return res.status(404).json({ error: "workflow not found" });
+
+  await prisma.workflow.update({ where: { id: wf.id }, data: { status: "deploying" }});
+
+  await queues.deploy.add("deploy", { workflowId: wf.id }, {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 3000 },
+    removeOnComplete: true,
+    removeOnFail: false
+  });
+
+  res.json({ ok: true });
+});
+
+/** SSE status */
+r.get("/status/:tenantSlug", async (req, res) => {
+  const { tenantSlug } = req.params;
+  const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug }});
+  if (!tenant) return res.status(404).end();
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  const send = async () => {
+    const wf = await prisma.workflow.findFirst({ where: { tenantId: tenant.id }, orderBy: { updatedAt: "desc" }});
+    res.write(`data: ${JSON.stringify({ status: wf?.status ?? "idle", lastRunUrl: wf?.lastRunUrl ?? null })}\n\n`);
+  };
+
+  await send();
+  const iv = setInterval(send, 3000);
+  req.on("close", () => clearInterval(iv));
+});
+
+export default r;
+
+2.4 Worker: deploy job + n8n translator
+
+backend/src/worker/index.ts
+
+import "dotenv/config";
+import { Worker } from "bullmq";
+import { PrismaClient } from "@prisma/client";
+import { deployToN8N } from "./deploy";
+
+const prisma = new PrismaClient();
+
+new Worker("deploy", async (job) => {
+  const { workflowId } = job.data;
+  const wf = await prisma.workflow.findUnique({ where: { id: workflowId }});
+  if (!wf) throw new Error("workflow not found");
+
+  const url = await deployToN8N(wf.json as any);
+
+  await prisma.workflow.update({ where: { id: workflowId }, data: { status: "live", lastRunUrl: url }});
+  return { url };
+}, { connection: { url: process.env.REDIS_URL! }});
+
+
+backend/src/worker/deploy.ts
+
+import fetch from "node-fetch";
+import { mapToN8n } from "./n8nTranslator";
+
+/** Example: push to n8n Cloud. Replace with your builder site API if you control it */
+export async function deployToN8N(workflow:any): Promise<string> {
+  const n8nScenario = mapToN8n(workflow);
+
+  const resp = await fetch(process.env.N8N_BASE_URL + "/api/v1/workflows", {
+    method: "POST",
+    headers: {
+      "Content-Type":"application/json",
+      "X-N8N-API-KEY": process.env.N8N_API_KEY!
+    },
+    body: JSON.stringify(n8nScenario)
+  });
+  if (!resp.ok) throw new Error(`n8n create failed: ${resp.status}`);
+  const data = await resp.json();
+
+  // Optionally activate:
+  await fetch(`${process.env.N8N_BASE_URL}/api/v1/workflows/${data.id}/activate`, {
+    method: "POST",
+    headers: { "X-N8N-API-KEY": process.env.N8N_API_KEY! }
+  });
+
+  // Return a view URL (adjust to your n8n host)
+  return `${process.env.N8N_BASE_URL.replace("/api","")}/workflow/${data.id}`;
+}
+
+
+backend/src/worker/n8nTranslator.ts
+
+/** Very simple mapper; expand as you add node types */
+export function mapToN8n(workflow:any) {
+  // Translate your nodes/edges into n8n format.
+  // For MVP, just create a single placeholder node per step.
+  const nodes = workflow.nodes.map((n:any, i:number) => ({
+    id: i + 1,
+    name: `${n.type}:${n.action}`,
+    type: "n8n-nodes-base.noOp",
+    typeVersion: 1,
+    position: [280 * (i+1), 200]
+  }));
+
+  const connections:any = {};
+  workflow.edges.forEach((e:any) => {
+    const fromIdx = workflow.nodes.findIndex((n:any)=>n.id===e.fromNodeId) + 1;
+    const toIdx = workflow.nodes.findIndex((n:any)=>n.id===e.toNodeId) + 1;
+    connections[`Node ${fromIdx}`] ??= { main: [[]] };
+    // n8n needs named connection; using 'main'
+    (connections[`Node ${fromIdx}`].main[0] as any[]).push({ node: `Node ${toIdx}`, type: "main", index: 0 });
+  });
+
+  return {
+    name: workflow.name,
+    nodes,
+    connections
+  };
+}
+
+2.5 Docker & Fly configs
+
+backend/Dockerfile
+
+FROM node:20-alpine as deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+FROM node:20-alpine as builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate && npm run build || true
+
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+EXPOSE 8080
+CMD ["node","dist/src/server.js"]
+
+
+backend/fly.toml (API)
+
+app = "your-api-app"
+primary_region = "ord"
+
+[build]
+dockerfile = "Dockerfile"
+
+[env]
+PORT = "8080"
+
+[[services]]
+protocol = "tcp"
+internal_port = 8080
+processes = ["app"]
+[[services.ports]]
+handlers = ["http"]
+port = 80
+[[services.ports]]
+handlers = ["tls","http"]
+port = 443
+
+
+backend/fly.worker.toml (Worker)
+
+app = "your-worker-app"
+primary_region = "ord"
+
+[build]
+dockerfile = "Dockerfile"
+
+[processes]
+  worker = "node dist/src/worker/index.js"
+
+[checks]
+  [checks.alive]
+    type = "tcp"
+    interval = "15s"
+    timeout = "2s"
+
+3) Frontend (Next.js 14 + Tailwind)
+3.1 Tailwind & config
+
+frontend/package.json
+
+{
+  "name": "frontend",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwindcss": "3.4.7",
+    "framer-motion": "11.0.0",
+    "clsx": "2.1.1"
+  }
+}
+
+
+frontend/tailwind.config.ts
+
+import type { Config } from "tailwindcss";
+export default {
+  content: ["./app/**/*.{ts,tsx}"],
+  theme: { extend: {} },
+  plugins: []
+} satisfies Config;
+
+
+frontend/postcss.config.js
+
+module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } };
+
+
+frontend/app/globals.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+frontend/vercel.json
+
+{ "version": 2, "buildCommand": "npm run build", "outputDirectory": ".next" }
+
+
+frontend/next.config.js
+
+module.exports = { reactStrictMode: true };
+
+3.2 Tenant resolver & theme
+
+frontend/lib/tenants.ts
+
+export async function getTenantByHost(host: string) {
+  // e.g., acme.yourdomain.com -> 'acme'
+  const slug = host.split(".")[0];
+  // For MVP, static map; replace with API call to backend for theme & page
+  return { slug, name: slug.toUpperCase() };
+}
+
+
+frontend/lib/theme.ts
+
+export const defaultTheme = {
+  colors: { primary: "#5B7CFA" },
+  gradients: { primary: "rgba(91,124,250,.18), rgba(255,255,255,0)" },
+  font: { family: "Inter, ui-sans-serif, system-ui" }
+};
+
+
+frontend/lib/data.ts
+
+export async function getTenantBundle(slug: string) {
+  // In prod: fetch from backend (page JSON, workflow status)
+  return {
+    theme: { ...require("./theme").defaultTheme },
+    page: {
+      brand: slug,
+      logoUrl: "https://dummyimage.com/120x32/000/fff.png&text="+slug,
+      hero: {
+        headline: "Automations that build themselves",
+        subhead: "Describe what you want. We’ll wire the workflow and deploy it for you.",
+        secondaryCta: "Docs",
+        secondaryHref: "/docs",
+        previewImage: "https://dummyimage.com/1200x650/eee/aaa.png"
+      },
+      features: {
+        title: "Why you’ll love it",
+        items: [
+          { emoji: "⚡️", title: "Fast", copy: "From prompt to live in minutes." },
+          { emoji: "🧩", title: "Composable", copy: "Generic nodes → infinite combos." },
+          { emoji: "🔒", title: "Secure", copy: "Keys never touch the browser." }
+        ]
+      },
+      footer: { smallprint: "By continuing you agree to our terms." }
+    }
+  };
+}
+
+
+frontend/middleware.ts
+
+import { NextRequest, NextResponse } from "next/server";
+export function middleware(req: NextRequest) {
+  // You can resolve tenant here and set headers/cookies if needed.
+  return NextResponse.next();
+}
+
+3.3 Themed landing page
+
+frontend/app/[slug]/page.tsx
+
+import { getTenantBundle } from "@/lib/data";
+
+export default async function Page({ params:{ slug } }: any) {
+  const { theme, page } = await getTenantBundle(slug);
+
+  return (
+    <main style={{ fontFamily: theme.font.family }} className="min-h-screen">
+      <div className="fixed inset-0 -z-10 opacity-70"
+           style={{background: `radial-gradient(80% 60% at 50% 0%, ${theme.gradients.primary}, transparent 70%)`}} />
+      <section className="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center">
+        <img src={page.logoUrl} alt={page.brand} className="h-10 mx-auto mb-6" />
+        <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">{page.hero.headline}</h1>
+        <p className="mt-5 text-lg text-neutral-600">{page.hero.subhead}</p>
+        <div className="mt-8 flex justify-center gap-3">
+          <a href="#get-started" className="px-5 py-3 rounded-lg text-white" style={{background: theme.colors.primary}}>Get started</a>
+          <a href={page.hero.secondaryHref} className="px-5 py-3 rounded-lg border">{page.hero.secondaryCta}</a>
+        </div>
+        <div className="mt-12 bg-white/70 border rounded-2xl shadow-xl p-5">
+          <img src={page.hero.previewImage} alt="" className="rounded-xl"/>
+        </div>
+      </section>
+
+      <section id="features" className="max-w-6xl mx-auto px-6 py-14">
+        <h2 className="text-3xl font-semibold mb-8 text-center">{page.features.title}</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {page.features.items.map((f:any)=>(
+            <div key={f.title} className="p-6 rounded-xl border bg-white/70">
+              <div className="text-2xl mb-2">{f.emoji}</div>
+              <h3 className="font-semibold">{f.title}</h3>
+              <p className="text-neutral-600 mt-1">{f.copy}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between rounded-xl border p-5 bg-white/70">
+          <div>
+            <div className="text-sm text-neutral-500">Workflow</div>
+            <div className="font-medium">
+              <span id="wf-status">idle</span>
+            </div>
+          </div>
+          <a id="wf-link" href="#" className="underline hidden">View last run</a>
+        </div>
+      </section>
+
+      <section id="get-started" className="max-w-6xl mx-auto px-6 py-16 text-center">
+        <a href={`/build?tenant=${slug}`} className="px-6 py-4 rounded-xl text-white text-lg" style={{background: theme.colors.primary}}>
+          Describe your automation →
+        </a>
+        <p className="text-neutral-500 mt-3 text-sm">{page.footer.smallprint}</p>
+      </section>
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            const es = new EventSource('${process.env.NEXT_PUBLIC_API_BASE}/workflows/status/${slug}');
+            es.onmessage = (ev) => {
+              const d = JSON.parse(ev.data);
+              document.getElementById('wf-status').textContent = d.status;
+              const link = document.getElementById('wf-link');
+              if (d.lastRunUrl) { link.href = d.lastRunUrl; link.classList.remove('hidden'); }
+            };
+          `
+        }}
+      />
+    </main>
+  );
+}
+
+3.4 Trigger endpoints (frontend → backend)
+
+frontend/app/api/status/route.ts
+
+export async function GET() {
+  return new Response(JSON.stringify({ ok: true }), { status: 200 });
+}
+
+
+frontend/app/api/trigger-deploy/route.ts
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  const r = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/workflows/deploy`, {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(body)
+  });
+  return new Response(await r.text(), { status: r.status });
+}
+
+4) Env & secrets
+
+.env.example
+
+# FRONTEND
+NEXT_PUBLIC_API_BASE=https://api.yourdomain.com
+
+# BACKEND
+OPENAI_API_KEY=sk-xxxx
+DATABASE_URL=postgresql://user:pass@host/db
+REDIS_URL=redis://default:pass@host:6379
+N8N_BASE_URL=https://api.n8ncloud.io   # example; set your own
+N8N_API_KEY=xxxx
+PORT=8080
+
+
+Set frontend env on Vercel; backend env on Fly.io:
+
+fly secrets set OPENAI_API_KEY=... DATABASE_URL=... REDIS_URL=... N8N_BASE_URL=... N8N_API_KEY=...
+
+5) Deploy steps (quick)
+
+Frontend (Vercel)
+
+cd frontend && npm i && npm run build
+
+Connect repo to Vercel → set NEXT_PUBLIC_API_BASE=https://api.yourdomain.com
+
+Add wildcard DNS *.yourdomain.com to Vercel project.
+
+Backend API (Fly.io)
+
+cd backend && npm i
+
+npx prisma generate && npx prisma migrate deploy
+
+fly launch (choose app name like your-api-app)
+
+fly secrets set ... (from .env)
+
+fly deploy
+
+Backend Worker (Fly.io)
+
+Duplicate app: cp fly.toml fly.worker.toml (already included)
+
+fly launch --config fly.worker.toml → name your-worker-app
+
+Set the same secrets.
+
+Change process to run node dist/src/worker/index.js (already set in fly.worker.toml)
+
+fly deploy -c fly.worker.toml
+
+6) Minimal “Build” page (optional, frontend)
+
+Add a super simple prompt → generate → deploy flow:
+
+frontend/app/build/page.tsx
+
+"use client";
+import { useState } from "react";
+
+export default function Build() {
+  const [prompt, setPrompt] = useState("");
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [json, setJson] = useState<any>(null);
+  const tenant = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : "").get("tenant") || "demo";
+
+  async function generate() {
+    const r = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/workflows/generate`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ prompt, tenantSlug: tenant })
+    });
+    const data = await r.json();
+    setWorkflowId(data.workflowId);
+    setJson(data.workflow);
+  }
+
+  async function deploy() {
+    await fetch("/api/trigger-deploy", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ workflowId })
+    });
+    alert("Deploying… watch the status on your landing page.");
+  }
+
+  return (
+    <main className="max-w-3xl mx-auto p-6">
+      <h1 className="text-2xl font-semibold">Describe your automation</h1>
+      <textarea className="w-full mt-3 p-3 border rounded" rows={6}
+        value={prompt} onChange={e=>setPrompt(e.target.value)}
+        placeholder="Ex: When a form is submitted, enrich the lead, score it, Slack alert if score>80; else add to CRM." />
+      <div className="mt-3 flex gap-2">
+        <button onClick={generate} className="px-4 py-2 rounded text-white" style={{background:"#5B7CFA"}}>Generate</button>
+        <button onClick={deploy} disabled={!workflowId} className="px-4 py-2 rounded border">Deploy</button>
+      </div>
+      {json && <pre className="mt-4 p-3 bg-gray-50 border rounded overflow-auto">{JSON.stringify(json,null,2)}</pre>}
+    </main>
+  );
+}
+
+7) Security & quality must-dos (quick)
+
+Do not expose OPENAI_API_KEY in the browser (only backend calls OpenAI).
+
+Add a CORS allowlist for your domains (already present).
+
+Add AJV schema validation (already present).
+
+Add rate limiting (already present).
+
+Add allowlist for outbound HTTP nodes before you let workflows call external URLs (simple ALLOWED_OUTBOUND_HOSTS check in worker).
+
+Add auth between frontend ↔ backend (JWT on /workflows/*), and per-tenant access later.
+
+8) What you’ll see working
+
+Visit https://demo.yourdomain.com → Themed landing with status block.
+
+Go to /build?tenant=demo → Enter a description → Click Generate → strict JSON shows.
+
+Click Deploy → Worker publishes a basic scenario to n8n → Landing page status flips to live and shows a View last run link.

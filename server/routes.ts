@@ -7704,6 +7704,206 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Workflow Generation and Management Endpoints
+  app.post("/api/workflows/generate", async (req, res) => {
+    try {
+      const { prompt, userId } = req.body;
+      
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      // Mock OpenAI workflow generation (replace with actual OpenAI API call)
+      const mockWorkflow = {
+        name: "Generated Workflow",
+        description: prompt,
+        env: {},
+        nodes: [
+          {
+            id: "trigger",
+            type: "webhook",
+            action: "receive",
+            inputs: { method: "POST" },
+            outputs: ["data"]
+          },
+          {
+            id: "process",
+            type: "transform", 
+            action: "process",
+            inputs: { data: "{{trigger.data}}" },
+            outputs: ["processed"]
+          },
+          {
+            id: "notify",
+            type: "email",
+            action: "send",
+            inputs: {
+              to: "admin@example.com",
+              subject: "Workflow Completed",
+              body: "{{process.processed}}"
+            },
+            outputs: ["sent"]
+          }
+        ],
+        edges: [
+          { fromNodeId: "trigger", fromPort: "data", toNodeId: "process", toPort: "data" },
+          { fromNodeId: "process", fromPort: "processed", toNodeId: "notify", toPort: "body" }
+        ],
+        triggers: [
+          { type: "webhook", config: { path: "/webhook" } }
+        ]
+      };
+
+      // Store workflow in database
+      const [workflow] = await db.insert(workflows).values({
+        userId: userId || null,
+        name: mockWorkflow.name,
+        description: mockWorkflow.description,
+        prompt: prompt,
+        workflowJson: mockWorkflow,
+        isActive: false // Not active until deployed
+      }).returning();
+
+      res.json({ 
+        workflowId: workflow.id, 
+        workflow: mockWorkflow 
+      });
+    } catch (error) {
+      console.error("Error generating workflow:", error);
+      res.status(500).json({ error: "Failed to generate workflow" });
+    }
+  });
+
+  app.post("/api/workflows/deploy", async (req, res) => {
+    try {
+      const { workflowId } = req.body;
+      
+      if (!workflowId) {
+        return res.status(400).json({ error: "workflowId is required" });
+      }
+
+      // Find workflow
+      const [workflow] = await db.select().from(workflows).where(eq(workflows.id, workflowId));
+      
+      if (!workflow) {
+        return res.status(404).json({ error: "Workflow not found" });
+      }
+
+      // Mock deployment process (replace with actual deployment logic)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Update workflow status to active
+      await db.update(workflows)
+        .set({ 
+          isActive: true,
+          updatedAt: new Date()
+        })
+        .where(eq(workflows.id, workflowId));
+
+      // Log deployment
+      await db.insert(workflowLogs).values({
+        workflowId: workflowId,
+        runId: `deploy-${Date.now()}`,
+        status: "success",
+        stepName: "deployment",
+        output: { message: "Workflow deployed successfully" }
+      });
+
+      res.json({ 
+        ok: true, 
+        message: "Workflow deployed successfully",
+        viewUrl: `/workflows/${workflowId}/runs`
+      });
+    } catch (error) {
+      console.error("Error deploying workflow:", error);
+      res.status(500).json({ error: "Failed to deploy workflow" });
+    }
+  });
+
+  app.get("/api/workflows/status/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Set up SSE headers
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+
+      const sendStatus = async () => {
+        try {
+          const userWorkflows = await db.select()
+            .from(workflows)
+            .where(eq(workflows.userId, parseInt(userId)))
+            .orderBy(desc(workflows.updatedAt))
+            .limit(1);
+
+          const status = userWorkflows.length > 0 
+            ? (userWorkflows[0].isActive ? "live" : "idle")
+            : "idle";
+
+          const lastRunUrl = userWorkflows.length > 0 && userWorkflows[0].isActive
+            ? `/workflows/${userWorkflows[0].id}/runs`
+            : null;
+
+          res.write(`data: ${JSON.stringify({ 
+            status, 
+            lastRunUrl,
+            workflowCount: userWorkflows.length 
+          })}\n\n`);
+        } catch (error) {
+          console.error("Error in SSE status update:", error);
+          res.write(`data: ${JSON.stringify({ 
+            status: "error", 
+            error: "Failed to fetch status" 
+          })}\n\n`);
+        }
+      };
+
+      // Send initial status
+      await sendStatus();
+
+      // Send updates every 3 seconds
+      const interval = setInterval(sendStatus, 3000);
+
+      // Clean up on client disconnect
+      req.on("close", () => {
+        clearInterval(interval);
+      });
+
+    } catch (error) {
+      console.error("Error setting up SSE:", error);
+      res.status(500).json({ error: "Failed to establish status stream" });
+    }
+  });
+
+  app.get("/api/workflows", async (req, res) => {
+    try {
+      const { userId } = req.query;
+      
+      let query = db.select().from(workflows);
+      
+      if (userId) {
+        query = query.where(eq(workflows.userId, parseInt(userId as string)));
+      }
+      
+      const userWorkflows = await query.orderBy(desc(workflows.createdAt));
+      
+      res.json(userWorkflows.map(wf => ({
+        id: wf.id,
+        name: wf.name,
+        description: wf.description,
+        status: wf.isActive ? 'live' : 'idle',
+        lastRunUrl: wf.isActive ? `/workflows/${wf.id}/runs` : null,
+        createdAt: wf.createdAt,
+        nodes: (wf.workflowJson as any)?.nodes || []
+      })));
+    } catch (error) {
+      console.error("Error fetching workflows:", error);
+      res.status(500).json({ error: "Failed to fetch workflows" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
