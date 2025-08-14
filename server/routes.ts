@@ -20,6 +20,9 @@ declare module 'express-session' {
 }
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { requestId, securityHeaders, apiRateLimit, workflowGenerationRateLimit } from "./middleware";
+import { workflowsUpdated } from "@shared/schema";
+import { addDeployJob } from "./queue-service";
 import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, workflows, workflowLogs, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist } from "@shared/schema";
 import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail, sendContactConfirmationEmail, sendQuoteRequestConfirmationEmail, sendAdminNotificationEmail } from "./welcome-email-service";
@@ -7168,8 +7171,88 @@ function getCuratedRecommendations(preferences: any) {
 const dailyBlogScheduler = new DailyBlogScheduler();
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply security middleware
+  app.use(requestId);
+  app.use(securityHeaders);
+  app.use('/api', apiRateLimit);
+  
   // Setup authentication first
   setupAuth(app);
+
+  // Tenant API endpoints
+  app.get('/api/tenants/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      
+      // Mock tenant data for now (replace with actual database lookup)
+      const mockTenant = {
+        id: 1,
+        slug,
+        name: slug.charAt(0).toUpperCase() + slug.slice(1) + ' Automation',
+        logoUrl: '/api/placeholder/logo.png',
+        theme: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#8B5CF6',
+            accent: '#F59E0B'
+          },
+          gradients: {
+            primary: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)'
+          },
+          font: {
+            family: 'Inter, sans-serif'
+          },
+          rounded: '8px'
+        },
+        page: {
+          hero: {
+            title: 'AI Workflow Automation for Your Business',
+            subtitle: 'Transform your business processes with intelligent automation workflows that deploy in minutes, not months.',
+            cta: 'Start Building Workflows'
+          },
+          features: [
+            {
+              title: 'Instant Deployment',
+              description: 'Deploy workflows to production in minutes with our automated infrastructure.',
+              icon: '⚡'
+            },
+            {
+              title: 'Natural Language',
+              description: 'Describe your workflow in plain English and watch AI build it for you.',
+              icon: '🧠'
+            },
+            {
+              title: 'Real-time Monitoring',
+              description: 'Track workflow performance with live status updates and detailed logs.',
+              icon: '📊'
+            }
+          ]
+        },
+        workflows: []
+      };
+      
+      // Get workflows for this tenant
+      const workflows = await db.select()
+        .from(workflowsUpdated)
+        .where(eq(workflowsUpdated.tenantId, 1))
+        .orderBy(desc(workflowsUpdated.createdAt))
+        .limit(10);
+      
+      mockTenant.workflows = workflows.map(wf => ({
+        id: wf.id,
+        name: wf.name,
+        description: wf.description || '',
+        status: wf.status as any,
+        lastRunUrl: wf.lastRunUrl,
+        createdAt: wf.createdAt?.toISOString() || new Date().toISOString()
+      }));
+      
+      res.json(mockTenant);
+    } catch (error) {
+      console.error('Error fetching tenant:', error);
+      res.status(500).json({ error: 'Failed to fetch tenant data' });
+    }
+  });
 
   // Add auth endpoints
   setupAuthEndpoints(app);
@@ -7709,78 +7792,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Test endpoint working", body: req.body });
   });
 
-  // Workflow Generation and Management Endpoints (no auth for demo)
-  app.post("/api/workflows/generate", async (req, res) => {
+  // Workflow Generation with OpenAI Integration
+  app.post("/api/workflows/generate", workflowGenerationRateLimit, async (req, res) => {
+    const requestId = req.id || `req_${Date.now()}`;
+    
     try {
-      console.log("Workflow generation request received:", req.body);
-      const { prompt, userId } = req.body;
+      console.log(`[${requestId}] Workflow generation request received:`, req.body);
+      const { prompt, userId, tenantId } = req.body;
       
       if (!prompt || typeof prompt !== 'string') {
         return res.status(400).json({ error: "Prompt is required" });
       }
 
-      // Mock OpenAI workflow generation (replace with actual OpenAI API call)
-      const mockWorkflow = {
-        name: "Generated Workflow",
-        description: prompt,
-        env: {},
-        nodes: [
-          {
-            id: "trigger",
-            type: "webhook",
-            action: "receive",
-            inputs: { method: "POST" },
-            outputs: ["data"]
-          },
-          {
-            id: "process",
-            type: "transform", 
-            action: "process",
-            inputs: { data: "{{trigger.data}}" },
-            outputs: ["processed"]
-          },
-          {
-            id: "notify",
-            type: "email",
-            action: "send",
-            inputs: {
-              to: "admin@example.com",
-              subject: "Workflow Completed",
-              body: "{{process.processed}}"
-            },
-            outputs: ["sent"]
-          }
-        ],
-        edges: [
-          { fromNodeId: "trigger", fromPort: "data", toNodeId: "process", toPort: "data" },
-          { fromNodeId: "process", fromPort: "processed", toNodeId: "notify", toPort: "body" }
-        ],
-        triggers: [
-          { type: "webhook", config: { path: "/webhook" } }
-        ]
-      };
+      // Generate workflow using OpenAI service
+      const { generateWorkflow } = await import('./openai-service');
+      const result = await generateWorkflow({
+        prompt,
+        tenantId: tenantId || req.tenant?.id,
+        userId
+      });
 
-      // Store workflow in database
-      const [workflow] = await db.insert(workflows).values({
+      let workflowData;
+      if (result.success) {
+        workflowData = result.workflow;
+        console.log(`[${requestId}] OpenAI generation successful - ${result.tokensUsed} tokens, ${result.latencyMs}ms`);
+      } else {
+        workflowData = result.fallbackWorkflow;
+        console.log(`[${requestId}] Using fallback workflow due to error: ${result.error}`);
+      }
+
+      if (!workflowData) {
+        throw new Error("No workflow data generated");
+      }
+
+      // Store workflow in database using new schema
+      const [workflow] = await db.insert(workflowsUpdated).values({
+        tenantId: tenantId || req.tenant?.id || null,
         userId: userId || null,
-        name: mockWorkflow.name,
-        description: mockWorkflow.description,
+        name: workflowData.name,
+        description: workflowData.description,
         prompt: prompt,
-        workflowJson: mockWorkflow,
-        isActive: false // Not active until deployed
+        workflowJson: workflowData,
+        status: 'idle'
       }).returning();
+
+      // Log workflow generation
+      await db.insert(workflowLogs).values({
+        workflowId: workflow.id,
+        runId: requestId,
+        status: 'success',
+        stepName: 'generation',
+        output: { 
+          message: 'Workflow generated successfully',
+          tokensUsed: result.success ? result.tokensUsed : 0,
+          latencyMs: result.success ? result.latencyMs : 0,
+          usedOpenAI: result.success
+        }
+      });
 
       res.json({ 
         workflowId: workflow.id, 
-        workflow: mockWorkflow 
+        workflow: workflowData,
+        generatedWith: result.success ? 'openai' : 'fallback'
       });
     } catch (error) {
-      console.error("Error generating workflow:", error);
+      console.error(`[${requestId}] Error generating workflow:`, error);
       res.status(500).json({ error: "Failed to generate workflow" });
     }
   });
 
   app.post("/api/workflows/deploy", async (req, res) => {
+    const requestId = req.id || `req_${Date.now()}`;
+    
     try {
       const { workflowId } = req.body;
       
@@ -7788,40 +7871,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "workflowId is required" });
       }
 
-      // Find workflow
-      const [workflow] = await db.select().from(workflows).where(eq(workflows.id, workflowId));
+      // Find workflow using updated schema
+      const [workflow] = await db.select().from(workflowsUpdated).where(eq(workflowsUpdated.id, workflowId));
       
       if (!workflow) {
         return res.status(404).json({ error: "Workflow not found" });
       }
 
-      // Mock deployment process (replace with actual deployment logic)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update workflow status to active
-      await db.update(workflows)
-        .set({ 
-          isActive: true,
-          updatedAt: new Date()
-        })
-        .where(eq(workflows.id, workflowId));
-
-      // Log deployment
-      await db.insert(workflowLogs).values({
-        workflowId: workflowId,
-        runId: `deploy-${Date.now()}`,
-        status: "success",
-        stepName: "deployment",
-        output: { message: "Workflow deployed successfully" }
+      // Enqueue deployment job with BullMQ
+      const job = await addDeployJob({
+        workflowId: workflow.id,
+        tenantId: workflow.tenantId || 1,
+        workflowJson: workflow.workflowJson,
+        requestId
       });
+
+      console.log(`[${requestId}] Deploy job enqueued: ${job.id}`);
 
       res.json({ 
         ok: true, 
-        message: "Workflow deployed successfully",
+        message: "Workflow deployment started",
+        jobId: job.id,
         viewUrl: `/workflows/${workflowId}/runs`
       });
     } catch (error) {
-      console.error("Error deploying workflow:", error);
+      console.error(`[${req.id}] Error deploying workflow:`, error);
       res.status(500).json({ error: "Failed to deploy workflow" });
     }
   });
@@ -7839,17 +7913,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sendStatus = async () => {
         try {
           const userWorkflows = await db.select()
-            .from(workflows)
-            .where(eq(workflows.userId, parseInt(userId)))
-            .orderBy(desc(workflows.updatedAt))
+            .from(workflowsUpdated)
+            .where(eq(workflowsUpdated.userId, parseInt(userId)))
+            .orderBy(desc(workflowsUpdated.updatedAt))
             .limit(1);
 
           const status = userWorkflows.length > 0 
-            ? (userWorkflows[0].isActive ? "live" : "idle")
+            ? userWorkflows[0].status
             : "idle";
 
-          const lastRunUrl = userWorkflows.length > 0 && userWorkflows[0].isActive
-            ? `/workflows/${userWorkflows[0].id}/runs`
+          const lastRunUrl = userWorkflows.length > 0 && userWorkflows[0].status === 'live'
+            ? userWorkflows[0].lastRunUrl || `/workflows/${userWorkflows[0].id}/runs`
             : null;
 
           res.write(`data: ${JSON.stringify({ 
@@ -7885,22 +7959,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/workflows", async (req, res) => {
     try {
-      const { userId } = req.query;
+      const { userId, tenantId } = req.query;
       
-      let query = db.select().from(workflows);
+      let query = db.select().from(workflowsUpdated);
       
       if (userId) {
-        query = query.where(eq(workflows.userId, parseInt(userId as string)));
+        query = query.where(eq(workflowsUpdated.userId, parseInt(userId as string)));
+      } else if (tenantId) {
+        query = query.where(eq(workflowsUpdated.tenantId, parseInt(tenantId as string)));
       }
       
-      const userWorkflows = await query.orderBy(desc(workflows.createdAt));
+      const userWorkflows = await query.orderBy(desc(workflowsUpdated.createdAt));
       
       res.json(userWorkflows.map(wf => ({
         id: wf.id,
         name: wf.name,
         description: wf.description,
-        status: wf.isActive ? 'live' : 'idle',
-        lastRunUrl: wf.isActive ? `/workflows/${wf.id}/runs` : null,
+        status: wf.status,
+        lastRunUrl: wf.lastRunUrl,
         createdAt: wf.createdAt,
         nodes: (wf.workflowJson as any)?.nodes || []
       })));

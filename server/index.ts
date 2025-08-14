@@ -37,6 +37,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize worker processes
+  await import('./worker/deploy');
+  await import('./worker/validate');
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

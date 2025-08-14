@@ -73,6 +73,7 @@ import MovieMatchmaker from "@/pages/movie-matchmaker";
 import TVMatchmaker from "@/pages/tv-matchmaker";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
+import TenantLandingPage from "@/pages/tenant/[slug]";
 import NewsletterTest from "@/pages/newsletter-test";
 import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
@@ -222,6 +223,9 @@ function Router() {
       <Route path="/newsletter-test" component={NewsletterTest} />
       <Route path="/client-suite-waitlist" component={ClientSuiteWaitlist} />
       <Route path="/client-portal" component={ClientPortalPage} />
+      
+      {/* Tenant-specific workflow landing pages */}
+      <Route path="/tenant/:slug" component={TenantLandingPage} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route component={NotFound} />

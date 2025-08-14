@@ -337,4 +337,127 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 
-// Client Suite Waitlist schema and types already defined above
+// Multi-tenant workflow builder schema as per checklist requirements
+
+// Tenants table for multi-tenant architecture
+export const tenants = pgTable("tenants", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 100 }).unique().notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  logoUrl: varchar("logo_url", { length: 500 }),
+  themeId: integer("theme_id").references(() => themes.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_tenants_slug").on(table.slug),
+]);
+
+// Themes table for customizable branding
+export const themes = pgTable("themes", {
+  id: serial("id").primaryKey(),
+  json: jsonb("json").notNull(), // Theme configuration JSON
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Pages table for tenant-specific content
+export const pages = pgTable("pages", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  json: jsonb("json").notNull(), // Page content JSON
+  isPublished: boolean("is_published").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_pages_tenant_id").on(table.tenantId),
+]);
+
+// API Keys table for secure credential management
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id).notNull(),
+  provider: varchar("provider", { length: 100 }).notNull(), // 'openai', 'slack', etc.
+  authRef: varchar("auth_ref", { length: 255 }).notNull(), // Reference key
+  encryptedSecret: text("encrypted_secret").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_api_keys_tenant_id").on(table.tenantId),
+]);
+
+// Update workflows table to include tenant relationship and proper status enum
+export const workflowsUpdated = pgTable("workflows", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenants.id),
+  userId: integer("user_id").references(() => users.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  prompt: text("prompt").notNull(),
+  workflowJson: jsonb("workflow_json").notNull(),
+  status: varchar("status", { length: 20 }).default("idle").notNull(), // 'idle','deploying','live','error'
+  lastRunUrl: text("last_run_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_workflows_tenant_id").on(table.tenantId),
+  index("idx_workflows_user_id").on(table.userId),
+]);
+
+// Insert schemas for new tables
+export const insertTenantSchema = createInsertSchema(tenants).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertThemeSchema = createInsertSchema(themes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPageSchema = createInsertSchema(pages).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Relations for new tables
+export const tenantsRelations = relations(tenants, ({ one, many }) => ({
+  theme: one(themes, {
+    fields: [tenants.themeId],
+    references: [themes.id],
+  }),
+  pages: many(pages),
+  workflows: many(workflowsUpdated),
+  apiKeys: many(apiKeys),
+}));
+
+export const themesRelations = relations(themes, ({ many }) => ({
+  tenants: many(tenants),
+}));
+
+export const pagesRelations = relations(pages, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [pages.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [apiKeys.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
+// Type exports for new tables
+export type InsertTenant = z.infer<typeof insertTenantSchema>;
+export type Tenant = typeof tenants.$inferSelect;
+
+export type InsertTheme = z.infer<typeof insertThemeSchema>;
+export type Theme = typeof themes.$inferSelect;
+
+export type InsertPage = z.infer<typeof insertPageSchema>;
+export type Page = typeof pages.$inferSelect;
+
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+export type ApiKey = typeof apiKeys.$inferSelect;
