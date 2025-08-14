@@ -73,13 +73,15 @@ import MovieMatchmaker from "@/pages/movie-matchmaker";
 import TVMatchmaker from "@/pages/tv-matchmaker";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
-import TenantLandingPage from "@/pages/tenant/[slug]";
+
 import NewsletterTest from "@/pages/newsletter-test";
 import FreeTools from "@/pages/free-tools";
 import OAuthConsent from "@/pages/oauth-consent";
 import GoogleAdsOAuth from "@/pages/google-ads-oauth";
 import RedesignedHome from "@/pages/redesigned-home";
 import AdminDashboard from "@/pages/admin-dashboard";
+import TenantLandingPage from "@/pages/tenant/TenantLandingPage";
+import ThemeEditor from "@/pages/admin/ThemeEditor";
 import AIWorkflowAutomation from "@/pages/ai-workflow-automation";
 import WebsiteAIAssistants from "@/pages/website-ai-assistants";
 import APIIntegrations from "@/pages/api-integrations";
@@ -226,6 +228,9 @@ function Router() {
       
       {/* Tenant-specific workflow landing pages */}
       <Route path="/tenant/:slug" component={TenantLandingPage} />
+      
+      {/* Admin theme editor */}
+      <Route path="/admin/theme-editor" component={ThemeEditor} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route component={NotFound} />

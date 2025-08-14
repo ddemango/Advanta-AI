@@ -23,8 +23,12 @@ import { storage } from "./storage";
 import { requestId, securityHeaders, apiRateLimit, workflowGenerationRateLimit } from "./middleware";
 import { workflowsUpdated } from "@shared/schema";
 import { addDeployJob } from "./queue-service";
+import { generateIdempotencyKey, isDuplicateOperation, markOperationStarted, getOperationResult } from "./idempotency";
+import { validateEnvironment, isHostAllowed, sanitizeInput, createAuditLog } from "./security";
+import { trackEvent } from "./analytics";
 import { setupAuth, requireAuth } from "./auth";
-import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, workflows, workflowLogs, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist } from "@shared/schema";
+import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, workflows, workflowLogs, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist, tenants, themes, pages } from "@shared/schema";
+import { redis, deployQueue } from "./queue-service";
 import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail, sendContactConfirmationEmail, sendQuoteRequestConfirmationEmail, sendAdminNotificationEmail } from "./welcome-email-service";
 import { eq, sql, desc } from "drizzle-orm";
 import { db } from "./db";
@@ -7179,75 +7183,217 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first
   setupAuth(app);
 
+  // Admin endpoints for theme/content management
+  app.get('/api/admin/tenants', async (req, res) => {
+    try {
+      const tenantsList = await db.select().from(tenants);
+      res.json(tenantsList);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      res.status(500).json({ error: 'Failed to fetch tenants' });
+    }
+  });
+
+  app.get('/api/admin/tenants/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.slug, slug)).limit(1);
+      
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      
+      // Get theme data
+      let themeData = null;
+      if (tenant.themeId) {
+        const [theme] = await db.select().from(themes).where(eq(themes.id, tenant.themeId)).limit(1);
+        themeData = theme?.json;
+      }
+      
+      // Get page data
+      const [page] = await db.select().from(pages)
+        .where(eq(pages.tenantId, tenant.id))
+        .limit(1);
+      
+      res.json({
+        ...tenant,
+        theme: themeData,
+        page: page?.json || {
+          hero: {
+            title: 'AI Workflow Automation',
+            subtitle: 'Transform your business with intelligent automation.',
+            cta: 'Get Started'
+          },
+          features: [
+            { title: 'Fast Deploy', description: 'Deploy in minutes', icon: '⚡' },
+            { title: 'AI Powered', description: 'Natural language workflows', icon: '🧠' },
+            { title: 'Real-time', description: 'Live monitoring', icon: '📊' }
+          ]
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching tenant config:', error);
+      res.status(500).json({ error: 'Failed to fetch tenant configuration' });
+    }
+  });
+
+  app.patch('/api/admin/tenants/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const updates = req.body;
+      
+      // Update tenant
+      await db.update(tenants)
+        .set({ 
+          name: updates.name,
+          logoUrl: updates.logoUrl,
+          themeId: updates.themeId
+        })
+        .where(eq(tenants.slug, slug));
+      
+      // Update page content if provided
+      if (updates.page) {
+        const [tenant] = await db.select().from(tenants).where(eq(tenants.slug, slug)).limit(1);
+        if (tenant) {
+          await db.insert(pages).values({
+            tenantId: tenant.id,
+            json: updates.page,
+            isPublished: true
+          }).onConflictDoUpdate({
+            target: pages.tenantId,
+            set: { 
+              json: updates.page,
+              updatedAt: new Date()
+            }
+          });
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating tenant:', error);
+      res.status(500).json({ error: 'Failed to update tenant' });
+    }
+  });
+
+  // Logo upload endpoint
+  app.post('/api/admin/upload-logo', async (req, res) => {
+    try {
+      // TODO: Implement actual file upload (use multer or similar)
+      // For now, return a placeholder URL
+      const logoUrl = `/api/placeholder/logo-${Date.now()}.png`;
+      res.json({ logoUrl });
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      res.status(500).json({ error: 'Failed to upload logo' });
+    }
+  });
+
   // Tenant API endpoints
   app.get('/api/tenants/:slug', async (req, res) => {
     try {
       const { slug } = req.params;
       
-      // Mock tenant data for now (replace with actual database lookup)
-      const mockTenant = {
-        id: 1,
-        slug,
-        name: slug.charAt(0).toUpperCase() + slug.slice(1) + ' Automation',
-        logoUrl: '/api/placeholder/logo.png',
-        theme: {
-          colors: {
-            primary: '#3B82F6',
-            secondary: '#8B5CF6',
-            accent: '#F59E0B'
-          },
-          gradients: {
-            primary: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)'
-          },
-          font: {
-            family: 'Inter, sans-serif'
-          },
-          rounded: '8px'
-        },
-        page: {
-          hero: {
-            title: 'AI Workflow Automation for Your Business',
-            subtitle: 'Transform your business processes with intelligent automation workflows that deploy in minutes, not months.',
-            cta: 'Start Building Workflows'
-          },
-          features: [
-            {
-              title: 'Instant Deployment',
-              description: 'Deploy workflows to production in minutes with our automated infrastructure.',
-              icon: '⚡'
-            },
-            {
-              title: 'Natural Language',
-              description: 'Describe your workflow in plain English and watch AI build it for you.',
-              icon: '🧠'
-            },
-            {
-              title: 'Real-time Monitoring',
-              description: 'Track workflow performance with live status updates and detailed logs.',
-              icon: '📊'
-            }
-          ]
-        },
-        workflows: []
-      };
+      // Get tenant from database
+      const [tenant] = await db.select().from(tenants).where(eq(tenants.slug, slug)).limit(1);
       
-      // Get workflows for this tenant
+      if (!tenant) {
+        // Return mock tenant data for development
+        const mockTenant = {
+          id: 1,
+          slug,
+          name: slug.charAt(0).toUpperCase() + slug.slice(1) + ' Automation',
+          logoUrl: '/api/placeholder/logo.png',
+          theme: {
+            colors: {
+              primary: '#3B82F6',
+              secondary: '#8B5CF6',
+              accent: '#F59E0B'
+            },
+            gradients: {
+              primary: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)'
+            },
+            font: {
+              family: 'Inter, sans-serif'
+            },
+            rounded: '8px'
+          },
+          page: {
+            hero: {
+              title: 'AI Workflow Automation for Your Business',
+              subtitle: 'Transform your business processes with intelligent automation workflows that deploy in minutes, not months.',
+              cta: 'Start Building Workflows'
+            },
+            features: [
+              {
+                title: 'Instant Deployment',
+                description: 'Deploy workflows to production in minutes with our automated infrastructure.',
+                icon: '⚡'
+              },
+              {
+                title: 'Natural Language',
+                description: 'Describe your workflow in plain English and watch AI build it for you.',
+                icon: '🧠'
+              },
+              {
+                title: 'Real-time Monitoring',
+                description: 'Track workflow performance with live status updates and detailed logs.',
+                icon: '📊'
+              }
+            ]
+          },
+          workflows: []
+        };
+        
+        // Get workflows for this tenant
+        const workflows = await db.select()
+          .from(workflowsUpdated)
+          .where(eq(workflowsUpdated.tenantId, 1))
+          .orderBy(desc(workflowsUpdated.createdAt))
+          .limit(10);
+        
+        mockTenant.workflows = workflows.map(wf => ({
+          id: wf.id,
+          name: wf.name,
+          description: wf.description || '',
+          status: wf.status as any,
+          lastRunUrl: wf.lastRunUrl,
+          createdAt: wf.createdAt?.toISOString() || new Date().toISOString()
+        }));
+        
+        return res.json(mockTenant);
+      }
+      
+      // If tenant exists, get full data with theme and page
+      let themeData = null;
+      if (tenant.themeId) {
+        const [theme] = await db.select().from(themes).where(eq(themes.id, tenant.themeId)).limit(1);
+        themeData = theme?.json;
+      }
+      
+      const [page] = await db.select().from(pages)
+        .where(eq(pages.tenantId, tenant.id))
+        .limit(1);
+      
       const workflows = await db.select()
         .from(workflowsUpdated)
-        .where(eq(workflowsUpdated.tenantId, 1))
+        .where(eq(workflowsUpdated.tenantId, tenant.id))
         .orderBy(desc(workflowsUpdated.createdAt))
         .limit(10);
       
-      mockTenant.workflows = workflows.map(wf => ({
-        id: wf.id,
-        name: wf.name,
-        description: wf.description || '',
-        status: wf.status as any,
-        lastRunUrl: wf.lastRunUrl,
-        createdAt: wf.createdAt?.toISOString() || new Date().toISOString()
-      }));
-      
-      res.json(mockTenant);
+      res.json({
+        ...tenant,
+        theme: themeData,
+        page: page?.json,
+        workflows: workflows.map(wf => ({
+          id: wf.id,
+          name: wf.name,
+          description: wf.description || '',
+          status: wf.status as any,
+          lastRunUrl: wf.lastRunUrl,
+          createdAt: wf.createdAt?.toISOString() || new Date().toISOString()
+        }))
+      });
     } catch (error) {
       console.error('Error fetching tenant:', error);
       res.status(500).json({ error: 'Failed to fetch tenant data' });
@@ -7865,7 +8011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const requestId = req.id || `req_${Date.now()}`;
     
     try {
-      const { workflowId } = req.body;
+      const { workflowId } = sanitizeInput(req.body);
       
       if (!workflowId) {
         return res.status(400).json({ error: "workflowId is required" });
@@ -7878,22 +8024,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Workflow not found" });
       }
 
+      // Generate idempotency key
+      const idempotencyKey = generateIdempotencyKey(workflow.tenantId || 1, workflow.workflowJson);
+      
+      // Check for duplicate deployment
+      const isDuplicate = await isDuplicateOperation(idempotencyKey);
+      if (isDuplicate) {
+        const existingResult = await getOperationResult(idempotencyKey);
+        if (existingResult) {
+          return res.json(existingResult);
+        }
+      }
+
+      // Mark operation as started
+      await markOperationStarted(idempotencyKey);
+
+      // Create audit log
+      const auditLog = createAuditLog({
+        userId: req.user?.id,
+        tenantId: workflow.tenantId || 1,
+        action: 'deploy_workflow',
+        resource: `workflow:${workflowId}`,
+        details: { workflowName: workflow.name, idempotencyKey },
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      console.log(`[${requestId}] Audit:`, auditLog);
+
       // Enqueue deployment job with BullMQ
       const job = await addDeployJob({
         workflowId: workflow.id,
         tenantId: workflow.tenantId || 1,
         workflowJson: workflow.workflowJson,
-        requestId
+        requestId,
+        idempotencyKey
       });
 
       console.log(`[${requestId}] Deploy job enqueued: ${job.id}`);
 
-      res.json({ 
+      const result = { 
         ok: true, 
         message: "Workflow deployment started",
         jobId: job.id,
+        idempotencyKey,
         viewUrl: `/workflows/${workflowId}/runs`
-      });
+      };
+
+      res.json(result);
     } catch (error) {
       console.error(`[${req.id}] Error deploying workflow:`, error);
       res.status(500).json({ error: "Failed to deploy workflow" });
@@ -7983,6 +8161,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching workflows:", error);
       res.status(500).json({ error: "Failed to fetch workflows" });
+    }
+  });
+
+  // Analytics tracking endpoint
+  app.post('/api/analytics/track', async (req, res) => {
+    try {
+      const { event, properties } = sanitizeInput(req.body);
+      
+      if (!event) {
+        return res.status(400).json({ error: 'Event name is required' });
+      }
+      
+      await trackEvent({
+        event,
+        properties: properties || {},
+        timestamp: new Date().toISOString(),
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        tenantSlug: req.tenant?.slug,
+        userId: req.user?.id
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Analytics tracking error:', error);
+      res.status(500).json({ error: 'Failed to track event' });
+    }
+  });
+
+  // Health check endpoint
+  app.get('/healthz', async (req, res) => {
+    try {
+      // Check database connection
+      await db.execute(sql`SELECT 1`);
+      
+      // Check environment
+      const envValidation = validateEnvironment();
+      
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        environment: envValidation,
+        services: {
+          database: 'connected',
+          redis: redis ? 'connected' : 'fallback',
+          queue: deployQueue ? 'active' : 'fallback'
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

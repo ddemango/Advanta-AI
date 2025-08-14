@@ -63,11 +63,18 @@ export const resolveTenant = async (req: Request, res: Response, next: NextFunct
       return next();
     }
 
-    // TODO: Implement actual tenant lookup from database
-    // const tenant = await db.select().from(tenants).where(eq(tenants.slug, subdomain)).limit(1);
+    // Implement actual tenant lookup from database
+    const { db } = await import('./db');
+    const { tenants } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
     
-    // For now, set a default tenant
-    req.tenant = { slug: subdomain, id: 1 };
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.slug, subdomain)).limit(1);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    
+    req.tenant = { slug: tenant.slug, id: tenant.id };
     next();
   } catch (error) {
     console.error('Error resolving tenant:', error);

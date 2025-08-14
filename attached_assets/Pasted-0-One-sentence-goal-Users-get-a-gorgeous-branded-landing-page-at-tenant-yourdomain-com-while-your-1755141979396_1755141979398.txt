@@ -1,0 +1,247 @@
+0) One-sentence goal
+
+Users get a gorgeous, branded landing page at tenant.yourdomain.com while your AI agent converts natural language → workflow JSON → deploys that workflow on a separate builder site in the background.
+
+1) Domains, DNS, and routing
+
+ Primary domain (e.g., yourdomain.com)
+
+ Wildcard subdomain DNS: *.yourdomain.com → your frontend host (A/ALIAS or CNAME)
+
+ Separate builder site domain or subdomain (e.g., builder.yourdomain.com, api.builder.yourdomain.com)
+
+ SSL certs (wildcard cert for *.yourdomain.com if your host needs manual TLS)
+
+2) Repos & code structure
+
+ Repo A — Frontend (Next.js + Tailwind + Framer Motion)
+
+app/[slug]/page.tsx (themed landing)
+
+middleware.ts (resolve tenant from host)
+
+app/api/workflows/* (status + trigger endpoints that call your backend API)
+
+app/admin/* (simple theme/content editor)
+
+lib/themes/* (JSON theme tokens)
+
+lib/data.ts (fetch tenant/page/workflow status)
+
+ Repo B — API & Worker (Node/Fastify or Express + BullMQ)
+
+/api/workflows/generate (NL → JSON via OpenAI Responses API with strict JSON schema)
+
+/api/workflows/deploy (enqueue deploy job; update status)
+
+/api/workflows/status (per-tenant status)
+
+/worker/deploy.ts (calls builder site API; retries/backoff)
+
+/worker/validate.ts (optional simulator)
+
+Shared types/Workflow.ts (schema for nodes/edges/triggers/env)
+
+3) Data model (Postgres tables)
+
+ tenants(id, slug, name, logo_url, theme_id, created_at)
+
+ themes(id, json jsonb, created_at)
+
+ pages(id, tenant_id, json jsonb, is_published boolean, updated_at)
+
+ workflows(id, tenant_id, json jsonb, status enum('idle','deploying','live','error'), last_run_url text, updated_at)
+
+ api_keys(id, tenant_id, provider, auth_ref, encrypted_secret, created_at) (optional)
+
+ Indexes on slug, tenant_id
+
+4) Environment & secrets (both repos)
+
+ OPENAI_API_KEY
+
+ DATABASE_URL (Neon/Supabase/RDS)
+
+ REDIS_URL (Upstash/ElastiCache)
+
+ JWT_SECRET (for short-lived tokens between Frontend ⇄ API ⇄ Builder)
+
+ BUILDER_API_URL (e.g., https://api.builder.yourdomain.com)
+
+ BUILDER_API_KEY or service-to-service JWT setup
+
+ ALLOWED_OUTBOUND_HOSTS (CSV allowlist for http nodes)
+
+ LOG_LEVEL (info|debug|warn|error)
+
+5) OpenAI integration (strict outputs)
+
+ Responses API call with response_format: { type: "json_schema", strict: true }
+
+ JSON Schema for Workflow:
+
+name, description, env
+
+nodes[] (id, type, action, inputs{}, outputs[], authRef?)
+
+edges[] (fromNodeId, fromPort, toNodeId, toPort)
+
+triggers[] (type: webhook|schedule|event, config{})
+
+ System prompt (Workflow Architect) to enforce node vocabulary & authRef use
+
+ Temperature ~0.2; max tokens adequate for graphs (e.g., 4–8k)
+
+6) Builder site (separate website) – choose one
+
+Option 1: Your own builder (recommended later)
+
+ Endpoints:
+
+POST /api/projects → { projectId, url }
+
+POST /api/projects/:id/workflows (accept your JSON graph)
+
+POST /api/projects/:id/run (optional)
+
+ Auth: service JWT (aud=builder)
+
+ Run logs UI and per-step output
+
+Option 2: Third-party engine now (fastest)
+
+ n8n Cloud / Make / Zapier Platform account
+
+ Translator module: map your generic nodes → provider’s nodes
+
+ API token + “create scenario” endpoint
+
+ Store external scenarioId + viewUrl in workflows.last_run_url
+
+7) Queue & background jobs
+
+ BullMQ queues: deploy, validate, run
+
+ Job options: attempts: 3, exponential backoff, dead-letter handling
+
+ Idempotency key per deploy (tenantId + workflow hash)
+
+8) Frontend theming & UI polish
+
+ Theme tokens JSON: colors.primary, gradients.primary, font.family, rounded
+
+ Hero + Features + Status + CTA sections
+
+ Micro-interactions: hover, reveal on scroll (Framer Motion)
+
+ Accessibility: color contrast ≥ 4.5:1; focus styles; alt text
+
+ SEO: metadata/OG/Twitter tags per tenant; sitemap; robots.txt
+
+ Analytics: first-party events (page_view, cta_click, deploy_click)
+
+9) Security & privacy rails
+
+ Never expose OPENAI_API_KEY to the browser (proxy via your API)
+
+ Outbound HTTP allowlist for workflow nodes
+
+ Validate inbound JSON against schema (AJV/Zod) server-side
+
+ Rate limit /api/* per IP + per tenant
+
+ Encryption at rest for any credentials; store only authRef in workflow JSON
+
+ CORS: only your domains
+
+ Audit logs: who deployed what, when, and diff of workflow JSON
+
+10) Observability & quality
+
+ Structured logs for: model calls (latency, tokens), job events, builder API calls
+
+ Request tracing (X-Request-Id) flows through UI→API→Worker→Builder
+
+ Health checks: /healthz for API and Worker
+
+ Error pages & user-facing statuses (deploying, live, error + reason)
+
+ Alerting on job failure rate, OpenAI 429/5xx spikes, builder API errors
+
+11) CI/CD & environments
+
+ GitHub Actions:
+
+Lint/test → build → deploy (preview on PRs, main to prod)
+
+ Environments: dev, staging, prod
+
+ Database migrations (Prisma/Flyway); seeded themes + demo tenant
+
+ Feature flags for risky features (e.g., “tools-enabled”)
+
+12) Performance checklist
+
+ Edge caching for static assets; long cache for images with revisioned URLs
+
+ Lazy-load noncritical components; defer Framer Motion where possible
+
+ Use next/image & font preloads
+
+ Server-sent events (SSE) or WS for status (avoid aggressive polling)
+
+13) Legal & content
+
+ Terms, Privacy, Cookies notice
+
+ Data Processing Addendum (if handling user data)
+
+ “AI assistance” disclosure on builder action pages
+
+14) Testing plan
+
+ Unit tests: schema validation, translator mapping, deploy idempotency
+
+ Integration tests: NL prompt → JSON graph → deploy (mock builder)
+
+ E2E: create tenant → theme → publish page → trigger deploy → get viewUrl
+
+ Load test: 50 concurrent deploys (queue + worker autoscale)
+
+15) MVP cut (what ships first)
+
+ One theme preset + logo upload
+
+ Hero/Features/Status/CTA sections
+
+ NL → JSON (strict) + basic validation (required nodes/ports)
+
+ Deploy to n8n Cloud (translator for 3–5 node types)
+
+ Status updates via SSE; link to n8n scenario as last_run_url
+
+16) Phase 2 (power features)
+
+ Your own builder site with run logs UI
+
+ Credentials handshake (OAuth for Slack/Gmail/etc.) → save as authRef
+
+ Visual graph preview on landing page (read-only)
+
+ Simulation/“dry run” annotations on nodes (✓/⚠️)
+
+ Multi-tenant admin with themes library & versioned pages
+
+17) Copy-paste tickets (assign and go)
+
+FE-01 – Tenant routing & theme loader
+FE-02 – Themed landing layout (Hero/Features/Status/CTA)
+FE-03 – Admin editor for page JSON + logo upload
+BE-01 – Workflow JSON schema + validator (AJV)
+BE-02 – /api/workflows/generate (OpenAI Responses API, strict JSON)
+BE-03 – /api/workflows/deploy (enqueue job, set status=deploying)
+WK-01 – Deploy worker (BullMQ) + n8n translator + retries
+BE-04 – /api/workflows/status + SSE stream
+OPS-01 – Postgres (Neon) + Redis (Upstash) + secrets wiring
+OPS-02 – CI/CD pipelines + preview deployments
+SEC-01 – Rate limits, CORS, outbound allowlist, audit logs

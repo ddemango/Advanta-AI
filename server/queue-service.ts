@@ -63,6 +63,7 @@ export interface DeployJobData {
   tenantId: number;
   workflowJson: any;
   requestId: string;
+  idempotencyKey?: string;
 }
 
 export interface ValidateJobData {
