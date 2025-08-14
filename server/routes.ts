@@ -21,9 +21,9 @@ declare module 'express-session' {
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist } from "@shared/schema";
+import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, workflows, workflowLogs, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist } from "@shared/schema";
 import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail, sendContactConfirmationEmail, sendQuoteRequestConfirmationEmail, sendAdminNotificationEmail } from "./welcome-email-service";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { DailyBlogScheduler, getAllBlogPosts } from "./daily-blog-system";
@@ -7704,9 +7704,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Workflow Generation and Management Endpoints
+  // Simple test endpoint first
+  app.post("/api/test-workflow", async (req, res) => {
+    res.json({ message: "Test endpoint working", body: req.body });
+  });
+
+  // Workflow Generation and Management Endpoints (no auth for demo)
   app.post("/api/workflows/generate", async (req, res) => {
     try {
+      console.log("Workflow generation request received:", req.body);
       const { prompt, userId } = req.body;
       
       if (!prompt || typeof prompt !== 'string') {
