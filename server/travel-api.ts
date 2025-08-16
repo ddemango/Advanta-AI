@@ -407,14 +407,17 @@ router.post('/summary', async (req, res) => {
       return res.status(400).json({ error: 'AI summary not available - OpenAI API key not configured' });
     }
     
-    const { flightOffers = [], hotelOffers = [], carOffers = [], origin, destination } = req.body;
+    const { offers = [], flightOffers = [], hotelOffers = [], carOffers = [], origin, destination } = req.body;
     
-    if (flightOffers.length === 0 && hotelOffers.length === 0 && carOffers.length === 0) {
+    // Support both old format (offers) and new format (flightOffers, etc.)
+    const flights = flightOffers.length > 0 ? flightOffers : offers;
+    
+    if (flights.length === 0 && hotelOffers.length === 0 && carOffers.length === 0) {
       return res.status(400).json({ error: 'No travel options provided for summary' });
     }
     
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
           role: "system",
@@ -433,11 +436,11 @@ Be conversational and helpful, like a knowledgeable travel agent.`
           role: "user",
           content: `Please analyze these travel options for a trip from ${origin} to ${destination}:
 
-FLIGHTS (${flightOffers.length} options):
-${flightOffers.map((f: any, i: number) => `${i+1}. $${f.priceUSD} - ${f.tier} deal (${f.cpm}¢/mile) - ${f.validatingAirline}`).join('\n')}
+FLIGHTS (${flights.length} options):
+${flights.map((f: any, i: number) => `${i+1}. $${f.priceUSD} - ${f.tier} deal (${f.cpm}¢/mile) - ${f.validatingAirline}`).join('\n')}
 
 HOTELS (${hotelOffers.length} options):
-${hotelOffers.map((h: any, i: number) => `${i+1}. ${h.hotel.name} - $${h.offers[0]?.price.total}/night in ${h.hotel.cityCode}`).join('\n')}
+${hotelOffers.map((h: any, i: number) => `${i+1}. ${h.hotel?.name || h.name} - $${h.offers?.[0]?.price.total || h.priceUSD}/night in ${h.hotel?.cityCode || h.cityCode}`).join('\n')}
 
 CARS (${carOffers.length} options):
 ${carOffers.map((c: any, i: number) => `${i+1}. ${c.vehicle} from ${c.supplier} - $${c.priceUSD}/day`).join('\n')}
@@ -455,6 +458,153 @@ Provide a comprehensive travel summary with recommendations.`
   } catch (error) {
     console.error('Summary generation error:', error);
     res.status(500).json({ error: 'Failed to generate AI summary' });
+  }
+});
+
+// Advanced Deal Finder endpoint
+router.post('/deals/find', async (req, res) => {
+  try {
+    const {
+      origin,
+      destination = null,
+      region = null,
+      departDate = null,
+      returnDate = null,
+      flexibility = "exact",
+      includeNearby = true,
+      cabin = "ECONOMY",
+      currency = "USD",
+      mistakeBias = true,
+      filters = {}
+    } = req.body;
+
+    if (!origin) {
+      return res.status(400).json({ error: 'Origin is required' });
+    }
+
+    // Helper functions for nearby airports and regions
+    const NEARBY_GROUPS: { [key: string]: string[] } = {
+      "NYC": ["JFK", "EWR", "LGA"],
+      "LON": ["LHR", "LGW", "STN"],
+      "SF": ["SFO"],
+      "LA": ["LAX"],
+      "CHI": ["ORD", "MDW"],
+      "WAS": ["DCA", "IAD", "BWI"]
+    };
+
+    const REGION_TO_CITIES: { [key: string]: string[] } = {
+      "EUROPE": ["LHR", "CDG", "FCO", "BCN", "AMS", "FRA"],
+      "ASIA": ["HND", "ICN", "BKK", "SIN"]
+    };
+
+    const expandOrigin = (code: string, includeNearby: boolean): string[] => {
+      const upperCode = code.toUpperCase();
+      for (const [, group] of Object.entries(NEARBY_GROUPS)) {
+        if (group.includes(upperCode)) {
+          return includeNearby ? group : [upperCode];
+        }
+      }
+      return [upperCode];
+    };
+
+    const expandDestinations = (dest: string | null, region: string | null): string[] => {
+      if (dest) return [dest.toUpperCase()];
+      if (region) return REGION_TO_CITIES[region.toUpperCase()] || [];
+      // Default "anywhere" destinations
+      return ["LHR", "CDG", "FCO", "BCN", "HND", "ICN"];
+    };
+
+    // Build date pairs based on flexibility
+    const buildDatePairs = (depart: string | null, ret: string | null, flex: string) => {
+      const pairs: Array<[string, string]> = [];
+      const now = new Date();
+      const depDate = depart ? new Date(depart) : new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const retDate = ret ? new Date(ret) : new Date(depDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+
+      const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+
+      if (flex === "exact") {
+        pairs.push([toYMD(depDate), toYMD(retDate)]);
+      } else if (flex === "+-3") {
+        for (let shift = -3; shift <= 3; shift++) {
+          const d1 = new Date(depDate.getTime() + shift * 24 * 60 * 60 * 1000);
+          const d2 = new Date(retDate.getTime() + shift * 24 * 60 * 60 * 1000);
+          pairs.push([toYMD(d1), toYMD(d2)]);
+        }
+      } else if (flex === "weekend") {
+        // Find next Friday-Sunday
+        const d1 = new Date(depDate);
+        while (d1.getDay() !== 5) d1.setDate(d1.getDate() + 1);
+        const d2 = new Date(d1.getTime() + 2 * 24 * 60 * 60 * 1000);
+        pairs.push([toYMD(d1), toYMD(d2)]);
+      } else if (flex === "month") {
+        // First 4 weekends of the month
+        const monthStart = new Date(depDate.getFullYear(), depDate.getMonth(), 1);
+        let friday = new Date(monthStart);
+        while (friday.getDay() !== 5) friday.setDate(friday.getDate() + 1);
+        
+        for (let i = 0; i < 4; i++) {
+          const start = new Date(friday.getTime() + i * 7 * 24 * 60 * 60 * 1000);
+          const end = new Date(start.getTime() + 2 * 24 * 60 * 60 * 1000);
+          pairs.push([toYMD(start), toYMD(end)]);
+        }
+      }
+      
+      return pairs;
+    };
+
+    // Expand origins and destinations
+    const origins = expandOrigin(origin, includeNearby);
+    const destinations = expandDestinations(destination, region);
+    const datePairs = buildDatePairs(departDate, returnDate, flexibility);
+
+    // Search across all combinations
+    const allOffers: any[] = [];
+    
+    for (const o of origins) {
+      for (const d of destinations) {
+        for (const [depDate, retDate] of datePairs.slice(0, 8)) { // Cap to prevent too many API calls
+          try {
+            const result = mockFlightSearch({
+              origin: o,
+              destination: d,
+              departDate: depDate,
+              returnDate: retDate,
+              nonStop: filters.maxStops === 0,
+              cabin,
+              maxPrice: null,
+              maxOffers: 20,
+              currency
+            });
+
+            (result.offers || []).forEach((offer: any) => {
+              // Add route and date info for display
+              offer._route = `${o}→${d}`;
+              offer._dates = `${depDate}→${retDate}`;
+              
+              // Apply mistake fare bias for sorting
+              if (mistakeBias && (offer.tier === "unicorn" || offer.tier === "great")) {
+                offer._sortPrice = offer.priceUSD - 0.01;
+              } else {
+                offer._sortPrice = offer.priceUSD;
+              }
+
+              allOffers.push(offer);
+            });
+          } catch (error) {
+            console.error(`Search error for ${o}→${d} on ${depDate}:`, error);
+          }
+        }
+      }
+    }
+
+    // Sort by price (with mistake fare bias) and return top results
+    allOffers.sort((a, b) => (a._sortPrice || a.priceUSD) - (b._sortPrice || b.priceUSD));
+
+    res.json({ offers: allOffers.slice(0, 40) });
+  } catch (error) {
+    console.error('Deal finder error:', error);
+    res.status(500).json({ error: 'Deal search failed' });
   }
 });
 

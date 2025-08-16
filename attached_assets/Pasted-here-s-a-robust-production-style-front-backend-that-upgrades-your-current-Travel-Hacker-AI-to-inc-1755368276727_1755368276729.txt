@@ -1,0 +1,643 @@
+here’s a robust, production-style front + backend that upgrades your current Travel Hacker AI to include: flexible “Deal Finder”, multi-city / region search, nearby airports, airline/stops filters, currency, alerts & saved deals (SQLite), rate-limiting, caching, and consistent /api/travel/* routes.
+
+Below is a copy-pasteable setup. Drop these files into your Replit (or any Python host). It keeps your Amadeus + optional ChatGPT layer.
+
+0) Project layout
+.
+├─ app.py                         # Flask app entry
+├─ travel_api.py                  # Blueprint mounted at /api/travel  ✅
+├─ providers/
+│  ├─ amadeus_flights.py
+│  ├─ amadeus_hotels.py
+│  └─ amadeus_cars.py
+├─ services/
+│  ├─ deal_math.py
+│  ├─ nearby.py
+│  └─ cache.py
+├─ db.py                          # SQLAlchemy models (Alerts, SavedDeal, Prefs)
+├─ ai_client.py                   # optional OpenAI layer
+├─ requirements.txt
+└─ frontend/
+   └─ TravelHackerAIV3.jsx        # Advanced React UI (no external script needed)
+
+1) requirements.txt
+Flask==3.0.3
+Flask-Cors==4.0.1
+python-dotenv==1.0.1
+requests==2.32.3
+pydantic==2.8.2
+SQLAlchemy==2.0.31
+cachetools==5.3.3
+openai==1.40.0
+
+2) app.py (Flask boot + blueprint, CORS, rate limit)
+import os, time
+from collections import defaultdict
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from dotenv import load_dotenv
+from travel_api import travel_bp
+
+load_dotenv()
+
+app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# --- very simple in-memory rate limiter (per IP) ---
+WINDOW = int(os.getenv("RL_WINDOW_SEC", "60"))
+MAX_REQ = int(os.getenv("RL_MAX_REQ", "120"))
+_BUCKET = defaultdict(list)
+
+@app.before_request
+def _ratelimit():
+    if os.getenv("RL_DISABLE", "0") == "1":  # turn off with env
+        return
+    if not request.path.startswith("/api/"):
+        return
+    now = time.time()
+    ip = request.headers.get("x-forwarded-for", request.remote_addr)
+    q = _BUCKET[ip]
+    # drop old
+    while q and now - q[0] > WINDOW:
+        q.pop(0)
+    if len(q) >= MAX_REQ:
+        return jsonify({"error": "rate_limited", "retryAfterSec": WINDOW}), 429
+    q.append(now)
+
+# mount blueprint at /api/travel
+app.register_blueprint(travel_bp, url_prefix="/api/travel")
+
+@app.get("/health")
+def health():
+    return jsonify({"ok": True, "service": "travel-hacker-ai", "ai": bool(os.getenv("OPENAI_API_KEY"))})
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", "8000"))
+    app.run(host="0.0.0.0", port=port, debug=True)
+
+3) providers/amadeus_flights.py
+import os, requests
+from typing import Optional, Dict, Any, List
+
+AMADEUS_ENV = (os.getenv("AMADEUS_ENV", "test") or "test").lower()
+BASE = "https://api.amadeus.com" if AMADEUS_ENV == "production" else "https://test.api.amadeus.com"
+CID = os.getenv("AMADEUS_API_KEY", "")
+SECRET = os.getenv("AMADEUS_API_SECRET", "")
+
+def _token() -> str:
+    if not CID or not SECRET:
+        return "DEMO"
+    r = requests.post(
+        f"{BASE}/v1/security/oauth2/token",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={"grant_type":"client_credentials","client_id":CID,"client_secret":SECRET},
+        timeout=30
+    )
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+def search_flights(
+    origin: str, destination: str,
+    depart_date: str, return_date: Optional[str],
+    max_offers: int = 30,
+    non_stop: Optional[bool] = None,
+    cabin: Optional[str] = None,
+    currency: str = "USD",
+    max_stops: Optional[int] = None,
+    allow_carriers: Optional[List[str]] = None,
+    block_carriers: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    tok = _token()
+    if tok == "DEMO":
+        return {
+            "data":[
+                {"id":"DEMO1","price":{"total":"350.00"},
+                 "validatingAirlineCodes":["ZZ"],
+                 "itineraries":[{"duration":"PT8H10M","segments":[
+                    {"departure":{"iataCode":origin,"at":f"{depart_date}T08:00:00"},
+                     "arrival":{"iataCode":destination,"at":f"{depart_date}T16:10:00"},
+                     "carrierCode":"ZZ","number":"101"}]}]
+                }
+            ]
+        }
+
+    flightFilters = {}
+    if non_stop is True or (max_stops is not None and max_stops == 0):
+        flightFilters["connectionRestriction"] = {"maxNumberOfConnections": 0}
+    elif max_stops is not None:
+        # Amadeus supports 0 for nonstop; for 1+ we just don't set restriction (best-effort)
+        pass
+
+    if cabin:
+        flightFilters["cabinRestrictions"] = [{
+            "cabin": cabin.upper(),
+            "coverage": "MOST_SEGMENTS",
+            "originDestinationIds": ["1","2"] if return_date else ["1"]
+        }]
+
+    if allow_carriers or block_carriers:
+        flightFilters["carrierRestrictions"] = {}
+        if allow_carriers: flightFilters["carrierRestrictions"]["includedCarrierCodes"] = [c.upper() for c in allow_carriers]
+        if block_carriers: flightFilters["carrierRestrictions"]["excludedCarrierCodes"] = [c.upper() for c in block_carriers]
+
+    body = {
+        "currencyCode": currency.upper(),
+        "originDestinations": [
+            {"id":"1","originLocationCode":origin.upper(),"destinationLocationCode":destination.upper(),
+             "departureDateTimeRange":{"date":depart_date}}
+        ] + ([{"id":"2","originLocationCode":destination.upper(),"destinationLocationCode":origin.upper(),
+               "departureDateTimeRange":{"date":return_date}}] if return_date else []),
+        "travelers": [{"id":"1","travelerType":"ADULT"}],
+        "sources": ["GDS"],
+        "searchCriteria": {
+            "maxFlightOffers": max_offers,
+            **({"flightFilters": flightFilters} if flightFilters else {})
+        }
+    }
+
+    r = requests.post(f"{BASE}/v2/shopping/flight-offers",
+                      headers={"Authorization": f"Bearer {tok}", "Content-Type":"application/json"},
+                      json=body, timeout=60)
+    r.raise_for_status()
+    return r.json()
+
+4) providers/amadeus_hotels.py
+import os, requests
+from typing import Dict, Any
+
+AMADEUS_ENV = (os.getenv("AMADEUS_ENV", "test") or "test").lower()
+BASE = "https://api.amadeus.com" if AMADEUS_ENV == "production" else "https://test.api.amadeus.com"
+CID = os.getenv("AMADEUS_API_KEY", "")
+SECRET = os.getenv("AMADEUS_API_SECRET", "")
+
+def _token() -> str:
+    if not CID or not SECRET:
+        return "DEMO"
+    r = requests.post(f"{BASE}/v1/security/oauth2/token",
+                      headers={"Content-Type":"application/x-www-form-urlencoded"},
+                      data={"grant_type":"client_credentials","client_id":CID,"client_secret":SECRET}, timeout=30)
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+def search_hotels(params: Dict[str, Any]) -> Dict[str, Any]:
+    tok = _token()
+    if tok == "DEMO":
+        return {"data":[
+            {"type":"hotel-offer","hotel":{"name":"Demo Inn Roma","hotelId":"D1","cityCode":params["cityCode"]},
+             "offers":[{"id":"HDEMO1","price":{"currency":"USD","total":"89.00"},
+                        "checkInDate":params["checkInDate"],"checkOutDate":params["checkOutDate"]}]}
+        ]}
+    q = {
+        "cityCode": params["cityCode"],
+        "checkInDate": params["checkInDate"],
+        "checkOutDate": params["checkOutDate"],
+        "adults": str(params.get("adults", 2)),
+        "roomQuantity": str(params.get("roomQuantity", 1)),
+        "currency": params.get("currency","USD")
+    }
+    if params.get("priceMax"): q["priceRange"] = f"0-{int(params['priceMax'])}"
+    r = requests.get(f"{BASE}/v3/shopping/hotel-offers",
+                     headers={"Authorization": f"Bearer {tok}"}, params=q, timeout=60)
+    r.raise_for_status()
+    return r.json()
+
+5) providers/amadeus_cars.py (placeholder)
+from typing import Dict, Any
+
+def search_cars(cityCode: str, pickUpDateTime: str, dropOffDateTime: str, passengers: int = 2) -> Dict[str, Any]:
+    # TODO: Wire to Amadeus Cars & Transfers once enabled for your key
+    return {"offers":[
+        {"id":"CARDEMO1","supplier":"DemoCar","vehicle":"Compact","priceUSD":32.0,
+         "pickUp":{"cityCode":cityCode,"at":pickUpDateTime},"dropOff":{"cityCode":cityCode,"at":dropOffDateTime}},
+        {"id":"CARDEMO2","supplier":"DemoCar","vehicle":"SUV","priceUSD":49.0,
+         "pickUp":{"cityCode":cityCode,"at":pickUpDateTime},"dropOff":{"cityCode":cityCode,"at":dropOffDateTime}}
+    ]}
+
+6) services/deal_math.py
+import math
+
+AIRPORTS = {
+    "JFK": (40.6413,-73.7781),"EWR":(40.6895,-74.1745),"LGA":(40.7769,-73.8740),
+    "SFO": (37.6213,-122.3790),"LAX":(33.9416,-118.4085),"ORD":(41.9742,-87.9073),
+    "MIA": (25.7959,-80.2870),"FCO":(41.8003,12.2389),"CDG":(49.0097,2.5479),
+    "LHR": (51.4700,-0.4543),"HND":(35.5494,139.7798),"BNA":(36.1263,-86.6774),
+    "DFW": (32.8998,-97.0403),"IAH":(29.9902,-95.3368),"BCN":(41.2974,2.0833)
+}
+
+def gc_distance_miles(a:str,b:str)->float:
+    if a not in AIRPORTS or b not in AIRPORTS: return 3000.0
+    (la1,lo1),(la2,lo2)=AIRPORTS[a],AIRPORTS[b]
+    R=3958.8
+    p1,p2=math.radians(la1),math.radians(la2)
+    dphi=math.radians(la2-la1); dl=math.radians(lo2-lo1)
+    h=math.sin(dphi/2)**2+math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+    return R*2*math.asin(min(1,math.sqrt(h)))
+
+def score_deal(price_usd: float, distance_miles: float):
+    d=max(1.0,distance_miles); cpm=price_usd/d
+    if cpm<0.02: tier="unicorn"
+    elif cpm<0.03: tier="great"
+    elif cpm<0.04: tier="cheap"
+    else: tier="standard"
+    return cpm,tier
+
+7) services/nearby.py
+from typing import List, Dict
+NEARBY_GROUPS: Dict[str, List[str]] = {
+    "NYC": ["JFK","EWR","LGA"],
+    "LON": ["LHR"],  # extend as needed
+    "SF":  ["SFO"],
+    "LA":  ["LAX"]
+}
+CITY_TO_PRIMARY = {"NYC":"JFK","SF":"SFO","LA":"LAX"}
+REGION_TO_CITIES = {
+    "EUROPE":["LON","PAR","ROM","BCN"],
+    "ASIA":["TYO"],
+}
+
+def expand_origin(code: str, include_nearby: bool)->List[str]:
+    code=code.upper()
+    for _,grp in NEARBY_GROUPS.items():
+        if code in grp: return grp if include_nearby else [code]
+    return [code]
+
+def expand_dest(anywhere:str|None, destination:str|None)->List[str]:
+    if destination: return [destination.upper()]
+    if anywhere: return [c for c in REGION_TO_CITIES.get(anywhere.upper(), [])]
+    # default “anywhere”
+    return ["LON","PAR","ROM","BCN","TYO"]
+
+8) services/cache.py
+from cachetools import TTLCache
+
+# cache flight searches to cut API calls; 5 min TTL, 512 keys
+flight_cache = TTLCache(maxsize=512, ttl=300)
+
+9) db.py (SQLite models + helpers)
+import os, datetime as dt
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, JSON, Boolean
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+DB_URL = os.getenv("DATABASE_URL", "sqlite:///travelhacker.db")
+engine = create_engine(DB_URL, echo=False, future=True)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, future=True)
+Base = declarative_base()
+
+class Alert(Base):
+    __tablename__="alerts"
+    id = Column(Integer, primary_key=True)
+    email = Column(String, nullable=False)
+    origin = Column(String, nullable=False)
+    destination = Column(String, nullable=True)
+    region = Column(String, nullable=True)  # e.g., EUROPE
+    max_price = Column(Float, nullable=True)
+    window = Column(JSON)                   # {"from":"YYYY-MM-DD","to":"YYYY-MM-DD"}
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    active = Column(Boolean, default=True)
+
+class SavedDeal(Base):
+    __tablename__="saved_deals"
+    id = Column(Integer, primary_key=True)
+    payload = Column(JSON)
+    note = Column(String, nullable=True)
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+
+class Preference(Base):
+    __tablename__="preferences"
+    id = Column(Integer, primary_key=True)
+    key = Column(String, unique=True)
+    value = Column(JSON)
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+10) ai_client.py (optional ChatGPT layer)
+import os, json
+from typing import Dict, Any, List
+try:
+    from openai import OpenAI
+    _HAS = True
+except Exception:
+    _HAS = False
+
+def ai_available()->bool:
+    return _HAS and bool(os.getenv("OPENAI_API_KEY"))
+
+def _client():
+    if not ai_available(): raise RuntimeError("OpenAI not configured")
+    return OpenAI()
+
+def _model(): return os.getenv("OPENAI_MODEL","gpt-4o-mini")
+
+def parse_free_text_ai(text:str)->Dict[str,Any]:
+    c=_client()
+    prompt=f"""
+Extract structured travel search params.
+
+Text: {text}
+
+Return JSON with keys:
+origin, destination (IATA-3 if possible),
+departDate, returnDate (YYYY-MM-DD or null),
+nonStop (bool), cabin (ECONOMY|PREMIUM_ECONOMY|BUSINESS|FIRST),
+maxPrice (number or null), region (null or like "EUROPE").
+"""
+    r=c.responses.create(model=_model(), input=[{"role":"user","content":prompt}], temperature=0)
+    import re, json as _j
+    m=re.search(r"\{.*\}", r.output_text, re.S)
+    data=_j.loads(m.group(0)) if m else {}
+    data.setdefault("cabin","ECONOMY")
+    return data
+
+def summarize_deals_ai(offers:List[Dict[str,Any]], origin:str, destination:str)->str:
+    c=_client()
+    snippet=json.dumps(offers[:5], indent=2)
+    r=c.responses.create(model=_model(), input=[{"role":"user","content":f"Summarize in 4 bullets:\nRoute {origin}->{destination}\n{snippet}"}], temperature=0.2)
+    return r.output_text.strip()
+
+11) travel_api.py (Blueprint with /api/travel/ routes)
+import os, json
+from functools import lru_cache
+from flask import Blueprint, request, jsonify
+from pydantic import BaseModel, Field, ValidationError
+from providers.amadeus_flights import search_flights
+from providers.amadeus_hotels import search_hotels
+from providers.amadeus_cars import search_cars
+from services.deal_math import gc_distance_miles, score_deal
+from services.nearby import expand_origin, expand_dest
+from services.cache import flight_cache
+from db import SessionLocal, init_db, Alert, SavedDeal
+from ai_client import ai_available, parse_free_text_ai, summarize_deals_ai
+
+init_db()
+travel_bp = Blueprint("travel", __name__)
+
+# --------- Schemas ----------
+class FlightSearch(BaseModel):
+    origin: str
+    destination: str
+    departDate: str
+    returnDate: str | None = None
+    nonStop: bool | None = None
+    cabin: str | None = "ECONOMY"
+    currency: str = "USD"
+    maxOffers: int = 30
+    maxStops: int | None = None
+    allowCarriers: list[str] | None = None
+    blockCarriers: list[str] | None = None
+    maxPrice: float | None = None
+
+class DealFinder(BaseModel):
+    origin: str
+    destination: str | None = None
+    region: str | None = None      # e.g., "EUROPE"
+    departDate: str | None = None
+    returnDate: str | None = None
+    flexibility: str = "exact"     # exact|+-3|weekend|month
+    includeNearby: bool = True
+    cabin: str = "ECONOMY"
+    currency: str = "USD"
+    mistakeBias: bool = True
+    filters: dict = Field(default_factory=dict)  # e.g., {"maxStops":0,"allowCarriers":["DL"]}
+
+class HotelSearch(BaseModel):
+    cityCode: str
+    checkInDate: str
+    checkOutDate: str
+    adults: int = 2
+    roomQuantity: int = 1
+    currency: str = "USD"
+    priceMax: float | None = None
+
+class CarSearch(BaseModel):
+    cityCode: str
+    pickUpDateTime: str
+    dropOffDateTime: str
+    passengers: int = 2
+
+# --------- Helpers ----------
+def _norm_flights(raw, origin, destination):
+    distance = gc_distance_miles(origin, destination)
+    out=[]
+    for o in (raw.get("data") or []):
+        price=float((o.get("price") or {}).get("total", 0.0))
+        cpm,tier=score_deal(price, distance)
+        out.append({
+            "id": o.get("id"),
+            "priceUSD": round(price,2),
+            "tier": tier, "cpm": round(cpm,4),
+            "validatingAirline": (o.get("validatingAirlineCodes") or [None])[0],
+            "itineraries":[{
+                "duration": it.get("duration"),
+                "segments":[{"from": s.get("departure",{}).get("iataCode"),
+                             "to": s.get("arrival",{}).get("iataCode"),
+                             "dep": s.get("departure",{}).get("at"),
+                             "arr": s.get("arrival",{}).get("at"),
+                             "carrier": s.get("carrierCode"),
+                             "number": s.get("number")} for s in (it.get("segments") or [])]
+            } for it in (o.get("itineraries") or [])]
+        })
+    return out
+
+# --------- Core endpoints ----------
+@travel_bp.post("/parse")
+def parse():
+    body = request.get_json(silent=True) or {}
+    text = (body.get("text") or "").strip()
+    if not text: return jsonify({"error":"missing text"}), 400
+    try:
+        params = parse_free_text_ai(text) if ai_available() else {}
+    except Exception as e:
+        params = {}
+    return jsonify({"params": params, "using_ai": ai_available()})
+
+@travel_bp.post("/flights/search")
+def flights_search():
+    try:
+        data = FlightSearch.model_validate(request.get_json(silent=True) or {})
+    except ValidationError as e:
+        return jsonify({"error":"bad_request","details":e.errors()}), 400
+
+    key = json.dumps(data.model_dump(), sort_keys=True)
+    if key in flight_cache:
+        raw = flight_cache[key]
+    else:
+        raw = search_flights(
+            data.origin, data.destination, data.departDate, data.returnDate,
+            data.maxOffers, data.nonStop, data.cabin, data.currency,
+            data.maxStops, data.allowCarriers, data.blockCarriers
+        )
+        flight_cache[key] = raw
+
+    offers = _norm_flights(raw, data.origin, data.destination)
+    if data.maxPrice is not None:
+        offers = [o for o in offers if o["priceUSD"] <= data.maxPrice]
+    offers.sort(key=lambda x: x["priceUSD"])
+    return jsonify({"offers": offers})
+
+@travel_bp.post("/summary")
+def summary():
+    if not ai_available():
+        return jsonify({"error":"ai_unavailable"}), 400
+    body = request.get_json(silent=True) or {}
+    offers = body.get("offers") or []
+    origin = body.get("origin") or ""
+    destination = body.get("destination") or ""
+    try:
+        s = summarize_deals_ai(offers, origin, destination)
+        return jsonify({"summary": s})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@travel_bp.post("/hotels/search")
+def hotels_search():
+    try:
+        data = HotelSearch.model_validate(request.get_json(silent=True) or {})
+    except ValidationError as e:
+        return jsonify({"error":"bad_request","details":e.errors()}), 400
+    raw = search_hotels(data.model_dump())
+    # normalize to flat list
+    offers=[]
+    for item in (raw.get("data") or []):
+        hotel = item.get("hotel") or {}
+        for off in (item.get("offers") or []):
+            price = float((off.get("price") or {}).get("total", 0.0))
+            offers.append({
+                "id": off.get("id"),
+                "name": hotel.get("name"),
+                "hotelId": hotel.get("hotelId"),
+                "cityCode": hotel.get("cityCode"),
+                "checkInDate": off.get("checkInDate"),
+                "checkOutDate": off.get("checkOutDate"),
+                "priceUSD": price,
+                "currency": (off.get("price") or {}).get("currency","USD"),
+                "boardType": off.get("boardType"),
+                "roomDesc": (off.get("room") or {}).get("description",{}).get("text")
+            })
+    offers.sort(key=lambda x: x["priceUSD"])
+    return jsonify({"offers": offers})
+
+@travel_bp.post("/cars/search")
+def cars_search():
+    try:
+        data = CarSearch.model_validate(request.get_json(silent=True) or {})
+    except ValidationError as e:
+        return jsonify({"error":"bad_request","details":e.errors()}), 400
+    res = search_cars(data.cityCode, data.pickUpDateTime, data.dropOffDateTime, data.passengers)
+    return jsonify({"offers": res.get("offers", [])})
+
+# --------- Deal Finder (multi-dest, flex dates, nearby) ----------
+@travel_bp.post("/deals/find")
+def deals_find():
+    try:
+        d = DealFinder.model_validate(request.get_json(silent=True) or {})
+    except ValidationError as e:
+        return jsonify({"error":"bad_request","details":e.errors()}), 400
+
+    # Build date pairs from flexibility
+    from datetime import datetime, timedelta
+    def to_date(s: str | None):
+        return datetime.strptime(s,"%Y-%m-%d") if s else datetime.utcnow()+timedelta(days=14)
+    dep = to_date(d.departDate); ret = to_date(d.returnDate) if d.returnDate else dep + timedelta(days=4)
+    pairs=[]
+    def add(a,b): pairs.append((a.strftime("%Y-%m-%d"), b.strftime("%Y-%m-%d")))
+    flex=d.flexibility
+    if flex=="exact": add(dep,ret)
+    elif flex=="+-3":
+        for sh in range(-3,4):
+            a=dep+timedelta(days=sh); b=ret+timedelta(days=sh); add(a,b)
+    elif flex=="weekend":
+        a=dep
+        while a.weekday()!=4: a+=timedelta(days=1)
+        b=a+timedelta(days=2); add(a,b)
+    elif flex=="month":
+        a=dep.replace(day=1)
+        # first 4 weekends
+        while a.weekday()!=4: a+=timedelta(days=1)
+        for i in range(4):
+            s=a+timedelta(days=i*7); e=s+timedelta(days=2); add(s,e)
+    else:
+        add(dep,ret)
+
+    # expand origins, destinations
+    origins = expand_origin(d.origin, d.includeNearby)
+    dests   = expand_dest(d.region, d.destination)
+
+    all_offers=[]
+    for o in origins:
+        for dst in dests:
+            for (dd,rr) in pairs[:8]: # cap fanout
+                raw = search_flights(
+                    o, dst, dd, rr,
+                    max_offers=25,
+                    non_stop=d.filters.get("maxStops",None)==0,
+                    cabin=d.cabin, currency=d.currency,
+                    max_stops=d.filters.get("maxStops"),
+                    allow_carriers=d.filters.get("allowCarriers"),
+                    block_carriers=d.filters.get("blockCarriers")
+                )
+                offers = _norm_flights(raw, o, dst)
+                for x in offers:
+                    # nudge sort if user prefers mistake fares
+                    x["_sort"] = x["priceUSD"] - (0.01 if d.mistakeBias and x["tier"] in ("unicorn","great") else 0.0)
+                    x["_route"] = f"{o}→{dst}"
+                    x["_dates"] = f"{dd}→{rr}"
+                all_offers.extend(offers)
+
+    all_offers.sort(key=lambda x: x.get("_sort", x["priceUSD"]))
+    return jsonify({"offers": all_offers[:40]})
+
+# --------- Alerts & Saved Deals ----------
+@travel_bp.post("/alerts")
+def create_alert():
+    body = request.get_json(silent=True) or {}
+    required = ["email","origin"]
+    if not all(k in body for k in required):
+        return jsonify({"error":"missing_fields","required":required}), 400
+    session = SessionLocal()
+    try:
+        a = Alert(
+            email=body["email"], origin=body["origin"].upper(),
+            destination=(body.get("destination") or None),
+            region=(body.get("region") or None),
+            max_price=body.get("maxPrice"),
+            window=body.get("window") or {}
+        )
+        session.add(a); session.commit()
+        return jsonify({"ok":True,"id":a.id})
+    finally:
+        session.close()
+
+@travel_bp.get("/alerts")
+def list_alerts():
+    session = SessionLocal()
+    try:
+        rows = session.query(Alert).order_by(Alert.created_at.desc()).all()
+        return jsonify({"alerts":[{
+            "id":r.id,"email":r.email,"origin":r.origin,"destination":r.destination,"region":r.region,
+            "maxPrice":r.max_price,"window":r.window,"active":r.active,"createdAt":r.created_at.isoformat()
+        } for r in rows]})
+    finally:
+        session.close()
+
+@travel_bp.delete("/alerts/<int:aid>")
+def delete_alert(aid:int):
+    session=SessionLocal()
+    try:
+        r=session.get(Alert, aid)
+        if not r: return jsonify({"error":"not_found"}), 404
+        session.delete(r); session.commit()
+        return jsonify({"ok":True})
+    finally:
+        session.close()
+
+@travel_bp.post("/save")
+def save_deal():
+    body=request.get_json(silent=True) or {}
+    session=SessionLocal()
+    try:
+        s=SavedDeal(payload=body, note=body.get("note"))
+        session.add(s); session.commit()
+        return jsonify({"ok":True,"id":s.id})
+    finally:
+        session.close()
