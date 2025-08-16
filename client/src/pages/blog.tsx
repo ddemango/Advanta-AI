@@ -296,7 +296,9 @@ export default function Blog() {
   // Fetch automated blog posts from file system (priority)
   const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
     queryKey: ['/api/blog/posts'],
-    staleTime: 30 * 1000, // 30 seconds - refresh frequently to show new automated posts
+    staleTime: 0, // Always fresh - no caching for new blog posts
+    refetchInterval: 5 * 1000, // Refresh every 5 seconds
+    refetchOnWindowFocus: true, // Refresh when user comes back to tab
   });
 
   // Fetch blog system status
