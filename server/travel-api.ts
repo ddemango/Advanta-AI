@@ -57,7 +57,7 @@ function pickCityCode(tokens: string[]): string {
 function pickDates(tokens: string[]): [string | null, string | null] {
   for (const token of tokens) {
     if (MONTHS[token]) {
-      const year = new Date().getFullYear();
+      const year = 2025; // Use 2025 for future travel dates
       const month = MONTHS[token];
       return [`${year}-${month.toString().padStart(2, '0')}-10`, `${year}-${month.toString().padStart(2, '0')}-17`];
     }
@@ -94,7 +94,7 @@ function parseBasic(text: string) {
     maxPrice: budget,
     
     // Hotel parameters
-    cityCode,
+    cityCode: pickCityCode(tokens),
     checkInDate: depart,
     checkOutDate: ret,
     adults: 2,
@@ -136,7 +136,7 @@ London -> LHR (airport), LON (city)
 Rome -> FCO (airport), ROM (city)
 Tokyo -> HND (airport), TYO (city)
 
-If dates are vague (like "next month"), use reasonable defaults based on current date.`
+If dates are vague (like "next month" or "March"), use 2025 for future travel dates. Current date is August 2025.`
         },
         {
           role: "user",

@@ -143,6 +143,25 @@ export default function TravelHackerAIV2() {
       setSearchParams(data.params);
       setActiveTab('flights');
       
+      // Auto-trigger searches if we have the required params
+      if (data.params.origin && data.params.destination && data.params.departDate) {
+        setTimeout(() => {
+          triggerFlightSearch(data.params);
+        }, 500);
+      }
+      
+      if (data.params.cityCode && data.params.checkInDate && data.params.checkOutDate) {
+        setTimeout(() => {
+          triggerHotelSearch(data.params);
+        }, 1000);
+      }
+      
+      if (data.params.cityCode && data.params.pickUpDateTime && data.params.dropOffDateTime) {
+        setTimeout(() => {
+          triggerCarSearch(data.params);
+        }, 1500);
+      }
+      
       toast({
         title: 'Query Parsed Successfully',
         description: data.using_ai ? 'Using AI for enhanced parsing' : 'Using basic parsing',
@@ -158,9 +177,9 @@ export default function TravelHackerAIV2() {
     }
   };
 
-  // Search flights
-  const searchFlights = async () => {
-    if (!searchParams.origin || !searchParams.destination || !searchParams.departDate) {
+  // Helper function to trigger flight search with specific params
+  const triggerFlightSearch = async (params = searchParams) => {
+    if (!params.origin || !params.destination || !params.departDate) {
       toast({
         title: 'Missing Flight Details',
         description: 'Please provide origin, destination, and departure date.',
@@ -175,13 +194,13 @@ export default function TravelHackerAIV2() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          origin: searchParams.origin,
-          destination: searchParams.destination,
-          departDate: searchParams.departDate,
-          returnDate: searchParams.returnDate,
-          nonStop: searchParams.nonStop || false,
-          cabin: searchParams.cabin || 'ECONOMY',
-          maxPrice: searchParams.maxPrice,
+          origin: params.origin,
+          destination: params.destination,
+          departDate: params.departDate,
+          returnDate: params.returnDate,
+          nonStop: params.nonStop || false,
+          cabin: params.cabin || 'ECONOMY',
+          maxPrice: params.maxPrice,
           maxOffers: 20,
           currency: 'USD'
         })
@@ -207,9 +226,14 @@ export default function TravelHackerAIV2() {
     }
   };
 
-  // Search hotels
-  const searchHotels = async () => {
-    if (!searchParams.cityCode || !searchParams.checkInDate || !searchParams.checkOutDate) {
+  // Search flights
+  const searchFlights = async () => {
+    await triggerFlightSearch();
+  };
+
+  // Helper function to trigger hotel search with specific params
+  const triggerHotelSearch = async (params = searchParams) => {
+    if (!params.cityCode || !params.checkInDate || !params.checkOutDate) {
       toast({
         title: 'Missing Hotel Details',
         description: 'Please provide city, check-in, and check-out dates.',
@@ -224,10 +248,10 @@ export default function TravelHackerAIV2() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cityCode: searchParams.cityCode,
-          checkInDate: searchParams.checkInDate,
-          checkOutDate: searchParams.checkOutDate,
-          adults: searchParams.adults || 2,
+          cityCode: params.cityCode,
+          checkInDate: params.checkInDate,
+          checkOutDate: params.checkOutDate,
+          adults: params.adults || 2,
           roomQuantity: 1,
           currency: 'USD'
         })
@@ -253,9 +277,9 @@ export default function TravelHackerAIV2() {
     }
   };
 
-  // Search cars
-  const searchCars = async () => {
-    if (!searchParams.cityCode || !searchParams.pickUpDateTime || !searchParams.dropOffDateTime) {
+  // Helper function to trigger car search with specific params
+  const triggerCarSearch = async (params = searchParams) => {
+    if (!params.cityCode || !params.pickUpDateTime || !params.dropOffDateTime) {
       toast({
         title: 'Missing Car Details',
         description: 'Please provide pickup location and dates.',
@@ -270,10 +294,10 @@ export default function TravelHackerAIV2() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cityCode: searchParams.cityCode,
-          pickUpDateTime: searchParams.pickUpDateTime,
-          dropOffDateTime: searchParams.dropOffDateTime,
-          passengers: searchParams.passengers || 2
+          cityCode: params.cityCode,
+          pickUpDateTime: params.pickUpDateTime,
+          dropOffDateTime: params.dropOffDateTime,
+          passengers: params.passengers || 2
         })
       });
       
@@ -295,6 +319,16 @@ export default function TravelHackerAIV2() {
     } finally {
       setIsSearchingCars(false);
     }
+  };
+
+  // Search hotels
+  const searchHotels = async () => {
+    await triggerHotelSearch();
+  };
+
+  // Search cars
+  const searchCars = async () => {
+    await triggerCarSearch();
   };
 
   // Generate AI summary
