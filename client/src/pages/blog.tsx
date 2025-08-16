@@ -377,7 +377,7 @@ export default function Blog() {
               <motion.div variants={fadeIn} className="max-w-lg mx-auto">
                 <div className="relative">
                   <Input
-                    placeholder="Search resources..."
+                    placeholder="Search articles..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-12 py-4 h-14 text-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg focus:shadow-xl transition-all duration-300"
