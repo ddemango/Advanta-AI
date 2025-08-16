@@ -7406,6 +7406,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Start the daily blog automation system
   dailyBlogScheduler.start();
 
+  // Travel Hacker AI endpoints
+  const travelApiModule = await import('./travel-api');
+  app.use('/api/travel', travelApiModule.default);
+
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {
     try {

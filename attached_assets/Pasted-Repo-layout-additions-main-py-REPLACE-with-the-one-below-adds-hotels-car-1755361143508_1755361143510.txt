@@ -1,0 +1,671 @@
+Repo layout (additions)
+.
+├─ main.py                 # REPLACE with the one below (adds hotels & cars routes)
+├─ amadeus_client.py       # unchanged (flights)
+├─ amadeus_hotels.py       # NEW (hotels)
+├─ amadeus_cars.py         # NEW (cars/transfers; demo + TODO)
+├─ ai_client.py            # unchanged
+├─ parser_nlq.py           # UPDATED: hotel/car parsing
+├─ deal_math.py            # unchanged
+├─ requirements.txt        # ADD: 'pydantic' for payload shaping
+├─ templates/
+│  └─ index.html           # UPDATED: tabs + hotel/car forms + results
+└─ static/
+   └─ app.js               # UPDATED: new tab logic & renderers
+
+1) requirements.txt (add one line)
+Flask==3.0.3
+python-dotenv==1.0.1
+requests==2.32.3
+openai==1.40.0
+pydantic==2.8.2
+
+2) amadeus_hotels.py (NEW — Hotel Search v3)
+import os, requests
+from typing import Dict, Any
+from pydantic import BaseModel, Field
+
+AMADEUS_ENV = (os.getenv("AMADEUS_ENV", "test") or "test").lower()
+BASE = "https://api.amadeus.com" if AMADEUS_ENV == "production" else "https://test.api.amadeus.com"
+CID = os.getenv("AMADEUS_API_KEY", "")
+SECRET = os.getenv("AMADEUS_API_SECRET", "")
+
+def _token() -> str:
+    if not CID or not SECRET:
+        return "DEMO"
+    r = requests.post(
+        f"{BASE}/v1/security/oauth2/token",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={"grant_type":"client_credentials","client_id":CID,"client_secret":SECRET},
+        timeout=30,
+    )
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+class HotelSearchParams(BaseModel):
+    cityCode: str = Field(..., description="IATA city code, e.g. NYC, ROM, PAR")
+    checkInDate: str  # YYYY-MM-DD
+    checkOutDate: str # YYYY-MM-DD
+    adults: int = 2
+    roomQuantity: int = 1
+    radius: int | None = None          # km (optional)
+    radiusUnit: str | None = None      # "KM" | "MILE"
+    priceMax: float | None = None
+    currency: str = "USD"
+
+def search_hotels(params: HotelSearchParams) -> Dict[str, Any]:
+    """
+    Uses Hotel Search API v3: GET /v3/shopping/hotel-offers?cityCode=...&checkInDate=...&checkOutDate=...
+    Returns Amadeus raw JSON or a demo response when keys are missing.
+    """
+    token = _token()
+    if token == "DEMO":
+        return {
+            "data":[
+                {"type":"hotel-offer","hotel":
+                    {"name":"Demo Inn Roma","hotelId":"D1","cityCode":params.cityCode},
+                 "offers":[{"id":"HDEMO1","price":{"currency":"USD","total":"89.00"},
+                            "checkInDate":params.checkInDate,"checkOutDate":params.checkOutDate}]}
+            ]
+        }
+
+    q = {
+        "cityCode": params.cityCode.upper(),
+        "checkInDate": params.checkInDate,
+        "checkOutDate": params.checkOutDate,
+        "adults": str(max(1, params.adults)),
+        "roomQuantity": str(max(1, params.roomQuantity)),
+        "currency": params.currency.upper(),
+    }
+    if params.radius: q["radius"] = str(params.radius)
+    if params.radiusUnit: q["radiusUnit"] = params.radiusUnit
+    if params.priceMax: q["priceRange"] = f"0-{int(params.priceMax)}"
+
+    r = requests.get(
+        f"{BASE}/v3/shopping/hotel-offers",
+        headers={"Authorization": f"Bearer {token}"},
+        params=q,
+        timeout=60,
+    )
+    r.raise_for_status()
+    return r.json()
+
+
+Refs: Amadeus Hotel Search API v3 & hotel list/guides (for city/hotel lookup). 
+Amadeus IT Group SA
++2
+Amadeus IT Group SA
++2
+
+3) amadeus_cars.py (NEW — Cars & Transfers placeholder)
+import os
+from typing import Dict, Any
+
+# NOTE:
+# Amadeus Self-Service exposes "Cars & Transfers" (transfers/rides & related booking).
+# Exact self-drive rental availability endpoints vary by catalog/scope.
+# Ship demo now; when your account has Cars/Transfers search access, swap this function
+# to call that endpoint and keep the return shape.
+
+def search_cars(cityCode: str, pickUpDateTime: str, dropOffDateTime: str, passengers: int = 2) -> Dict[str, Any]:
+    """
+    Placeholder that returns a demo set unless you wire an actual Cars/Transfers search.
+    Keep response shape stable: { offers: [{id, supplier, vehicle, priceUSD, pickUp, dropOff}] }
+    """
+    # TODO: Wire to Amadeus Cars & Transfers search once enabled for your key.
+    # Docs & Postman (official): see "Cars and Transfers" section. 
+    # Example booking endpoint (after selecting an offer):
+    #   POST /v1/ordering/transfer-orders?offerId=<OFFER_ID>
+    # (Search endpoint varies; follow the Self-Service Cars/Transfers reference.)
+    # https://developers.amadeus.com/self-service/category/cars-and-transfers
+    return {
+        "offers":[
+            {
+                "id":"CARDEMO1",
+                "supplier":"DemoCar",
+                "vehicle":"Compact",
+                "priceUSD": 32.00,
+                "pickUp":{"cityCode":cityCode.upper(),"at":pickUpDateTime},
+                "dropOff":{"cityCode":cityCode.upper(),"at":dropOffDateTime}
+            },
+            {
+                "id":"CARDEMO2",
+                "supplier":"DemoCar",
+                "vehicle":"SUV",
+                "priceUSD": 49.00,
+                "pickUp":{"cityCode":cityCode.upper(),"at":pickUpDateTime},
+                "dropOff":{"cityCode":cityCode.upper(),"at":dropOffDateTime}
+            }
+        ]
+    }
+
+
+Refs: Cars & Transfers docs + example booking endpoint; use their Postman collection when you enable this category. 
+Amadeus IT Group SA
++1
+
+4) parser_nlq.py (UPDATE — hotels/cars parsing)
+
+Replace your file contents with:
+
+import re
+from datetime import date
+from typing import Tuple
+
+IATA_GUESS = {
+    "nyc":"JFK","new":"JFK","york":"JFK",
+    "sf":"SFO","sfo":"SFO","bay":"SFO",
+    "la":"LAX","los":"LAX","angeles":"LAX",
+    "miami":"MIA","chicago":"ORD",
+    "rome":"FCO","tokyo":"HND","london":"LHR","paris":"CDG",
+    "nashville":"BNA","dallas":"DFW","houston":"IAH"
+}
+CITY_CODE_GUESS = { # for hotels/cars cityCode (IATA city)
+    "paris":"PAR","rome":"ROM","london":"LON","new":"NYC","york":"NYC","tokyo":"TYO","miami":"MIA","chicago":"CHI"
+}
+
+MONTHS = {
+    "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,"apr":4,"april":4,"may":5,
+    "jun":6,"june":6,"jul":7,"july":7,"aug":8,"august":8,"sep":9,"sept":9,"september":9,
+    "oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12
+}
+
+def _tokens(s:str): return re.findall(r"[a-z]{2,}", s.lower())
+
+def _pick_iata(tokens):
+    mapped = [IATA_GUESS[t] for t in tokens if t in IATA_GUESS]
+    origin = mapped[0] if mapped else "JFK"
+    dest   = mapped[1] if len(mapped) > 1 else "FCO"
+    return origin, dest
+
+def _pick_city(tokens):
+    for t in tokens:
+        if t in CITY_CODE_GUESS:
+            return CITY_CODE_GUESS[t]
+    return "PAR"
+
+def _pick_dates(tokens) -> Tuple[str|None,str|None]:
+    for t in tokens:
+        if t in MONTHS:
+            y = date.today().year
+            m = MONTHS[t]
+            return f"{y}-{m:02d}-10", f"{y}-{m:02d}-17"
+    return None, None
+
+def parse_free_text_basic(s: str):
+    tokens = _tokens(s)
+    # flights
+    origin, destination = _pick_iata(tokens)
+    depart, ret = _pick_dates(tokens)
+    # budget
+    m = re.search(r"\$?\s*(\d{2,5})\b", s.lower())
+    budget = int(m.group(1)) if m else None
+    # nonstop/cabin
+    nonstop = "nonstop" in s.lower() or "non-stop" in s.lower() or "no stops" in s.lower()
+    cabin = "ECONOMY"
+    if "business" in s.lower(): cabin = "BUSINESS"
+    elif "first" in s.lower():  cabin = "FIRST"
+    elif "premium" in s.lower():cabin = "PREMIUM_ECONOMY"
+
+    # hotels/cars
+    cityCode = _pick_city(tokens)
+    checkIn, checkOut = depart, ret
+
+    return {
+        # flights
+        "origin": origin, "destination": destination,
+        "departDate": depart, "returnDate": ret,
+        "nonStop": nonstop, "cabin": cabin, "maxPrice": budget,
+        # hotels
+        "cityCode": cityCode, "checkInDate": checkIn, "checkOutDate": checkOut, "adults": 2,
+        # cars
+        "pickUpDateTime": (f"{checkIn}T10:00:00" if checkIn else None),
+        "dropOffDateTime": (f"{checkOut}T10:00:00" if checkOut else None),
+        "passengers": 2
+    }
+
+5) main.py (REPLACE — adds hotel & car routes)
+import os, json
+from flask import Flask, request, jsonify, render_template
+from dotenv import load_dotenv
+
+from amadeus_client import search_flights
+from amadeus_hotels import search_hotels, HotelSearchParams
+from amadeus_cars import search_cars
+
+from deal_math import score_deal, gc_distance_miles
+from parser_nlq import parse_free_text_basic
+from ai_client import parse_free_text_ai, summarize_deals_ai, ai_available
+
+load_dotenv()
+app = Flask(__name__, static_folder="static", template_folder="templates")
+
+@app.get("/")
+def home(): return render_template("index.html")
+
+@app.get("/health")
+def health(): return jsonify({"ok": True, "service": "travel-hacker-ai", "ai": ai_available()})
+
+@app.post("/api/parse")
+def api_parse():
+    body = request.get_json(force=True, silent=True) or {}
+    text = (body.get("text") or "").strip()
+    if not text: return jsonify({"error":"Missing 'text'"}), 400
+    use_ai = bool(os.getenv("USE_AI_PARSER","1")=="1" and ai_available())
+    try:
+        params = parse_free_text_ai(text) if use_ai else parse_free_text_basic(text)
+        return jsonify({"params": params, "using_ai": use_ai})
+    except Exception as e:
+        return jsonify({"params": parse_free_text_basic(text), "using_ai": False, "note": str(e)})
+
+# -------- Flights --------
+@app.post("/api/search")
+def api_search():
+    body = request.get_json(force=True, silent=True) or {}
+    origin      = (body.get("origin") or "JFK").upper()
+    destination = (body.get("destination") or "FCO").upper()
+    depart_date = body.get("departDate")
+    return_date = body.get("returnDate")
+    non_stop    = bool(body.get("nonStop", False))
+    cabin       = (body.get("cabin") or "ECONOMY").upper()
+    max_offers  = int(body.get("maxOffers") or 30)
+    currency    = (body.get("currency") or "USD").upper()
+    max_price   = body.get("maxPrice")
+    try:
+        resp = search_flights(origin, destination, depart_date, return_date, non_stop, cabin, max_offers, currency)
+    except Exception as e:
+        return jsonify({"error": f"flight search failed: {str(e)}"}), 502
+
+    distance = gc_distance_miles(origin, destination)
+    offers = []
+    for o in (resp.get("data") or []):
+        price = float((o.get("price") or {}).get("total", 0.0))
+        cpm, tier = score_deal(price, distance)
+        offers.append({
+            "id": o.get("id"),
+            "priceUSD": round(price, 2),
+            "tier": tier,
+            "cpm": round(cpm, 4),
+            "validatingAirline": (o.get("validatingAirlineCodes") or [None])[0],
+            "itineraries": [{
+                "duration": it.get("duration"),
+                "segments": [{
+                    "from": s.get("departure", {}).get("iataCode"),
+                    "to": s.get("arrival", {}).get("iataCode"),
+                    "dep": s.get("departure", {}).get("at"),
+                    "arr": s.get("arrival", {}).get("at"),
+                    "carrier": s.get("carrierCode"),
+                    "number": s.get("number"),
+                } for s in (it.get("segments") or [])]
+            } for it in (o.get("itineraries") or [])]
+        })
+    if max_price:
+        try: cap = float(max_price); offers = [x for x in offers if x["priceUSD"] <= cap]
+        except: pass
+    offers.sort(key=lambda x: x["priceUSD"])
+    return jsonify({"offers": offers})
+
+@app.post("/api/summary")
+def api_summary():
+    if not ai_available(): return jsonify({"error":"AI not available"}), 400
+    body = request.get_json(force=True, silent=True) or {}
+    offers = body.get("offers") or []
+    origin = body.get("origin") or ""
+    destination = body.get("destination") or ""
+    try:
+        summary = summarize_deals_ai(offers=offers, origin=origin, destination=destination)
+        return jsonify({"summary": summary})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# -------- Hotels --------
+@app.post("/api/hotels/search")
+def api_hotels_search():
+    body = request.get_json(force=True, silent=True) or {}
+    try:
+        params = HotelSearchParams(
+            cityCode=(body.get("cityCode") or "ROM").upper(),
+            checkInDate=body.get("checkInDate") or "2025-10-10",
+            checkOutDate=body.get("checkOutDate") or "2025-10-12",
+            adults=int(body.get("adults") or 2),
+            roomQuantity=int(body.get("roomQuantity") or 1),
+            radius=int(body["radius"]) if body.get("radius") else None,
+            radiusUnit=body.get("radiusUnit"),
+            priceMax=float(body["priceMax"]) if body.get("priceMax") else None,
+            currency=(body.get("currency") or "USD").upper(),
+        )
+        raw = search_hotels(params)
+        # normalize
+        offers=[]
+        for item in (raw.get("data") or []):
+            hotel = item.get("hotel") or {}
+            for off in (item.get("offers") or []):
+                price = float((off.get("price") or {}).get("total", 0.0))
+                offers.append({
+                    "id": off.get("id"),
+                    "name": hotel.get("name"),
+                    "hotelId": hotel.get("hotelId"),
+                    "cityCode": hotel.get("cityCode"),
+                    "checkInDate": off.get("checkInDate"),
+                    "checkOutDate": off.get("checkOutDate"),
+                    "priceUSD": price,
+                    "currency": (off.get("price") or {}).get("currency","USD"),
+                    "boardType": off.get("boardType"),
+                    "roomDesc": (off.get("room") or {}).get("description",{}).get("text")
+                })
+        offers.sort(key=lambda x: x["priceUSD"])
+        return jsonify({"offers": offers})
+    except Exception as e:
+        return jsonify({"error": f"hotel search failed: {str(e)}"}), 502
+
+# -------- Cars (Transfers placeholder) --------
+@app.post("/api/cars/search")
+def api_cars_search():
+    body = request.get_json(force=True, silent=True) or {}
+    cityCode = (body.get("cityCode") or "ROM").upper()
+    pickUp = body.get("pickUpDateTime") or "2025-10-10T10:00:00"
+    dropOff = body.get("dropOffDateTime") or "2025-10-12T10:00:00"
+    pax = int(body.get("passengers") or 2)
+    try:
+        data = search_cars(cityCode, pickUp, dropOff, pax)
+        return jsonify({"offers": data.get("offers", [])})
+    except Exception as e:
+        return jsonify({"error": f"car search failed: {str(e)}"}), 502
+
+asgi_app = app
+if __name__ == "__main__":
+    port = int(os.getenv("PORT","8000"))
+    app.run(host="0.0.0.0", port=port, debug=True)
+
+6) templates/index.html (UPDATE — tabs + forms)
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Travel Hacker AI</title>
+<style>
+  body{margin:0;font-family:ui-sans-serif,system-ui;background:#f7fafc;color:#0f172a}
+  header{text-align:center;padding:40px 20px}
+  .container{max-width:980px;margin:0 auto;padding:0 16px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px}
+  input,select,button{border:1px solid #e5e7eb;border-radius:12px;padding:10px;font-size:14px}
+  button{cursor:pointer}.pill{border:1px solid #e5e7eb;padding:6px 10px;border-radius:999px;font-size:12px;background:#fff}
+  .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:16px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #e5e7eb}
+  .muted{color:#64748b}
+  .tabs{display:flex;gap:8px;justify-content:center;margin:10px 0 14px}
+  .tab{padding:8px 14px;border:1px solid #e5e7eb;border-radius:999px;background:#fff}
+  .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+  .row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .row>div{display:flex;flex-direction:column}
+  @media (max-width:800px){.row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1 style="font-size:40px;margin:10px 0;">Travel Hacker AI</h1>
+    <p style="max-width:720px;margin:0 auto;color:#475569">
+      Let AI find ultra-cheap flights, mistake fares, hotel deals, and car options with live prices.
+    </p>
+    <div style="margin-top:10px" class="muted">
+      <label><input id="use_ai" type="checkbox" checked/> Use AI parsing/summaries (if available)</label>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="flights">Flights</button>
+      <button class="tab" data-tab="hotels">Hotels</button>
+      <button class="tab" data-tab="cars">Cars</button>
+    </div>
+    <div id="prompts" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- Flights -->
+  <section class="card" data-pane="flights">
+    <form id="flightForm">
+      <div class="row">
+        <div><label>From (IATA)</label><input id="origin" value="JFK" required/></div>
+        <div><label>To (IATA)</label><input id="destination" value="FCO" required/></div>
+        <div><label>Depart</label><input id="departDate" type="date"/></div>
+        <div><label>Return</label><input id="returnDate" type="date"/></div>
+        <div><label>Max Price (USD)</label><input id="maxPrice" inputmode="numeric" pattern="[0-9]*"/></div>
+        <div style="align-items:center;gap:8px;justify-content:end;">
+          <label style="display:flex;gap:6px;align-items:center;"><input id="nonStop" type="checkbox"/> Non-stop</label>
+          <select id="cabin"><option>ECONOMY</option><option>PREMIUM_ECONOMY</option><option>BUSINESS</option><option>FIRST</option></select>
+          <button type="submit">Find Deals</button>
+        </div>
+      </div>
+    </form>
+    <div id="flightSummary" class="muted" style="margin-top:10px;"></div>
+    <div id="flightResults" class="grid"></div>
+  </section>
+
+  <!-- Hotels -->
+  <section class="card" data-pane="hotels" style="display:none">
+    <form id="hotelForm">
+      <div class="row">
+        <div><label>City (IATA city code)</label><input id="h_cityCode" value="ROM" required/></div>
+        <div><label>Check-in</label><input id="h_checkIn" type="date" required/></div>
+        <div><label>Check-out</label><input id="h_checkOut" type="date" required/></div>
+        <div><label>Adults</label><input id="h_adults" type="number" min="1" value="2" required/></div>
+        <div><label>Rooms</label><input id="h_rooms" type="number" min="1" value="1" required/></div>
+        <div style="align-items:end;justify-content:end;"><button type="submit">Search Hotels</button></div>
+      </div>
+    </form>
+    <div id="hotelResults" class="grid"></div>
+  </section>
+
+  <!-- Cars -->
+  <section class="card" data-pane="cars" style="display:none">
+    <form id="carForm">
+      <div class="row">
+        <div><label>City (IATA city code)</label><input id="c_cityCode" value="ROM" required/></div>
+        <div><label>Pick-up (local)</label><input id="c_pick" type="datetime-local" required/></div>
+        <div><label>Drop-off (local)</label><input id="c_drop" type="datetime-local" required/></div>
+        <div><label>Passengers</label><input id="c_pax" type="number" min="1" value="2" required/></div>
+        <div style="align-items:end;justify-content:end;"><button type="submit">Search Cars</button></div>
+      </div>
+    </form>
+    <div id="carResults" class="grid"></div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
+
+7) static/app.js (UPDATE — tabs + hotel/car logic)
+const $ = (id)=>document.getElementById(id);
+const q = (sel)=>document.querySelector(sel);
+const qa = (sel)=>Array.from(document.querySelectorAll(sel));
+
+/* Tabs */
+qa(".tab").forEach(t=>{
+  t.onclick = ()=>{
+    qa(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const name = t.dataset.tab;
+    qa("[data-pane]").forEach(p=>p.style.display = (p.dataset.pane===name)?"block":"none");
+  };
+});
+
+/* Prompts */
+const prompts = [
+  `NYC to Europe under $400 in October`,
+  `Hotel in Rome Oct 10–12 for 2 adults`,
+  `Car/transfer in Paris Oct 10 10AM → Oct 12 10AM`
+];
+const promptsEl = $("prompts");
+prompts.forEach(p=>{
+  const b = document.createElement("button");
+  b.className="pill"; b.textContent="“"+p+"”";
+  b.onclick = async ()=>{
+    const r = await postJSON("/api/parse", { text: p });
+    const pm = r.params || {};
+    // flights
+    if (pm.origin) $("origin").value = pm.origin;
+    if (pm.destination) $("destination").value = pm.destination;
+    if (pm.departDate) $("departDate").value = pm.departDate;
+    if (pm.returnDate) $("returnDate").value = pm.returnDate;
+    // hotels
+    if (pm.cityCode) $("h_cityCode").value = pm.cityCode;
+    if (pm.checkInDate) $("h_checkIn").value = pm.checkInDate;
+    if (pm.checkOutDate) $("h_checkOut").value = pm.checkOutDate;
+    if (pm.adults) $("h_adults").value = pm.adults;
+    if (pm.roomQuantity) $("h_rooms").value = pm.roomQuantity;
+    // cars
+    if (pm.cityCode) $("c_cityCode").value = pm.cityCode;
+    if (pm.pickUpDateTime) $("c_pick").value = pm.pickUpDateTime.slice(0,16);
+    if (pm.dropOffDateTime) $("c_drop").value = pm.dropOffDateTime.slice(0,16);
+  };
+  promptsEl.appendChild(b);
+});
+
+/* Flights */
+$("flightForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const body = {
+    origin:v("origin"), destination:v("destination"),
+    departDate:v("departDate"), returnDate:v("returnDate"),
+    maxPrice:v("maxPrice"), cabin:v("cabin"),
+    nonStop:$("nonStop").checked
+  };
+  const res = await postJSON("/api/search", body);
+  renderFlights(res.offers||[]);
+  $("flightSummary").innerHTML = "";
+  if ($("use_ai").checked && (res.offers||[]).length){
+    try{
+      const s = await postJSON("/api/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
+      if (s.summary) $("flightSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
+    }catch{}
+  }
+});
+
+/* Hotels */
+$("hotelForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const body = {
+    cityCode:v("h_cityCode"), checkInDate:v("h_checkIn"), checkOutDate:v("h_checkOut"),
+    adults:parseInt(v("h_adults")||"2",10), roomQuantity:parseInt(v("h_rooms")||"1",10)
+  };
+  const res = await postJSON("/api/hotels/search", body);
+  renderHotels(res.offers||[]);
+});
+
+/* Cars */
+$("carForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const body = {
+    cityCode:v("c_cityCode"),
+    pickUpDateTime: v("c_pick") ? new Date(v("c_pick")).toISOString() : undefined,
+    dropOffDateTime: v("c_drop") ? new Date(v("c_drop")).toISOString() : undefined,
+    passengers: parseInt(v("c_pax")||"2",10)
+  };
+  const res = await postJSON("/api/cars/search", body);
+  renderCars(res.offers||[]);
+});
+
+/* Helpers */
+function v(id){ return $(id).value || undefined; }
+async function postJSON(url, body){
+  const r = await fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  return await r.json();
+}
+
+/* Renderers */
+function renderFlights(list){
+  const root = $("flightResults"); root.innerHTML="";
+  if (!list.length) return root.innerHTML = empty();
+  list.forEach(o=>{
+    const badge = o.tier==="unicorn"?"🦄 mistake-fare-like": o.tier==="great"?"🔥 great": o.tier==="cheap"?"✅ cheap":"—";
+    const it = (o.itineraries||[]).map(it=>`
+      <div style="margin-top:6px;">
+        <div class="muted" style="font-size:12px;">${(it.duration||"").replace("PT","").toLowerCase()}</div>
+        <div>${(it.segments||[]).map(s=>`${s.from} → ${s.to}`).join(" · ")}</div>
+      </div>`).join("");
+    const card = document.createElement("article");
+    card.className="card";
+    card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">$${o.priceUSD.toFixed(0)} USD</h3><span class="badge">${badge}</span>
+      </div><div class="muted" style="font-size:12px;margin-top:4px;">CPM ~$${o.cpm.toFixed(2)}/mile ${o.validatingAirline?("• "+o.validatingAirline):""}</div>${it}`;
+    $("flightResults").appendChild(card);
+  });
+}
+
+function renderHotels(list){
+  const root = $("hotelResults"); root.innerHTML="";
+  if (!list.length) return root.innerHTML = empty("No hotels found. Try wider dates.");
+  list.forEach(h=>{
+    const card = document.createElement("article");
+    card.className="card";
+    card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;">${h.name||"Hotel"}</h3><strong>$${(h.priceUSD||0).toFixed(0)} ${h.currency||"USD"}</strong>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:4px;">${h.checkInDate} → ${h.checkOutDate} • ${h.cityCode||""}</div>
+    <div style="margin-top:8px;">${h.roomDesc||""}</div>`;
+    root.appendChild(card);
+  });
+}
+
+function renderCars(list){
+  const root = $("carResults"); root.innerHTML="";
+  if (!list.length) return root.innerHTML = empty("No car/transfer offers yet.");
+  list.forEach(c=>{
+    const card = document.createElement("article");
+    card.className="card";
+    card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;">${c.vehicle||"Vehicle"} • $${(c.priceUSD||0).toFixed(0)} USD</h3>
+      <span class="badge">${c.supplier||""}</span>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:4px;">${c.pickUp?.cityCode||""} ${c.pickUp?.at||""} → ${c.dropOff?.cityCode||""} ${c.dropOff?.at||""}</div>`;
+    root.appendChild(card);
+  });
+}
+
+function empty(msg="No results yet. Try a different query."){ 
+  return `<div class="card" style="grid-column:1/-1;text-align:center;color:#64748b">${msg}</div>`; 
+}
+
+8) Agent checklist (copy-paste to your AI agent)
+
+Title: Upgrade Travel Hacker AI on Replit with Hotels & Cars (Amadeus)
+
+Steps (no skipping):
+
+Open the existing travel-hacker-ai Repl.
+
+Create new files amadeus_hotels.py and amadeus_cars.py with the exact contents above.
+
+Replace main.py, parser_nlq.py, templates/index.html, static/app.js with the versions above.
+
+Add pydantic==2.8.2 to requirements.txt (already shown) and run:
+
+pip install -r requirements.txt
+
+Ensure Replit Secrets already have:
+
+AMADEUS_API_KEY, AMADEUS_API_SECRET, AMADEUS_ENV=test
+
+Optionally: OPENAI_API_KEY, OPENAI_MODEL=gpt-4o-mini, USE_AI_PARSER=1
+
+Run python3 main.py.
+
+Verify /health returns JSON with "ok": true.
+
+Test Flights: prompt “NYC to Europe under $400 in October” → Find Deals → ensure JSON renders.
+
+Test Hotels: city ROM, dates 2025-10-10 → 2025-10-12 → Search Hotels → confirm cards (if keys missing, expect Demo Inn Roma).
+
+Test Cars: ROM, pickup 2025-10-10 10:00, drop 2025-10-12 10:00 → Search Cars → confirm demo cards.
+
+Deliverables:
+
+Public URL
+
+/health JSON
+
+One screenshot or paste of each results grid (flights/hotels/cars)
+
+No unhandled exceptions in console; all API routes must always return JSON

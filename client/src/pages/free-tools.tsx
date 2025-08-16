@@ -31,9 +31,9 @@ import {
   Building2,
   Eye,
   Lightbulb,
+  Plane,
   Video,
   Workflow,
-  Plane,
   Search as SearchIcon,
   Grid3X3,
   List,
@@ -288,6 +288,15 @@ export default function FreeTools() {
       icon: Users,
       category: 'Business Tools',
       route: '/crm-use-case-finder'
+    },
+    {
+      id: 'travel-hacker-ai-v2',
+      name: 'Travel Hacker AI Pro',
+      description: 'Complete trip planning with flights, hotels, and car rentals. Powered by live Amadeus data and AI parsing.',
+      icon: SearchIcon,
+      category: 'Travel & Lifestyle',
+      route: '/travel-hacker-ai-v2',
+      featured: true
     }
   ];
 
