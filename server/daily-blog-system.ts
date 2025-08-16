@@ -2,8 +2,11 @@ import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
 import * as cron from "node-cron";
-import { log } from "./vite";
+import { log, blogLog } from './logger';
 import { scheduleNewsletterSending } from './newsletter-system';
+import { runQualityGates } from './quality-gates';
+import { shareToAllPlatforms } from './social';
+import { logGeneration, trackAPIUsage } from './blog-db';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -64,6 +67,28 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
 
+// Function to guess tags from content
+function guessTags(content: string): string[] {
+  const tags = new Set<string>();
+  const checks = [
+    ['AI', 'ai'], ['automation', 'automation'], ['marketing', 'marketing'],
+    ['SEO', 'seo'], ['workflow', 'workflow'], ['analytics', 'analytics'],
+    ['engineering', 'engineering'], ['javascript', 'javascript'], ['python', 'python'],
+    ['business', 'business'], ['strategy', 'strategy'], ['implementation', 'implementation'],
+    ['chatbot', 'chatbot'], ['machine learning', 'ml'], ['deep learning', 'dl'],
+    ['customer service', 'customer-service'], ['sales', 'sales'], ['crm', 'crm']
+  ];
+  
+  const lowerContent = content.toLowerCase();
+  for (const [needle, tag] of checks) {
+    if (lowerContent.includes(needle.toLowerCase())) {
+      tags.add(tag);
+    }
+  }
+  
+  return Array.from(tags).slice(0, 6);
+}
+
 // Function to convert markdown to HTML
 function convertMarkdownToHtml(content: string): string {
   // Convert markdown headings to HTML
@@ -94,9 +119,111 @@ function getCurrentDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+// Enhanced HTML template with tags and improved meta
+function createEnhancedHtmlTemplate({
+  title,
+  description,
+  category,
+  tags,
+  bodyHtml,
+  canonicalSlug,
+  dateStr
+}: {
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  bodyHtml: string;
+  canonicalSlug: string;
+  dateStr: string;
+}): string {
+  const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] 
+    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+    : 'https://advanta-ai.com';
+    
+  const tagsMeta = tags.length ? `<meta name="tags" content="${tags.join(',')}" />` : '';
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": title,
+    "description": description,
+    "datePublished": dateStr,
+    "author": {
+      "@type": "Organization",
+      "name": "Advanta AI"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Advanta AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${baseUrl}/logo.png`
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `${baseUrl}/blog/${canonicalSlug}`
+    }
+  };
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} | Advanta AI</title>
+    <meta name="description" content="${description}" />
+    <meta name="category" content="${category}" />
+    <meta name="date" content="${dateStr}" />
+    ${tagsMeta}
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="${baseUrl}/blog/${canonicalSlug}" />
+    <meta property="og:site_name" content="Advanta AI" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="${baseUrl}/blog/${canonicalSlug}" />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
+    
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+        h2 { color: #1f2937; margin-top: 30px; }
+        h3 { color: #374151; }
+        p { margin-bottom: 16px; }
+        .meta { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+        .tags { margin-top: 20px; }
+        .tag { display: inline-block; background: #eff6ff; color: #2563eb; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="meta">Published on ${dateStr} • Category: ${category.replace('_', ' ').toUpperCase()}</div>
+    ${tags.length ? `<div class="tags">${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
+    ${bodyHtml}
+    
+    <div style="margin-top: 40px; padding: 20px; background: #f9fafb; border-radius: 8px; text-align: center;">
+        <p><strong>Ready to implement AI in your business?</strong></p>
+        <p><a href="${baseUrl}/contact" style="color: #2563eb;">Contact Advanta AI</a> for a consultation.</p>
+    </div>
+</body>
+</html>`;
+}
+
 // Function to generate blog post content using GPT-4o
-async function generateBlogContent(topic: string): Promise<{ title: string, content: string, category: string }> {
+async function generateBlogContent(topic: string): Promise<{ title: string, content: string, category: string, tags: string[] }> {
   try {
+    logGeneration('single-post', 'start', `Generating: ${topic}`);
+    
     const prompt = `
 You are a professional AI and technology writer for Advanta AI, a leading AI consultancy company that delivers enterprise-grade AI solutions in 7 days instead of 6+ months.
 
@@ -142,6 +269,12 @@ CONTENT:
 [More detailed content with specific use cases and benefits]
 
 ## [Third main section heading]
+[Implementation guidance with specific steps]
+
+## How to Get Started with AI Implementation
+[Actionable next steps and practical advice]
+
+IMPORTANT: Include relevant tags and ensure the content is actionable and business-focused.
 [Implementation guidance, best practices, or future outlook]
 
 ## Conclusion

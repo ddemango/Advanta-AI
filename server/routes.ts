@@ -33,15 +33,37 @@ import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail, sendContactC
 import { eq, sql, desc } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
-import { DailyBlogScheduler, getAllBlogPosts } from "./daily-blog-system";
+import { blogSystem } from "./blog-integration";
 import { workflowEngine } from "./workflow-engine";
 import { getWorkflowAnalytics, generatePerformanceReport } from "./workflow-analytics";
 import { triggerSystem, parseAdvancedSchedule } from "./advanced-triggers";
 import { aiCapabilities } from "./ai-capabilities";
 import { log } from "./vite";
+import rateLimit from 'express-rate-limit';
+import { enhancedBlogRouter } from './enhanced-blog-routes';
+import { statusRouter } from './status-routes';
+import { adminRouter } from './admin-routes';
 import Stripe from "stripe";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Rate limiting for public API endpoints
+const publicApiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 120, // 120 requests per minute per IP
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  trustProxy: process.env.NODE_ENV === 'production'
+});
+
+// Rate limiting for blog view tracking
+const viewTrackingLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 view tracking requests per minute
+  message: { error: 'Too many view requests' },
+  trustProxy: process.env.NODE_ENV === 'production'
+});
 
 // Fantasy Football Analysis Engine
 interface PlayerAnalysis {
@@ -1665,7 +1687,7 @@ function setupAuthEndpoints(app: Express) {
   // Get daily blog scheduler status
   app.get('/api/blog/scheduler/status', (req, res) => {
     try {
-      const status = dailyBlogScheduler.getStatus();
+      const status = blogSystem.getSystemStatus();
       res.json(status);
     } catch (error) {
       console.error('Error getting scheduler status:', error);
@@ -1676,7 +1698,7 @@ function setupAuthEndpoints(app: Express) {
   // Manual trigger for blog generation (admin use)
   app.post('/api/blog/generate', async (req, res) => {
     try {
-      await dailyBlogScheduler.generateNow();
+      await blogSystem.triggerBlogGeneration();
       return res.json({ success: true, message: 'Blog post generated successfully' });
     } catch (error) {
       console.error('Error generating blog post:', error);
@@ -1687,13 +1709,22 @@ function setupAuthEndpoints(app: Express) {
   // Get blog system status
   app.get('/api/blog/status', async (req, res) => {
     try {
-      const status = dailyBlogScheduler.getStatus();
+      const status = blogSystem.getSystemStatus();
       return res.json(status);
     } catch (error) {
       console.error('Error getting blog status:', error);
       return res.status(500).json({ message: 'Error getting blog status' });
     }
   });
+  
+  // Mount enhanced blog routes with rate limiting
+  app.use('/api/enhanced-blog', publicApiLimiter, enhancedBlogRouter);
+  
+  // Mount status and health endpoints
+  app.use('/api/status', statusRouter);
+  
+  // Mount admin routes
+  app.use('/api/admin', adminRouter);
 
   // ---------- Newsletter API Routes ----------
   
@@ -7171,8 +7202,7 @@ function getCuratedRecommendations(preferences: any) {
   });
 }
 
-// Initialize daily blog scheduler
-const dailyBlogScheduler = new DailyBlogScheduler();
+// Enhanced blog system will be initialized in registerRoutes
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply security middleware
@@ -7403,8 +7433,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add auth endpoints
   setupAuthEndpoints(app);
   
-  // Start the daily blog automation system
-  dailyBlogScheduler.start();
+  // Initialize the enhanced blog automation system
+  await blogSystem.initialize();
+  
+  // Mount enhanced blog routes
+  app.use('/api/enhanced-blog', enhancedBlogRouter);
+  app.use('/api/status', statusRouter);
+  app.use('/api/admin', adminRouter);
 
   // Travel Hacker AI endpoints
   const travelApiModule = await import('./travel-api.js');

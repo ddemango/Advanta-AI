@@ -1,0 +1,455 @@
+set-it-and-forget-it blog. Let’s do it. Below is a tight, copy-pasteable handoff spec with all the bells & whistles so your blog generates itself, publishes itself, emails itself, SEO’s itself, and monitors itself.
+
+I’ll keep it structured so you (or your AI agent) can implement straight through.
+
+🔁 Fully-Automated Blog: End-to-End Spec
+What you’ll have when done
+
+3 posts/day auto-generated (sanitized, with OG meta, images optional)
+
+Unified SPA route /blog/:slug (+ static /posts/*.html for CDN)
+
+Index, tags, categories, search, pagination, infinite scroll
+
+Reading time + persistent view counts (SQLite)
+
+RSS + Sitemap auto-regenerated
+
+Digest emails M/W/F 8:00 AM CT to subscribers (JSON/SQLite list)
+
+Auto social share webhooks (X/LinkedIn; optional placeholders)
+
+Quality gates (length, sections, link check, AI tone/brand)
+
+Admin/status page + health checks, logs, retry/backoff, budget caps
+
+Cache control + ETag + prefetch hints for speed
+
+Assumes you already added: minimal Express routes, React pages with queryFn, OpenAI writer, generator, subscribers, scheduler. We’re extending that baseline.
+
+0) Install (additions)
+npm i better-sqlite3 pino pino-pretty express-rate-limit
+npm i fuse.js            # lightweight fuzzy search
+# optional: axios for webhooks
+npm i axios
+
+1) Persistence upgrade (views + subscribers → SQLite)
+
+server/db.ts
+
+import Database from 'better-sqlite3';
+import path from 'node:path';
+import fs from 'node:fs';
+
+const DB_PATH = path.join(process.cwd(), 'data', 'blog.sqlite');
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+export const db = new Database(DB_PATH);
+
+db.exec(`
+  PRAGMA journal_mode = WAL;
+  CREATE TABLE IF NOT EXISTS views (
+    slug TEXT PRIMARY KEY,
+    count INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    createdAt TEXT NOT NULL,
+    verified INTEGER NOT NULL DEFAULT 1
+  );
+  CREATE INDEX IF NOT EXISTS idx_sub_email ON subscribers(email);
+`);
+
+
+Swap in DB for views (replace Map logic in blog-routes.ts)
+
+// helpers
+import { db } from './db';
+
+function getViews(slug: string): number {
+  const row = db.prepare('SELECT count FROM views WHERE slug=?').get(slug);
+  return row?.count ?? 0;
+}
+function incView(slug: string): number {
+  db.prepare('INSERT INTO views(slug,count) VALUES(?,1) ON CONFLICT(slug) DO UPDATE SET count=count+1').run(slug);
+  return getViews(slug);
+}
+
+// in buildIndex(): replace viewCounts.get(slug)
+viewCount: getViews(slug)
+
+// in POST /api/blog/view:
+const next = incView(slug);
+res.json({ slug, viewCount: next });
+
+
+Swap subscribers JSON → SQLite (optional now or later):
+
+Keep your JSON functions as a fallback.
+
+Or adapt subscribers.ts to read/write via db (same exported API).
+
+2) API upgrades
+2.1 Pagination + filtering + search
+
+Extend /api/blog/posts to accept ?q=&category=&tag=&cursor=&limit=
+
+limit default 12, max 50
+
+cursor = YYYY-MM-DD|filename from last page item
+
+// blog-routes.ts (inside buildIndex or post-list handler)
+import Fuse from 'fuse.js';
+
+blogRouter.get('/posts', async (req, res) => {
+  try {
+    const { q = '', category = '', tag = '', cursor = '', limit = '12' } = req.query as Record<string,string>;
+    const cap = Math.min(Math.max(parseInt(limit,10)||12, 1), 50);
+
+    let items = await buildIndex(); // already sorted newest first
+
+    if (category && category !== 'all') items = items.filter(i => i.category === category);
+    if (tag) items = items.filter(i => (i as any).tags?.includes(tag)); // tags added in #3 below
+
+    if (q) {
+      const fuse = new Fuse(items, { keys: ['title','description','slug','category'], threshold: 0.35, includeScore: false });
+      items = fuse.search(q).map(r => r.item);
+    }
+
+    // cursor pagination
+    let start = 0;
+    if (cursor) {
+      const idx = items.findIndex(i => `${i.date}|${i.filename}` === cursor);
+      start = idx >= 0 ? idx + 1 : 0;
+    }
+    const page = items.slice(start, start + cap);
+    const nextCursor = page.length === cap ? `${page[page.length-1].date}|${page[page.length-1].filename}` : null;
+
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+    res.json({ items: page, nextCursor });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to build index' });
+  }
+});
+
+
+Client (list page): switch to infinite scroll using nextCursor. (You can keep your current grid and append pages.)
+
+2.2 Health, status, metrics
+// server/status-routes.ts
+import express from 'express';
+import os from 'node:os';
+import { db } from './db';
+
+export const statusRouter = express.Router();
+
+statusRouter.get('/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+
+statusRouter.get('/metrics', (_req, res) => {
+  const mem = process.memoryUsage();
+  const views = db.prepare('SELECT count(*) as n FROM views').get().n;
+  const subs = db.prepare('SELECT count(*) as n FROM subscribers').get().n;
+  res.json({
+    uptime: process.uptime(),
+    load: os.loadavg(),
+    rss: mem.rss,
+    heapUsed: mem.heapUsed,
+    views, subs,
+    now: new Date().toISOString(),
+  });
+});
+
+
+Mount:
+
+import { statusRouter } from './status-routes';
+app.use('/api/status', statusRouter);
+
+2.3 Rate limiting for public endpoints
+import rateLimit from 'express-rate-limit';
+const limiter = rateLimit({ windowMs: 60_000, max: 120 }); // per IP
+app.use('/api/', limiter);
+
+3) Post metadata: tags, canonical, socials
+
+Generator: add tags structure & lightweight auto-tagging.
+
+// generator.ts
+function guessTags(md: string): string[] {
+  const tags = new Set<string>();
+  const checks = [
+    ['AI','ai'], ['automation','automation'], ['marketing','marketing'],
+    ['SEO','seo'], ['workflow','workflow'], ['analytics','analytics'],
+    ['engineering','engineering'], ['javascript','javascript'], ['python','python']
+  ];
+  for (const [needle, tag] of checks) if (md.toLowerCase().includes(needle.toLowerCase())) tags.add(tag);
+  return Array.from(tags).slice(0, 6);
+}
+...
+const tags = guessTags(gen.markdown);
+const html = htmlShell({ ... , tags, ... });
+
+function htmlShell({ title, description, category, ogImage, bodyHtml, canonicalSlug, tags }:{
+  title:string; description:string; category:string; ogImage?:string; bodyHtml:string; canonicalSlug:string; tags:string[];
+}) {
+  const tagsMeta = tags.length ? `<meta name="tags" content="${tags.join(',')}">` : '';
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${title} | Advanta AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="${description}" />
+<meta name="category" content="${category}" />
+${tagsMeta}
+${ogImage ? `<meta property="og:image" content="${ogImage}" />` : ''}
+<meta property="og:title" content="${title}" />
+<meta property="og:description" content="${description}" />
+<link rel="canonical" href="https://yourdomain.com/blog/${canonicalSlug}">
+...
+`;
+}
+
+
+Index parser: read tags
+
+function extractMeta(html: string) {
+  ...
+  const tags = (html.match(/<meta\s+name="tags"\s+content="([^"]+)"/i)?.[1] || '')
+      .split(',').map(s=>s.trim()).filter(Boolean);
+  return { title, category, description, ogImage, tags };
+}
+
+
+Return tags from /api/blog/posts and /api/blog/file/:slug.
+
+4) Search UI + category/tags + infinite scroll (React)
+
+Add an input for q, chips for categories & top tags, load pages with nextCursor.
+
+Debounce input (300ms), refetch list.
+
+IntersectionObserver to fetch next page when sentinel becomes visible.
+
+(You already have most of the UI; this is just wiring to the new API.)
+
+5) RSS + Sitemap automation
+
+server/feeds.ts
+
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { buildIndex } from './blog-routes'; // export it if not already
+
+const PUBLIC_DIR = path.join(process.cwd(), 'public');
+
+export async function buildRSSandSitemap() {
+  const posts = await buildIndex();
+  await fs.mkdir(PUBLIC_DIR, { recursive: true });
+
+  // RSS (top 50)
+  const top = posts.slice(0, 50);
+  const rssItems = top.map(p => `
+    <item>
+      <title><![CDATA[${p.title}]]></title>
+      <link>https://yourdomain.com/blog/${p.slug}</link>
+      <guid>https://yourdomain.com/blog/${p.slug}</guid>
+      <pubDate>${new Date(p.date).toUTCString()}</pubDate>
+      <description><![CDATA[${p.description}]]></description>
+    </item>`).join('\n');
+
+  const rss = `<?xml version="1.0" encoding="UTF-8" ?>
+  <rss version="2.0"><channel>
+  <title>Advanta AI Blog</title>
+  <link>https://yourdomain.com/blog</link>
+  <description>Latest posts</description>
+  ${rssItems}
+  </channel></rss>`;
+
+  await fs.writeFile(path.join(PUBLIC_DIR, 'rss.xml'), rss, 'utf8');
+
+  // Sitemap (top 1000)
+  const urls = posts.slice(0, 1000).map(p => `
+    <url><loc>https://yourdomain.com/blog/${p.slug}</loc><lastmod>${p.date}</lastmod></url>`).join('\n');
+  const sm = `<?xml version="1.0" encoding="UTF-8"?>
+  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    ${urls}
+  </urlset>`;
+  await fs.writeFile(path.join(PUBLIC_DIR, 'sitemap.xml'), sm, 'utf8');
+}
+
+
+Cron: call after each generation batch and nightly:
+
+// scheduler.ts
+import { buildRSSandSitemap } from './feeds';
+cron.schedule('5 8,13,18 * * *', async () => { try { await buildRSSandSitemap(); } catch(e){ console.error(e);} }, { timezone: TZ });
+cron.schedule('0 2 * * *', async () => { try { await buildRSSandSitemap(); } catch(e){ console.error(e);} }, { timezone: TZ });
+
+6) Auto social share (optional)
+
+server/social.ts
+
+import axios from 'axios';
+
+export async function shareToX(title: string, slug: string) {
+  if (!process.env.X_BEARER) return;
+  const text = `${title} — https://yourdomain.com/blog/${slug}`;
+  // Use your X API endpoint/provider; placeholder:
+  await axios.post('https://api.your-x-proxy.example/post', { text }, {
+    headers: { Authorization: `Bearer ${process.env.X_BEARER}` }
+  });
+}
+
+export async function shareToLinkedIn(title: string, slug: string) {
+  if (!process.env.LINKEDIN_TOKEN) return;
+  const text = `${title}\nhttps://yourdomain.com/blog/${slug}`;
+  // LinkedIn UGC Posts API or a proxy—placeholder call:
+  await axios.post('https://api.your-li-proxy.example/post', { text }, {
+    headers: { Authorization: `Bearer ${process.env.LINKEDIN_TOKEN}` }
+  });
+}
+
+
+Hook after generation:
+
+// generator.ts (after writing each post)
+import { shareToX, shareToLinkedIn } from './social';
+await shareToX(gen.title, slug);
+await shareToLinkedIn(gen.title, slug);
+
+7) Content quality gates & link checker
+
+Minimum quality (already validating title length & word count). Add structure checks + broken link scan:
+
+// generator.ts (after obtaining gen.markdown)
+function validateStructure(md: string) {
+  const hasH2 = /(^|\n)##\s+/.test(md);
+  const hasHowTo = /(^|\n)##\s+(how to|implementation|step-by-step)/i.test(md);
+  if (!hasH2) throw new Error('Missing H2 sections');
+  if (!hasHowTo) throw new Error('Add a "How to implement" section');
+}
+validateStructure(gen.markdown);
+
+
+Broken link scan (best-effort, skip external domains if you prefer):
+
+import axios from 'axios';
+async function checkLinks(html: string) {
+  const links = Array.from(html.matchAll(/<a [^>]*href="([^"]+)"/gi)).map(m => m[1]);
+  const unique = [...new Set(links)].filter(u => /^https?:\/\//.test(u));
+  const results = await Promise.allSettled(unique.map(url => axios.head(url, { timeout: 5000 })));
+  const bad = results.map((r,i)=>({r,i})).filter(x => x.r.status==='rejected' || (x.r.value && x.r.value.status>=400)).map(x => unique[x.i]);
+  if (bad.length) console.warn('[link-check] unreachable:', bad.slice(0,5));
+}
+await checkLinks(safeHtml); // non-blocking; or make it block if you want strictness
+
+8) Logging & monitoring
+
+Pino logger:
+
+// server/logger.ts
+import pino from 'pino';
+export const log = pino({ transport: { target: 'pino-pretty' } });
+
+// use: log.info({ slug }, 'generated post');
+
+
+Wrap cron jobs with logs + retries:
+
+async function withRetry<T>(fn:()=>Promise<T>, label: string, tries=2) {
+  for (let i=0;i<tr ies;i++){
+    try { return await fn(); } catch(e){ log.error({err:e}, `[${label}] attempt ${i+1} failed`); if (i===tries-1) throw e; }
+  }
+}
+
+
+Use withRetry(()=>generateOnePost(),'gen-1pm').
+
+9) Performance & caching
+
+Static /posts already served with max-age: 1h. Put that path behind your CDN; enable ETag and Gzip/Brotli.
+
+API responses: set Cache-Control: public, max-age=30, stale-while-revalidate=60.
+
+Client: add <link rel="preconnect" href="https://yourdomain.com"> and prefetch post links on hover (quick win).
+
+10) Admin panel (super simple)
+
+/api/status already exists. Add a tiny password-protected route to regenerate RSS, send digest now, trigger generation, and list last 20 logs (optional if you centralize logs).
+
+// server/admin-routes.ts
+import express from 'express';
+import { buildRSSandSitemap } from './feeds';
+import { generateOnePost, generateThreePosts } from './generator';
+import { sendDigestEmail } from './email';
+
+export const adminRouter = express.Router();
+adminRouter.use((req,res,next)=>{
+  if (req.get('x-admin-key') !== process.env.ADMIN_KEY) return res.status(401).json({error:'unauthorized'});
+  next();
+});
+
+adminRouter.post('/generate-one', async (_req,res)=>{ await generateOnePost(); res.json({ok:true}); });
+adminRouter.post('/generate-three', async (_req,res)=>{ await generateThreePosts(); res.json({ok:true}); });
+adminRouter.post('/digest', async (_req,res)=>{ await sendDigestEmail(); res.json({ok:true}); });
+adminRouter.post('/feeds', async (_req,res)=>{ await buildRSSandSitemap(); res.json({ok:true}); });
+
+
+Mount:
+
+import { adminRouter } from './admin-routes';
+app.use('/api/admin', adminRouter);
+
+11) Security touches
+
+Sanitize all HTML (already in server).
+
+DOMPurify on client (optional second layer).
+
+Rate limit /api/blog/view, /api/subscribers.
+
+No inline scripts in generated posts; block if present.
+
+ENV budget caps for OpenAI (e.g., max N tokens/day—enforce by counting requests in SQLite and short-circuiting if over).
+
+12) Acceptance checklist (done = ✅)
+
+✅ /api/blog/posts supports q/category/tag/cursor/limit and returns { items, nextCursor }.
+
+✅ /api/blog/file/:slug returns tags, sanitized content, reading_time, viewCount.
+
+✅ Infinite scroll on the list page; search and category/tag filters work together.
+
+✅ View counts persist across restarts (SQLite).
+
+✅ rss.xml + sitemap.xml regenerate on cron and on demand.
+
+✅ Digest emails send M/W/F 8:00 AM CT to all subscribers.
+
+✅ (Optional) Social posts fire per article.
+
+✅ Status endpoints return health & metrics; admin routes work with x-admin-key.
+
+✅ Logs show generation + email + feed runs with timestamps; retries on transient errors.
+
+✅ No console errors; Core Web Vitals look good (LCP under ~2.5s on a couple of sample pages).
+
+13) One-time env/config
+APP_TZ=America/Chicago
+ADMIN_KEY=supersecret_admin_key
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4.1
+
+# Email
+SMTP_HOST=...
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASS=...
+EMAIL_FROM="Advanta AI Blog <noreply@advanta-ai.com>"
+
+# Social (if used)
+X_BEARER=...
+LINKEDIN_TOKEN=...
