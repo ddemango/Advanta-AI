@@ -59,8 +59,7 @@ const cleanBlogData = (post: any) => {
     category: post.category?.replace(/\*\*/g, '').replace(/\*/g, '').trim() || 'ai_technology',
     description: post.description?.replace(/\*\*/g, '').replace(/\*/g, '').replace(/strong>\*\/stron/g, '').trim() || 'Discover the latest AI insights and innovations.',
     preview: post.preview?.replace(/\*\*/g, '').replace(/\*/g, '').trim(),
-    readingTime: Math.min(Math.max(parseInt(post.readingTime) || 5, 1), 15), // Cap at 15 minutes
-    date: '2025-08-16' // Use correct current date
+    readingTime: Math.min(Math.max(parseInt(post.readingTime) || 5, 1), 15) // Cap at 15 minutes
   };
 };
 
