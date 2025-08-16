@@ -1,0 +1,367 @@
+Here’s an advanced, no-fluff Admin Dashboard spec for Advanta-AI that you can hand to your devs/AI agent and build in phases. I split it into pages, KPIs, data objects, and “done means done” checklists so nothing gets missed.
+
+Top-Level Structure (left nav)
+
+Overview (CEO view)
+
+Users & Accounts (CRM/tenants)
+
+Billing & Plans
+
+Projects & Workflows (AI jobs)
+
+Models & Prompts (LLM ops)
+
+Content & Tools (site tools, blog, templates)
+
+Analytics (product + marketing)
+
+Growth Ops (A/B tests, SEO, funnels)
+
+Automation & Schedules
+
+Integrations & Data Sources
+
+Support & Quality
+
+Security, Audit, & Settings
+
+1) Overview (Executive Home)
+
+Widgets/KPIs
+
+MRR / ARR, net revenue, churn, expansion, LTV, CAC, payback
+
+Active users (DAU/WAU/MAU), New signups, Conversion rate
+
+Top products/tools used, Top workflows run, Avg run time, Error rate
+
+GPT & API spend (today / 7d / 30d), cost per action
+
+Incidents & SLAs (open, breaching soon), queue backlog
+
+Live status: APIs (OpenAI/Supabase/Stripe/etc.), rate limits, latency
+Actions
+
+“Create announcement” (sitewide banner)
+
+“Start experiment” (A/B test wizard)
+
+“Trigger reindex/retrain” (content/embeddings)
+
+2) Users & Accounts (CRM/Tenancy)
+
+Tables & Views
+
+Accounts (company, plan, seats, MRR, health score)
+
+Users (role, last seen, verification, 2FA status)
+
+Usage (runs, tokens, storage, bandwidth)
+
+Activity timeline (events, payments, support tickets)
+Bulk actions
+
+Plan upgrades/downgrades, add seats, credit grants, resets
+
+Suspend/reactivate, invite links, SSO mapping
+Health scoring
+
+Inputs: weekly active days, workflows created, first value time, ticket sentiment
+
+Output: Red/Amber/Green + playbooks (nudge, concierge setup, “power unlock” email)
+
+3) Billing & Plans
+
+Plans/Entitlements: features toggles per tier (API limits, tool access, white-label, SSO)
+
+Coupons, trials, proration, metered usage (per run / tokens / storage)
+
+Invoices, refunds, dunning, failed payment recovery automation
+
+Revenue dashboards by cohort/plan/source
+
+4) Projects & Workflows (Your core product)
+
+Objects
+
+Project (name, team, integrations, environment)
+
+Workflow (graph, version, triggers, schedule, env vars)
+
+Run (inputs, outputs, logs, cost, latency, success/failure, artifacts)
+Features
+
+Visual run inspector (timeline + step logs + prompts + responses)
+
+Rerun with patch, compare runs, diff prompts & settings
+
+Queues & concurrency controls; cancel/retry; priority lanes
+
+Scheduled jobs (cron), conditional triggers (webhook, file, calendar)
+
+Guardrails: token caps, timeouts, content filters, PII redaction
+
+5) Models & Prompts (LLMOps)
+
+Prompt Library (versioned, tags, owners, tests, eval scores)
+
+Model Registry (OpenAI, local, vision, TTS): default per environment, fallbacks
+
+Offline Evals: test suites (accuracy, hallucination rate, latency), golden sets
+
+Prompt A/B testing (traffic split, win metrics, auto-promote winner)
+
+Cost controls: per-model caps, routing rules (cheap first, escalate on failure)
+
+Safety: grounding sources, citation checks, disallowed content rules
+
+6) Content & Tools
+
+Site Tools CMS: create/edit your free tools (Real Estate, Finance, Health, Sports, Productivity…). Fields: name, description, inputs schema, output schema, pricing flag, SEO fields, feature flags.
+
+Template Gallery: prebuilt workflows/prompts your users can one-click copy
+
+Blog/Docs: MDX editor, scheduled publish, auto ToC, canonical URL, redirects, internal links suggestions
+
+Asset Manager: logos, icons, screenshots; image optimization; CDN purge
+
+7) Analytics (Product + Marketing)
+
+Product analytics
+
+Event explorer (funnel: Visit → Try tool → Create account → Run workflow → Subscribe)
+
+Cohorts, retention, feature adoption, time-to-value
+
+Heatmaps/session replays (privacy-safe)
+Marketing analytics
+
+Traffic sources, SEO pages, top keywords, CTR, conversion per channel
+
+UTM performance, payback per campaign
+Financial + Ops
+
+Cost per run, cost by tool, margin by feature/plan
+
+Token usage breakdown, model spend anomaly alerts
+
+8) Growth Ops (Experiments & SEO)
+
+A/B/n Experiments: pages, copy, pricing, onboarding steps
+
+SEO: sitemap, structured data validator, 404/redirects, internal link graph
+
+Content planner: topic clusters, velocity, “what to write next” based on gaps
+
+Onboarding flows editor: step ordering, tips, progressive disclosure
+
+9) Automation & Schedules
+
+Job scheduler (cron UI) w/ calendars, timezones
+
+Playbooks: “New customer 0–14d”, “Churn risk”, “High error rate”, “Big spender”
+
+Actions: email, Slack/Discord, webhooks, in-app banners, workflow triggers
+
+Audit: every automation execution with inputs/outputs
+
+10) Integrations & Data Sources
+
+Connectors: Stripe/LemonSqueezy, GA4, Search Console, Facebook/Google Ads, HubSpot, Slack, Discord, Gmail, Google Drive, The Rundown API (sports), etc.
+
+Status & quota: per connector keys, scopes, last sync, error logs
+
+Data contracts: schemas for events (versioned), transformations preview
+
+11) Support & Quality
+
+Ticket inbox (from chat, email, in-app), SLAs, macros, satisfaction
+
+Feedback/NPS with theme clustering (LLM tags bugs/feature asks)
+
+Release notes manager and in-app changelog
+
+Incident center: uptime, postmortems, status page publisher
+
+12) Security, Audit, & Settings
+
+RBAC: Owner, Admin, Ops, Analyst, Support, Read-only
+
+API keys management, IP allowlists, OAuth clients
+
+Audit logs (every change, who/when/what diff), exportable
+
+PII vault + field-level encryption, masked replays
+
+Backups, restore points, config snapshots
+
+Feature flags (kill-switches) per tenant/env
+
+Data Model (core tables)
+
+accounts(id, name, plan_id, seats, mrr, status, health_score, created_at)
+
+users(id, account_id, email, role, last_seen, 2fa_enabled)
+
+plans(id, name, entitlements JSONB, price, metering JSONB)
+
+projects(id, account_id, name, env)
+
+workflows(id, project_id, name, version, graph JSONB, flags JSONB)
+
+runs(id, workflow_id, status, input JSONB, output JSONB, cost_cents, tokens_in, tokens_out, latency_ms, started_at, finished_at)
+
+prompts(id, name, version, content, tests JSONB, owner)
+
+experiments(id, name, target, variants JSONB, primary_metric, status)
+
+events(id, account_id, user_id, type, props JSONB, ts)
+
+tickets(id, account_id, subject, status, priority, assignee, messages JSONB)
+
+audit_logs(id, actor_id, resource, action, before JSONB, after JSONB, ts)
+
+Events to Track (copy/paste)
+user_signed_up, user_verified, session_started, session_ended,
+tool_viewed, tool_run_started, tool_run_succeeded, tool_run_failed,
+workflow_created, workflow_run_started, workflow_run_succeeded, workflow_run_failed,
+subscription_started, plan_upgraded, plan_downgraded, payment_failed, refund_issued,
+experiment_started, experiment_won, experiment_stopped,
+support_ticket_opened, support_ticket_closed,
+model_spend_spike_detected, incident_opened, incident_resolved
+
+“Done Means Done” Checklists
+Engineering (platform)
+
+ Env separation (dev/stage/prod) + seeded demo data
+
+ Feature flags + kill-switches
+
+ WebSockets for live run logs; fallback long-poll
+
+ Rate limits & per-tenant quotas
+
+ Background queue (jobs, retries, DLQ)
+
+ Structured logging, trace IDs, request sampling
+
+ All writes audited; PII masked in logs
+
+ Backups nightly + restore test monthly
+
+Analytics
+
+ Unified event schema (versioned) + validation
+
+ Funnel & cohort dashboards prebuilt
+
+ Cost dashboards (by tool, plan, model)
+
+ SEO KPIs (impressions, CTR, top pages)
+
+ Alerts (spend surge, error rate, churn risk)
+
+LLMOps
+
+ Prompt versioning + rollback
+
+ Regression tests (golden Q/A) per prompt
+
+ Auto-route to fallback model on failure
+
+ Per-model spend caps + notifications
+
+ Red-team suite (safety/policy) quarterly
+
+Growth & Content
+
+ Experiment wizard; guardrails on traffic split
+
+ Content calendar; scheduled publish; auto internal links
+
+ Template gallery with 1-click copy to user workspace
+
+Support & Quality
+
+ In-app bug report with context (console/logs/user agent)
+
+ SLA timers; escalation rules
+
+ Postmortem template and incident tags
+
+Security
+
+ RBAC enforced server-side; permission tests
+
+ 2FA/SSO; API key rotation workflow
+
+ Data retention windows + “Right to be forgotten” job
+
+Tech Stack (suggested)
+
+Frontend: Next.js + TypeScript, Tailwind + shadcn/ui, Recharts/Chart.js
+
+State/queries: React Query, WebSockets (Socket.IO)
+
+Backend: Node (Fastify) or Python (FastAPI), tRPC/REST, OpenAPI docs
+
+DB: Postgres (Supabase/Neon) + Prisma; Redis for queues/caching
+
+Jobs: BullMQ/Temporal for scheduling & retries
+
+Auth: Clerk/Auth0 (SSO/SAML for enterprise)
+
+Payments: Stripe (metered billing + Seat pricing)
+
+Analytics: PostHog (product), GA4/Search Console (marketing)
+
+Obs: OpenTelemetry + Sentry + Uptime monitoring
+
+Search/Embeddings: pgvector or Pinecone
+
+Permissions (RBAC quick map)
+
+Owner: everything
+
+Admin: all but billing keys & delete account
+
+Ops: workflows/runs/queues; read-only billing
+
+Analyst: analytics read, experiments read/write
+
+Support: tickets, user impersonation (with audit), read-only runs
+
+Read-only: dashboards only
+
+Admin Page Wireframe (at a glance)
+
+Header: environment switcher, global search (⌘K), alerts bell, user menu
+
+Left Nav: sections above
+
+Main: cards grid; each card has: sparkline, primary metric, trend %, deep link
+
+Footer: status bar (APIs OK / degraded / incident)
+
+Ready-to-Build Tickets (copy to your AI agent)
+
+Create “Overview” dashboard with 8 cards: MRR, DAU, New Signups, Conversion %, Token Spend (30d), Avg Run Cost, Error Rate, Top Tool. Add date range picker + export CSV.
+
+Users & Accounts: tables + filters + health score + bulk actions; drawer to view timeline & invoices.
+
+Projects & Workflows: list, run details with live logs (WS), retry/cancel, cost breakdown, artifacts download.
+
+Prompt Library: CRUD + versioning + inline evals; traffic split A/B with automatic winner threshold.
+
+Experiments: start/stop, variant editor, metrics picker, significance calc.
+
+Billing: plans & entitlements matrix; metered usage graphs; coupon creator; dunning flows.
+
+Analytics: funnels & cohorts; per-tool margins; UTM report; anomaly alerts.
+
+Automations: cron UI + playbooks (new user nudge, churn risk, spend spike); logs for each run.
+
+Support: ticket inbox + SLA timers + macros; NPS with LLM theme clustering.
+
+Security/Audit: RBAC, key management, audit log viewer with diff.
