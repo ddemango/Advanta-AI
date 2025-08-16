@@ -28,7 +28,41 @@ import { fadeIn, fadeInUp } from '@/lib/animations';
 import { GradientText } from '@/components/ui/gradient-text';
 import { Helmet } from 'react-helmet';
 
+import SEOMetadata from '@/components/SEOMetadata';
+
 export default function Home() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Advanta AI",
+    "description": "Leading AI agency specializing in business automation, AI marketing, and custom AI solutions. Transform your business with enterprise-grade AI workflows in 7 days.",
+    "url": "https://advanta-ai.com",
+    "logo": "https://advanta-ai.com/logo.png",
+    "foundingDate": "2024",
+    "founder": {
+      "@type": "Person",
+      "name": "Advanta AI Team"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "US"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+1-555-ADVANTA",
+      "contactType": "customer service",
+      "availableLanguage": "English"
+    },
+    "sameAs": [
+      "https://linkedin.com/company/advanta-ai",
+      "https://twitter.com/AdvantaAI"
+    ],
+    "offers": {
+      "@type": "Service",
+      "name": "AI Business Automation",
+      "description": "Custom AI workflows, chatbots, and marketing automation solutions for enterprises"
+    }
+  };
   // State for quick navigation and tab management
   const [activeSection, setActiveSection] = useState('hero');
   const [servicesTab, setServicesTab] = useState('ai-agents');
@@ -106,61 +140,15 @@ export default function Home() {
 
   return (
     <>
-      <Helmet>
-        <title>Advanta AI - Automate. Optimize. Scale. | AI-Powered Workflows Built for Your Business</title>
-        <meta name="description" content="Advanta AI transforms business operations by combining APIs, ChatGPT, and intelligent automation tools. Eliminate repetitive tasks, streamline operations, and create seamless customer interactions directly from your website." />
-        <meta name="keywords" content="AI automation, workflow integration, ChatGPT integration, API automation, business process automation, AI-driven workflows, intelligent automation tools" />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content="Advanta AI - Automate. Optimize. Scale. | AI-Powered Workflows" />
-        <meta property="og:description" content="Transform your business operations with AI. We combine APIs, ChatGPT, and intelligent automation to eliminate repetitive tasks and create seamless customer interactions." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://advanta-ai.com" />
-        <meta property="og:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
-        <meta property="og:site_name" content="Advanta AI" />
-        
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Advanta AI - Automate. Optimize. Scale." />
-        <meta name="twitter:description" content="Transform business operations with AI-powered workflows. Combine APIs, ChatGPT, and intelligent automation to eliminate repetitive tasks." />
-        <meta name="twitter:image" content="https://advanta-ai.com/og-image-workflow-automation.jpg" />
-        <meta name="twitter:site" content="@advanta_ai" />
-        
-        {/* Additional SEO */}
-        <meta name="author" content="Advanta AI" />
-        <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-        <link rel="canonical" href="https://advanta-ai.com/" />
-        
-        {/* Structured Data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "Advanta AI",
-            "url": "https://advanta-ai.com",
-            "logo": "https://advanta-ai.com/logo.png",
-            "description": "AI-driven automation and workflow integration agency helping businesses streamline operations, eliminate repetitive tasks, and provide seamless customer interactions using AI",
-            "contactPoint": {
-              "@type": "ContactPoint",
-              "telephone": "+1-800-ADVANTA",
-              "contactType": "Customer Service"
-            },
-            "sameAs": [
-              "https://twitter.com/advanta_ai",
-              "https://linkedin.com/company/advanta-ai"
-            ],
-            "offers": {
-              "@type": "Service",
-              "name": "AI-Driven Automation & Workflow Integration",
-              "description": "Combining APIs, ChatGPT, and intelligent automation tools for smarter business workflows",
-              "provider": {
-                "@type": "Organization",
-                "name": "Advanta AI"
-              }
-            }
-          })}
-        </script>
-      </Helmet>
+      <SEOMetadata
+        title="Advanta AI - #1 AI Marketing Agency | 7-Day AI Implementation"
+        description="Leading AI agency delivering enterprise-grade AI automation, marketing solutions, and custom chatbots. Build, launch, and scale AI workflows in days, not months. Trusted by 500+ businesses."
+        keywords="AI marketing agency, AI automation services, AI business solutions, artificial intelligence consulting, AI workflow automation, AI chatbot development, best AI agency 2025"
+        canonicalUrl="https://advanta-ai.com"
+        ogTitle="Advanta AI - Transform Your Business with AI in 7 Days"
+        ogDescription="The #1 AI agency for enterprise automation. Custom AI workflows, marketing solutions, and chatbots deployed in 7 days. Join 500+ successful AI transformations."
+        jsonLd={jsonLd}
+      />
       
       <NewHeader />
       

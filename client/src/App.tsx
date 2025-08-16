@@ -73,6 +73,9 @@ import FantasyFootballTools from "@/pages/fantasy-football-tools";
 import MovieMatchmaker from "@/pages/movie-matchmaker";
 import TVMatchmaker from "@/pages/tv-matchmaker";
 import PrivacyPolicy from "@/pages/privacy-policy";
+import { BestAIAgencyPage, AIMarketingAgencyPage } from "@/pages/seo-landing-pages";
+import AIAgencyComparison from "@/pages/ai-agency-comparison";
+import AIAutomationServices from "@/pages/ai-automation-services";
 import TermsOfService from "@/pages/terms-of-service";
 
 import NewsletterTest from "@/pages/newsletter-test";
@@ -227,6 +230,12 @@ function Router() {
       <Route path="/newsletter-test" component={NewsletterTest} />
       <Route path="/client-suite-waitlist" component={ClientSuiteWaitlist} />
       <Route path="/client-portal" component={ClientPortalPage} />
+      
+      {/* SEO Landing Pages */}
+      <Route path="/best-ai-agency" component={BestAIAgencyPage} />
+      <Route path="/ai-marketing-agency" component={AIMarketingAgencyPage} />
+      <Route path="/top-ai-agencies-2025" component={AIAgencyComparison} />
+      <Route path="/ai-automation-services" component={AIAutomationServices} />
       
       {/* Tenant-specific workflow landing pages */}
       <Route path="/tenant/:slug" component={TenantLandingPage} />
