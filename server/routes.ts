@@ -7407,7 +7407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   dailyBlogScheduler.start();
 
   // Travel Hacker AI endpoints
-  const travelApiModule = await import('./travel-api');
+  const travelApiModule = await import('./travel-api.js');
   app.use('/api/travel', travelApiModule.default);
 
   // AI Chatbot Processing Endpoint

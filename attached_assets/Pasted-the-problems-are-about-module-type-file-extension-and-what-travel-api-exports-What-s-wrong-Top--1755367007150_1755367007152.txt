@@ -1,0 +1,92 @@
+the problems are about module type, file extension, and what travel-api exports.
+
+What’s wrong
+
+Top-level await import(...) only works in ESM
+
+If your server file uses CommonJS (require, no "type":"module"), top-level await will throw.
+
+In CJS you can use import() but not with top-level await unless you wrap it in an async IIFE.
+
+Missing file extension
+
+In Node ESM you must include the extension: ./travel-api.js (or .mjs). Without it you’ll get a module resolution error.
+
+Assumption about default export
+
+app.use('/api/travel', travelApiModule.default) assumes travel-api default-exports an Express Router.
+
+If that module uses module.exports = router (CJS), default may work… but if it uses named exports (export const router = ...) then default is undefined.
+
+If it exports a function (e.g., returns a router), you must call it.
+
+Fixes (pick the pattern that matches your project)
+A) If your project is ESM ("type":"module" or .mjs)
+
+Server file:
+
+import express from 'express';
+import travelApi from './travel-api.js';   // note the .js extension
+
+const app = express();
+
+// travelApi must be an Express Router (or a middleware/function)
+app.use('/api/travel', travelApi);
+
+app.listen(3000);
+
+
+travel-api.js should default-export a Router:
+
+// travel-api.js
+import { Router } from 'express';
+const router = Router();
+
+router.post('/parse',  (req,res)=>{ /* ... */ });
+router.post('/flights/search', (req,res)=>{ /* ... */ });
+router.post('/hotels/search',  (req,res)=>{ /* ... */ });
+router.post('/cars/search',    (req,res)=>{ /* ... */ });
+router.post('/summary',        (req,res)=>{ /* ... */ });
+
+export default router;
+
+
+If you used named export (export const router = ...), mount with:
+import { router as travelApi } from './travel-api.js'
+
+B) If your project is CommonJS (default Node, require style)
+
+Server file (no top-level await):
+
+const express = require('express');
+const travelApi = require('./travel-api'); // .js optional in CJS
+
+const app = express();
+app.use('/api/travel', travelApi.default || travelApi); // works for CJS/ESM builds
+app.listen(3000);
+
+
+Or if you really want dynamic import in CJS:
+
+const express = require('express');
+const app = express();
+
+(async () => {
+  const mod = await import('./travel-api.js');
+  const travelApi = mod.default || mod.router || mod;
+  app.use('/api/travel', travelApi);
+  app.listen(3000);
+})();
+
+Quick checklist
+
+ Using ESM? Add "type":"module" to package.json or rename to .mjs, and include the .js extension in imports.
+
+ Using CJS? Don’t use top-level await. Use require(...) or wrap import() in an async IIFE.
+
+ Ensure travel-api exports an Express Router (recommended), and you mount that router.
+
+ If travel-api exports a function that returns a router, call it:
+app.use('/api/travel', travelApi()).
+
+ Mount before app.listen(...).

@@ -123,7 +123,7 @@ $("deal_cta").onclick = async ()=>{
   let params = {};
   const nl = [v("d_from"), v("d_to")].filter(Boolean).join(" to ");
   if (useAI && nl){
-    try { params = (await postJSON("/api/parse",{ text: nl })).params || {}; } catch {}
+    try { params = (await postJSON("/api/travel/parse",{ text: nl })).params || {}; } catch {}
   }
 
   const origin      = guessIATA(v("d_from") || params.origin, "JFK");
@@ -184,7 +184,7 @@ $("deal_cta").onclick = async ()=>{
   const allOffers = [];
   for (const d of destList){
     for (const [dd, rr] of datePairs.slice(0,8)){   // cap calls
-      const res = await postJSON("/api/search", {
+      const res = await postJSON("/api/travel/flights/search", {
         origin, destination: d, departDate: dd, returnDate: rr, nonStop, cabin, maxPrice
       });
       (res.offers||[]).forEach(o=>{
@@ -201,7 +201,7 @@ $("deal_cta").onclick = async ()=>{
   $("dealSummary").innerHTML="";
   if ($("use_ai").checked && allOffers.length){
     try {
-      const s = await postJSON("/api/summary", { offers: allOffers.slice(0,8), origin, destination: destList.join(",") });
+      const s = await postJSON("/api/travel/summary", { offers: allOffers.slice(0,8), origin, destination: destList.join(",") });
       if (s.summary) $("dealSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
     } catch {}
   }
@@ -210,16 +210,16 @@ $("deal_cta").onclick = async ()=>{
   if (!flightsOnly && wantHotels){
     console.log("Searching for hotels...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
-    const h = await postJSON("/api/hotels/search", {
+    const h = await postJSON("/api/travel/hotels/search", {
       cityCode, checkInDate: datePairs[0][0], checkOutDate: datePairs[0][1], adults: 2, roomQuantity: 1
     });
-    renderHotelsInto("dealResults", (h.offers||[]).slice(0,6));
+    renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
   }
   
   if (!flightsOnly && wantCars){
     console.log("Searching for cars...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
-    const c = await postJSON("/api/cars/search", {
+    const c = await postJSON("/api/travel/cars/search", {
       cityCode, pickUpDateTime: new Date(datePairs[0][0]+"T10:00:00").toISOString(),
       dropOffDateTime: new Date(datePairs[0][1]+"T10:00:00").toISOString(), passengers: 2
     });
@@ -235,12 +235,12 @@ $("flightForm")?.addEventListener("submit", async (e)=>{
     departDate:v("departDate"), returnDate:v("returnDate"),
     maxPrice:v("maxPrice"), cabin:v("cabin"), nonStop:$("nonStop").checked
   };
-  const res = await postJSON("/api/search", body);
+  const res = await postJSON("/api/travel/flights/search", body);
   renderFlightsInto("flightResults", res.offers||[]);
   $("flightSummary").innerHTML="";
   if ($("use_ai").checked && (res.offers||[]).length){
     try{
-      const s = await postJSON("/api/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
+      const s = await postJSON("/api/travel/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
       if (s.summary) $("flightSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
     }catch{}
   }
@@ -248,16 +248,16 @@ $("flightForm")?.addEventListener("submit", async (e)=>{
 
 $("hotelForm")?.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const res = await postJSON("/api/hotels/search", {
+  const res = await postJSON("/api/travel/hotels/search", {
     cityCode:v("h_cityCode"), checkInDate:v("h_checkIn"), checkOutDate:v("h_checkOut"),
     adults:parseInt(v("h_adults")||"2",10), roomQuantity:parseInt(v("h_rooms")||"1",10)
   });
-  renderHotelsInto("hotelResults", res.offers||[]);
+  renderHotelsInto("hotelResults", res.data||[]);
 });
 
 $("carForm")?.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const res = await postJSON("/api/cars/search", {
+  const res = await postJSON("/api/travel/cars/search", {
     cityCode:v("c_cityCode"),
     pickUpDateTime: v("c_pick") ? new Date(v("c_pick")).toISOString() : undefined,
     dropOffDateTime: v("c_drop") ? new Date(v("c_drop")).toISOString() : undefined,
@@ -298,15 +298,16 @@ function renderHotelsInto(rootId, list){
   head.className="muted"; head.style.marginTop="8px"; head.innerHTML="— Hotels —";
   root.appendChild(head);
   list.forEach(h=>{
+    const offer = h.offers?.[0] || {};
     const card=document.createElement("article");
     card.className="card";
     card.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">${h.name||"Hotel"}</h3>
-        <strong>$${Number(h.priceUSD||0).toFixed(0)} ${h.currency||"USD"}</strong>
+        <h3 style="margin:0;">${h.hotel?.name||"Hotel"}</h3>
+        <strong>$${(offer.price?.total||0)} ${offer.price?.currency||"USD"}</strong>
       </div>
-      <div class="muted" style="font-size:12px;margin-top:4px;">${h.checkInDate||""} → ${h.checkOutDate||""} • ${h.cityCode||""}</div>
-      <div style="margin-top:6px;">${h.roomDesc||""}</div>
+      <div class="muted" style="font-size:12px;margin-top:4px;">${offer.checkInDate} → ${offer.checkOutDate} • ${h.hotel?.cityCode||""}</div>
+      <div style="margin-top:6px;">${h.hotel?.hotelId||""}</div>
     `;
     root.appendChild(card);
   });
