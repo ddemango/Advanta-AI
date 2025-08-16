@@ -97,6 +97,13 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  // Refetch data when timeRange changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [timeRange, isAuthenticated]);
+
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {

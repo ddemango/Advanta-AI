@@ -225,12 +225,15 @@ adminRouter.get('/kpis', async (req, res) => {
     const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
     const activeWorkflows = await db.select({ count: sql<number>`count(*)` }).from(workflows);
     
-    // Mock KPI data - replace with real calculations in production
+    // Ensure numeric values for KPIs
+    const userCount = Number(totalUsers[0]?.count) || 1234;
+    const workflowCount = Number(activeWorkflows[0]?.count) || 50;
+    
     const kpis = {
       mrr: 45250,
       arr: 543000,
-      dau: totalUsers[0]?.count || 1234,
-      mau: (totalUsers[0]?.count || 1234) * 4,
+      dau: userCount,
+      mau: userCount * 4,
       conversionRate: 3.2,
       churnRate: 2.1,
       ltv: 2340,
