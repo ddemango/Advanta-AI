@@ -28,14 +28,33 @@ function setupPreferenceToggles() {
           const carsCheckbox = $("d_include_cars");
           if (hotelsCheckbox) hotelsCheckbox.checked = false;
           if (carsCheckbox) carsCheckbox.checked = false;
+          console.log("Flights only enabled - disabled hotels and cars");
         }
+        
+        // If hotels or cars are checked, uncheck flights only
+        if ((id === "d_include_hotels" || id === "d_include_cars") && this.checked) {
+          const flightsOnlyCheckbox = $("d_flights_only");
+          if (flightsOnlyCheckbox && flightsOnlyCheckbox.checked) {
+            flightsOnlyCheckbox.checked = false;
+            console.log("Hotels/Cars enabled - disabled flights only");
+          }
+        }
+      });
+      
+      // Also add click handler to ensure checkbox toggles
+      checkbox.addEventListener('click', function(e) {
+        // Force the checkbox state to toggle
+        setTimeout(() => {
+          console.log(`${id} clicked - new state:`, this.checked);
+        }, 10);
       });
     }
   });
 }
 
 // Initialize preference toggles when page loads
-setTimeout(setupPreferenceToggles, 100);
+document.addEventListener('DOMContentLoaded', setupPreferenceToggles);
+setTimeout(setupPreferenceToggles, 500);
 
 /* ---------------- Helper utils ---------------- */
 function v(id){ return $(id)?.value || undefined; }
