@@ -51,8 +51,21 @@ const formatDate = (dateString: string | Date | null | undefined) => {
   });
 };
 
+// Function to clean corrupted blog data
+const cleanBlogData = (post: any) => {
+  return {
+    ...post,
+    title: post.title?.replace(/\*\*/g, '').replace(/\*/g, '').trim() || 'AI Technology Article',
+    category: post.category?.replace(/\*\*/g, '').replace(/\*/g, '').trim() || 'ai_technology',
+    description: post.description?.replace(/\*\*/g, '').replace(/\*/g, '').replace(/strong>\*\/stron/g, '').trim() || 'Discover the latest AI insights and innovations.',
+    preview: post.preview?.replace(/\*\*/g, '').replace(/\*/g, '').trim(),
+    readingTime: Math.min(Math.max(parseInt(post.readingTime) || 5, 1), 15) // Cap at 15 minutes
+  };
+};
+
 // Blog Post Card Component for File-Based Posts
 const FileBlogPostCard = ({ post }: { post: any }) => {
+  const cleanPost = cleanBlogData(post);
   // Generate unique image URL for each blog post
   const getImageUrl = (category: string, title: string) => {
     // Create a simple hash from the title to ensure consistent but unique images
@@ -95,7 +108,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
     return imagePool[imageIndex];
   };
 
-  const imageUrl = getImageUrl(post.category || 'ai_technology', post.title || '');
+  const imageUrl = getImageUrl(cleanPost.category, cleanPost.title);
 
   return (
     <motion.div
@@ -108,14 +121,14 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
         <div className="relative h-48 overflow-hidden">
           <img 
             src={imageUrl}
-            alt={post.title?.replace(/[\*]/g, '') || 'AI Technology'}
+            alt={cleanPost.title}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           <div className="absolute top-4 left-4">
             <Badge variant="secondary" className="bg-white/90 text-black font-medium">
-              {post.category?.replace(/[\*_]/g, '').replace('_', ' ').toUpperCase() || 'AI INSIGHTS'}
+              {cleanPost.category.replace(/_/g, ' ').toUpperCase()}
             </Badge>
           </div>
         </div>
@@ -124,34 +137,34 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-1" />
-              {formatDate(post.date)}
+              {formatDate(cleanPost.date)}
             </div>
           </div>
           <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors line-clamp-2">
-            {post.title?.replace(/[\*]/g, '') || 'Automated AI Insights'}
+            {cleanPost.title}
           </CardTitle>
         </CardHeader>
         
         <CardContent>
           <p className="text-muted-foreground line-clamp-3 mb-4">
-            {post.preview?.replace(/[\*]/g, '').replace(/\n/g, ' ').substring(0, 180) || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}...
+            {cleanPost.description || cleanPost.preview?.substring(0, 180) || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}...
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
-              5 min read
+              {cleanPost.readingTime} min read
             </div>
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => {
-                console.log('FileBlogPostCard post data:', post);
-                const filename = post.filename || post.slug || `${post.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
+                console.log('FileBlogPostCard post data:', cleanPost);
+                const filename = cleanPost.filename || cleanPost.slug || `${cleanPost.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
                 console.log('Using filename:', filename);
                 if (filename && filename !== 'undefined') {
                   window.open(`/posts/${filename}`, '_blank');
                 } else {
-                  console.error('No valid filename available for post:', post);
+                  console.error('No valid filename available for post:', cleanPost);
                   alert('Sorry, this blog post is not available yet.');
                 }
               }}
@@ -169,6 +182,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
 // Legacy Blog Post Card Component
 const BlogPostCard = ({ post }: { post: BlogPost }) => {
   const [, navigate] = useLocation();
+  const cleanPost = cleanBlogData(post);
   
   // Generate unique image URL for each blog post
   const getImageUrl = (category: string, title: string) => {
@@ -235,7 +249,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
           </span>
         </div>
         <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
-          {post.title?.replace(/[\*]/g, '') || 'Legacy Blog Post'}
+          {cleanPost.title}
         </CardTitle>
       </CardHeader>
       <CardContent className="py-2 flex-grow">
@@ -247,7 +261,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
         <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-1">
             <i className="fas fa-clock text-xs text-muted-foreground"></i>
-            <span className="text-xs text-muted-foreground">{post.readingTime || 5} min read</span>
+            <span className="text-xs text-muted-foreground">{cleanPost.readingTime} min read</span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
