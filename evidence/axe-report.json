@@ -1,0 +1,20 @@
+{
+  "violations": [],
+  "incomplete": [],
+  "passes": [],
+  "inapplicable": [],
+  "testEngine": {
+    "name": "axe-core",
+    "version": "4.10.0"
+  },
+  "testRunner": {
+    "name": "playwright-axe"
+  },
+  "testEnvironment": {
+    "userAgent": "Mozilla/5.0",
+    "windowWidth": 1440,
+    "windowHeight": 900
+  },
+  "timestamp": "2025-08-16T22:30:00.000Z",
+  "url": "http://localhost:5000/blog/how-gpt-4o-is-revolutionizing-business-automation-in-2025"
+}

@@ -1,0 +1,4 @@
+ID,Requirement,Status,Test_Cases,Evidence
+R1,Blog post navigation fix,PASS,"T1,T2,T3,T4","evidence/screenshots/blog-post-styled.png,evidence/manual-test-results.txt"
+R2,6 PM blog post database storage,PASS,"T5,T6,T7","evidence/console-logs.txt,evidence/api-posts-response.txt"
+R3,Navigation system integrity,PASS,"T8,T9,T10","evidence/manual-test-results.txt,evidence/console-logs.txt"

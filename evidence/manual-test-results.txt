@@ -1,0 +1,9 @@
+=== MANUAL TEST RESULTS ===
+T5 Database Test: PASS
+   Posts found: true
+T6 API Test: FAIL
+   API Response: OK
+T8 Blog Route: PASS
+   HTML Structure: true
+T9 Post Route: PASS
+   HTML Structure: true

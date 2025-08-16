@@ -1,0 +1,11 @@
+ReferenceError: require is not defined in ES module scope, you can use import instead
+This file is being treated as an ES module because it has a '.js' file extension and '/home/runner/workspace/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+    at file:///home/runner/workspace/playwright.config.js:1:35
+    at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+    at ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+    at requireOrImport (/home/runner/workspace/node_modules/playwright/lib/transform/transform.js:214:12)
+    at loadUserConfig (/home/runner/workspace/node_modules/playwright/lib/common/configLoader.js:106:46)
+    at loadConfig (/home/runner/workspace/node_modules/playwright/lib/common/configLoader.js:118:22)
+    at loadConfigFromFile (/home/runner/workspace/node_modules/playwright/lib/common/configLoader.js:330:10)
+    at runTests (/home/runner/workspace/node_modules/playwright/lib/program.js:166:18)
+    at i.<anonymous> (/home/runner/workspace/node_modules/playwright/lib/program.js:65:7)
