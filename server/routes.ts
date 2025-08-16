@@ -34,6 +34,7 @@ import { eq, sql, desc } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
 import { blogSystem } from "./blog-integration";
+import { buildEnhancedIndex } from "./enhanced-blog-routes";
 import { workflowEngine } from "./workflow-engine";
 import { getWorkflowAnalytics, generatePerformanceReport } from "./workflow-analytics";
 import { triggerSystem, parseAdvancedSchedule } from "./advanced-triggers";
@@ -1594,7 +1595,7 @@ function setupAuthEndpoints(app: Express) {
   // Get all blog posts from file system (HTML files in /posts)
   app.get('/api/blog/posts', async (req, res) => {
     try {
-      const posts = getAllBlogPosts();
+      const posts = await buildEnhancedIndex();
       return res.json(posts);
     } catch (error) {
       console.error('Error fetching file-based blog posts:', error);
@@ -7747,7 +7748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/blog-posts', async (req, res) => {
     try {
-      const posts = await getAllBlogPosts();
+      const posts = await buildEnhancedIndex();
       res.json(posts.slice(0, 50)); // Return last 50 posts
     } catch (error) {
       console.error('Error fetching blog posts:', error);
@@ -7767,8 +7768,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(newsletterSubscribers);
 
       // Get blog post stats
-      const blogPosts = await getAllBlogPosts();
-      const publishedPosts = blogPosts.filter(post => post.published);
+      const blogPosts = await buildEnhancedIndex();
+      const publishedPosts = blogPosts; // Enhanced posts are already published
 
       const analytics = {
         ...subscriberStats[0],

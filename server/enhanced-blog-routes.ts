@@ -55,8 +55,8 @@ function extractEnhancedMeta(html: string, filename: string): BlogPost | null {
   }
 }
 
-// Build enhanced index with all metadata
-async function buildEnhancedIndex(): Promise<BlogPost[]> {
+// Build enhanced index with all metadata - exported for compatibility
+export async function buildEnhancedIndex(): Promise<BlogPost[]> {
   try {
     const postsDir = path.join(process.cwd(), 'posts');
     const exists = await fs.access(postsDir).then(() => true).catch(() => false);
@@ -134,8 +134,8 @@ enhancedBlogRouter.get('/posts', async (req, res) => {
 
     // Get available categories and tags for filtering
     const allItems = items.length === 0 ? await buildEnhancedIndex() : items;
-    const categories = [...new Set(allItems.map(i => i.category))].sort();
-    const tags = [...new Set(allItems.flatMap(i => i.tags))].sort();
+    const categories = Array.from(new Set(allItems.map(i => i.category))).sort();
+    const tags = Array.from(new Set(allItems.flatMap(i => i.tags))).sort();
 
     const duration = Date.now() - startTime;
     if (duration > 1000) {
