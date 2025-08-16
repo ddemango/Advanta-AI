@@ -54,13 +54,15 @@ function setupPreferenceToggles() {
 
 // Initialize preference toggles when page loads
 document.addEventListener('DOMContentLoaded', setupPreferenceToggles);
-setTimeout(setupPreferenceToggles, 500);
 
 /* ---------------- Helper utils ---------------- */
 function v(id){ return $(id)?.value || undefined; }
 async function postJSON(url, body){
-  const r = await fetch(url,{method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify(body)});
-  return r.json();
+  const r = await fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  let data;
+  try { data = await r.json(); } catch { data = { error: `Bad response from ${url}` }; }
+  if (!r.ok) console.warn(`HTTP ${r.status} for ${url}`, data);
+  return data;
 }
 function empty(msg="No results yet."){ return `<div class="card" style="grid-column:1/-1;text-align:center;color:#64748b">${msg}</div>`; }
 
@@ -69,24 +71,26 @@ function setMonthRange(monthOffset=0){
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth()+monthOffset, 5);
   const end   = new Date(now.getFullYear(), now.getMonth()+monthOffset, 19);
-  $("d_depart").value = start.toISOString().slice(0,10);
-  $("d_return").value = end.toISOString().slice(0,10);
+  const toYMD = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
+  $("d_depart").value = toYMD(start);
+  $("d_return").value = toYMD(end);
 }
 qa("[data-chip]").forEach(btn=>{
   btn.onclick = ()=>{
     const k = btn.dataset.chip;
+    const toYMD = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
     if (k==="spontaneous"){
       const d1 = new Date(); d1.setDate(d1.getDate()+7);
       const d2 = new Date(); d2.setDate(d2.getDate()+11);
-      $("d_depart").value = d1.toISOString().slice(0,10);
-      $("d_return").value = d2.toISOString().slice(0,10);
+      $("d_depart").value = toYMD(d1);
+      $("d_return").value = toYMD(d2);
     } else if (k==="this_month"){ setMonthRange(0); }
     else if (k==="next_month"){ setMonthRange(1); }
     else if (k==="this_year"){
       const d1 = new Date(); d1.setMonth(d1.getMonth()+2, 10);
       const d2 = new Date(); d2.setMonth(d1.getMonth(), d1.getDate()+7);
-      $("d_depart").value = d1.toISOString().slice(0,10);
-      $("d_return").value = d2.toISOString().slice(0,10);
+      $("d_depart").value = toYMD(d1);
+      $("d_return").value = toYMD(d2);
     }
   };
 });
@@ -119,7 +123,7 @@ $("deal_cta").onclick = async ()=>{
   let params = {};
   const nl = [v("d_from"), v("d_to")].filter(Boolean).join(" to ");
   if (useAI && nl){
-    try { params = (await postJSON("/api/travel/parse",{ text: nl })).params || {}; } catch {}
+    try { params = (await postJSON("/api/parse",{ text: nl })).params || {}; } catch {}
   }
 
   const origin      = guessIATA(v("d_from") || params.origin, "JFK");
@@ -180,26 +184,24 @@ $("deal_cta").onclick = async ()=>{
   const allOffers = [];
   for (const d of destList){
     for (const [dd, rr] of datePairs.slice(0,8)){   // cap calls
-      const res = await postJSON("/api/travel/flights/search", {
+      const res = await postJSON("/api/search", {
         origin, destination: d, departDate: dd, returnDate: rr, nonStop, cabin, maxPrice
       });
       (res.offers||[]).forEach(o=>{
-        // Promote mistake fares when user wants them, or include all offers when not filtering
-        if (wantMistake && o.tier !== "unicorn" && o.tier !== "great") {
-          o.priceUSD += 100; // demote regular fares when mistake fares are preferred
-        }
-        allOffers.push({ ...o, _route:`${origin}→${d}`, _dates:`${dd}→${rr}` });
+        // Sort key for mistake fare preference without changing display price
+        const adj = (wantMistake && (o.tier==="unicorn"||o.tier==="great")) ? -0.001 : 0;
+        allOffers.push({ ...o, _route:`${origin}→${d}`, _dates:`${dd}→${rr}`, _sortPrice: o.priceUSD + adj });
       });
     }
   }
-  allOffers.sort((a,b)=>a.priceUSD-b.priceUSD);
+  allOffers.sort((a,b)=>(a._sortPrice||a.priceUSD)-(b._sortPrice||b.priceUSD));
   renderFlightsInto("dealResults", allOffers.slice(0,12));
 
   // AI summary for flights (optional)
   $("dealSummary").innerHTML="";
   if ($("use_ai").checked && allOffers.length){
     try {
-      const s = await postJSON("/api/travel/summary", { offers: allOffers.slice(0,8), origin, destination: destList.join(",") });
+      const s = await postJSON("/api/summary", { offers: allOffers.slice(0,8), origin, destination: destList.join(",") });
       if (s.summary) $("dealSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
     } catch {}
   }
@@ -208,16 +210,16 @@ $("deal_cta").onclick = async ()=>{
   if (!flightsOnly && wantHotels){
     console.log("Searching for hotels...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
-    const h = await postJSON("/api/travel/hotels/search", {
+    const h = await postJSON("/api/hotels/search", {
       cityCode, checkInDate: datePairs[0][0], checkOutDate: datePairs[0][1], adults: 2, roomQuantity: 1
     });
-    renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
+    renderHotelsInto("dealResults", (h.offers||[]).slice(0,6));
   }
   
   if (!flightsOnly && wantCars){
     console.log("Searching for cars...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
-    const c = await postJSON("/api/travel/cars/search", {
+    const c = await postJSON("/api/cars/search", {
       cityCode, pickUpDateTime: new Date(datePairs[0][0]+"T10:00:00").toISOString(),
       dropOffDateTime: new Date(datePairs[0][1]+"T10:00:00").toISOString(), passengers: 2
     });
@@ -233,12 +235,12 @@ $("flightForm")?.addEventListener("submit", async (e)=>{
     departDate:v("departDate"), returnDate:v("returnDate"),
     maxPrice:v("maxPrice"), cabin:v("cabin"), nonStop:$("nonStop").checked
   };
-  const res = await postJSON("/api/travel/flights/search", body);
+  const res = await postJSON("/api/search", body);
   renderFlightsInto("flightResults", res.offers||[]);
   $("flightSummary").innerHTML="";
   if ($("use_ai").checked && (res.offers||[]).length){
     try{
-      const s = await postJSON("/api/travel/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
+      const s = await postJSON("/api/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
       if (s.summary) $("flightSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
     }catch{}
   }
@@ -246,16 +248,16 @@ $("flightForm")?.addEventListener("submit", async (e)=>{
 
 $("hotelForm")?.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const res = await postJSON("/api/travel/hotels/search", {
+  const res = await postJSON("/api/hotels/search", {
     cityCode:v("h_cityCode"), checkInDate:v("h_checkIn"), checkOutDate:v("h_checkOut"),
     adults:parseInt(v("h_adults")||"2",10), roomQuantity:parseInt(v("h_rooms")||"1",10)
   });
-  renderHotelsInto("hotelResults", res.data||[]);
+  renderHotelsInto("hotelResults", res.offers||[]);
 });
 
 $("carForm")?.addEventListener("submit", async (e)=>{
   e.preventDefault();
-  const res = await postJSON("/api/travel/cars/search", {
+  const res = await postJSON("/api/cars/search", {
     cityCode:v("c_cityCode"),
     pickUpDateTime: v("c_pick") ? new Date(v("c_pick")).toISOString() : undefined,
     dropOffDateTime: v("c_drop") ? new Date(v("c_drop")).toISOString() : undefined,
@@ -296,16 +298,15 @@ function renderHotelsInto(rootId, list){
   head.className="muted"; head.style.marginTop="8px"; head.innerHTML="— Hotels —";
   root.appendChild(head);
   list.forEach(h=>{
-    const offer = h.offers?.[0] || {};
     const card=document.createElement("article");
     card.className="card";
     card.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">${h.hotel?.name||"Hotel"}</h3>
-        <strong>$${(offer.price?.total||0)} ${offer.price?.currency||"USD"}</strong>
+        <h3 style="margin:0;">${h.name||"Hotel"}</h3>
+        <strong>$${Number(h.priceUSD||0).toFixed(0)} ${h.currency||"USD"}</strong>
       </div>
-      <div class="muted" style="font-size:12px;margin-top:4px;">${offer.checkInDate} → ${offer.checkOutDate} • ${h.hotel?.cityCode||""}</div>
-      <div style="margin-top:6px;">${h.hotel?.hotelId||""}</div>
+      <div class="muted" style="font-size:12px;margin-top:4px;">${h.checkInDate||""} → ${h.checkOutDate||""} • ${h.cityCode||""}</div>
+      <div style="margin-top:6px;">${h.roomDesc||""}</div>
     `;
     root.appendChild(card);
   });

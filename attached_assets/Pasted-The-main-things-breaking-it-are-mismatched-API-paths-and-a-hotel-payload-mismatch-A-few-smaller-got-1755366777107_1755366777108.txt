@@ -1,0 +1,159 @@
+The main things breaking it are mismatched API paths and a hotel payload mismatch. A few smaller gotchas too. Here’s the punch list with fixes:
+
+🚨 Blockers
+
+Wrong API endpoints (all 404)
+
+Your backend (from our Replit build) exposes:
+
+/api/parse, /api/search, /api/summary
+
+/api/hotels/search, /api/cars/search
+
+Your script calls namespaced routes:
+
+/api/travel/parse, /api/travel/flights/search, /api/travel/summary,
+/api/travel/hotels/search, /api/travel/cars/search
+
+Fix (choose one)
+
+Option A (frontend-only): change the URLs in your code:
+
+/api/travel/parse → /api/parse
+
+/api/travel/flights/search → /api/search
+
+/api/travel/summary → /api/summary
+
+/api/travel/hotels/search → /api/hotels/search
+
+/api/travel/cars/search → /api/cars/search
+
+Option B (backend): add those /api/travel/... routes as aliases to the existing ones.
+
+Hotel response shape mismatch
+
+Backend returns { offers: [...] } (normalized).
+
+Your renderers expect { data: [...] } in several places:
+
+in deal flow: renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
+
+in hotels tab: renderHotelsInto("hotelResults", res.data||[]);
+
+Your renderHotelsInto also expects raw v3 objects ({ hotel, offers: [...] }), but the backend normalized to flat { name, priceUSD, ... }.
+
+Fix
+
+Pick one approach and keep it consistent:
+
+A. Use normalized backend (recommended):
+
+In calls: use res.offers instead of res.data.
+
+Replace renderHotelsInto with the normalized version:
+
+function renderHotelsInto(rootId, list){
+  const root=$(rootId); if(!root) return;
+  if (!list.length) return;
+  const head=document.createElement("div");
+  head.className="muted"; head.style.marginTop="8px"; head.innerHTML="— Hotels —";
+  root.appendChild(head);
+  list.forEach(h=>{
+    const card=document.createElement("article");
+    card.className="card";
+    card.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">${h.name||"Hotel"}</h3>
+        <strong>$${Number(h.priceUSD||0).toFixed(0)} ${h.currency||"USD"}</strong>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:4px;">${h.checkInDate||""} → ${h.checkOutDate||""} • ${h.cityCode||""}</div>
+      <div style="margin-top:6px;">${h.roomDesc||""}</div>
+    `;
+    root.appendChild(card);
+  });
+}
+
+
+And update the callers:
+
+// deal flow:
+const h = await postJSON("/api/hotels/search", {...});
+renderHotelsInto("dealResults", (h.offers||[]).slice(0,6));
+
+// hotels tab:
+const res = await postJSON("/api/hotels/search", {...});
+renderHotelsInto("hotelResults", res.offers||[]);
+
+
+B. Use raw Amadeus v3 response (then change the backend to not normalize and return the v3 data array).
+
+⚠️ Smaller issues / polish
+
+Tab selectors vs styles
+
+You use .travel-tab everywhere (good), and the CSS styles that class. Your renderers create cards/badges with classes card, badge, muted. Make sure your CSS styles those base classes (or alias them). If your page only styles .travel-card/.travel-badge/.travel-muted, the rendered results look unstyled.
+
+Quick alias in your CSS:
+
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:16px}
+.badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid #e5e7eb}
+.muted{color:#64748b}
+
+
+or change card/badge/muted to travel-card/travel-badge/travel-muted inside the renderers.
+
+Double-binding preference toggles
+
+You call setupPreferenceToggles on DOMContentLoaded and again via setTimeout(..., 500). That can create duplicate listeners and double logs. Keep one:
+
+document.addEventListener('DOMContentLoaded', setupPreferenceToggles);
+// remove the setTimeout line
+
+
+“Flights only” logic edge case
+
+If the user checks Flights only first (it’s default checked), hotels/cars are auto-unchecked—great. But if they then check both hotels and cars, your code unchecks flights-only (also good). Just make sure the initial state matches your UI defaults (currently: flightsOnly=true, hotels=false, cars=false). You already handle it; just calling out that it works as intended.
+
+Mistake-fare “sort nudge”
+
+You add +100 to non-mistake fares:
+
+if (wantMistake && o.tier !== "unicorn" && o.tier !== "great") o.priceUSD += 100;
+
+
+That mutates the actual price shown to users. Prefer a sort key instead of changing priceUSD:
+
+const adj = (wantMistake && (o.tier==="unicorn"||o.tier==="great")) ? -0.001 : 0;
+allOffers.push({ ...o, _route:..., _dates:..., _sortPrice: o.priceUSD + adj });
+...
+allOffers.sort((a,b)=>a._sortPrice-b._sortPrice);
+
+
+And still display the true o.priceUSD.
+
+Fetch error handling
+
+If the server returns non-JSON on an error, r.json() will throw. Wrap postJSON:
+
+async function postJSON(url, body){
+  const r = await fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  let data;
+  try { data = await r.json(); } catch { data = { error: `Bad response from ${url}` }; }
+  if (!r.ok) console.warn(`HTTP ${r.status} for ${url}`, data);
+  return data;
+}
+
+
+Date chip timezone drift
+
+toISOString().slice(0,10) converts to UTC; depending on locale, that can shift a day. Safer:
+
+const toYMD = d => [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
+$("d_depart").value = toYMD(start);
+$("d_return").value = toYMD(end);
+
+
+Anywhere list contains mix of airport/city codes
+
+["LON","PAR","ROM","BCN","TYO"] mixes IATA city codes (OK for Amadeus) and one airport (BCN). It still works; just be aware. If you want all city-codes, switch BCN → BCN is also the city code for Barcelona (same as airport), so you’re fine.
