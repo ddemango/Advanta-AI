@@ -348,44 +348,63 @@ export default function Blog() {
             variants={staggerContainer}
             initial="hidden"
             animate="show"
-            className="text-center mb-16"
+            className="relative overflow-hidden"
           >
-            <motion.h1 variants={fadeInUp} className="text-4xl md:text-5xl font-bold mb-4">
-              AI Insights <span className="gradient-text">Blog</span>
-            </motion.h1>
-            <motion.p variants={fadeInUp} className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-              Discover the latest trends, strategies, and innovations in AI technology and applications. 
-              Our fully automated AI system generates 3 high-quality blog posts daily at 8 AM, 1 PM, and 6 PM.
-            </motion.p>
+            {/* Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-green-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-green-950/20 rounded-3xl"></div>
             
-            {blogStatus && (
-              <motion.div variants={fadeIn} className="mb-8">
-                <div className="inline-flex items-center px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
-                  <div className="flex items-center space-x-2 text-sm text-green-700 dark:text-green-300">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span>Live Blog System: {allPosts.length} automated posts generated</span>
-                  </div>
+            <div className="relative text-center py-20 px-8">
+              {/* Book Icon */}
+              <motion.div variants={fadeInUp} className="mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl">
+                  <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
                 </div>
               </motion.div>
-            )}
-            
-            {/* Search Bar */}
-            <motion.div variants={fadeIn} className="max-w-md mx-auto">
-              <div className="relative">
-                <Input
-                  placeholder="Search articles, topics, or tags..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 py-6"
-                />
-                <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"></i>
-              </div>
-            </motion.div>
+
+              {/* Main Heading */}
+              <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl font-bold mb-6 text-gray-900 dark:text-white leading-tight">
+                Unlock the Power of <span className="text-blue-600 dark:text-blue-400">AI</span> — One<br/>
+                Resource at a Time
+              </motion.h1>
+              
+              {/* Subtitle */}
+              <motion.p variants={fadeInUp} className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
+                Explore expert insights, practical guides, AI templates, and real-world examples to help your business 
+                scale smarter.
+              </motion.p>
+              
+              {/* Search Bar */}
+              <motion.div variants={fadeIn} className="max-w-lg mx-auto">
+                <div className="relative">
+                  <Input
+                    placeholder="Search resources..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 py-4 h-14 text-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg focus:shadow-xl transition-all duration-300"
+                  />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                </div>
+              </motion.div>
+
+              {/* Blog Status Indicator */}
+              {blogStatus && (
+                <motion.div variants={fadeIn} className="mt-8">
+                  <div className="inline-flex items-center px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span>Live AI System: {allPosts.length} automated insights generated</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </motion.div>
           
           {/* Featured Posts Section */}
           {featuredPosts.length > 0 && (
-            <section className="mb-16">
+            <section className="mb-16 mt-20">
               <h2 className="text-2xl font-bold mb-6">Featured Articles</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {featuredPosts.map((post: BlogPost) => (
@@ -396,7 +415,7 @@ export default function Blog() {
           )}
           
           {/* Categories and Blog Posts */}
-          <section>
+          <section className="mt-20">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold">All Articles</h2>
               <Button
