@@ -162,7 +162,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
     return categoryImages[category] || categoryImages['ai_technology'];
   };
 
-  const imageUrl = post.featured_image || getImageUrl(post.category || 'ai_technology', post.title || '');
+  const imageUrl = post.featuredImage || getImageUrl(post.category || 'ai_technology', post.title || '');
   
   return (
     <Card className="overflow-hidden h-full flex flex-col hover:border-primary/50 transition-colors cursor-pointer"
@@ -181,7 +181,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
             {post.category}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            {formatDate(post.created_at)}
+            {formatDate(post.createdAt)}
           </span>
         </div>
         <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
@@ -197,13 +197,13 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
         <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-1">
             <i className="fas fa-clock text-xs text-muted-foreground"></i>
-            <span className="text-xs text-muted-foreground">{post.reading_time || 5} min read</span>
+            <span className="text-xs text-muted-foreground">{post.readingTime || 5} min read</span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-1">
             <i className="fas fa-eye text-xs text-muted-foreground"></i>
-            <span className="text-xs text-muted-foreground">{post.view_count || 0}</span>
+            <span className="text-xs text-muted-foreground">{post.viewCount || 0}</span>
           </div>
         </div>
       </CardFooter>
@@ -276,7 +276,7 @@ export default function Blog() {
   
   // Featured posts - get top 3 by view count
   const featuredPosts = blogPosts ? 
-    [...blogPosts].sort((a: BlogPost, b: BlogPost) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 3) : 
+    [...blogPosts].sort((a: BlogPost, b: BlogPost) => (b.viewCount || 0) - (a.viewCount || 0)).slice(0, 3) : 
     [];
 
   return (
@@ -313,7 +313,7 @@ export default function Blog() {
                 <div className="inline-flex items-center px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
                   <div className="flex items-center space-x-2 text-sm text-green-700 dark:text-green-300">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span>Live Blog System: {blogStatus.postsCount} automated posts generated</span>
+                    <span>Live Blog System: {allPosts.length} automated posts generated</span>
                   </div>
                 </div>
               </motion.div>
@@ -415,9 +415,9 @@ export default function Blog() {
                     {blogStatus && (
                       <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                          Daily Blog System: {blogStatus.isRunning ? '🟢 Active' : '🔴 Inactive'} | 
-                          {blogStatus.postsCount} automated posts | 
-                          {blogStatus.schedulesCount} daily schedules
+                          Daily Blog System: {blogStatus.scheduler?.isRunning ? '🟢 Active' : '🔴 Inactive'} | 
+                          {allPosts.length} automated posts | 
+                          {blogStatus.scheduler?.activeTasks || 0} active schedules
                         </p>
                       </div>
                     )}
