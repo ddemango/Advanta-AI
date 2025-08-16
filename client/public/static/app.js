@@ -154,23 +154,22 @@ $("deal_cta").onclick = async ()=>{
     } catch {}
   }
 
-  // Hotels & Cars (optional)
-  if (!flightsOnly){
-    if (wantHotels){
-      const cityCode = guessCityCode(destination || "rome", "ROM");
-      const h = await postJSON("/api/travel/hotels/search", {
-        cityCode, checkInDate: datePairs[0][0], checkOutDate: datePairs[0][1], adults: 2, roomQuantity: 1
-      });
-      renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
-    }
-    if (wantCars){
-      const cityCode = guessCityCode(destination || "rome", "ROM");
-      const c = await postJSON("/api/travel/cars/search", {
-        cityCode, pickUpDateTime: new Date(datePairs[0][0]+"T10:00:00").toISOString(),
-        dropOffDateTime: new Date(datePairs[0][1]+"T10:00:00").toISOString(), passengers: 2
-      });
-      renderCarsInto("dealResults", (c.offers||[]).slice(0,4));
-    }
+  // Hotels & Cars (conditional based on preferences)
+  if (!flightsOnly && wantHotels){
+    const cityCode = guessCityCode(destination || "rome", "ROM");
+    const h = await postJSON("/api/travel/hotels/search", {
+      cityCode, checkInDate: datePairs[0][0], checkOutDate: datePairs[0][1], adults: 2, roomQuantity: 1
+    });
+    renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
+  }
+  
+  if (!flightsOnly && wantCars){
+    const cityCode = guessCityCode(destination || "rome", "ROM");
+    const c = await postJSON("/api/travel/cars/search", {
+      cityCode, pickUpDateTime: new Date(datePairs[0][0]+"T10:00:00").toISOString(),
+      dropOffDateTime: new Date(datePairs[0][1]+"T10:00:00").toISOString(), passengers: 2
+    });
+    renderCarsInto("dealResults", (c.offers||[]).slice(0,4));
   }
 };
 

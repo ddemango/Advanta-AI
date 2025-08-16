@@ -130,9 +130,9 @@ export default function TravelHackerAIV2() {
 
           <div className="travel-checkline">
             <div className="travel-check"><input id="d_flights_only" type="checkbox" defaultChecked/> ✈️ Flights only</div>
-            <div className="travel-check"><input id="d_include_hotels" type="checkbox" defaultChecked/> 🏨 Include hotels</div>
-            <div className="travel-check"><input id="d_include_cars" type="checkbox" defaultChecked/> 🚗 Include car rentals</div>
-            <div className="travel-check"><input id="d_mistake" type="checkbox" defaultChecked/> ⚡ Mistake fares</div>
+            <div className="travel-check"><input id="d_include_hotels" type="checkbox"/> 🏨 Include hotels</div>
+            <div className="travel-check"><input id="d_include_cars" type="checkbox"/> 🚗 Include car rentals</div>
+            <div className="travel-check"><input id="d_mistake" type="checkbox"/> ⚡ Mistake fares</div>
           </div>
 
           <button id="deal_cta" className="travel-cta" style={{marginTop: '14px'}}>🎯 Find My Deal</button>
