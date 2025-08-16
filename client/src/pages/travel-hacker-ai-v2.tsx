@@ -1,877 +1,464 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Plane, 
-  Hotel, 
-  Car, 
-  Search, 
-  MapPin, 
-  Calendar, 
-  DollarSign, 
-  Users, 
-  Clock, 
-  Star,
-  Loader2,
-  Sparkles,
-  TrendingUp,
-  Globe,
-  CreditCard,
-  ArrowRight
-} from 'lucide-react';
-
-interface FlightOffer {
-  id: string;
-  priceUSD: number;
-  tier: string;
-  cpm: number;
-  validatingAirline: string;
-  itineraries: Array<{
-    duration: string;
-    segments: Array<{
-      from: string;
-      to: string;
-      dep: string;
-      arr: string;
-      carrier: string;
-      number: string;
-    }>;
-  }>;
-}
-
-interface HotelOffer {
-  type: string;
-  hotel: {
-    name: string;
-    hotelId: string;
-    cityCode: string;
-  };
-  offers: Array<{
-    id: string;
-    price: {
-      currency: string;
-      total: string;
-    };
-    checkInDate: string;
-    checkOutDate: string;
-  }>;
-}
-
-interface CarOffer {
-  id: string;
-  supplier: string;
-  vehicle: string;
-  priceUSD: number;
-  pickUp: {
-    cityCode: string;
-    at: string;
-  };
-  dropOff: {
-    cityCode: string;
-    at: string;
-  };
-}
-
-interface SearchParams {
-  origin?: string;
-  destination?: string;
-  departDate?: string;
-  returnDate?: string;
-  nonStop?: boolean;
-  cabin?: string;
-  maxPrice?: number;
-  cityCode?: string;
-  checkInDate?: string;
-  checkOutDate?: string;
-  adults?: number;
-  pickUpDateTime?: string;
-  dropOffDateTime?: string;
-  passengers?: number;
-}
-
 export default function TravelHackerAIV2() {
-  const [activeTab, setActiveTab] = useState('search');
-  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState('');
-  const [isParsingQuery, setIsParsingQuery] = useState(false);
-  const [searchParams, setSearchParams] = useState<SearchParams>({});
-  
-  // Search states
-  const [isSearchingFlights, setIsSearchingFlights] = useState(false);
-  const [isSearchingHotels, setIsSearchingHotels] = useState(false);
-  const [isSearchingCars, setIsSearchingCars] = useState(false);
-  
-  // Results
-  const [flightOffers, setFlightOffers] = useState<FlightOffer[]>([]);
-  const [hotelOffers, setHotelOffers] = useState<HotelOffer[]>([]);
-  const [carOffers, setCarOffers] = useState<CarOffer[]>([]);
-  
-  // AI Summary
-  const [aiSummary, setAiSummary] = useState('');
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  
-  const { toast } = useToast();
-
-  // Parse natural language query
-  const handleParseQuery = async () => {
-    if (!naturalLanguageQuery.trim()) {
-      toast({
-        title: 'Query Required',
-        description: 'Please enter your travel plans in natural language.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsParsingQuery(true);
-    try {
-      const response = await fetch('/api/travel/parse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: naturalLanguageQuery })
-      });
-      
-      if (!response.ok) throw new Error('Failed to parse query');
-      
-      const data = await response.json();
-      setSearchParams(data.params);
-      setActiveTab('flights');
-      
-      // Auto-trigger searches if we have the required params
-      if (data.params.origin && data.params.destination && data.params.departDate) {
-        setTimeout(() => {
-          triggerFlightSearch(data.params);
-        }, 500);
-      }
-      
-      // Auto-trigger hotel search if we have city and checkin (create checkout date if missing)
-      if (data.params.cityCode && data.params.checkInDate) {
-        const enhancedParams = { ...data.params };
-        if (!enhancedParams.checkOutDate && enhancedParams.checkInDate) {
-          const checkIn = new Date(enhancedParams.checkInDate);
-          checkIn.setDate(checkIn.getDate() + 7);
-          enhancedParams.checkOutDate = checkIn.toISOString().split('T')[0];
-        }
-        setTimeout(() => {
-          triggerHotelSearch(enhancedParams);
-        }, 1000);
-      }
-      
-      // Auto-trigger car search if we have city and dates
-      if (data.params.cityCode && (data.params.pickUpDateTime || data.params.checkInDate)) {
-        const enhancedParams = { ...data.params };
-        if (!enhancedParams.pickUpDateTime && enhancedParams.checkInDate) {
-          enhancedParams.pickUpDateTime = `${enhancedParams.checkInDate}T10:00:00`;
-        }
-        if (!enhancedParams.dropOffDateTime) {
-          const dropDate = enhancedParams.checkOutDate || (() => {
-            const checkIn = new Date(enhancedParams.checkInDate);
-            checkIn.setDate(checkIn.getDate() + 7);
-            return checkIn.toISOString().split('T')[0];
-          })();
-          enhancedParams.dropOffDateTime = `${dropDate}T10:00:00`;
-        }
-        setTimeout(() => {
-          triggerCarSearch(enhancedParams);
-        }, 1500);
-      }
-      
-      toast({
-        title: 'Query Parsed Successfully',
-        description: data.using_ai ? 'Using AI for enhanced parsing' : 'Using basic parsing',
-      });
-    } catch (error) {
-      toast({
-        title: 'Parsing Failed',
-        description: error instanceof Error ? error.message : 'Failed to parse travel query',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsParsingQuery(false);
-    }
-  };
-
-  // Helper function to trigger flight search with specific params
-  const triggerFlightSearch = async (params = searchParams) => {
-    if (!params.origin || !params.destination || !params.departDate) {
-      toast({
-        title: 'Missing Flight Details',
-        description: 'Please provide origin, destination, and departure date.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsSearchingFlights(true);
-    try {
-      const response = await fetch('/api/travel/flights/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          origin: params.origin,
-          destination: params.destination,
-          departDate: params.departDate,
-          returnDate: params.returnDate,
-          nonStop: params.nonStop || false,
-          cabin: params.cabin || 'ECONOMY',
-          maxPrice: params.maxPrice,
-          maxOffers: 20,
-          currency: 'USD'
-        })
-      });
-      
-      if (!response.ok) throw new Error('Flight search failed');
-      
-      const data = await response.json();
-      setFlightOffers(data.offers || []);
-      
-      toast({
-        title: 'Flight Search Complete',
-        description: `Found ${data.offers?.length || 0} flight options`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Flight Search Failed',
-        description: error instanceof Error ? error.message : 'Failed to search flights',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSearchingFlights(false);
-    }
-  };
-
-  // Search flights
-  const searchFlights = async () => {
-    await triggerFlightSearch();
-  };
-
-  // Helper function to trigger hotel search with specific params
-  const triggerHotelSearch = async (params = searchParams) => {
-    if (!params.cityCode || !params.checkInDate || !params.checkOutDate) {
-      toast({
-        title: 'Missing Hotel Details',
-        description: 'Please provide city, check-in, and check-out dates.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsSearchingHotels(true);
-    try {
-      const response = await fetch('/api/travel/hotels/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cityCode: params.cityCode,
-          checkInDate: params.checkInDate,
-          checkOutDate: params.checkOutDate,
-          adults: params.adults || 2,
-          roomQuantity: 1,
-          currency: 'USD'
-        })
-      });
-      
-      if (!response.ok) throw new Error('Hotel search failed');
-      
-      const data = await response.json();
-      setHotelOffers(data.data || []);
-      
-      toast({
-        title: 'Hotel Search Complete',
-        description: `Found ${data.data?.length || 0} hotel options`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Hotel Search Failed',
-        description: error instanceof Error ? error.message : 'Failed to search hotels',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSearchingHotels(false);
-    }
-  };
-
-  // Helper function to trigger car search with specific params
-  const triggerCarSearch = async (params = searchParams) => {
-    if (!params.cityCode || !params.pickUpDateTime || !params.dropOffDateTime) {
-      toast({
-        title: 'Missing Car Details',
-        description: 'Please provide pickup location and dates.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsSearchingCars(true);
-    try {
-      const response = await fetch('/api/travel/cars/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cityCode: params.cityCode,
-          pickUpDateTime: params.pickUpDateTime,
-          dropOffDateTime: params.dropOffDateTime,
-          passengers: params.passengers || 2
-        })
-      });
-      
-      if (!response.ok) throw new Error('Car search failed');
-      
-      const data = await response.json();
-      setCarOffers(data.offers || []);
-      
-      toast({
-        title: 'Car Search Complete',
-        description: `Found ${data.offers?.length || 0} car rental options`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Car Search Failed',
-        description: error instanceof Error ? error.message : 'Failed to search car rentals',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSearchingCars(false);
-    }
-  };
-
-  // Search hotels
-  const searchHotels = async () => {
-    await triggerHotelSearch();
-  };
-
-  // Search cars
-  const searchCars = async () => {
-    await triggerCarSearch();
-  };
-
-  // Generate AI summary
-  const generateAISummary = async () => {
-    if (flightOffers.length === 0 && hotelOffers.length === 0 && carOffers.length === 0) {
-      toast({
-        title: 'No Results to Summarize',
-        description: 'Please search for flights, hotels, or cars first.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsGeneratingSummary(true);
-    try {
-      const response = await fetch('/api/travel/summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flightOffers: flightOffers.slice(0, 5),
-          hotelOffers: hotelOffers.slice(0, 5),
-          carOffers: carOffers.slice(0, 3),
-          origin: searchParams.origin,
-          destination: searchParams.destination
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate summary');
-      
-      const data = await response.json();
-      setAiSummary(data.summary);
-      
-      toast({
-        title: 'AI Summary Generated',
-        description: 'Your personalized travel recommendations are ready',
-      });
-    } catch (error) {
-      toast({
-        title: 'Summary Generation Failed',
-        description: error instanceof Error ? error.message : 'Failed to generate AI summary',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsGeneratingSummary(false);
-    }
-  };
-
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'EXCELLENT': return 'bg-green-100 text-green-800 border-green-200';
-      case 'GOOD': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'FAIR': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const formatDuration = (duration: string) => {
-    return duration?.replace('PT', '').replace('H', 'h ').replace('M', 'm') || '';
-  };
-
-  const formatDateTime = (dateTime: string) => {
-    return new Date(dateTime).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Travel Hacker AI
-              </h1>
-              <p className="text-gray-600 mt-1">Complete trip planning with live prices powered by Amadeus</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-xs">
-                <Sparkles className="w-3 h-3 mr-1" />
-                AI Enhanced
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                <Globe className="w-3 h-3 mr-1" />
-                Live Data
-              </Badge>
-            </div>
-          </div>
-        </div>
+    <div dangerouslySetInnerHTML={{
+      __html: `
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Travel Hacker AI</title>
+<style>
+  :root{--b:#0f172a;--mut:#64748b;--bd:#e5e7eb;--bg:#f7fafc;--pill:#fff;--cta:#275afe}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,system-ui;background:var(--bg);color:var(--b)}
+  header{text-align:center;padding:40px 20px}
+  .container{max-width:980px;margin:0 auto;padding:0 16px}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px}
+  input,select,button,textarea{border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:14px;background:#fff}
+  button{cursor:pointer}
+  .muted{color:var(--mut)}
+  .pill{border:1px solid var(--bd);padding:8px 12px;border-radius:12px;background:var(--pill);display:flex;align-items:center;gap:8px}
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:800px){.row,.row-3{grid-template-columns:1fr}}
+  .checkline{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .check{display:flex;align-items:center;gap:8px}
+  .cta{background:var(--cta);color:#fff;border:none;border-radius:12px;padding:14px 16px;font-weight:600;width:100%}
+  .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:16px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--bd)}
+  .hero-bullets{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px}
+  .hero-bullets .pill{font-weight:600}
+  .tabs{display:flex;gap:8px;justify-content:center;margin:16px 0 10px}
+  .tab{padding:8px 14px;border:1px solid var(--bd);border-radius:999px;background:#fff}
+  .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+  .section-title{font-weight:700;margin:22px 0 8px}
+  .hint{font-size:12px;color:var(--mut);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1 style="font-size:40px;margin:10px 0;">Travel Hacker AI</h1>
+    <p style="max-width:740px;margin:0 auto;color:#475569">
+      Let AI do the heavy lifting. Find ultra-cheap flights, rare mistake fares, and full budget travel plans with live prices.
+    </p>
+
+    <!-- Hero bullets -->
+    <div class="hero-bullets">
+      <div class="pill">Ultra-cheap roundtrip flights</div>
+      <div class="pill">⚡ Rare mistake fares</div>
+      <div class="pill">🧳 Full budget travel plans</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="deal">Find My Travel Deal</button>
+      <button class="tab" data-tab="flights">Flights</button>
+      <button class="tab" data-tab="hotels">Hotels</button>
+      <button class="tab" data-tab="cars">Cars</button>
+    </div>
+
+    <div class="muted" style="margin-top:6px;">
+      <label><input id="use_ai" type="checkbox" checked/> Use AI parsing/summaries (if available)</label>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- UNIVERSAL "Deal" form (your screenshots) -->
+  <section class="card" data-pane="deal">
+    <h3 class="section-title">Find My Travel Deal</h3>
+
+    <div class="row">
+      <div>
+        <label>Departure City</label>
+        <input id="d_from" placeholder="e.g., Nashville, New York" />
+        <div class="hint">City or IATA (BNA, JFK)</div>
       </div>
-
-      <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 max-w-2xl mx-auto">
-            <TabsTrigger value="search" className="flex items-center space-x-2">
-              <Search className="w-4 h-4" />
-              <span>Search</span>
-            </TabsTrigger>
-            <TabsTrigger value="flights" className="flex items-center space-x-2">
-              <Plane className="w-4 h-4" />
-              <span>Flights</span>
-            </TabsTrigger>
-            <TabsTrigger value="hotels" className="flex items-center space-x-2">
-              <Hotel className="w-4 h-4" />
-              <span>Hotels</span>
-            </TabsTrigger>
-            <TabsTrigger value="cars" className="flex items-center space-x-2">
-              <Car className="w-4 h-4" />
-              <span>Cars</span>
-            </TabsTrigger>
-            <TabsTrigger value="summary" className="flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4" />
-              <span>Summary</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Natural Language Search */}
-          <TabsContent value="search" className="space-y-6">
-            <Card className="max-w-4xl mx-auto">
-              <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center space-x-2">
-                  <Sparkles className="w-5 h-5 text-blue-600" />
-                  <span>Describe Your Trip</span>
-                </CardTitle>
-                <p className="text-gray-600">
-                  Tell us about your travel plans in natural language and we'll find the best options
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <Textarea
-                    value={naturalLanguageQuery}
-                    onChange={(e) => setNaturalLanguageQuery(e.target.value)}
-                    placeholder="Example: I want to go from NYC to Rome in March with my partner, looking for business class flights under $2000, a nice hotel near the city center, and a rental car..."
-                    className="min-h-[120px] text-lg"
-                  />
-                  <Button 
-                    onClick={handleParseQuery}
-                    disabled={isParsingQuery || !naturalLanguageQuery.trim()}
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  >
-                    {isParsingQuery ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Parsing your request...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-4 h-4 mr-2" />
-                        Find My Trip
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Parsed Parameters Preview */}
-                {Object.keys(searchParams).length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-50 rounded-lg p-4"
-                  >
-                    <h4 className="font-medium mb-3 text-gray-900">Parsed Travel Parameters:</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                      {searchParams.origin && (
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="w-4 h-4 text-blue-600" />
-                          <span>From: {searchParams.origin}</span>
-                        </div>
-                      )}
-                      {searchParams.destination && (
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="w-4 h-4 text-green-600" />
-                          <span>To: {searchParams.destination}</span>
-                        </div>
-                      )}
-                      {searchParams.departDate && (
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-4 h-4 text-purple-600" />
-                          <span>Depart: {searchParams.departDate}</span>
-                        </div>
-                      )}
-                      {searchParams.returnDate && (
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-4 h-4 text-orange-600" />
-                          <span>Return: {searchParams.returnDate}</span>
-                        </div>
-                      )}
-                      {searchParams.maxPrice && (
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="w-4 h-4 text-red-600" />
-                          <span>Budget: ${searchParams.maxPrice}</span>
-                        </div>
-                      )}
-                      {searchParams.adults && (
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-indigo-600" />
-                          <span>Adults: {searchParams.adults}</span>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Example Queries */}
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">Example Queries:</h4>
-                  <div className="grid gap-2">
-                    {[
-                      "Business trip from NYC to London next month, need hotel near financial district",
-                      "Family vacation to Tokyo in July, 4 people, budget $5000 total",
-                      "Weekend getaway from LA to San Francisco, prefer non-stop flights",
-                      "Honeymoon to Paris in May, looking for luxury hotel and car rental"
-                    ].map((example, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setNaturalLanguageQuery(example)}
-                        className="text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-sm"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Flight Search Results */}
-          <TabsContent value="flights" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Flight Options</h2>
-              <Button 
-                onClick={searchFlights}
-                disabled={isSearchingFlights}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isSearchingFlights ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Plane className="w-4 h-4 mr-2" />
-                    Search Flights
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              <AnimatePresence>
-                {flightOffers.map((offer, index) => (
-                  <motion.div
-                    key={offer.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="text-2xl font-bold text-green-600">
-                              ${offer.priceUSD}
-                            </div>
-                            <Badge className={getTierColor(offer.tier)}>
-                              {offer.tier}
-                            </Badge>
-                            <span className="text-sm text-gray-500">
-                              {offer.cpm} ¢/mile
-                            </span>
-                          </div>
-                          <div className="text-right text-sm text-gray-500">
-                            {offer.validatingAirline}
-                          </div>
-                        </div>
-
-                        {offer.itineraries.map((itinerary, idx) => (
-                          <div key={idx} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">
-                                {idx === 0 ? 'Outbound' : 'Return'}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                Duration: {formatDuration(itinerary.duration)}
-                              </span>
-                            </div>
-                            <div className="space-y-1">
-                              {itinerary.segments.map((segment, segIdx) => (
-                                <div key={segIdx} className="flex items-center space-x-4 text-sm">
-                                  <span className="font-mono">
-                                    {segment.carrier}{segment.number}
-                                  </span>
-                                  <span>{segment.from}</span>
-                                  <ArrowRight className="w-4 h-4" />
-                                  <span>{segment.to}</span>
-                                  <span className="text-gray-500">
-                                    {formatDateTime(segment.dep)} - {formatDateTime(segment.arr)}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {flightOffers.length === 0 && !isSearchingFlights && (
-              <div className="text-center py-12">
-                <Plane className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">No flight results yet. Click "Search Flights" to begin.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Hotel Search Results */}
-          <TabsContent value="hotels" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Hotel Options</h2>
-              <Button 
-                onClick={searchHotels}
-                disabled={isSearchingHotels}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isSearchingHotels ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Hotel className="w-4 h-4 mr-2" />
-                    Search Hotels
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              <AnimatePresence>
-                {hotelOffers.map((hotel, index) => (
-                  <motion.div
-                    key={hotel.hotel.hotelId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-semibold mb-1">
-                              {hotel.hotel.name}
-                            </h3>
-                            <p className="text-gray-500 flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {hotel.hotel.cityCode}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            {hotel.offers.map((offer, idx) => (
-                              <div key={idx} className="text-2xl font-bold text-green-600">
-                                ${offer.price.total}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {hotel.offers.map((offer, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-sm text-gray-500">
-                            <span>
-                              {offer.checkInDate} to {offer.checkOutDate}
-                            </span>
-                            <span>{offer.price.currency}</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {hotelOffers.length === 0 && !isSearchingHotels && (
-              <div className="text-center py-12">
-                <Hotel className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">No hotel results yet. Click "Search Hotels" to begin.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Car Rental Results */}
-          <TabsContent value="cars" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Car Rental Options</h2>
-              <Button 
-                onClick={searchCars}
-                disabled={isSearchingCars}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                {isSearchingCars ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Car className="w-4 h-4 mr-2" />
-                    Search Cars
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              <AnimatePresence>
-                {carOffers.map((car, index) => (
-                  <motion.div
-                    key={car.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-semibold mb-1">
-                              {car.vehicle}
-                            </h3>
-                            <p className="text-gray-500">{car.supplier}</p>
-                          </div>
-                          <div className="text-2xl font-bold text-green-600">
-                            ${car.priceUSD}
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 text-sm text-gray-600">
-                          <div className="flex items-center justify-between">
-                            <span>Pick-up:</span>
-                            <span>{car.pickUp.cityCode} - {formatDateTime(car.pickUp.at)}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span>Drop-off:</span>
-                            <span>{car.dropOff.cityCode} - {formatDateTime(car.dropOff.at)}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {carOffers.length === 0 && !isSearchingCars && (
-              <div className="text-center py-12">
-                <Car className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">No car rental results yet. Click "Search Cars" to begin.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* AI Summary */}
-          <TabsContent value="summary" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">AI Travel Summary</h2>
-              <Button 
-                onClick={generateAISummary}
-                disabled={isGeneratingSummary}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-              >
-                {isGeneratingSummary ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate AI Summary
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {aiSummary ? (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                      {aiSummary}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="text-center py-12">
-                <TrendingUp className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500 mb-4">
-                  Get personalized AI insights about your travel options
-                </p>
-                <p className="text-sm text-gray-400">
-                  Search for flights, hotels, or cars first, then generate an AI summary
-                </p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+      <div>
+        <label>Destination (Optional)</label>
+        <input id="d_to" placeholder="Leave empty for anywhere" />
       </div>
     </div>
+
+    <div class="section-title">When do you want to travel?</div>
+    <div class="chips">
+      <button class="pill" data-chip="spontaneous">⚡ Spontaneous</button>
+      <button class="pill" data-chip="this_month">📅 This Month</button>
+      <button class="pill" data-chip="next_month">📅 Next Month</button>
+      <button class="pill" data-chip="this_year">📅 This Year</button>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label>Departure Date</label>
+        <input id="d_depart" type="date" />
+      </div>
+      <div>
+        <label>Return Date</label>
+        <input id="d_return" type="date" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label>Budget (Optional)</label>
+        <input id="d_budget" placeholder="e.g., $500" inputmode="numeric" />
+      </div>
+      <div>
+        <label>Date Flexibility</label>
+        <select id="d_flex">
+          <option value="exact">Exact dates</option>
+          <option value="+-3">± 3 days</option>
+          <option value="weekend">Weekend only</option>
+          <option value="month">Any time this month</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="checkline">
+      <div class="check"><input id="d_flights_only" type="checkbox" checked/> ✈️ Flights only</div>
+      <div class="check"><input id="d_include_hotels" type="checkbox" checked/> 🏨 Include hotels</div>
+      <div class="check"><input id="d_include_cars" type="checkbox" checked/> 🚗 Include car rentals</div>
+      <div class="check"><input id="d_mistake" type="checkbox" checked/> ⚡ Mistake fares</div>
+    </div>
+
+    <button id="deal_cta" class="cta" style="margin-top:14px;">🎯 Find My Deal</button>
+
+    <div id="dealSummary" class="muted" style="margin-top:10px;"></div>
+    <div id="dealResults" class="grid"></div>
+  </section>
+
+  <!-- Dedicated tabs (still supported) -->
+  <section class="card" data-pane="flights" style="display:none">
+    <h3 class="section-title">Flights</h3>
+    <form id="flightForm" class="row">
+      <div><label>From (IATA)</label><input id="origin" value="JFK" required/></div>
+      <div><label>To (IATA)</label><input id="destination" value="FCO" required/></div>
+      <div><label>Depart</label><input id="departDate" type="date"/></div>
+      <div><label>Return</label><input id="returnDate" type="date"/></div>
+      <div><label>Max Price (USD)</label><input id="maxPrice" inputmode="numeric" pattern="[0-9]*"/></div>
+      <div>
+        <label>Cabin</label>
+        <select id="cabin"><option>ECONOMY</option><option>PREMIUM_ECONOMY</option><option>BUSINESS</option><option>FIRST</option></select>
+        <div class="check" style="margin-top:8px;"><input id="nonStop" type="checkbox"/> Non-stop</div>
+        <button type="submit" class="cta" style="margin-top:8px;">Find Deals</button>
+      </div>
+    </form>
+    <div id="flightSummary" class="muted" style="margin-top:10px;"></div>
+    <div id="flightResults" class="grid"></div>
+  </section>
+
+  <section class="card" data-pane="hotels" style="display:none">
+    <h3 class="section-title">Hotels</h3>
+    <form id="hotelForm" class="row">
+      <div><label>City (IATA city)</label><input id="h_cityCode" value="ROM" required/></div>
+      <div><label>Check-in</label><input id="h_checkIn" type="date" required/></div>
+      <div><label>Check-out</label><input id="h_checkOut" type="date" required/></div>
+      <div><label>Adults</label><input id="h_adults" type="number" min="1" value="2" required/></div>
+      <div><label>Rooms</label><input id="h_rooms" type="number" min="1" value="1" required/></div>
+      <div style="align-self:end;"><button class="cta" type="submit">Search Hotels</button></div>
+    </form>
+    <div id="hotelResults" class="grid"></div>
+  </section>
+
+  <section class="card" data-pane="cars" style="display:none">
+    <h3 class="section-title">Cars</h3>
+    <form id="carForm" class="row-3">
+      <div><label>City (IATA city)</label><input id="c_cityCode" value="ROM" required/></div>
+      <div><label>Pick-up</label><input id="c_pick" type="datetime-local" required/></div>
+      <div><label>Drop-off</label><input id="c_drop" type="datetime-local" required/></div>
+      <div><label>Passengers</label><input id="c_pax" type="number" min="1" value="2" required/></div>
+      <div style="grid-column:1 / -1; text-align:right;"><button class="cta" type="submit">Search Cars</button></div>
+    </form>
+    <div id="carResults" class="grid"></div>
+  </section>
+</main>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const qa = (sel)=>Array.from(document.querySelectorAll(sel));
+
+/* ---------------- Tabs ---------------- */
+qa(".tab").forEach(t=>{
+  t.onclick = ()=>{
+    qa(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const name = t.dataset.tab;
+    qa("[data-pane]").forEach(p=>p.style.display = (p.dataset.pane===name)?"block":"none");
+  };
+});
+
+/* ---------------- Helper utils ---------------- */
+function v(id){ return $(id)?.value || undefined; }
+async function postJSON(url, body){
+  const r = await fetch(url,{method:"POST",headers:{ "Content-Type":"application/json" },body:JSON.stringify(body)});
+  return r.json();
+}
+function empty(msg="No results yet."){ return "<div class=\\"card\\" style=\\"grid-column:1/-1;text-align:center;color:#64748b\\">"+msg+"</div>"; }
+
+/* ---------------- Anywhere/Date chips logic ---------------- */
+function setMonthRange(monthOffset=0){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth()+monthOffset, 5);
+  const end   = new Date(now.getFullYear(), now.getMonth()+monthOffset, 19);
+  $("d_depart").value = start.toISOString().slice(0,10);
+  $("d_return").value = end.toISOString().slice(0,10);
+}
+qa("[data-chip]").forEach(btn=>{
+  btn.onclick = ()=>{
+    const k = btn.dataset.chip;
+    if (k==="spontaneous"){
+      const d1 = new Date(); d1.setDate(d1.getDate()+7);
+      const d2 = new Date(); d2.setDate(d2.getDate()+11);
+      $("d_depart").value = d1.toISOString().slice(0,10);
+      $("d_return").value = d2.toISOString().slice(0,10);
+    } else if (k==="this_month"){ setMonthRange(0); }
+    else if (k==="next_month"){ setMonthRange(1); }
+    else if (k==="this_year"){
+      const d1 = new Date(); d1.setMonth(d1.getMonth()+2, 10);
+      const d2 = new Date(); d2.setMonth(d1.getMonth(), d1.getDate()+7);
+      $("d_depart").value = d1.toISOString().slice(0,10);
+      $("d_return").value = d2.toISOString().slice(0,10);
+    }
+  };
+});
+
+/* ---------------- Light IATA helpers ---------------- */
+const CITY_TO_IATA = {
+  "nashville":"BNA","new york":"JFK","nyc":"JFK","miami":"MIA",
+  "paris":"CDG","rome":"FCO","london":"LHR","tokyo":"HND","chicago":"ORD","los angeles":"LAX","la":"LAX","san francisco":"SFO","sf":"SFO"
+};
+const CITY_TO_CITYCODE = { "paris":"PAR","rome":"ROM","london":"LON","new york":"NYC","nyc":"NYC","tokyo":"TYO","miami":"MIA","chicago":"CHI" };
+
+function guessIATA(s, fallback){
+  if(!s) return fallback;
+  const k = s.trim().toLowerCase();
+  if (k.length===3 && /^[a-z]{3}$/.test(k)) return k.toUpperCase(); // IATA given
+  return (CITY_TO_IATA[k] || fallback).toUpperCase();
+}
+function guessCityCode(s, fallback){
+  if(!s) return fallback;
+  const k = s.trim().toLowerCase();
+  if (k.length===3 && /^[a-z]{3}$/.test(k)) return k.toUpperCase(); // already an IATA city
+  return (CITY_TO_CITYCODE[k] || fallback).toUpperCase();
+}
+
+/* ---------------- "Deal" CTA: orchestrates everything ---------------- */
+$("deal_cta").onclick = async ()=>{
+  const useAI = $("use_ai").checked;
+
+  // Parse NL if the user typed a natural phrase into from/to
+  let params = {};
+  const nl = [v("d_from"), v("d_to")].filter(Boolean).join(" to ");
+  if (useAI && nl){
+    try { params = (await postJSON("/api/travel/parse",{ text: nl })).params || {}; } catch {}
+  }
+
+  const origin      = guessIATA(v("d_from") || params.origin, "JFK");
+  const destination = (v("d_to") || params.destination || "").trim();
+  const depart      = v("d_depart") || params.departDate;
+  const ret         = v("d_return") || params.returnDate;
+  const budgetRaw   = v("d_budget"); 
+  const maxPrice    = budgetRaw ? Number((budgetRaw+"").replace(/[^0-9.]/g,"")) : undefined;
+  const cabin       = "ECONOMY";
+  const nonStop     = false;
+  const flex        = v("d_flex");      // exact | +-3 | weekend | month
+  const flightsOnly = $("d_flights_only").checked;
+  const wantHotels  = $("d_include_hotels").checked;
+  const wantCars    = $("d_include_cars").checked;
+  const wantMistake = $("d_mistake").checked;
+
+  // Build a list of date pairs based on flexibility
+  const datePairs = [];
+  const dep = new Date(depart || new Date().toISOString().slice(0,10));
+  const retD = ret ? new Date(ret) : new Date(dep.getTime()+3*86400000);
+
+  function addPair(d1,d2){ datePairs.push([ d1.toISOString().slice(0,10), d2.toISOString().slice(0,10) ]); }
+
+  if (flex==="exact"){ addPair(dep, retD); }
+  else if (flex==="+-3"){
+    for (let shift=-3; shift<=3; shift++){
+      const d1 = new Date(dep); d1.setDate(d1.getDate()+shift);
+      const d2 = new Date(retD); d2.setDate(d2.getDate()+shift);
+      addPair(d1,d2);
+    }
+  } else if (flex==="weekend"){
+    // find next Fri–Sun
+    const d1 = new Date(dep);
+    while (d1.getDay()!==5) d1.setDate(d1.getDate()+1);
+    const d2 = new Date(d1); d2.setDate(d1.getDate()+2);
+    addPair(d1,d2);
+  } else if (flex==="month"){
+    // first 4 weekends as candidates
+    const base = new Date(dep.getFullYear(), dep.getMonth(), 1);
+    let d1 = new Date(base);
+    while (d1.getDay()!==5) d1.setDate(d1.getDate()+1);
+    for (let i=0;i<4;i++){
+      const start = new Date(d1); start.setDate(d1.getDate()+7*i);
+      const end = new Date(start); end.setDate(start.getDate()+2);
+      addPair(start,end);
+    }
+  }
+
+  // "Anywhere" support: small curated list for MVP
+  const ANYWHERE = ["LON","PAR","ROM","BCN","TYO"];
+  const destList = destination ? [guessIATA(destination, "FCO")] : ANYWHERE;
+
+  // Fan out flight searches (limit to a safe #)
+  $("dealResults").innerHTML = "";
+  const allOffers = [];
+  for (const d of destList){
+    for (const [dd, rr] of datePairs.slice(0,8)){   // cap calls
+      const res = await postJSON("/api/travel/flights/search", {
+        origin, destination: d, departDate: dd, returnDate: rr, nonStop, cabin, maxPrice
+      });
+      (res.offers||[]).forEach(o=>{
+        // Optionally demote non-mistake fares when user ticks 'Mistake fares'
+        if (wantMistake && o.tier === "standard") o.priceUSD += 0.01; // stable sort nudge
+        allOffers.push({ ...o, _route:origin+"→"+d, _dates:dd+"→"+rr });
+      });
+    }
+  }
+  allOffers.sort((a,b)=>a.priceUSD-b.priceUSD);
+  renderFlightsInto("dealResults", allOffers.slice(0,12));
+
+  // AI summary for flights (optional)
+  $("dealSummary").innerHTML="";
+  if ($("use_ai").checked && allOffers.length){
+    try {
+      const s = await postJSON("/api/travel/summary", { offers: allOffers.slice(0,8), origin, destination: destList.join(",") });
+      if (s.summary) $("dealSummary").innerHTML = s.summary.replaceAll("\\n","<br/>");
+    } catch {}
+  }
+
+  // Hotels & Cars (optional)
+  if (!flightsOnly){
+    if (wantHotels){
+      const cityCode = guessCityCode(destination || "rome", "ROM");
+      const h = await postJSON("/api/travel/hotels/search", {
+        cityCode, checkInDate: datePairs[0][0], checkOutDate: datePairs[0][1], adults: 2, roomQuantity: 1
+      });
+      renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
+    }
+    if (wantCars){
+      const cityCode = guessCityCode(destination || "rome", "ROM");
+      const c = await postJSON("/api/travel/cars/search", {
+        cityCode, pickUpDateTime: new Date(datePairs[0][0]+"T10:00:00").toISOString(),
+        dropOffDateTime: new Date(datePairs[0][1]+"T10:00:00").toISOString(), passengers: 2
+      });
+      renderCarsInto("dealResults", (c.offers||[]).slice(0,4));
+    }
+  }
+};
+
+/* ---------------- Dedicated tab forms (still work) ---------------- */
+$("flightForm")?.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const body = {
+    origin:v("origin"), destination:v("destination"),
+    departDate:v("departDate"), returnDate:v("returnDate"),
+    maxPrice:v("maxPrice"), cabin:v("cabin"), nonStop:$("nonStop").checked
+  };
+  const res = await postJSON("/api/travel/flights/search", body);
+  renderFlightsInto("flightResults", res.offers||[]);
+  $("flightSummary").innerHTML="";
+  if ($("use_ai").checked && (res.offers||[]).length){
+    try{
+      const s = await postJSON("/api/travel/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
+      if (s.summary) $("flightSummary").innerHTML = s.summary.replaceAll("\\n","<br/>");
+    }catch{}
+  }
+});
+
+$("hotelForm")?.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const res = await postJSON("/api/travel/hotels/search", {
+    cityCode:v("h_cityCode"), checkInDate:v("h_checkIn"), checkOutDate:v("h_checkOut"),
+    adults:parseInt(v("h_adults")||"2",10), roomQuantity:parseInt(v("h_rooms")||"1",10)
+  });
+  renderHotelsInto("hotelResults", res.data||[]);
+});
+
+$("carForm")?.addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const res = await postJSON("/api/travel/cars/search", {
+    cityCode:v("c_cityCode"),
+    pickUpDateTime: v("c_pick") ? new Date(v("c_pick")).toISOString() : undefined,
+    dropOffDateTime: v("c_drop") ? new Date(v("c_drop")).toISOString() : undefined,
+    passengers: parseInt(v("c_pax")||"2",10)
+  });
+  renderCarsInto("carResults", res.offers||[]);
+});
+
+/* ---------------- Renderers ---------------- */
+function renderFlightsInto(rootId, list){
+  const root=$(rootId); if(!root) return; root.innerHTML="";
+  if (!list.length) return root.innerHTML=empty("No flights found. Try wider dates.");
+  list.forEach(o=>{
+    const badge = o.tier==="unicorn"?"🦄 mistake-fare-like": o.tier==="great"?"🔥 great": o.tier==="cheap"?"✅ cheap":"—";
+    const segs = (o.itineraries||[]).flatMap(it=>it.segments||[]);
+    const path = segs.map(s=>s.from+"→"+s.to).join(" · ");
+    const card=document.createElement("article");
+    card.className="card";
+    card.innerHTML = 
+      "<div style=\\"display:flex;justify-content:space-between;align-items:center;\\">"+
+        "<h3 style=\\"margin:0;\\">$"+o.priceUSD.toFixed(0)+" USD</h3>"+
+        "<span class=\\"badge\\">"+badge+"</span>"+
+      "</div>"+
+      "<div class=\\"muted\\" style=\\"font-size:12px;margin-top:4px;\\">"+
+        "CPM ~$"+(o.cpm||0).toFixed(2)+"/mile "+(o.validatingAirline?("• "+o.validatingAirline):"")+
+        (o._route?(" • "+o._route):"")+" "+(o._dates?(" • "+o._dates):"")+
+      "</div>"+
+      "<div style=\\"margin-top:6px;\\">"+path+"</div>";
+    root.appendChild(card);
+  });
+}
+
+function renderHotelsInto(rootId, list){
+  const root=$(rootId); if(!root) return;
+  if (!list.length) return;
+  const head=document.createElement("div");
+  head.className="muted"; head.style.marginTop="8px"; head.innerHTML="— Hotels —";
+  root.appendChild(head);
+  list.forEach(h=>{
+    const offer = h.offers?.[0] || {};
+    const card=document.createElement("article");
+    card.className="card";
+    card.innerHTML=
+      "<div style=\\"display:flex;justify-content:space-between;align-items:center;\\">"+
+        "<h3 style=\\"margin:0;\\">"+(h.hotel?.name||"Hotel")+"</h3>"+
+        "<strong>$"+(offer.price?.total||0)+" "+(offer.price?.currency||"USD")+"</strong>"+
+      "</div>"+
+      "<div class=\\"muted\\" style=\\"font-size:12px;margin-top:4px;\\">"+offer.checkInDate+" → "+offer.checkOutDate+" • "+(h.hotel?.cityCode||"")+"</div>"+
+      "<div style=\\"margin-top:6px;\\">"+(h.hotel?.hotelId||"")+"</div>";
+    root.appendChild(card);
+  });
+}
+
+function renderCarsInto(rootId, list){
+  const root=$(rootId); if(!root) return;
+  if (!list.length) return;
+  const head=document.createElement("div");
+  head.className="muted"; head.style.marginTop="8px"; head.innerHTML="— Cars / Transfers —";
+  root.appendChild(head);
+  list.forEach(c=>{
+    const card=document.createElement("article");
+    card.className="card";
+    card.innerHTML=
+      "<div style=\\"display:flex;justify-content:space-between;align-items:center;\\">"+
+        "<h3 style=\\"margin:0;\\">"+(c.vehicle||"Vehicle")+" • $"+(c.priceUSD||0).toFixed(0)+" USD</h3>"+
+        "<span class=\\"badge\\">"+(c.supplier||"")+"</span>"+
+      "</div>"+
+      "<div class=\\"muted\\" style=\\"font-size:12px;margin-top:4px;\\">"+(c.pickUp?.cityCode||"")+" "+(c.pickUp?.at||"")+" → "+(c.dropOff?.cityCode||"")+" "+(c.dropOff?.at||"")+"</div>";
+    root.appendChild(card);
+  });
+}
+</script>
+</body>
+</html>
+      `
+    }} />
   );
 }

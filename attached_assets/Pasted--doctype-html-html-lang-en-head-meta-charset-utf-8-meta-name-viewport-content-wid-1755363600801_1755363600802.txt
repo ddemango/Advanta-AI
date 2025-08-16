@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Travel Hacker AI</title>
+<style>
+  :root{--b:#0f172a;--mut:#64748b;--bd:#e5e7eb;--bg:#f7fafc;--pill:#fff;--cta:#275afe}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,system-ui;background:var(--bg);color:var(--b)}
+  header{text-align:center;padding:40px 20px}
+  .container{max-width:980px;margin:0 auto;padding:0 16px}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:16px;padding:16px}
+  input,select,button,textarea{border:1px solid var(--bd);border-radius:12px;padding:10px;font-size:14px;background:#fff}
+  button{cursor:pointer}
+  .muted{color:var(--mut)}
+  .pill{border:1px solid var(--bd);padding:8px 12px;border-radius:12px;background:var(--pill);display:flex;align-items:center;gap:8px}
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:800px){.row,.row-3{grid-template-columns:1fr}}
+  .checkline{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .check{display:flex;align-items:center;gap:8px}
+  .cta{background:var(--cta);color:#fff;border:none;border-radius:12px;padding:14px 16px;font-weight:600;width:100%}
+  .grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:16px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--bd)}
+  .hero-bullets{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px}
+  .hero-bullets .pill{font-weight:600}
+  .tabs{display:flex;gap:8px;justify-content:center;margin:16px 0 10px}
+  .tab{padding:8px 14px;border:1px solid var(--bd);border-radius:999px;background:#fff}
+  .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+  .section-title{font-weight:700;margin:22px 0 8px}
+  .hint{font-size:12px;color:var(--mut);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1 style="font-size:40px;margin:10px 0;">Travel Hacker AI</h1>
+    <p style="max-width:740px;margin:0 auto;color:#475569">
+      Let AI do the heavy lifting. Find ultra-cheap flights, rare mistake fares, and full budget travel plans with live prices.
+    </p>
+
+    <!-- Hero bullets -->
+    <div class="hero-bullets">
+      <div class="pill">Ultra-cheap roundtrip flights</div>
+      <div class="pill">⚡ Rare mistake fares</div>
+      <div class="pill">🧳 Full budget travel plans</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="deal">Find My Travel Deal</button>
+      <button class="tab" data-tab="flights">Flights</button>
+      <button class="tab" data-tab="hotels">Hotels</button>
+      <button class="tab" data-tab="cars">Cars</button>
+    </div>
+
+    <div class="muted" style="margin-top:6px;">
+      <label><input id="use_ai" type="checkbox" checked/> Use AI parsing/summaries (if available)</label>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- UNIVERSAL "Deal" form (your screenshots) -->
+  <section class="card" data-pane="deal">
+    <h3 class="section-title">Find My Travel Deal</h3>
+
+    <div class="row">
+      <div>
+        <label>Departure City</label>
+        <input id="d_from" placeholder="e.g., Nashville, New York" />
+        <div class="hint">City or IATA (BNA, JFK)</div>
+      </div>
+      <div>
+        <label>Destination (Optional)</label>
+        <input id="d_to" placeholder="Leave empty for anywhere" />
+      </div>
+    </div>
+
+    <div class="section-title">When do you want to travel?</div>
+    <div class="chips">
+      <button class="pill" data-chip="spontaneous">⚡ Spontaneous</button>
+      <button class="pill" data-chip="this_month">📅 This Month</button>
+      <button class="pill" data-chip="next_month">📅 Next Month</button>
+      <button class="pill" data-chip="this_year">📅 This Year</button>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label>Departure Date</label>
+        <input id="d_depart" type="date" />
+      </div>
+      <div>
+        <label>Return Date</label>
+        <input id="d_return" type="date" />
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div>
+        <label>Budget (Optional)</label>
+        <input id="d_budget" placeholder="e.g., $500" inputmode="numeric" />
+      </div>
+      <div>
+        <label>Date Flexibility</label>
+        <select id="d_flex">
+          <option value="exact">Exact dates</option>
+          <option value="+-3">± 3 days</option>
+          <option value="weekend">Weekend only</option>
+          <option value="month">Any time this month</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="checkline">
+      <div class="check"><input id="d_flights_only" type="checkbox" checked/> ✈️ Flights only</div>
+      <div class="check"><input id="d_include_hotels" type="checkbox" checked/> 🏨 Include hotels</div>
+      <div class="check"><input id="d_include_cars" type="checkbox" checked/> 🚗 Include car rentals</div>
+      <div class="check"><input id="d_mistake" type="checkbox" checked/> ⚡ Mistake fares</div>
+    </div>
+
+    <button id="deal_cta" class="cta" style="margin-top:14px;">🎯 Find My Deal</button>
+
+    <div id="dealSummary" class="muted" style="margin-top:10px;"></div>
+    <div id="dealResults" class="grid"></div>
+  </section>
+
+  <!-- Dedicated tabs (still supported) -->
+  <section class="card" data-pane="flights" style="display:none">
+    <h3 class="section-title">Flights</h3>
+    <form id="flightForm" class="row">
+      <div><label>From (IATA)</label><input id="origin" value="JFK" required/></div>
+      <div><label>To (IATA)</label><input id="destination" value="FCO" required/></div>
+      <div><label>Depart</label><input id="departDate" type="date"/></div>
+      <div><label>Return</label><input id="returnDate" type="date"/></div>
+      <div><label>Max Price (USD)</label><input id="maxPrice" inputmode="numeric" pattern="[0-9]*"/></div>
+      <div>
+        <label>Cabin</label>
+        <select id="cabin"><option>ECONOMY</option><option>PREMIUM_ECONOMY</option><option>BUSINESS</option><option>FIRST</option></select>
+        <div class="check" style="margin-top:8px;"><input id="nonStop" type="checkbox"/> Non-stop</div>
+        <button type="submit" class="cta" style="margin-top:8px;">Find Deals</button>
+      </div>
+    </form>
+    <div id="flightSummary" class="muted" style="margin-top:10px;"></div>
+    <div id="flightResults" class="grid"></div>
+  </section>
+
+  <section class="card" data-pane="hotels" style="display:none">
+    <h3 class="section-title">Hotels</h3>
+    <form id="hotelForm" class="row">
+      <div><label>City (IATA city)</label><input id="h_cityCode" value="ROM" required/></div>
+      <div><label>Check-in</label><input id="h_checkIn" type="date" required/></div>
+      <div><label>Check-out</label><input id="h_checkOut" type="date" required/></div>
+      <div><label>Adults</label><input id="h_adults" type="number" min="1" value="2" required/></div>
+      <div><label>Rooms</label><input id="h_rooms" type="number" min="1" value="1" required/></div>
+      <div style="align-self:end;"><button class="cta" type="submit">Search Hotels</button></div>
+    </form>
+    <div id="hotelResults" class="grid"></div>
+  </section>
+
+  <section class="card" data-pane="cars" style="display:none">
+    <h3 class="section-title">Cars</h3>
+    <form id="carForm" class="row-3">
+      <div><label>City (IATA city)</label><input id="c_cityCode" value="ROM" required/></div>
+      <div><label>Pick-up</label><input id="c_pick" type="datetime-local" required/></div>
+      <div><label>Drop-off</label><input id="c_drop" type="datetime-local" required/></div>
+      <div><label>Passengers</label><input id="c_pax" type="number" min="1" value="2" required/></div>
+      <div style="grid-column:1 / -1; text-align:right;"><button class="cta" type="submit">Search Cars</button></div>
+    </form>
+    <div id="carResults" class="grid"></div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
