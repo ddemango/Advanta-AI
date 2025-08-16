@@ -17,7 +17,7 @@ export interface WorkflowGenerationRequest {
   userId?: number;
 }
 
-export interface WorkflowGenerationResponse {
+export type WorkflowGenerationResponse = {
   success: true;
   workflow: any;
   tokensUsed: number;
@@ -105,7 +105,7 @@ export async function generateWorkflow(request: WorkflowGenerationRequest): Prom
   }
 }
 
-function generateMockWorkflow(request: WorkflowGenerationRequest): WorkflowGenerationResponse {
+function generateMockWorkflow(request: WorkflowGenerationRequest): { success: true; workflow: any; tokensUsed: number; latencyMs: number } {
   const latencyMs = Date.now() - Date.now() + Math.random() * 100; // Simulate latency
   
   // Generate contextual mock workflow based on prompt keywords
