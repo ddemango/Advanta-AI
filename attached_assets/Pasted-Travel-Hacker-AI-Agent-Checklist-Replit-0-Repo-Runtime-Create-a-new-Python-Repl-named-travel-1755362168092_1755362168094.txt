@@ -1,0 +1,225 @@
+Travel Hacker AI — Agent Checklist (Replit)
+0) Repo & Runtime
+
+Create a new Python Repl named travel-hacker-ai (or open the existing one).
+
+File tree (create exactly):
+
+.
+├─ main.py
+├─ amadeus_client.py
+├─ amadeus_hotels.py
+├─ amadeus_cars.py
+├─ ai_client.py
+├─ parser_nlq.py
+├─ deal_math.py
+├─ requirements.txt
+├─ .replit
+├─ replit.nix                # optional
+├─ templates/
+│  └─ index.html
+└─ static/
+   └─ app.js
+
+1) Secrets (Replit → Tools → Secrets)
+
+AMADEUS_API_KEY = <client_id>
+
+AMADEUS_API_SECRET = <client_secret>
+
+AMADEUS_ENV = test (switch to production later)
+
+(Optional, for AI parsing/summaries)
+
+OPENAI_API_KEY = <key>
+
+OPENAI_MODEL = gpt-4o-mini
+
+USE_AI_PARSER = 1 (set 0 to disable AI parsing)
+
+2) Dependencies
+
+Open Shell:
+
+pip install -r requirements.txt
+
+
+requirements.txt must include:
+
+Flask==3.0.3
+python-dotenv==1.0.1
+requests==2.32.3
+openai==1.40.0
+pydantic==2.8.2
+
+3) Paste Code (exact)
+
+Use the full code provided earlier for:
+
+main.py (flights + hotels + cars routes)
+
+amadeus_client.py (flights)
+
+amadeus_hotels.py (Hotel Search v3)
+
+amadeus_cars.py (cars/transfers placeholder with demo data)
+
+ai_client.py (optional ChatGPT parser/summaries)
+
+parser_nlq.py (flight/hotel/car NL parsing)
+
+deal_math.py (distance + CPM scoring)
+
+templates/index.html (tabs UI)
+
+static/app.js (tab logic + renderers)
+
+Do not change filenames, endpoints, or response shapes.
+
+4) Run & Health Check
+
+Run:
+
+python3 main.py
+
+
+Open the webview → visit /health
+
+Expect JSON:
+
+"ok": true
+
+"service": "travel-hacker-ai"
+
+"ai": true|false (true only if OPENAI_API_KEY present)
+
+5) Functional Tests
+A. Flights
+
+In the UI (Flights tab):
+
+Click a prompt or fill:
+
+From: JFK
+
+To: FCO
+
+Depart: 2025-10-10
+
+Return: 2025-10-17
+
+Click Find Deals.
+
+Expected:
+
+With Amadeus keys: real offers sorted by price.
+
+Without keys: a demo offer appears (price ~ $350).
+
+Each result shows: price, tier badge (🦄/🔥/✅/—), CPM/mile, route segments.
+
+B. Flights (AI Summary)
+
+Toggle “Use AI parsing/summaries” on.
+
+After results load, a short bullet summary should appear (only if OPENAI_API_KEY is set).
+
+No summary if AI not configured; app must still work.
+
+C. Hotels
+
+Switch to Hotels tab.
+
+Use:
+
+City (IATA city code): ROM
+
+Check-in: 2025-10-10
+
+Check-out: 2025-10-12
+
+Adults: 2
+
+Rooms: 1
+
+Click Search Hotels.
+
+Expected:
+
+With keys: real hotel offers via Hotel Search v3.
+
+Without keys: Demo Inn Roma card appears.
+
+D. Cars
+
+Switch to Cars tab.
+
+Use:
+
+City: ROM
+
+Pick-up: 2025-10-10 10:00
+
+Drop-off: 2025-10-12 10:00
+
+Passengers: 2
+
+Click Search Cars.
+
+Expected: demo car/transfer offers (until Cars/Transfers API wired).
+
+E. /api/parse (NL Parsing)
+
+Click any prompt (“NYC to Europe under $400 in October”).
+
+Confirm form fields prefill appropriately for Flights/Hotels/Cars.
+
+Works with or without AI key (fallback parser engaged if no AI).
+
+6) Error Handling & Non-Negotiables
+
+All endpoints always return JSON, even on errors:
+
+/api/search, /api/hotels/search, /api/cars/search, /api/parse, /api/summary
+
+No unhandled exceptions in Replit console.
+
+If Amadeus auth fails, routes must return a JSON error or the built-in demo payload (as implemented).
+
+CORS is not required for same-origin UI; do not add extra middleware.
+
+7) Visual/UX Checks
+
+Tabs switch correctly (Flights/Hotels/Cars).
+
+Empty states show a friendly message (no raw JSON).
+
+Prices are whole dollars where appropriate; CPM shows two decimals.
+
+“Use AI parsing/summaries” toggle behaves as expected.
+
+8) Deliverables (return to user)
+
+Public URL of the running Repl.
+
+Paste the exact /health JSON.
+
+One example result for each tab:
+
+Flights: lowest-price card (price + tier + segments)
+
+Hotels: top card (name + price + dates)
+
+Cars: one demo card (vehicle + price + times)
+
+Confirmation that:
+
+/api/parse returns structured params for a prompt.
+
+/api/search returns offers (real or demo).
+
+/api/hotels/search returns offers (real or demo).
+
+/api/cars/search returns demo offers.
+
+/api/summary returns text only when OPENAI_API_KEY is set.
