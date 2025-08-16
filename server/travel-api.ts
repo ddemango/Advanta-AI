@@ -176,7 +176,12 @@ function mockFlightSearch(params: any) {
     const price = basePrice + (Math.random() * 400) - 200;
     if (maxPrice && price > maxPrice) continue;
     
-    const tier = price < 500 ? 'EXCELLENT' : price < 800 ? 'GOOD' : 'FAIR';
+    // Generate some mistake fares (unicorn/great tier)
+    const rand = Math.random();
+    let tier;
+    if (rand < 0.1) tier = 'unicorn';  // 10% chance for mistake fares
+    else if (rand < 0.3) tier = 'great';  // 20% chance for great deals  
+    else tier = price < 800 ? 'good' : 'fair';
     const cpm = (price / 3000) * 100; // Rough cost per mile calculation
     
     offers.push({

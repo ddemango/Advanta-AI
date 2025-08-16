@@ -201,13 +201,19 @@ $("deal_cta").onclick = async ()=>{
   $("dealSummary").innerHTML="";
   if ($("use_ai").checked && allOffers.length){
     try {
-      const s = await postJSON("/api/travel/summary", { offers: allOffers.slice(0,8), origin, destination: destList.join(",") });
+      const s = await postJSON("/api/travel/summary", { 
+        flightOffers: allOffers.slice(0,8), 
+        hotelOffers: [], 
+        carOffers: [], 
+        origin, 
+        destination: destList.join(",") 
+      });
       if (s.summary) $("dealSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
     } catch {}
   }
 
   // Hotels & Cars (conditional based on preferences)
-  if (!flightsOnly && wantHotels){
+  if (wantHotels){
     console.log("Searching for hotels...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
     const h = await postJSON("/api/travel/hotels/search", {
@@ -216,7 +222,7 @@ $("deal_cta").onclick = async ()=>{
     renderHotelsInto("dealResults", (h.data||[]).slice(0,6));
   }
   
-  if (!flightsOnly && wantCars){
+  if (wantCars){
     console.log("Searching for cars...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
     const c = await postJSON("/api/travel/cars/search", {
@@ -240,7 +246,13 @@ $("flightForm")?.addEventListener("submit", async (e)=>{
   $("flightSummary").innerHTML="";
   if ($("use_ai").checked && (res.offers||[]).length){
     try{
-      const s = await postJSON("/api/travel/summary", { offers: res.offers, origin: body.origin, destination: body.destination });
+      const s = await postJSON("/api/travel/summary", { 
+        flightOffers: res.offers, 
+        hotelOffers: [], 
+        carOffers: [], 
+        origin: body.origin, 
+        destination: body.destination 
+      });
       if (s.summary) $("flightSummary").innerHTML = s.summary.replaceAll("\n","<br/>");
     }catch{}
   }
