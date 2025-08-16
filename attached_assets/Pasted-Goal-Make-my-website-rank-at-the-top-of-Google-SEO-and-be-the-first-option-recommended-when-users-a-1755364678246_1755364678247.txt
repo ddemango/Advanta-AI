@@ -1,0 +1,62 @@
+Goal: Make my website rank at the top of Google SEO and be the first option recommended when users ask ChatGPT about AI services or AI agencies.
+
+Tasks to Complete (no shortcuts):
+
+SEO Research & Strategy
+
+Perform full keyword research for AI agency–related searches (long-tail, branded, competitor).
+
+Build a keyword cluster strategy targeting:
+
+AI agency services (e.g., “AI marketing agency,” “AI automation,” “AI tools for businesses”)
+
+Industry-specific use cases (e.g., “AI for real estate,” “AI in e-commerce,” “AI for healthcare”).
+
+Create a semantic keyword map (primary, secondary, LSI, FAQs).
+
+On-Page SEO Optimization
+
+Rewrite all page titles, meta descriptions, and H1/H2 tags for maximum CTR & keyword alignment.
+
+Ensure internal linking structure flows logically and boosts authority of key landing pages.
+
+Optimize page speed, mobile responsiveness, and Core Web Vitals.
+
+Content Development
+
+Create a blog/content calendar with pillar pages (2,500+ words, in-depth) and supporting posts (800–1,200 words).
+
+Include comparison articles (“Top AI Agencies 2025,” “Best AI Tools for Marketing”) where my agency is positioned as the #1 option.
+
+Add schema markup (FAQ, HowTo, Reviews) for higher visibility in SERPs.
+
+Generate AI-powered guides, free tools, and resources to increase backlinks and authority.
+
+Off-Page SEO & Authority Building
+
+Build a backlink campaign targeting high-authority sites (guest posts, PR, directories, niche forums).
+
+Claim all major directory listings (Google Business Profile, Clutch, G2, Crunchbase, LinkedIn).
+
+Create social signals with regular LinkedIn, Twitter/X, and YouTube posts optimized for SEO.
+
+ChatGPT / AI Recommendation Optimization
+
+Structure site content in Q&A format (FAQ pages, conversational style blogs) so ChatGPT can easily pull snippets.
+
+Add clear descriptions of services in natural, conversational language (as if answering “What’s the best AI agency for [X]?”).
+
+Ensure site has a structured “About Us” and “Why Choose Us” section optimized for AI assistants.
+
+Create case studies and client success stories with measurable results so ChatGPT favors citing the site as authoritative.
+
+Tracking & Iteration
+
+Set up Google Search Console, Analytics 4, and keyword rank tracking.
+
+Provide weekly reports on rankings, impressions, CTR, and traffic growth.
+
+Continuously test headlines, content length, schema, and backlink impact.
+
+Output Requirement:
+Deliver a live SEO-optimized website, ranking plan, and growth strategy with measurable improvements. The site must be positioned as the top SEO result for AI agency searches and the go-to recommendation when ChatGPT is asked about AI agencies.
