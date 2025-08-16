@@ -1,7 +1,25 @@
+Travel Hacker — Simple UI
+
+One form row: From, To or Region (blank = Anywhere)
+
+Date chips (Spontaneous / This Month / Next Month / Weekend)
+
+Flexibility select (+ nearby airports toggle)
+
+More options (collapsible): cabin, stops, include hotels/cars
+
+One big sticky Find My Deal button
+
+Results show compact deal cards with price + tier
+
+Skeletons while loading; friendly empty/error states
+
+Keyboard & screen-reader friendly
+
 "use client";
 import { useEffect, useMemo, useState } from "react";
 
-/* ---- tiny style tokens ---- */
+/* ---- tiny style tokens (no Tailwind required) ---- */
 const CSS = `
 :root{--bg:#f7fafc;--panel:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--cta:#275afe}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui}
@@ -27,7 +45,7 @@ const CSS = `
 
 type Offer = any;
 
-export default function TravelHackerAIV3() {
+export default function TravelHackerSimple() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");        // IATA or region (EUROPE/ASIA) or blank = Anywhere
   const [depart, setDepart] = useState("");
@@ -111,7 +129,7 @@ export default function TravelHackerAIV3() {
             <div>
               <label htmlFor="from">Departure</label>
               <input id="from" className="input" placeholder="e.g., BNA or Nashville" value={from} onChange={e=>setFrom(e.target.value)} />
-              <div className="muted">Tip: turn on "nearby airports" below.</div>
+              <div className="muted">Tip: turn on “nearby airports” below.</div>
             </div>
             <div>
               <label htmlFor="to">Destination (or Region)</label>
@@ -204,7 +222,7 @@ export default function TravelHackerAIV3() {
         <section aria-live="polite" className="grid">
           {loading && Array.from({length:6}).map((_,i)=><div key={i} className="skeleton" />)}
           {!loading && offers.length===0 && !error && (
-            <div className="card" style={{gridColumn:"1/-1",textAlign:"center"}}>No results yet—try "± 3 days" or "Weekend".</div>
+            <div className="card" style={{gridColumn:"1/-1",textAlign:"center"}}>No results yet—try “± 3 days” or “Weekend”.</div>
           )}
           {offers.map((o, i)=>(
             <article key={i} className="card">
