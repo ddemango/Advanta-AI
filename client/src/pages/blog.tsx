@@ -365,14 +365,12 @@ export default function Blog() {
 
               {/* Main Heading */}
               <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl font-bold mb-6 text-gray-900 dark:text-white leading-tight">
-                Unlock the Power of <span className="text-blue-600 dark:text-blue-400">AI</span> — One<br/>
-                Resource at a Time
+                <span className="text-blue-600 dark:text-blue-400">AI</span> Blog
               </motion.h1>
               
               {/* Subtitle */}
               <motion.p variants={fadeInUp} className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
-                Explore expert insights, practical guides, AI templates, and real-world examples to help your business 
-                scale smarter.
+                Discover the latest trends, strategies, and innovations in AI technology and applications. We generates 3 high-quality blog posts daily at 8 AM, 1 PM, and 6 PM.
               </motion.p>
               
               {/* Search Bar */}
