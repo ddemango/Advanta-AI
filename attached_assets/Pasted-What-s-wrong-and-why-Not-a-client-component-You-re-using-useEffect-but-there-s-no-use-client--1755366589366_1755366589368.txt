@@ -1,6 +1,36 @@
+What’s wrong (and why)
+
+Not a client component
+
+You’re using useEffect, but there’s no "use client" directive. In App Router, the file is server by default → hooks won’t run.
+
+Class name mismatches with /static/app.js
+
+The script looks for .tab, .card, .badge, .muted, and .grid.
+
+Your component only defines .travel-tab, .travel-card, .travel-badge, .travel-muted, .travel-grid.
+
+Result: the script can’t find tab buttons; cards it creates (<article class="card">) are unstyled.
+
+Script may be injected twice in Strict Mode
+
+React Strict Mode mounts → unmounts → mounts again in dev. You append the script each mount. You remove it on unmount, but during quick remounts you can still end up racing two loads.
+
+Script path must actually exist
+
+In Next.js, static assets should be under /public. Ensure the file is at public/static/app.js so /static/app.js resolves.
+
+(Minor) Using defaultValue while JS mutates .value
+
+It’s fine (uncontrolled inputs) — just be aware React won’t manage those values. This is intended since the external script sets values.
+
+Quick fixes (minimal, safe)
+
+Paste this updated component. It adds "use client", guards against duplicate script injection, and aliases the legacy classes so your styles apply to elements the script creates.
+
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 export default function TravelHackerAIV2() {
   useEffect(() => {
@@ -8,25 +38,28 @@ export default function TravelHackerAIV2() {
     const existing = document.querySelector<HTMLScriptElement>('script[src="/static/app.js"]');
     if (existing) return;
 
-    const script = document.createElement('script');
-    script.src = '/static/app.js';
+    const script = document.createElement("script");
+    script.src = "/static/app.js"; // make sure file lives at /public/static/app.js
     script.async = true;
     document.body.appendChild(script);
 
     return () => {
-      // Optional: don't remove so listeners remain on fast remounts
+      // optional: don’t remove so listeners remain on fast remounts
+      // if you prefer cleanup, uncomment:
       // if (document.body.contains(script)) document.body.removeChild(script);
     };
   }, []);
 
   return (
-    <div style={{
-      fontFamily: 'ui-sans-serif, system-ui',
-      background: '#f7fafc',
-      color: '#0f172a',
-      minHeight: '100vh',
-      margin: 0
-    }}>
+    <div
+      style={{
+        fontFamily: "ui-sans-serif, system-ui",
+        background: "#f7fafc",
+        color: "#0f172a",
+        minHeight: "100vh",
+        margin: 0,
+      }}
+    >
       <style>{`
         :root{--b:#0f172a;--mut:#64748b;--bd:#e5e7eb;--bg:#f7fafc;--pill:#fff;--cta:#275afe}
         .travel-container{max-width:980px;margin:0 auto;padding:0 16px}
@@ -60,10 +93,10 @@ export default function TravelHackerAIV2() {
         .travel-hint{font-size:12px;color:#64748b;margin-top:4px}
       `}</style>
 
-      <header style={{textAlign: 'center', padding: '40px 20px'}}>
+      <header style={{ textAlign: "center", padding: "40px 20px" }}>
         <div className="travel-container">
-          <h1 style={{fontSize: '40px', margin: '10px 0'}}>Travel Hacker AI</h1>
-          <p style={{maxWidth: '740px', margin: '0 auto', color: '#475569'}}>
+          <h1 style={{ fontSize: "40px", margin: "10px 0" }}>Travel Hacker AI</h1>
+          <p style={{ maxWidth: "740px", margin: "0 auto", color: "#475569" }}>
             Let AI do the heavy lifting. Find ultra-cheap flights, rare mistake fares, and full budget travel plans with live prices.
           </p>
 
@@ -73,20 +106,22 @@ export default function TravelHackerAIV2() {
             <div className="travel-pill">🧳 Full budget travel plans</div>
           </div>
 
-          <div className="travel-tabs" style={{display: 'flex', gap: 8, justifyContent: 'center', margin: '16px 0 10px'}}>
+          <div className="travel-tabs" style={{ display: "flex", gap: 8, justifyContent: "center", margin: "16px 0 10px" }}>
+            {/* add BOTH classes so app.js can bind to .tab */}
             <button className="travel-tab tab active" data-tab="deal">Find My Travel Deal</button>
             <button className="travel-tab tab" data-tab="flights">Flights</button>
             <button className="travel-tab tab" data-tab="hotels">Hotels</button>
             <button className="travel-tab tab" data-tab="cars">Cars</button>
           </div>
 
-          <div className="travel-muted" style={{marginTop: '6px'}}>
-            <label><input id="use_ai" type="checkbox" defaultChecked/> Use AI parsing/summaries (if available)</label>
+          <div className="travel-muted" style={{ marginTop: "6px" }}>
+            <label><input id="use_ai" type="checkbox" defaultChecked /> Use AI parsing/summaries (if available)</label>
           </div>
         </div>
       </header>
 
       <main className="travel-container">
+        {/* DEAL PANE */}
         <section className="travel-card card" data-pane="deal">
           <h3 className="travel-section-title">Find My Travel Deal</h3>
 
@@ -110,7 +145,7 @@ export default function TravelHackerAIV2() {
             <button className="travel-pill" data-chip="this_year">📅 This Year</button>
           </div>
 
-          <div className="travel-row" style={{marginTop: '10px'}}>
+          <div className="travel-row" style={{ marginTop: 10 }}>
             <div>
               <label>Departure Date</label>
               <input id="d_depart" className="travel-input" type="date" />
@@ -121,7 +156,7 @@ export default function TravelHackerAIV2() {
             </div>
           </div>
 
-          <div className="travel-row" style={{marginTop: '10px'}}>
+          <div className="travel-row" style={{ marginTop: 10 }}>
             <div>
               <label>Budget (Optional)</label>
               <input id="d_budget" className="travel-input" placeholder="e.g., $500" inputMode="numeric" />
@@ -138,27 +173,28 @@ export default function TravelHackerAIV2() {
           </div>
 
           <div className="travel-checkline">
-            <label className="travel-check" style={{cursor: 'pointer'}}>
-              <input id="d_flights_only" type="checkbox" defaultChecked style={{marginRight: '8px'}}/> ✈️ Flights only
+            <label className="travel-check" style={{ cursor: "pointer" }}>
+              <input id="d_flights_only" type="checkbox" defaultChecked style={{ marginRight: 8 }} /> ✈️ Flights only
             </label>
-            <label className="travel-check" style={{cursor: 'pointer'}}>
-              <input id="d_include_hotels" type="checkbox" style={{marginRight: '8px'}}/> 🏨 Include hotels
+            <label className="travel-check" style={{ cursor: "pointer" }}>
+              <input id="d_include_hotels" type="checkbox" style={{ marginRight: 8 }} /> 🏨 Include hotels
             </label>
-            <label className="travel-check" style={{cursor: 'pointer'}}>
-              <input id="d_include_cars" type="checkbox" style={{marginRight: '8px'}}/> 🚗 Include car rentals
+            <label className="travel-check" style={{ cursor: "pointer" }}>
+              <input id="d_include_cars" type="checkbox" style={{ marginRight: 8 }} /> 🚗 Include car rentals
             </label>
-            <label className="travel-check" style={{cursor: 'pointer'}}>
-              <input id="d_mistake" type="checkbox" style={{marginRight: '8px'}}/> ⚡ Mistake fares
+            <label className="travel-check" style={{ cursor: "pointer" }}>
+              <input id="d_mistake" type="checkbox" style={{ marginRight: 8 }} /> ⚡ Mistake fares
             </label>
           </div>
 
-          <button id="deal_cta" className="travel-cta" style={{marginTop: '14px'}}>🎯 Find My Deal</button>
+          <button id="deal_cta" className="travel-cta" style={{ marginTop: 14 }}>🎯 Find My Deal</button>
 
-          <div id="dealSummary" className="muted travel-muted" style={{marginTop: '10px'}}></div>
+          <div id="dealSummary" className="muted travel-muted" style={{ marginTop: 10 }}></div>
           <div id="dealResults" className="grid travel-grid"></div>
         </section>
 
-        <section className="travel-card card" data-pane="flights" style={{display: 'none'}}>
+        {/* FLIGHTS */}
+        <section className="travel-card card" data-pane="flights" style={{ display: "none" }}>
           <h3 className="travel-section-title">Flights</h3>
           <form id="flightForm" className="travel-row">
             <div><label>From (IATA)</label><input id="origin" className="travel-input" defaultValue="JFK" required/></div>
@@ -169,20 +205,18 @@ export default function TravelHackerAIV2() {
             <div>
               <label>Cabin</label>
               <select id="cabin" className="travel-select">
-                <option>ECONOMY</option>
-                <option>PREMIUM_ECONOMY</option>
-                <option>BUSINESS</option>
-                <option>FIRST</option>
+                <option>ECONOMY</option><option>PREMIUM_ECONOMY</option><option>BUSINESS</option><option>FIRST</option>
               </select>
-              <div className="travel-check" style={{marginTop: '8px'}}><input id="nonStop" type="checkbox"/> Non-stop</div>
-              <button type="submit" className="travel-cta" style={{marginTop: '8px'}}>Find Deals</button>
+              <div className="travel-check" style={{ marginTop: 8 }}><input id="nonStop" type="checkbox" /> Non-stop</div>
+              <button type="submit" className="travel-cta" style={{ marginTop: 8 }}>Find Deals</button>
             </div>
           </form>
-          <div id="flightSummary" className="muted travel-muted" style={{marginTop: '10px'}}></div>
+          <div id="flightSummary" className="muted travel-muted" style={{ marginTop: 10 }}></div>
           <div id="flightResults" className="grid travel-grid"></div>
         </section>
 
-        <section className="travel-card card" data-pane="hotels" style={{display: 'none'}}>
+        {/* HOTELS */}
+        <section className="travel-card card" data-pane="hotels" style={{ display: "none" }}>
           <h3 className="travel-section-title">Hotels</h3>
           <form id="hotelForm" className="travel-row">
             <div><label>City (IATA city)</label><input id="h_cityCode" className="travel-input" defaultValue="ROM" required/></div>
@@ -190,19 +224,20 @@ export default function TravelHackerAIV2() {
             <div><label>Check-out</label><input id="h_checkOut" className="travel-input" type="date" required/></div>
             <div><label>Adults</label><input id="h_adults" className="travel-input" type="number" min="1" defaultValue="2" required/></div>
             <div><label>Rooms</label><input id="h_rooms" className="travel-input" type="number" min="1" defaultValue="1" required/></div>
-            <div style={{alignSelf: 'end'}}><button className="travel-cta" type="submit">Search Hotels</button></div>
+            <div style={{ alignSelf: "end" }}><button className="travel-cta" type="submit">Search Hotels</button></div>
           </form>
           <div id="hotelResults" className="grid travel-grid"></div>
         </section>
 
-        <section className="travel-card card" data-pane="cars" style={{display: 'none'}}>
+        {/* CARS */}
+        <section className="travel-card card" data-pane="cars" style={{ display: "none" }}>
           <h3 className="travel-section-title">Cars</h3>
           <form id="carForm" className="travel-row-3">
             <div><label>City (IATA city)</label><input id="c_cityCode" className="travel-input" defaultValue="ROM" required/></div>
             <div><label>Pick-up</label><input id="c_pick" className="travel-input" type="datetime-local" required/></div>
             <div><label>Drop-off</label><input id="c_drop" className="travel-input" type="datetime-local" required/></div>
             <div><label>Passengers</label><input id="c_pax" className="travel-input" type="number" min="1" defaultValue="2" required/></div>
-            <div style={{gridColumn: '1 / -1', textAlign: 'right'}}><button className="travel-cta" type="submit">Search Cars</button></div>
+            <div style={{ gridColumn: "1 / -1", textAlign: "right" }}><button className="travel-cta" type="submit">Search Cars</button></div>
           </form>
           <div id="carResults" className="grid travel-grid"></div>
         </section>
