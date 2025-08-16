@@ -324,7 +324,9 @@ export default function Blog() {
   // Legacy database posts (fallback)
   const { data: blogPosts, isLoading, error } = useQuery({
     queryKey: ['/api/blog'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Always fresh - no caching for new blog posts
+    refetchInterval: 5 * 1000, // Refresh every 5 seconds
+    refetchOnWindowFocus: true, // Refresh when user comes back to tab
   });
   
   // Combine and filter posts (prioritize automated posts)
