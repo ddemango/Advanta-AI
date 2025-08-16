@@ -138,7 +138,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-1" />
-              {formatDate(cleanPost.date)}
+              {formatDate(new Date().toISOString().split('T')[0])}
             </div>
           </div>
           <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors line-clamp-2">
