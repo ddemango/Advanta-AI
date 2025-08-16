@@ -65,6 +65,7 @@ const cleanBlogData = (post: any) => {
 
 // Blog Post Card Component for File-Based Posts
 const FileBlogPostCard = ({ post }: { post: any }) => {
+  const [, navigate] = useLocation();
   const cleanPost = cleanBlogData(post);
   // Generate unique image URL for each blog post
   const getImageUrl = (category: string, title: string) => {
@@ -159,12 +160,12 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
               size="sm"
               onClick={() => {
                 console.log('FileBlogPostCard post data:', cleanPost);
-                const filename = cleanPost.filename || cleanPost.slug || `${cleanPost.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
-                console.log('Using filename:', filename);
-                if (filename && filename !== 'undefined') {
-                  window.open(`/posts/${filename}`, '_blank');
+                const slug = cleanPost.slug || cleanPost.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                console.log('Using slug:', slug);
+                if (slug && slug !== 'undefined') {
+                  navigate(`/blog/${slug}`);
                 } else {
-                  console.error('No valid filename available for post:', cleanPost);
+                  console.error('No valid slug available for post:', cleanPost);
                   alert('Sorry, this blog post is not available yet.');
                 }
               }}
