@@ -53,21 +53,46 @@ const formatDate = (dateString: string | Date | null | undefined) => {
 
 // Blog Post Card Component for File-Based Posts
 const FileBlogPostCard = ({ post }: { post: any }) => {
-  // Generate category-based image URL
+  // Generate unique image URL for each blog post
   const getImageUrl = (category: string, title: string) => {
-    const categoryImages: { [key: string]: string } = {
-      'ai_technology': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80',
-      'business_strategy': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80',
-      'automation': 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80',
-      'marketing_ai': 'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80',
-      'case_studies': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80',
-      'tutorials': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80',
-      'industry_insights': 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80',
-      'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80',
-      'resources': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80'
-    };
+    // Create a simple hash from the title to ensure consistent but unique images
+    const hash = title.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
     
-    return categoryImages[category] || categoryImages['ai_technology'];
+    // Pool of high-quality AI/tech/business related images
+    const imagePool = [
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80', // AI brain
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80', // Business strategy
+      'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80', // Automation
+      'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80', // Marketing AI
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80', // Case studies
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80', // Tutorials
+      'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80', // Industry insights
+      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80', // News
+      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80', // Resources
+      'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800&h=400&fit=crop&auto=format&q=80', // Data analytics
+      'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop&auto=format&q=80', // Machine learning
+      'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=400&fit=crop&auto=format&q=80', // AI development
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop&auto=format&q=80', // Technology
+      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop&auto=format&q=80', // Team collaboration
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop&auto=format&q=80', // Innovation
+      'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&h=400&fit=crop&auto=format&q=80', // Digital transformation
+      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop&auto=format&q=80', // AI robot
+      'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=400&fit=crop&auto=format&q=80', // Future tech
+      'https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?w=800&h=400&fit=crop&auto=format&q=80', // AI interface
+      'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop&auto=format&q=80', // Programming
+      'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&auto=format&q=80', // Work collaboration
+      'https://images.unsplash.com/photo-1512758017271-d7b84c2113f1?w=800&h=400&fit=crop&auto=format&q=80', // Digital workflow
+      'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=400&fit=crop&auto=format&q=80', // Cloud computing
+      'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=400&fit=crop&auto=format&q=80', // Business growth
+      'https://images.unsplash.com/photo-1590650153855-d9e808231d41?w=800&h=400&fit=crop&auto=format&q=80'  // AI brain network
+    ];
+    
+    // Use hash to select a consistent image for each title
+    const imageIndex = Math.abs(hash) % imagePool.length;
+    return imagePool[imageIndex];
   };
 
   const imageUrl = getImageUrl(post.category || 'ai_technology', post.title || '');
@@ -145,21 +170,46 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
 const BlogPostCard = ({ post }: { post: BlogPost }) => {
   const [, navigate] = useLocation();
   
-  // Generate category-based image URL
+  // Generate unique image URL for each blog post
   const getImageUrl = (category: string, title: string) => {
-    const categoryImages: { [key: string]: string } = {
-      'ai_technology': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80',
-      'business_strategy': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80',
-      'automation': 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80',
-      'marketing_ai': 'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80',
-      'case_studies': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80',
-      'tutorials': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80',
-      'industry_insights': 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80',
-      'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80',
-      'resources': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80'
-    };
+    // Create a simple hash from the title to ensure consistent but unique images
+    const hash = title.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
     
-    return categoryImages[category] || categoryImages['ai_technology'];
+    // Pool of high-quality AI/tech/business related images
+    const imagePool = [
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80', // AI brain
+      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80', // Business strategy
+      'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80', // Automation
+      'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80', // Marketing AI
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80', // Case studies
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80', // Tutorials
+      'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80', // Industry insights
+      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80', // News
+      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80', // Resources
+      'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800&h=400&fit=crop&auto=format&q=80', // Data analytics
+      'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop&auto=format&q=80', // Machine learning
+      'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=400&fit=crop&auto=format&q=80', // AI development
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop&auto=format&q=80', // Technology
+      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop&auto=format&q=80', // Team collaboration
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop&auto=format&q=80', // Innovation
+      'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&h=400&fit=crop&auto=format&q=80', // Digital transformation
+      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop&auto=format&q=80', // AI robot
+      'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=400&fit=crop&auto=format&q=80', // Future tech
+      'https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?w=800&h=400&fit=crop&auto=format&q=80', // AI interface
+      'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop&auto=format&q=80', // Programming
+      'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&auto=format&q=80', // Work collaboration
+      'https://images.unsplash.com/photo-1512758017271-d7b84c2113f1?w=800&h=400&fit=crop&auto=format&q=80', // Digital workflow
+      'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=400&fit=crop&auto=format&q=80', // Cloud computing
+      'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=400&fit=crop&auto=format&q=80', // Business growth
+      'https://images.unsplash.com/photo-1590650153855-d9e808231d41?w=800&h=400&fit=crop&auto=format&q=80'  // AI brain network
+    ];
+    
+    // Use hash to select a consistent image for each title
+    const imageIndex = Math.abs(hash) % imagePool.length;
+    return imagePool[imageIndex];
   };
 
   const imageUrl = post.featuredImage || getImageUrl(post.category || 'ai_technology', post.title || '');
