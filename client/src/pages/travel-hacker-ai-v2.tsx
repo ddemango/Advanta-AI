@@ -150,15 +150,35 @@ export default function TravelHackerAIV2() {
         }, 500);
       }
       
-      if (data.params.cityCode && data.params.checkInDate && data.params.checkOutDate) {
+      // Auto-trigger hotel search if we have city and checkin (create checkout date if missing)
+      if (data.params.cityCode && data.params.checkInDate) {
+        const enhancedParams = { ...data.params };
+        if (!enhancedParams.checkOutDate && enhancedParams.checkInDate) {
+          const checkIn = new Date(enhancedParams.checkInDate);
+          checkIn.setDate(checkIn.getDate() + 7);
+          enhancedParams.checkOutDate = checkIn.toISOString().split('T')[0];
+        }
         setTimeout(() => {
-          triggerHotelSearch(data.params);
+          triggerHotelSearch(enhancedParams);
         }, 1000);
       }
       
-      if (data.params.cityCode && data.params.pickUpDateTime && data.params.dropOffDateTime) {
+      // Auto-trigger car search if we have city and dates
+      if (data.params.cityCode && (data.params.pickUpDateTime || data.params.checkInDate)) {
+        const enhancedParams = { ...data.params };
+        if (!enhancedParams.pickUpDateTime && enhancedParams.checkInDate) {
+          enhancedParams.pickUpDateTime = `${enhancedParams.checkInDate}T10:00:00`;
+        }
+        if (!enhancedParams.dropOffDateTime) {
+          const dropDate = enhancedParams.checkOutDate || (() => {
+            const checkIn = new Date(enhancedParams.checkInDate);
+            checkIn.setDate(checkIn.getDate() + 7);
+            return checkIn.toISOString().split('T')[0];
+          })();
+          enhancedParams.dropOffDateTime = `${dropDate}T10:00:00`;
+        }
         setTimeout(() => {
-          triggerCarSearch(data.params);
+          triggerCarSearch(enhancedParams);
         }, 1500);
       }
       

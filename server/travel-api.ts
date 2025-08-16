@@ -83,6 +83,9 @@ function parseBasic(text: string) {
   
   const cityCode = pickCityCode(tokens);
   
+  // Create default checkout/dropoff date if not provided (7 days after checkin)
+  const defaultCheckout = depart ? `${depart.split('-')[0]}-${depart.split('-')[1]}-${String(parseInt(depart.split('-')[2]) + 7).padStart(2, '0')}` : null;
+  
   return {
     // Flight parameters
     origin,
@@ -94,14 +97,14 @@ function parseBasic(text: string) {
     maxPrice: budget,
     
     // Hotel parameters
-    cityCode: pickCityCode(tokens),
+    cityCode,
     checkInDate: depart,
-    checkOutDate: ret,
+    checkOutDate: ret || defaultCheckout,
     adults: 2,
     
     // Car parameters
     pickUpDateTime: depart ? `${depart}T10:00:00` : null,
-    dropOffDateTime: ret ? `${ret}T10:00:00` : null,
+    dropOffDateTime: (ret || defaultCheckout) ? `${ret || defaultCheckout}T10:00:00` : null,
     passengers: 2
   };
 }
@@ -125,7 +128,9 @@ Extract these parameters:
 - maxPrice: number or null
 - cityCode: IATA city code for hotels/cars (e.g., NYC, PAR, LON)
 - checkInDate: YYYY-MM-DD (same as departDate usually)
-- checkOutDate: YYYY-MM-DD (same as returnDate usually)
+- checkOutDate: YYYY-MM-DD (same as returnDate, or 7 days after checkInDate if no return)
+- pickUpDateTime: YYYY-MM-DDTHH:MM:SS format for car pickup
+- dropOffDateTime: YYYY-MM-DDTHH:MM:SS format for car dropoff
 - adults: number of adults
 - passengers: number for car rental
 
@@ -136,7 +141,12 @@ London -> LHR (airport), LON (city)
 Rome -> FCO (airport), ROM (city)
 Tokyo -> HND (airport), TYO (city)
 
-If dates are vague (like "next month" or "March"), use 2025 for future travel dates. Current date is August 2025.`
+If dates are vague (like "next month" or "March"), use 2025 for future travel dates. Current date is August 2025.
+
+IMPORTANT: Always provide checkOutDate and dropOffDateTime when checkInDate and pickUpDateTime are provided. 
+- If no return/checkout date mentioned, default to 7 days after the check-in/departure date.
+- Hotel stays: checkInDate = departDate, checkOutDate = returnDate OR departDate + 7 days
+- Car rentals: pickUpDateTime = departDate + "T10:00:00", dropOffDateTime = checkOutDate + "T10:00:00"`
         },
         {
           role: "user",
