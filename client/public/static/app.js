@@ -2,14 +2,40 @@ const $  = (id)=>document.getElementById(id);
 const qa = (sel)=>Array.from(document.querySelectorAll(sel));
 
 /* ---------------- Tabs ---------------- */
-qa(".tab").forEach(t=>{
+qa(".travel-tab").forEach(t=>{
   t.onclick = ()=>{
-    qa(".tab").forEach(x=>x.classList.remove("active"));
+    qa(".travel-tab").forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     const name = t.dataset.tab;
     qa("[data-pane]").forEach(p=>p.style.display = (p.dataset.pane===name)?"block":"none");
   };
 });
+
+/* ---------------- Preference Toggle Handlers ---------------- */
+function setupPreferenceToggles() {
+  const checkboxes = ["d_flights_only", "d_include_hotels", "d_include_cars", "d_mistake"];
+  
+  checkboxes.forEach(id => {
+    const checkbox = $(id);
+    if (checkbox) {
+      checkbox.addEventListener('change', function() {
+        console.log(`${id} changed to:`, this.checked);
+        
+        // Special logic for flights only
+        if (id === "d_flights_only" && this.checked) {
+          // When flights only is checked, uncheck hotels and cars
+          const hotelsCheckbox = $("d_include_hotels");
+          const carsCheckbox = $("d_include_cars");
+          if (hotelsCheckbox) hotelsCheckbox.checked = false;
+          if (carsCheckbox) carsCheckbox.checked = false;
+        }
+      });
+    }
+  });
+}
+
+// Initialize preference toggles when page loads
+setTimeout(setupPreferenceToggles, 100);
 
 /* ---------------- Helper utils ---------------- */
 function v(id){ return $(id)?.value || undefined; }
@@ -86,10 +112,13 @@ $("deal_cta").onclick = async ()=>{
   const cabin       = "ECONOMY";
   const nonStop     = false;
   const flex        = v("d_flex");      // exact | +-3 | weekend | month
-  const flightsOnly = $("d_flights_only").checked;
-  const wantHotels  = $("d_include_hotels").checked;
-  const wantCars    = $("d_include_cars").checked;
-  const wantMistake = $("d_mistake").checked;
+  const flightsOnly = $("d_flights_only") ? $("d_flights_only").checked : false;
+  const wantHotels  = $("d_include_hotels") ? $("d_include_hotels").checked : false;
+  const wantCars    = $("d_include_cars") ? $("d_include_cars").checked : false;
+  const wantMistake = $("d_mistake") ? $("d_mistake").checked : false;
+  
+  // Debug log to check checkbox states
+  console.log("Preference toggles:", { flightsOnly, wantHotels, wantCars, wantMistake });
 
   // Build a list of date pairs based on flexibility
   const datePairs = [];
@@ -136,8 +165,10 @@ $("deal_cta").onclick = async ()=>{
         origin, destination: d, departDate: dd, returnDate: rr, nonStop, cabin, maxPrice
       });
       (res.offers||[]).forEach(o=>{
-        // Optionally demote non-mistake fares when user ticks 'Mistake fares'
-        if (wantMistake && o.tier === "standard") o.priceUSD += 0.01; // stable sort nudge
+        // Promote mistake fares when user wants them, or include all offers when not filtering
+        if (wantMistake && o.tier !== "unicorn" && o.tier !== "great") {
+          o.priceUSD += 100; // demote regular fares when mistake fares are preferred
+        }
         allOffers.push({ ...o, _route:`${origin}→${d}`, _dates:`${dd}→${rr}` });
       });
     }
@@ -156,6 +187,7 @@ $("deal_cta").onclick = async ()=>{
 
   // Hotels & Cars (conditional based on preferences)
   if (!flightsOnly && wantHotels){
+    console.log("Searching for hotels...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
     const h = await postJSON("/api/travel/hotels/search", {
       cityCode, checkInDate: datePairs[0][0], checkOutDate: datePairs[0][1], adults: 2, roomQuantity: 1
@@ -164,6 +196,7 @@ $("deal_cta").onclick = async ()=>{
   }
   
   if (!flightsOnly && wantCars){
+    console.log("Searching for cars...");
     const cityCode = guessCityCode(destination || "rome", "ROM");
     const c = await postJSON("/api/travel/cars/search", {
       cityCode, pickUpDateTime: new Date(datePairs[0][0]+"T10:00:00").toISOString(),
