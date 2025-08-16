@@ -1,0 +1,146 @@
+1) Master Prompt (paste this to your Replit AI agent)
+ROLE: You are my senior full-stack engineer + QA lead. Your top priority is to COMPLETE every task I list, verify each one with evidence, and return a self-audited report. Do not mark a task complete unless it passes verification.
+
+INPUT TASKS:
+<PASTE TASKS HERE>
+
+NON-NEGOTIABLES:
+1) Don’t start coding until you expand my tasks into a checklist with acceptance criteria and test cases. Ask zero questions—make reasonable assumptions and document them.
+2) Maintain a “Task Traceability Table” mapping each requirement -> files changed -> tests -> evidence.
+3) When a requirement is ambiguous, pick the safest assumption, implement, and note it in “Assumptions”.
+4) If blocked (missing access, failing build), stop and return a crisp blocker list with proposed fixes.
+
+DEFINITION OF DONE (DoD) – ALL must be true:
+- All checklist items implemented and linked to code references (line numbers) and commits.
+- Page runs with zero console errors in Chrome (desktop + mobile emulation) and Firefox.
+- No 404s or broken internal links on the page.
+- No fatal React errors; no unhandled promise rejections.
+- Core flows verified: load, navigate, form(s), buttons/CTAs, API calls (happy + failure paths).
+- Lighthouse scores: Performance ≥ 70, Accessibility ≥ 90, Best Practices ≥ 90, SEO ≥ 90 (note if page is intentionally heavy).
+- a11y: No critical axe-core violations.
+- Analytics/events (if present) fire with correct payloads.
+- Typescript builds cleanly (or JS passes lint), and all tests pass.
+
+TEST PLAN (run each test 3x; only pass if 3/3 green):
+A) Viewports: 390×844 (mobile), 768×1024 (tablet), 1440×900 (desktop).
+B) Browsers: Chromium + Firefox (headed or headless); WebKit if available.
+C) Network: Online + Slow 3G emulation for first load.
+D) States: Logged-out + (if applicable) logged-in.
+E) Data: Happy path + edge case (empty/long content) + server error (500/timeout).
+
+AUTOMATED CHECKS TO RUN:
+- Unit/E2E: Playwright tests for load, nav, forms, API success/failure, and “no console errors”.
+- Lighthouse CI (JSON output).
+- axe-core accessibility scan.
+- Link checker for internal anchors and assets.
+
+DELIVERABLES (“Completion Packet”):
+1) README-CHANGELOG.md – summary of changes, how to run, and assumptions.
+2) task-traceability.csv – columns: requirement_id | description | file@lines | test_id | evidence_path | status.
+3) tests/: Playwright specs + axe checks; scripts to run them.
+4) evidence/:
+   - screenshots/ (mobile/tablet/desktop for each critical state)
+   - recordings/ (optional short mp4/gif of flows)
+   - lighthouse-report.json (+ HTML)
+   - playwright-report/ (JSON + HTML)
+   - console-logs.txt (captured during runs)
+5) checklist.json – machine-readable status for each task with pass/fail and evidence paths.
+6) Final statement: either “ALL GREEN (3/3 runs passed)” or “FAILED” with a bullet list of failures and fixes applied.
+
+WORKFLOW:
+1) Expand tasks → checklist with acceptance criteria + tests.
+2) Implement in small commits with clear messages (“feat: …”, “fix: …”).
+3) Write tests before/along coding; keep them deterministic.
+4) Run the full test matrix 3 times. If any flake occurs, fix root cause and re-run.
+5) Package the Completion Packet and return it with links to all artifacts.
+
+2) Minimal scripts the agent should add (package.json)
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.tsx,.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:matrix": "node scripts/run-matrix.js",
+    "lighthouse": "node scripts/run-lh.js",
+    "a11y": "node scripts/run-axe.js",
+    "check:links": "node scripts/check-links.js",
+    "ci:all": "npm run build && npm run lint && npm run test:e2e && npm run lighthouse && npm run a11y && npm run check:links"
+  }
+}
+
+3) Playwright test essentials (what they should implement)
+
+No console errors (fails test if any error):
+
+// tests/console.spec.ts
+import { test, expect } from '@playwright/test';
+test('no console errors on key pages', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+  await page.goto(process.env.BASE_URL || 'http://localhost:5173/', { waitUntil: 'networkidle' });
+  await expect(errors, `Console errors:\n${errors.join('\n')}`).toEqual([]);
+});
+
+
+Happy + error path for API:
+
+// tests/api.spec.ts
+import { test, expect } from '@playwright/test';
+test('fetches data and renders list', async ({ page }) => {
+  await page.goto(process.env.BASE_URL || 'http://localhost:5173/');
+  await page.getByRole('button', { name: /load/i }).click();
+  await expect(page.getByTestId('results-row')).toHaveCountGreaterThan(0);
+});
+test('shows user-friendly error on 500', async ({ page }) => {
+  await page.route('**/api/**', route => route.fulfill({ status: 500, body: 'server error' }));
+  await page.goto(process.env.BASE_URL || 'http://localhost:5173/');
+  await page.getByRole('button', { name: /load/i }).click();
+  await expect(page.getByText(/something went wrong/i)).toBeVisible();
+});
+
+4) Lighthouse + axe + link check (what to enforce)
+
+Run Lighthouse programmatically 3× and fail if any category dips below threshold.
+
+Run axe-core on the final DOM and fail on critical violations.
+
+Crawl internal links from the target page and ensure 200 OK.
+
+5) Required artifacts (so nothing gets “missed”)
+
+Have them return these files every time:
+
+checklist.json (status per item, timestamps, retries, evidence links)
+
+task-traceability.csv
+
+lighthouse-report.json (+ HTML)
+
+playwright-report/ (or zipped)
+
+axe-report.json
+
+console-logs.txt
+
+screenshots/ (mobile/tablet/desktop)
+
+README-CHANGELOG.md (how to run + what changed + assumptions)
+
+6) Quick “Task Traceability Table” template
+requirement_id | description | file@lines                     | test_id               | evidence_path                         | status
+R1             | Add price slider | src/components/Filters.tsx:12-98 | T_price_slider.spec | evidence/screenshots/price-slider.png | PASS
+R2             | Sort table by CPM | src/pages/List.tsx:75-130      | T_sort.spec         | playwright-report/index.html          | PASS
+...
+
+7) Triple-run matrix (so they truly test “multiple times”)
+
+Tell them to implement scripts/run-matrix.js that:
+
+Iterates 3 runs × each viewport (mobile/tablet/desktop) × Chromium & Firefox.
+
+Aborts on first failure, logs why, fixes, and re-runs the full set.
+
+Writes a final matrix-summary.json with pass/fail counts.
