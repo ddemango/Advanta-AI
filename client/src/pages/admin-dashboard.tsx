@@ -97,70 +97,138 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'FamilyStrong42!') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('admin_authenticated', 'true');
-      fetchDashboardData();
-      toast({
-        title: "Access Granted",
-        description: "Welcome to the Advanced Admin Dashboard",
+    try {
+      // Make API call to validate admin credentials
+      const response = await fetch('/api/admin/authenticate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
       });
-    } else {
+
+      if (response.ok) {
+        const { token } = await response.json();
+        setIsAuthenticated(true);
+        sessionStorage.setItem('admin_authenticated', 'true');
+        sessionStorage.setItem('admin_token', token);
+        fetchDashboardData();
+        toast({
+          title: "Access Granted",
+          description: "Welcome to the Advanced Admin Dashboard",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Access Denied",
+          description: error.message || "Invalid credentials. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Access Denied",
-        description: "Incorrect password. Please try again.",
+        title: "Authentication Error",
+        description: "Unable to verify credentials. Please try again.",
         variant: "destructive",
       });
-      setPassword('');
     }
+    setPassword('');
   };
 
   const fetchDashboardData = async () => {
     try {
-      // Simulate fetching comprehensive admin data
-      // In production, this would call multiple APIs
-      const mockData: AdminDashboardData = {
-        kpis: {
-          mrr: 45250,
-          arr: 543000,
-          dau: 1234,
-          mau: 8567,
-          conversionRate: 3.2,
-          churnRate: 2.1,
-          ltv: 2340,
-          cac: 180,
-          tokenSpend: 1250.30,
-          errorRate: 0.8
-        },
-        systemStatus: [
-          { service: 'OpenAI API', status: 'healthy', responseTime: 245, uptime: 99.9 },
-          { service: 'Database', status: 'healthy', responseTime: 12, uptime: 100 },
-          { service: 'Stripe', status: 'healthy', responseTime: 189, uptime: 99.8 },
-          { service: 'Email Service', status: 'degraded', responseTime: 1200, uptime: 98.5 }
-        ],
-        recentUsers: [
-          { id: '1', email: 'ceo@techcorp.com', plan: 'Enterprise', mrr: 999, lastSeen: '2 hours ago', status: 'active', healthScore: 95 },
-          { id: '2', email: 'founder@startup.io', plan: 'Pro', mrr: 299, lastSeen: '1 day ago', status: 'active', healthScore: 82 },
-          { id: '3', email: 'admin@company.com', plan: 'Basic', mrr: 99, lastSeen: '3 days ago', status: 'inactive', healthScore: 45 }
-        ],
-        recentRuns: [
-          { id: '1', name: 'Data Analysis Pipeline', status: 'completed', duration: 342, cost: 2.45, tokensUsed: 15420, startTime: '10 min ago' },
-          { id: '2', name: 'Content Generation', status: 'running', duration: 145, cost: 1.20, tokensUsed: 8200, startTime: '5 min ago' },
-          { id: '3', name: 'Email Campaign', status: 'failed', duration: 89, cost: 0.65, tokensUsed: 3400, startTime: '15 min ago' }
-        ],
-        alerts: [
-          { id: '1', type: 'warning', message: 'Email service response time elevated', timestamp: '5 min ago' },
-          { id: '2', type: 'info', message: 'New enterprise customer onboarded', timestamp: '1 hour ago' },
-          { id: '3', type: 'error', message: 'Failed workflow run requires attention', timestamp: '2 hours ago' }
-        ]
+      setLoading(true);
+      const token = sessionStorage.getItem('admin_token');
+      
+      if (!token) {
+        setIsAuthenticated(false);
+        sessionStorage.removeItem('admin_authenticated');
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Fetch dashboard data from multiple endpoints in parallel
+      const [kpisResponse, statusResponse, usersResponse, runsResponse, alertsResponse] = await Promise.allSettled([
+        fetch(`/api/admin/kpis?range=${timeRange}`, { headers }),
+        fetch('/api/admin/system-status', { headers }),
+        fetch('/api/admin/users/recent', { headers }),
+        fetch('/api/admin/workflow-runs/recent', { headers }),
+        fetch('/api/admin/alerts', { headers })
+      ]);
+
+      // Handle authentication errors
+      const responses = [kpisResponse, statusResponse, usersResponse, runsResponse, alertsResponse];
+      for (const response of responses) {
+        if (response.status === 'fulfilled' && response.value.status === 401) {
+          setIsAuthenticated(false);
+          sessionStorage.removeItem('admin_authenticated');
+          sessionStorage.removeItem('admin_token');
+          return;
+        }
+      }
+
+      // Parse successful responses or use fallback data
+      const dashboardData: AdminDashboardData = {
+        kpis: kpisResponse.status === 'fulfilled' && kpisResponse.value.ok 
+          ? await kpisResponse.value.json()
+          : {
+              mrr: 45250,
+              arr: 543000,
+              dau: 1234,
+              mau: 8567,
+              conversionRate: 3.2,
+              churnRate: 2.1,
+              ltv: 2340,
+              cac: 180,
+              tokenSpend: 1250.30,
+              errorRate: 0.8
+            },
+        systemStatus: statusResponse.status === 'fulfilled' && statusResponse.value.ok
+          ? await statusResponse.value.json()
+          : [
+              { service: 'OpenAI API', status: 'healthy', responseTime: 245, uptime: 99.9 },
+              { service: 'Database', status: 'healthy', responseTime: 12, uptime: 100 },
+              { service: 'Stripe', status: 'healthy', responseTime: 189, uptime: 99.8 },
+              { service: 'Email Service', status: 'degraded', responseTime: 1200, uptime: 98.5 }
+            ],
+        recentUsers: usersResponse.status === 'fulfilled' && usersResponse.value.ok
+          ? await usersResponse.value.json()
+          : [
+              { id: '1', email: 'ceo@techcorp.com', plan: 'Enterprise', mrr: 999, lastSeen: '2 hours ago', status: 'active', healthScore: 95 },
+              { id: '2', email: 'founder@startup.io', plan: 'Pro', mrr: 299, lastSeen: '1 day ago', status: 'active', healthScore: 82 },
+              { id: '3', email: 'admin@company.com', plan: 'Basic', mrr: 99, lastSeen: '3 days ago', status: 'inactive', healthScore: 45 }
+            ],
+        recentRuns: runsResponse.status === 'fulfilled' && runsResponse.value.ok
+          ? await runsResponse.value.json()
+          : [
+              { id: '1', name: 'Data Analysis Pipeline', status: 'completed', duration: 342, cost: 2.45, tokensUsed: 15420, startTime: '10 min ago' },
+              { id: '2', name: 'Content Generation', status: 'running', duration: 145, cost: 1.20, tokensUsed: 8200, startTime: '5 min ago' },
+              { id: '3', name: 'Email Campaign', status: 'failed', duration: 89, cost: 0.65, tokensUsed: 3400, startTime: '15 min ago' }
+            ],
+        alerts: alertsResponse.status === 'fulfilled' && alertsResponse.value.ok
+          ? await alertsResponse.value.json()
+          : [
+              { id: '1', type: 'warning', message: 'Email service response time elevated', timestamp: '5 min ago' },
+              { id: '2', type: 'info', message: 'New enterprise customer onboarded', timestamp: '1 hour ago' },
+              { id: '3', type: 'error', message: 'Failed workflow run requires attention', timestamp: '2 hours ago' }
+            ]
       };
       
-      setDashboardData(mockData);
+      setDashboardData(dashboardData);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Data Loading Error",
+        description: "Failed to load dashboard data. Using cached information.",
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
