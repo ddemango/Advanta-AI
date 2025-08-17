@@ -138,7 +138,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-1" />
-              {formatDate(cleanPost.date)}
+              {formatDate(cleanPost.date || cleanPost.createdAt)}
             </div>
           </div>
           <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors line-clamp-2">
@@ -246,7 +246,7 @@ const BlogPostCard = ({ post }: { post: BlogPost }) => {
             {post.category}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            {formatDate(post.createdAt)}
+            {formatDate(post.createdAt || post.date)}
           </span>
         </div>
         <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
