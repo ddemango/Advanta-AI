@@ -10,23 +10,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Clock, ArrowRight, Search } from 'lucide-react';
+import { CalendarDays, Clock, ArrowRight, Search, Eye } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 import { BlogPost } from '@shared/schema';
 import { useLocation } from 'wouter';
 import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
 
-// Real blog categories - NO MOCK DATA
+// Real blog categories aligned with backend
 const blogCategories = [
   { id: 'all', name: 'All Posts' },
   { id: 'ai_technology', name: 'AI Technology' },
   { id: 'business_strategy', name: 'Business Strategy' },
-  { id: 'case_studies', name: 'Case Studies' },
-  { id: 'tutorials', name: 'Tutorials' },
-  { id: 'industry_insights', name: 'Industry Insights' },
-  { id: 'news', name: 'News' },
-  { id: 'marketing_ai', name: 'Marketing AI' },
-  { id: 'resources', name: 'Resources' }
+  { id: 'automation', name: 'Automation' },
+  { id: 'marketing', name: 'Marketing' },
+  { id: 'engineering', name: 'Engineering' }
 ];
 
 // Real trending tags from actual blog posts
@@ -34,6 +31,35 @@ const featuredTags = [
   'AI-Enhanced CRM', 'Sales Funnel', 'Marketing Automation', 'Business Intelligence', 
   'ROI Optimization', 'Enterprise AI', 'Workflow Automation', 'Data Analytics'
 ];
+
+// Helper functions
+const fetchJson = <T,>(url: string) =>
+  fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.json() as Promise<T>; });
+
+const canonicalSlug = (p: any) => {
+  if (p.slug) return String(p.slug);
+  if (p.filename) return String(p.filename).replace(/\.html$/,'').replace(/^\d{4}-\d{2}-\d{2}-/,'');
+  return String(p.title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g,'');
+};
+
+// Unified post type for handling both file and legacy posts
+type PostCardItem = {
+  id?: string;
+  filename?: string;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  preview?: string;
+  ogImage?: string;
+  date?: string;
+  reading_time: number;
+  viewCount: number;
+  source: 'file' | 'legacy';
+};
 
 // Function to format date with error handling
 const formatDate = (dateString: string | Date | null | undefined) => {
@@ -51,22 +77,26 @@ const formatDate = (dateString: string | Date | null | undefined) => {
   });
 };
 
-// Function to clean corrupted blog data
-const cleanBlogData = (post: any) => {
-  return {
-    ...post,
-    title: post.title?.replace(/\*\*/g, '').replace(/\*/g, '').trim() || 'AI Technology Article',
-    category: post.category?.replace(/\*\*/g, '').replace(/\*/g, '').trim() || 'ai_technology',
-    description: post.description?.replace(/\*\*/g, '').replace(/\*/g, '').replace(/strong>\*\/stron/g, '').trim() || 'Discover the latest AI insights and innovations.',
-    preview: post.preview?.replace(/\*\*/g, '').replace(/\*/g, '').trim(),
-    readingTime: Math.min(Math.max(parseInt(post.readingTime) || 5, 1), 15) // Cap at 15 minutes
-  };
-};
+// Normalize posts from different sources into unified format
+const normalize = (p: any): PostCardItem => ({
+  id: p.id,
+  filename: p.filename,
+  slug: canonicalSlug(p),
+  title: (p.title || '').trim(),
+  category: (p.category || 'ai_technology').trim(),
+  description: (p.description || p.summary || p.preview || '').trim(),
+  preview: p.preview,
+  ogImage: p.ogImage || p.featuredImage,
+  date: p.date || p.createdAt,
+  reading_time: Number.isFinite(p.reading_time) ? p.reading_time :
+                Number.isFinite(p.readingTime) ? p.readingTime : 5,
+  viewCount: Number(p.viewCount || 0),
+  source: p.filename ? 'file' : 'legacy',
+});
 
-// Blog Post Card Component for File-Based Posts
-const FileBlogPostCard = ({ post }: { post: any }) => {
+// Unified Blog Post Card Component
+const UnifiedBlogPostCard = ({ post }: { post: PostCardItem }) => {
   const [, navigate] = useLocation();
-  const cleanPost = cleanBlogData(post);
   // Generate unique image URL for each blog post
   const getImageUrl = (category: string, title: string) => {
     // Create a simple hash from the title to ensure consistent but unique images
@@ -109,7 +139,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
     return imagePool[imageIndex];
   };
 
-  const imageUrl = getImageUrl(cleanPost.category, cleanPost.title);
+  const imageUrl = post.ogImage || getImageUrl(post.category, post.title);
 
   return (
     <motion.div
@@ -119,17 +149,17 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
     >
       <Card className="h-full hover:shadow-lg transition-all duration-300 overflow-hidden">
         {/* Featured Image */}
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative w-full aspect-[1200/630] overflow-hidden">
           <img 
             src={imageUrl}
-            alt={cleanPost.title}
+            alt={post.title}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
           <div className="absolute top-4 left-4">
             <Badge variant="secondary" className="bg-white/90 text-black font-medium">
-              {cleanPost.category.replace(/_/g, ' ').toUpperCase()}
+              {post.category.replace(/_/g, ' ').toUpperCase()}
             </Badge>
           </div>
         </div>
@@ -138,37 +168,27 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarDays className="h-4 w-4 mr-1" />
-              {formatDate(cleanPost.date || cleanPost.createdAt)}
+              {formatDate(post.date)}
             </div>
           </div>
           <CardTitle className="text-xl leading-tight hover:text-blue-600 transition-colors line-clamp-2">
-            {cleanPost.title}
+            {post.title}
           </CardTitle>
         </CardHeader>
         
         <CardContent>
           <p className="text-muted-foreground line-clamp-3 mb-4">
-            {cleanPost.description || cleanPost.preview?.substring(0, 180) || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}...
+            {post.description || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
-              {cleanPost.readingTime} min read
+              {post.reading_time} min read
             </div>
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => {
-                console.log('FileBlogPostCard post data:', cleanPost);
-                const slug = cleanPost.slug || cleanPost.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                console.log('Using slug:', slug);
-                if (slug && slug !== 'undefined') {
-                  navigate(`/blog/${slug}`);
-                } else {
-                  console.error('No valid slug available for post:', cleanPost);
-                  alert('Sorry, this blog post is not available yet.');
-                }
-              }}
+              onClick={() => navigate(`/blog/${post.slug}`)}
               className="hover:text-blue-600"
             >
               Read More <ArrowRight className="h-4 w-4 ml-1" />
@@ -180,101 +200,7 @@ const FileBlogPostCard = ({ post }: { post: any }) => {
   );
 };
 
-// Legacy Blog Post Card Component
-const BlogPostCard = ({ post }: { post: BlogPost }) => {
-  const [, navigate] = useLocation();
-  const cleanPost = cleanBlogData(post);
-  
-  // Generate unique image URL for each blog post
-  const getImageUrl = (category: string, title: string) => {
-    // Create a simple hash from the title to ensure consistent but unique images
-    const hash = title.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-    
-    // Pool of high-quality AI/tech/business related images
-    const imagePool = [
-      'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80', // AI brain
-      'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&auto=format&q=80', // Business strategy
-      'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=400&fit=crop&auto=format&q=80', // Automation
-      'https://images.unsplash.com/photo-1556155092-490a1ba16284?w=800&h=400&fit=crop&auto=format&q=80', // Marketing AI
-      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&auto=format&q=80', // Case studies
-      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop&auto=format&q=80', // Tutorials
-      'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=800&h=400&fit=crop&auto=format&q=80', // Industry insights
-      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=400&fit=crop&auto=format&q=80', // News
-      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=400&fit=crop&auto=format&q=80', // Resources
-      'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800&h=400&fit=crop&auto=format&q=80', // Data analytics
-      'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop&auto=format&q=80', // Machine learning
-      'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&h=400&fit=crop&auto=format&q=80', // AI development
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop&auto=format&q=80', // Technology
-      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop&auto=format&q=80', // Team collaboration
-      'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop&auto=format&q=80', // Innovation
-      'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&h=400&fit=crop&auto=format&q=80', // Digital transformation
-      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop&auto=format&q=80', // AI robot
-      'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=400&fit=crop&auto=format&q=80', // Future tech
-      'https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?w=800&h=400&fit=crop&auto=format&q=80', // AI interface
-      'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=400&fit=crop&auto=format&q=80', // Programming
-      'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&auto=format&q=80', // Work collaboration
-      'https://images.unsplash.com/photo-1512758017271-d7b84c2113f1?w=800&h=400&fit=crop&auto=format&q=80', // Digital workflow
-      'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=400&fit=crop&auto=format&q=80', // Cloud computing
-      'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=400&fit=crop&auto=format&q=80', // Business growth
-      'https://images.unsplash.com/photo-1590650153855-d9e808231d41?w=800&h=400&fit=crop&auto=format&q=80'  // AI brain network
-    ];
-    
-    // Use hash to select a consistent image for each title
-    const imageIndex = Math.abs(hash) % imagePool.length;
-    return imagePool[imageIndex];
-  };
 
-  const imageUrl = post.featuredImage || getImageUrl(post.category || 'ai_technology', post.title || '');
-  
-  return (
-    <Card className="overflow-hidden h-full flex flex-col hover:border-primary/50 transition-colors cursor-pointer"
-      onClick={() => navigate(`/blog/${post.slug}`)}>
-      <div className="h-48 overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt={post.title} 
-          className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
-          loading="lazy"
-        />
-      </div>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center mb-2">
-          <Badge variant="outline" className="text-xs text-primary">
-            {post.category}
-          </Badge>
-          <span className="text-xs text-muted-foreground">
-            {formatDate(post.createdAt || post.date)}
-          </span>
-        </div>
-        <CardTitle className="line-clamp-2 hover:text-primary transition-colors">
-          {cleanPost.title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="py-2 flex-grow">
-        <p className="text-muted-foreground text-sm line-clamp-3">
-          {post.summary}
-        </p>
-      </CardContent>
-      <CardFooter className="pt-2 border-t border-border flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1">
-            <i className="fas fa-clock text-xs text-muted-foreground"></i>
-            <span className="text-xs text-muted-foreground">{cleanPost.readingTime} min read</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1">
-            <i className="fas fa-eye text-xs text-muted-foreground"></i>
-            <span className="text-xs text-muted-foreground">{post.viewCount || 0}</span>
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
-  );
-};
 
 
 
@@ -311,42 +237,42 @@ export default function Blog() {
   // Fetch automated blog posts from file system (priority)
   const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
     queryKey: ['/api/blog/posts'],
-    staleTime: 0, // Always fresh - no caching for new blog posts
-    refetchInterval: 5 * 1000, // Refresh every 5 seconds
-    refetchOnWindowFocus: true, // Refresh when user comes back to tab
+    queryFn: () => fetchJson<any[]>('/api/blog/posts'),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch blog system status
   const { data: blogStatus } = useQuery({
     queryKey: ['/api/blog/status'],
-    refetchInterval: 60 * 1000, // Check every minute
+    queryFn: () => fetchJson<any>('/api/blog/status'),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   // Legacy database posts (fallback)
-  const { data: blogPosts, isLoading, error } = useQuery({
+  const { data: blogPosts = [], isLoading, error } = useQuery({
     queryKey: ['/api/blog'],
-    staleTime: 0, // Always fresh - no caching for new blog posts
-    refetchInterval: 5 * 1000, // Refresh every 5 seconds
-    refetchOnWindowFocus: true, // Refresh when user comes back to tab
+    queryFn: () => fetchJson<any[]>('/api/blog'),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   
-  // Combine and filter posts (prioritize automated posts)
-  const allPosts = [...(filePosts || []), ...(blogPosts || [])];
+  // Normalize, dedupe, and sort posts
+  const combined = [...(filePosts || []), ...(blogPosts || [])].map(normalize);
+  const seen = new Set<string>();
+  const allPosts = combined.filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
+                           .sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')));
   
-  const filteredPosts = allPosts.filter((post: any) => {
-    const matchesCategory = currentCategory === 'all' || post.category === currentCategory;
-    const matchesSearch = searchQuery === '' || 
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (post.preview && post.preview.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (post.summary && post.summary.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+  const filteredPosts = allPosts.filter(p => {
+    const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = !q || [p.title, p.description, p.preview].some(s => (s||'').toLowerCase().includes(q));
     return matchesCategory && matchesSearch;
   });
   
-  // Featured posts - get top 3 by view count
-  const featuredPosts = blogPosts ? 
-    [...blogPosts].sort((a: BlogPost, b: BlogPost) => (b.viewCount || 0) - (a.viewCount || 0)).slice(0, 3) : 
-    [];
+  // Featured posts - get top 3 by view count from unified list
+  const featuredPosts = [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3);
 
   return (
     <>
@@ -389,7 +315,7 @@ export default function Blog() {
               
               {/* Subtitle */}
               <motion.p variants={fadeInUp} className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed">
-                Discover the latest trends, strategies, and innovations in AI technology and applications. We generates 3 high-quality blog posts daily at 8 AM, 1 PM, and 6 PM.
+                Discover the latest trends, strategies, and innovations in AI technology and applications. We generate 3 high-quality blog posts daily at 8 AM, 1 PM, and 6 PM.
               </motion.p>
               
               {/* Search Bar */}
@@ -424,8 +350,8 @@ export default function Blog() {
             <section className="mb-16 mt-20">
               <h2 className="text-2xl font-bold mb-6">Featured Articles</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {featuredPosts.map((post: BlogPost) => (
-                  <BlogPostCard key={post.id} post={post} />
+                {featuredPosts.map((post: PostCardItem) => (
+                  <UnifiedBlogPostCard key={post.id || post.slug} post={post} />
                 ))}
               </div>
             </section>
@@ -501,23 +427,17 @@ export default function Blog() {
                     {blogStatus && (
                       <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                          Daily Blog System: {blogStatus.scheduler?.isRunning ? '🟢 Active' : '🔴 Inactive'} | 
+                          Daily Blog System: {(blogStatus as any).scheduler?.isRunning ? '🟢 Active' : '🔴 Inactive'} | 
                           {allPosts.length} automated posts | 
-                          {blogStatus.scheduler?.activeTasks || 0} active schedules
+                          {(blogStatus as any).scheduler?.activeTasks || 0} active schedules
                         </p>
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPosts.map((post: any) => (
-                      <div key={post.id || post.slug || post.filename}>
-                        {post.filename ? (
-                          <FileBlogPostCard post={post} />
-                        ) : (
-                          <BlogPostCard post={post} />
-                        )}
-                      </div>
+                    {filteredPosts.map((post: PostCardItem) => (
+                      <UnifiedBlogPostCard key={post.id || post.slug} post={post} />
                     ))}
                   </div>
                 )}

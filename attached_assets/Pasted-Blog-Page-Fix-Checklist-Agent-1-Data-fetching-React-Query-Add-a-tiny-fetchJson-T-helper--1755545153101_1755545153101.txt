@@ -1,0 +1,107 @@
+Blog Page Fix Checklist (Agent)
+1) Data fetching (React Query)
+
+ Add a tiny fetchJson<T>() helper.
+
+ Provide a queryFn for every useQuery:
+
+/api/blog/posts → file-based posts
+
+/api/blog/status → system status
+
+/api/blog → legacy posts (fallback)
+
+ Set staleTime: 60_000 and refetchOnWindowFocus: false for all three.
+
+ Remove aggressive 5s polling (or increase to ≥60s if polling is required).
+
+2) Categories (align with backend)
+
+ Replace the blogCategories list with:
+
+all, ai_technology, business_strategy, automation, marketing, engineering
+
+
+ Ensure generator/indexer emits these exact IDs.
+
+3) Slug canonicalization (navigation)
+
+ Implement canonicalSlug(p):
+
+use p.slug
+
+else derive from p.filename by stripping .html and the leading YYYY-MM-DD-
+
+else fallback from title (slugify)
+
+ Use navigate(/blog/${canonicalSlug(post)}) everywhere (no /posts/*.html links in UI).
+
+4) Normalize + dedupe + sort posts
+
+ Create normalize(p) to map file + legacy posts to a unified shape:
+
+slug, title, category, description (or summary/preview), ogImage (or featuredImage), date (date or createdAt), reading_time (reading_time or readingTime), viewCount
+
+ Merge arrays → dedupe by slug (prefer file source).
+
+ Sort newest first by date (string compare on YYYY-MM-DD).
+
+5) Filtering & search
+
+ Filter by category: include when currentCategory === 'all' || p.category === currentCategory.
+
+ Text search: compare lowercase against title, description, preview defensively.
+
+ (Optional) Debounce search input (300ms).
+
+6) Featured posts
+
+ Compute from the normalized combined list (not legacy only):
+
+Sort by viewCount desc; take top 3.
+
+7) Card components
+
+ Prefer server values: reading_time, ogImage, description.
+
+ Image selection: post.ogImage || hashed Unsplash fallback.
+
+ Prevent CLS: wrap image in aspect-[1200/630] container.
+
+ Button/row click uses canonical slug.
+
+ Replace all Font Awesome <i class="fas ..."> with Lucide icons already imported (e.g., Eye, Clock).
+
+8) “Cleaning” function
+
+ Remove over-aggressive asterisk stripping and the bad regex fragment.
+
+ Don’t clamp reading time arbitrarily—use server reading_time if present; fallback to 5.
+
+9) Status & copy
+
+ If blogStatus exists, show a small status pill (already present).
+
+ Fix hero subtitle typo: “We generate 3 high-quality blog posts daily at 8 AM, 1 PM, and 6 PM.”
+
+10) Performance nits
+
+ Avoid double polling; rely on cache (staleTime) or a manual refresh.
+
+ Ensure images use loading="lazy".
+
+ Remove heavy console logs in production (e.g., console.log('FileBlogPostCard post data…')).
+
+11) Types & safety
+
+ Define a PostCardItem interface and type component props (no any).
+
+ Guard against missing fields in UI (e.g., description || preview || '').
+
+ Keep formatDate() but always pass post.date from server.
+
+12) Pagination placeholder
+
+ Keep current static pager UI disabled.
+
+ (Prep) Read nextCursor once backend pagination lands; wire infinite scroll later.

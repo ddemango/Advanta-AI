@@ -1,0 +1,195 @@
+Critical issues & how to fix them
+1) Broken/incomplete code (copy error)
+
+The snippet ends mid-URL (...q=80', // AI brain ... '?w=800&h=400&fit=crop&auto=).
+➤ Fix: complete the imagePool array and ensure the function returns a URL (and that the component actually uses it).
+
+2) Navigation is unclear / potentially broken
+
+You grab const [, navigate] = useLocation(); but I can’t see it used to open the post.
+
+Also, make sure you link to a unified canonical route (e.g., /blog/:slug) rather than raw /posts/*.html.
+➤ Fix: always route to /blog/${post.slug} (where slug strips the date prefix).
+
+const handleOpen = () => {
+  const slug = (post.slug || post.filename || '')
+    .replace(/\.html$/,'')
+    .replace(/^\d{4}-\d{2}-\d{2}-/, '');
+  navigate(`/blog/${slug}`);
+};
+
+3) Category list doesn’t match your backend
+
+Your server uses categories like ai_technology, business_strategy, automation, etc. Here you have case_studies, tutorials, industry_insights, news, marketing_ai, resources. If the API returns automation but your tab list doesn’t include it, filters won’t work.
+➤ Fix: align with the backend set (and add automation).
+
+const blogCategories = [
+  { id: 'all', name: 'All Posts' },
+  { id: 'ai_technology', name: 'AI Technology' },
+  { id: 'business_strategy', name: 'Business Strategy' },
+  { id: 'automation', name: 'Automation' },
+  { id: 'marketing', name: 'Marketing' },
+  { id: 'engineering', name: 'Engineering' }
+];
+
+
+(If you truly need the others, ensure the generator/indexer returns those exact ids.)
+
+4) “Featured tags” are hardcoded and mislabeled as “real”
+
+The featuredTags array is static while the comment says “Real trending tags”. That’s misleading and will drift from actual content.
+➤ Fix: derive top tags from the /api/blog/posts response (count & sort), or rename comment to “placeholder”.
+
+5) cleanBlogData over-cleans and can corrupt content
+
+It strips all *, including legitimate emphasis, and has a stray replace token (/strong>\*\/stron/) that looks like a bad paste.
+
+It also clamps reading time arbitrarily, ignoring the server-computed reading_time.
+➤ Fix: prefer server fields; use minimal fallback cleaning; don’t blindly strip all asterisks.
+
+const cleanBlogData = (post: any) => {
+  const stripArtifacts = (s?: string) => (s ?? '').replace(/<\/?strong>/gi,'').trim();
+  return {
+    ...post,
+    title: (post.title || 'AI Technology Article').trim(),
+    category: (post.category || 'ai_technology').trim(),
+    description: stripArtifacts(post.description) || 'Discover the latest AI insights and innovations.',
+    preview: (post.preview ?? '').trim(),
+    // prefer server reading_time; fallback to 5–15
+    reading_time: Number.isFinite(post.reading_time) 
+      ? post.reading_time 
+      : Math.min(Math.max(parseInt(post.readingTime,10) || 5, 1), 15),
+  };
+};
+
+6) getImageUrl hashing logic is unsafe & ignores post images
+
+You calculate a hash but don’t mod it to the pool length (and negative hashes will break an index).
+
+You also ignore post.ogImage, which you already generate on the server.
+➤ Fix: use post.ogImage first; otherwise use a stable hash→pool index.
+
+const getImageUrl = (category: string, title: string, ogImage?: string) => {
+  if (ogImage) return ogImage;
+  const imagePool = [
+    'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=630&fit=crop&auto=format&q=80',
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=630&fit=crop&auto=format&q=80',
+    'https://images.unsplash.com/photo-1551281044-8e8b5953ab4c?w=1200&h=630&fit=crop&auto=format&q=80',
+    'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1200&h=630&fit=crop&auto=format&q=80',
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=630&fit=crop&auto=format&q=80',
+  ];
+  let hash = 0;
+  for (let i = 0; i < (title || category).length; i++) {
+    hash = (hash << 5) - hash + (title || category).charCodeAt(i);
+    hash |= 0;
+  }
+  const idx = Math.abs(hash) % imagePool.length;
+  return imagePool[idx];
+};
+
+
+Also consider CLS: set intrinsic sizes or wrap images with fixed aspect ratio (e.g., Tailwind aspect-[1200/630]) to avoid layout shift.
+
+7) Type safety gaps
+
+post: any and imported BlogPost from @shared/schema aren’t used. This invites runtime bugs.
+➤ Fix: define a proper type mirroring your API and use it throughout.
+
+type PostIndexItem = {
+  filename: string;
+  date: string;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  ogImage?: string;
+  reading_time: number;
+  viewCount: number;
+  tags?: string[];
+};
+
+8) Date formatting could show “Recent” for valid inputs
+
+new Date('YYYY-MM-DD') is fine, but if you ever pass a filename or null, you’ll get “Recent”. That’s OK as a fallback, but make sure upstream passes ISO dates from the server.
+➤ Fix: keep function, but ensure you feed post.date from the API (which your server extracts from filename).
+
+9) Missing react-query queryFn in the list/post pages (likely elsewhere)
+
+This snippet doesn’t show fetching, but earlier code used useQuery without queryFn. That fetches nothing unless you set a default queryFn globally.
+➤ Fix: always pass a queryFn:
+
+const fetchJson = <T,>(u: string) => fetch(u).then(r => { if (!r.ok) throw new Error(`${r.status} ${u}`); return r.json() as Promise<T>; });
+const { data } = useQuery({ queryKey: ['/api/blog/posts'], queryFn: () => fetchJson<PostIndexItem[]>('/api/blog/posts') });
+
+10) SEO/UX: keep a canonical link & use server data where possible
+
+If your server provides description, ogImage, reading_time, and slug, don’t recompute on the client unless missing.
+
+In the page component, set <Helmet> tags from the fetched post payload.
+
+Cleaned-up card component (drop-in)
+type PostIndexItem = {
+  filename: string;
+  date: string;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  ogImage?: string;
+  reading_time: number;
+  viewCount: number;
+  tags?: string[];
+};
+
+const formatDate = (dateString?: string | Date | null) => {
+  if (!dateString) return 'Recent';
+  const d = new Date(dateString);
+  return isNaN(d.getTime())
+    ? 'Recent'
+    : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
+const normalizePost = (post: PostIndexItem): PostIndexItem & { imageUrl: string } => {
+  const cleaned: PostIndexItem = {
+    ...post,
+    title: (post.title || 'AI Technology Article').trim(),
+    category: (post.category || 'ai_technology').trim(),
+    description: (post.description || 'Discover the latest AI insights and innovations.').trim(),
+    reading_time: Number.isFinite(post.reading_time) ? post.reading_time : 5,
+  };
+  const imageUrl = getImageUrl(cleaned.category, cleaned.title, cleaned.ogImage);
+  return { ...cleaned, imageUrl };
+};
+
+const FileBlogPostCard = ({ post }: { post: PostIndexItem }) => {
+  const [, navigate] = useLocation();
+  const p = normalizePost(post);
+
+  const openPost = () => navigate(`/blog/${p.slug}`);
+
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      {p.imageUrl && (
+        <div className="w-full aspect-[1200/630] bg-neutral-100 overflow-hidden">
+          <img src={p.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+        </div>
+      )}
+      <CardHeader>
+        <Badge variant="secondary" className="mb-2 capitalize">{p.category.replace('_',' ')}</Badge>
+        <CardTitle className="line-clamp-2">{p.title}</CardTitle>
+        <div className="flex items-center gap-3 text-xs text-neutral-600 mt-1">
+          <span className="inline-flex items-center gap-1"><CalendarDays size={14} /> {formatDate(p.date)}</span>
+          <span className="inline-flex items-center gap-1"><Clock size={14} /> {p.reading_time} min read</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-neutral-700 line-clamp-3">{p.description}</p>
+      </CardContent>
+      <CardFooter>
+        <Button onClick={openPost} variant="ghost" className="gap-2">
+          Read post <ArrowRight size={16} />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};

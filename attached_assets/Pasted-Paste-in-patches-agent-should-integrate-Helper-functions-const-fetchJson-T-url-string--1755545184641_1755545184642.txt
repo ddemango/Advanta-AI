@@ -1,0 +1,96 @@
+Paste-in patches (agent should integrate)
+
+Helper functions
+
+const fetchJson = <T,>(url: string) =>
+  fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.json() as Promise<T>; });
+
+const canonicalSlug = (p: any) => {
+  if (p.slug) return String(p.slug);
+  if (p.filename) return String(p.filename).replace(/\.html$/,'').replace(/^\d{4}-\d{2}-\d{2}-/,'');
+  return String(p.title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g,'');
+};
+
+
+Queries
+
+const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
+  queryKey: ['/api/blog/posts'],
+  queryFn: () => fetchJson<any[]>('/api/blog/posts'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+const { data: blogStatus } = useQuery({
+  queryKey: ['/api/blog/status'],
+  queryFn: () => fetchJson<any>('/api/blog/status'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+const { data: blogPosts = [], isLoading, error } = useQuery({
+  queryKey: ['/api/blog'],
+  queryFn: () => fetchJson<any[]>('/api/blog'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+
+Normalize + merge
+
+type PostCardItem = {
+  id?: string; filename?: string; slug: string; title: string; category: string;
+  description: string; preview?: string; ogImage?: string; date?: string;
+  reading_time: number; viewCount: number; source: 'file' | 'legacy';
+};
+
+const normalize = (p: any): PostCardItem => ({
+  id: p.id,
+  filename: p.filename,
+  slug: canonicalSlug(p),
+  title: (p.title || '').trim(),
+  category: (p.category || 'ai_technology').trim(),
+  description: (p.description || p.summary || p.preview || '').trim(),
+  preview: p.preview,
+  ogImage: p.ogImage || p.featuredImage,
+  date: p.date || p.createdAt,
+  reading_time: Number.isFinite(p.reading_time) ? p.reading_time :
+                Number.isFinite(p.readingTime) ? p.readingTime : 5,
+  viewCount: Number(p.viewCount || 0),
+  source: p.filename ? 'file' : 'legacy',
+});
+
+const combined = [...(filePosts || []), ...(blogPosts || [])].map(normalize);
+const seen = new Set<string>();
+const allPosts = combined.filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
+                         .sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')));
+
+
+Filter & featured
+
+const filteredPosts = allPosts.filter(p => {
+  const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+  const q = searchQuery.trim().toLowerCase();
+  const matchesSearch = !q || [p.title, p.description, p.preview].some(s => (s||'').toLowerCase().includes(q));
+  return matchesCategory && matchesSearch;
+});
+
+const featuredPosts = [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3);
+
+
+Card image wrapper
+
+<div className="w-full aspect-[1200/630] overflow-hidden">
+  <img src={imageUrl} alt={cleanPost.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" loading="lazy" />
+</div>
+
+
+Replace FA icons with Lucide
+
+import { Eye, Clock } from 'lucide-react';
+// ...
+<span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-4 w-4" /> {cleanPost.reading_time} min read</span>
+<span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-4

@@ -1,0 +1,338 @@
+1) useQuery calls are missing queryFns (nothing actually fetches)
+
+You’re calling:
+
+useQuery({ queryKey: ['/api/blog/posts'], staleTime: 0, refetchInterval: 5000, ... })
+
+
+without a queryFn. Unless you configured a global default fetcher elsewhere, no network request happens.
+
+Fix
+
+Add a tiny fetch helper and pass queryFn to every useQuery:
+
+const fetchJson = <T,>(url: string) =>
+  fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.json() as Promise<T>; });
+
+const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
+  queryKey: ['/api/blog/posts'],
+  queryFn: () => fetchJson<any[]>('/api/blog/posts'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+const { data: blogStatus } = useQuery({
+  queryKey: ['/api/blog/status'],
+  queryFn: () => fetchJson<any>('/api/blog/status'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+const { data: blogPosts = [], isLoading, error } = useQuery({
+  queryKey: ['/api/blog'],
+  queryFn: () => fetchJson<any[]>('/api/blog'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+
+Also: polling every 5s with two lists is noisy and expensive. Prefer staleTime + user-initiated refresh or a longer interval.
+
+2) Category IDs don’t match your backend
+
+Your tabs include ids like case_studies, tutorials, industry_insights, news, marketing_ai, resources. Your server/indexer we designed earlier returns categories like ai_technology, business_strategy, automation, marketing, engineering. A mismatch leads to filters showing zero posts.
+
+Fix
+
+Align to backend (or update generator/indexer to emit these exact ids):
+
+const blogCategories = [
+  { id: 'all', name: 'All Posts' },
+  { id: 'ai_technology', name: 'AI Technology' },
+  { id: 'business_strategy', name: 'Business Strategy' },
+  { id: 'automation', name: 'Automation' },
+  { id: 'marketing', name: 'Marketing' },
+  { id: 'engineering', name: 'Engineering' },
+];
+
+3) Slug handling can generate inconsistent URLs
+
+You fall back to a slug derived from title:
+
+const slug = cleanPost.slug || cleanPost.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+
+If the file exists as 2025-08-16-my-post.html, your canonical SPA route is /blog/my-post. Deriving from the title can disagree with the server slug (punctuation/casing changes).
+
+Fix
+
+Prefer server-provided fields in this order:
+
+post.slug (canonical)
+
+post.filename → strip .html and date prefix
+Only as a last resort derive from title.
+
+const canonicalSlug = (p: any) => {
+  if (p.slug) return String(p.slug);
+  if (p.filename) return String(p.filename).replace(/\.html$/,'').replace(/^\d{4}-\d{2}-\d{2}-/,'');
+  return String(p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g,'');
+};
+
+
+Then use navigate(/blog/${canonicalSlug(cleanPost)});
+
+4) Mixing two sources without normalization, sorting, or deduping
+
+You do:
+
+const allPosts = [...(filePosts || []), ...(blogPosts || [])];
+
+
+…but the shapes differ (reading_time vs readingTime, ogImage vs featuredImage, date vs createdAt). You also don’t sort by date or dedupe.
+
+Fix
+
+Normalize, sort, and dedupe:
+
+type PostCardItem = {
+  id?: string;
+  filename?: string;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  preview?: string;
+  ogImage?: string;
+  date?: string;
+  reading_time: number;
+  viewCount: number;
+  source: 'file' | 'legacy';
+};
+
+const normalize = (p: any): PostCardItem => ({
+  id: p.id,
+  filename: p.filename,
+  slug: canonicalSlug(p),
+  title: (p.title || '').trim(),
+  category: (p.category || 'ai_technology').trim(),
+  description: (p.description || p.summary || p.preview || '').trim(),
+  preview: p.preview,
+  ogImage: p.ogImage || p.featuredImage,
+  date: p.date || p.createdAt,
+  reading_time: Number.isFinite(p.reading_time) ? p.reading_time :
+                Number.isFinite(p.readingTime) ? p.readingTime : 5,
+  viewCount: Number(p.viewCount || 0),
+  source: p.filename ? 'file' : 'legacy',
+});
+
+const combined = [...(filePosts || []), ...(blogPosts || [])].map(normalize);
+
+// dedupe by slug (prefer file source)
+const seen = new Set<string>();
+const deduped = combined.filter(p => {
+  if (seen.has(p.slug)) return false;
+  seen.add(p.slug);
+  return true;
+});
+
+// sort newest first (by date; fallback to title)
+deduped.sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || a.title.localeCompare(b.title));
+
+
+Use deduped for filtering/search.
+
+5) “Featured tags” aren’t real
+
+The array labeled “Real trending tags” is hardcoded. That will drift, and clicking them sets the search query but doesn’t truly reflect the corpus.
+
+Fix
+
+Compute top tags server-side, or infer from posts (if posts include tags):
+
+const tagCounts = new Map<string, number>();
+for (const p of (filePosts || [])) {
+  (p.tags || []).forEach((t: string) => tagCounts.set(t, (tagCounts.get(t)||0)+1));
+}
+const featuredTags = Array.from(tagCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([t])=>t);
+
+
+(If tags aren’t in API yet, keep your static list but rename the comment to “Sample tags”.)
+
+6) Over-aggressive “cleaning” corrupts content
+
+cleanBlogData strips asterisks globally and has a suspicious regex fragment:
+
+.replace(/strong>\*\/stron/g, '')
+
+
+You also clamp readingTime instead of using server reading_time.
+
+Fix
+
+Keep it minimal; prefer server fields:
+
+const cleanBlogData = (post: any) => ({
+  ...post,
+  title: (post.title || 'AI Technology Article').trim(),
+  category: (post.category || 'ai_technology').trim(),
+  description: (post.description || post.summary || post.preview || 'Discover the latest AI insights and innovations.').trim(),
+  preview: (post.preview || '').trim(),
+  reading_time: Number.isFinite(post.reading_time) ? post.reading_time : Math.min(Math.max(parseInt(post.readingTime,10) || 5, 1), 15),
+});
+
+
+Then in the UI always show reading_time.
+
+7) Image logic ignores ogImage and risks layout shift
+
+You hash the title and pick a random Unsplash. That’s fine as a fallback, but:
+
+If ogImage exists, use it first.
+
+Set a fixed aspect ratio to avoid CLS (you mostly do with h-48, but use aspect-[1200/630] for social-friendly previews).
+
+Fix (inside cards)
+const imageUrl = cleanPost.ogImage || getImageUrl(cleanPost.category, cleanPost.title);
+<div className="w-full aspect-[1200/630] overflow-hidden">
+  <img src={imageUrl} alt={cleanPost.title} className="w-full h-full object-cover" loading="lazy" />
+</div>
+
+8) Featured posts choose only legacy, not file posts
+
+You compute:
+
+const featuredPosts = blogPosts ? [...blogPosts].sort(...).slice(0, 3) : [];
+
+
+This ignores file-based posts where the view counts actually live now.
+
+Fix
+
+Use the normalized, deduped list and sort by viewCount:
+
+const featuredPosts = [...deduped].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3);
+
+
+(Then render with the file card by default; or a unified card.)
+
+9) Icon inconsistency
+
+You import Lucide icons but also use <i className="fas ..."> which requires Font Awesome CSS being globally loaded. If FA isn’t loaded, these render as empty squares.
+
+Fix
+
+Replace FA with Lucide everywhere for consistency:
+
+import { Eye } from 'lucide-react';
+// ...
+<span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-4 w-4" /> {post.viewCount || 0}</span>
+
+10) UX/perf nits
+
+Poll every 5s for three queries → noisy and costly. Prefer staleTime and manual refresh for content that changes a few times/day.
+
+Search is a simple substring; fine, but consider lowercasing fields defensively (some posts may lack title/preview/summary).
+
+Helmet is static here; good. On the post page set per-post meta.
+
+Pasteable fixes (focused patches)
+A) Helper: canonical slug + fetchJson
+const canonicalSlug = (p: any) => {
+  if (p.slug) return String(p.slug);
+  if (p.filename) return String(p.filename).replace(/\.html$/,'').replace(/^\d{4}-\d{2}-\d{2}-/,'');
+  return String(p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g,'');
+};
+const fetchJson = <T,>(url: string) =>
+  fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.json() as Promise<T>; });
+
+B) Queries with queryFn and saner caching
+const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
+  queryKey: ['/api/blog/posts'],
+  queryFn: () => fetchJson<any[]>('/api/blog/posts'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+const { data: blogStatus } = useQuery({
+  queryKey: ['/api/blog/status'],
+  queryFn: () => fetchJson<any>('/api/blog/status'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+const { data: blogPosts = [], isLoading, error } = useQuery({
+  queryKey: ['/api/blog'],
+  queryFn: () => fetchJson<any[]>('/api/blog'),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+C) Normalize + dedupe + sort
+type PostCardItem = {
+  id?: string; filename?: string; slug: string; title: string; category: string;
+  description: string; preview?: string; ogImage?: string; date?: string;
+  reading_time: number; viewCount: number; source: 'file' | 'legacy';
+};
+const normalize = (p: any): PostCardItem => ({
+  id: p.id, filename: p.filename, slug: canonicalSlug(p),
+  title: (p.title || '').trim(),
+  category: (p.category || 'ai_technology').trim(),
+  description: (p.description || p.summary || p.preview || '').trim(),
+  preview: p.preview,
+  ogImage: p.ogImage || p.featuredImage,
+  date: p.date || p.createdAt,
+  reading_time: Number.isFinite(p.reading_time) ? p.reading_time :
+                Number.isFinite(p.readingTime) ? p.readingTime : 5,
+  viewCount: Number(p.viewCount || 0),
+  source: p.filename ? 'file' : 'legacy',
+});
+const combined = [...(filePosts || []), ...(blogPosts || [])].map(normalize);
+const seen = new Set<string>();
+const allPosts = combined.filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
+                         .sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')));
+
+
+Then your filtering becomes:
+
+const filteredPosts = allPosts.filter(p => {
+  const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+  const q = searchQuery.trim().toLowerCase();
+  const matchesSearch = !q || [p.title, p.description, p.preview].some(s => (s||'').toLowerCase().includes(q));
+  return matchesCategory && matchesSearch;
+});
+const featuredPosts = [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3);
+
+D) Align categories
+const blogCategories = [
+  { id: 'all', name: 'All Posts' },
+  { id: 'ai_technology', name: 'AI Technology' },
+  { id: 'business_strategy', name: 'Business Strategy' },
+  { id: 'automation', name: 'Automation' },
+  { id: 'marketing', name: 'Marketing' },
+  { id: 'engineering', name: 'Engineering' }
+];
+
+E) Fix FileBlogPostCard navigation & image choice
+
+Inside the card:
+
+const imageUrl = cleanPost.ogImage || getImageUrl(cleanPost.category, cleanPost.title);
+
+<Button 
+  variant="ghost" 
+  size="sm"
+  onClick={() => navigate(`/blog/${canonicalSlug(cleanPost)}`)}
+  className="hover:text-blue-600"
+>
+  Read More <ArrowRight className="h-4 w-4 ml-1" />
+</Button>
+
+
+…and change the media wrapper to avoid CLS:
+
+<div className="w-full aspect-[1200/630] overflow-hidden">
+  <img src={imageUrl} alt={cleanPost.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" loading="lazy" />
+</div>
+
+F) Replace Font Awesome <i> with Lucide
+
+In both cards (view/clock icons), use the already-imported Lucide icons (e.g., Eye, Clock) instead of <i className="fas ...">.
