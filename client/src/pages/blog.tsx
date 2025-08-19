@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
@@ -8,11 +8,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Clock, ArrowRight, Search, Eye } from 'lucide-react';
+import { CalendarDays, Clock, ArrowRight, Search, Eye, ChevronLeft, ChevronRight, PenSquare } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
-import { BlogPost } from '@shared/schema';
 import { useLocation } from 'wouter';
 import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
 
@@ -26,11 +25,15 @@ const blogCategories = [
   { id: 'engineering', name: 'Engineering' }
 ];
 
-// Real trending tags from actual blog posts
-const featuredTags = [
-  'AI-Enhanced CRM', 'Sales Funnel', 'Marketing Automation', 'Business Intelligence', 
-  'ROI Optimization', 'Enterprise AI', 'Workflow Automation', 'Data Analytics'
-];
+// Simple debounce hook
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [v, setV] = useState(value);
+  useEffect(() => { 
+    const id = setTimeout(() => setV(value), delay); 
+    return () => clearTimeout(id); 
+  }, [value, delay]);
+  return v;
+}
 
 // Helper functions
 const fetchJson = <T,>(url: string) =>
@@ -181,9 +184,15 @@ const UnifiedBlogPostCard = ({ post }: { post: PostCardItem }) => {
             {post.description || 'AI-powered insights and analysis for modern businesses looking to leverage artificial intelligence for competitive advantage.'}
           </p>
           <div className="flex items-center justify-between">
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="h-4 w-4 mr-1" />
-              {post.reading_time} min read
+            <div className="flex items-center text-sm text-muted-foreground gap-4">
+              <span className="inline-flex items-center">
+                <Clock className="h-4 w-4 mr-1" />
+                {post.reading_time} min read
+              </span>
+              <span className="inline-flex items-center">
+                <Eye className="h-4 w-4 mr-1" />
+                {post.viewCount ?? 0}
+              </span>
             </div>
             <Button 
               variant="ghost" 
@@ -232,7 +241,8 @@ const BlogPostSkeleton = () => (
 export default function Blog() {
   const [, navigate] = useLocation();
   const [currentCategory, setCurrentCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [rawQuery, setRawQuery] = useState<string>('');
+  const searchQuery = useDebouncedValue(rawQuery, 300);
   
   // Fetch automated blog posts from file system (priority)
   const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
@@ -258,21 +268,36 @@ export default function Blog() {
     refetchOnWindowFocus: false,
   });
   
-  // Normalize, dedupe, and sort posts
-  const combined = [...(filePosts || []), ...(blogPosts || [])].map(normalize);
-  const seen = new Set<string>();
-  const allPosts = combined.filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
-                           .sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')));
-  
-  const filteredPosts = allPosts.filter(p => {
-    const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+  // Memoized post processing
+  const combined = useMemo(() => [...(filePosts || []), ...(blogPosts || [])].map(normalize), [filePosts, blogPosts]);
+
+  const allPosts = useMemo(() => {
+    const seen = new Set<string>();
+    return combined
+      .filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
+      .sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')));
+  }, [combined]);
+
+  const filteredPosts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const matchesSearch = !q || [p.title, p.description, p.preview].some(s => (s||'').toLowerCase().includes(q));
-    return matchesCategory && matchesSearch;
-  });
-  
-  // Featured posts - get top 3 by view count from unified list
-  const featuredPosts = [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3);
+    return allPosts.filter(p => {
+      const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+      const matchesSearch = !q || [p.title, p.description, p.preview].some(s => (s||'').toLowerCase().includes(q));
+      return matchesCategory && matchesSearch;
+    });
+  }, [allPosts, currentCategory, searchQuery]);
+
+  const featuredPosts = useMemo(() => [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3), [allPosts]);
+
+  // Compute tags from posts or use fallback
+  const tagsToShow = useMemo(() => {
+    const tagCounts = new Map<string, number>();
+    (filePosts ?? []).forEach((p: any) => (p.tags ?? []).forEach((t: string) => tagCounts.set(t, (tagCounts.get(t) || 0) + 1)));
+    const computedTags = Array.from(tagCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([t])=>t);
+    return computedTags.length ? computedTags : [
+      'AI-Enhanced CRM','Sales Funnel','Marketing Automation','Business Intelligence','ROI Optimization','Enterprise AI','Workflow Automation','Data Analytics'
+    ];
+  }, [filePosts]);
 
   return (
     <>
@@ -323,8 +348,8 @@ export default function Blog() {
                 <div className="relative">
                   <Input
                     placeholder="Search articles..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={rawQuery}
+                    onChange={(e) => setRawQuery(e.target.value)}
                     className="pl-12 py-4 h-14 text-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg focus:shadow-xl transition-all duration-300"
                   />
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -337,7 +362,7 @@ export default function Blog() {
                   <div className="inline-flex items-center px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>Live AI System: {allPosts.length} automated insights generated</span>
+                      <span>Live AI System: {(filePosts?.length ?? 0)} automated insights generated</span>
                     </div>
                   </div>
                 </motion.div>
@@ -366,7 +391,7 @@ export default function Blog() {
                 variant="outline"
                 className="hidden md:flex items-center"
               >
-                <i className="fas fa-pen-to-square mr-2"></i>
+                <PenSquare className="h-4 w-4 mr-2" />
                 Manage Content
               </Button>
             </div>
@@ -391,12 +416,12 @@ export default function Blog() {
               
               {/* Popular Tags */}
               <div className="flex flex-wrap gap-2 mt-4">
-                {featuredTags.map((tag) => (
+                {tagsToShow.map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => setSearchQuery(tag)}
+                    onClick={() => setRawQuery(tag)}
                   >
                     #{tag}
                   </Badge>
@@ -446,8 +471,8 @@ export default function Blog() {
                 {filteredPosts.length > 0 && (
                   <div className="flex justify-center mt-12">
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="icon" disabled>
-                        <i className="fas fa-chevron-left text-xs"></i>
+                      <Button variant="outline" size="icon" disabled aria-label="Previous page">
+                        <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" className="h-8 w-8 p-0 font-medium">
                         1
@@ -462,8 +487,8 @@ export default function Blog() {
                       <Button variant="ghost" className="h-8 w-8 p-0">
                         12
                       </Button>
-                      <Button variant="outline" size="icon">
-                        <i className="fas fa-chevron-right text-xs"></i>
+                      <Button variant="outline" size="icon" aria-label="Next page">
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

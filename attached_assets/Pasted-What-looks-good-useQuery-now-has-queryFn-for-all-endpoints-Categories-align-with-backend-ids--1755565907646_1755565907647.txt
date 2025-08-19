@@ -1,0 +1,179 @@
+What looks good
+
+✅ useQuery now has queryFn for all endpoints.
+
+✅ Categories align with backend ids.
+
+✅ You normalize + dedupe + sort posts before filtering.
+
+✅ Unified card component with fixed aspect ratio (prevents CLS).
+
+✅ Canonical navigation via /blog/${post.slug}.
+
+Issues to fix (in priority order)
+1) Unused / inconsistent icons (and FA leftovers)
+
+You still use Font Awesome class icons in a few places (chevrons, “Manage Content”), but you’re already on Lucide. Also Eye is imported but never used.
+
+Why it matters: FA CSS may not be loaded → empty boxes; bundle bloat; inconsistent look.
+
+Fix
+
+Replace FA with Lucide and add view counts:
+
+import { CalendarDays, Clock, ArrowRight, Search, Eye, ChevronLeft, ChevronRight, PenSquare } from 'lucide-react';
+
+// Manage Content button
+<Button onClick={() => navigate('/blog/admin')} variant="outline" className="hidden md:flex items-center">
+  <PenSquare className="h-4 w-4 mr-2" />
+  Manage Content
+</Button>
+
+// Card footer (inside UnifiedBlogPostCard)
+<div className="flex items-center text-sm text-muted-foreground gap-4">
+  <span className="inline-flex items-center">
+    <Clock className="h-4 w-4 mr-1" />
+    {post.reading_time} min read
+  </span>
+  <span className="inline-flex items-center">
+    <Eye className="h-4 w-4 mr-1" />
+    {post.viewCount ?? 0}
+  </span>
+</div>
+
+// Pagination placeholders
+<Button variant="outline" size="icon" disabled aria-label="Previous page"><ChevronLeft className="h-4 w-4" /></Button>
+...
+<Button variant="outline" size="icon" aria-label="Next page"><ChevronRight className="h-4 w-4" /></Button>
+
+
+Also remove FA-only HTML (<i className="fas ...">) entirely.
+
+2) Unused imports & dead code
+
+useEffect, TabsContent, Eye (until you add it), and BlogPost are imported but not used.
+
+Why it matters: ESLint warnings, larger bundles.
+
+Fix
+
+Delete unused imports (after adding Eye usage above, it will be used):
+
+// remove: useEffect, TabsContent, BlogPost
+
+3) Static “featuredTags” labeled as “Real”
+
+The list is hardcoded but commented as “Real trending tags”.
+
+Why it matters: Misleading; falls out of sync.
+
+Fix (quick rename)
+
+Rename comment to “Sample tags”, or compute tags when your API includes them. Example (safe fallback):
+
+// Prefer computed tags when available (requires tags in /api/blog/posts)
+const tagCounts = new Map<string, number>();
+(filePosts ?? []).forEach((p: any) => (p.tags ?? []).forEach((t: string) => tagCounts.set(t, (tagCounts.get(t) || 0) + 1)));
+const computedTags = Array.from(tagCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([t])=>t);
+const tagsToShow = computedTags.length ? computedTags : [
+  'AI-Enhanced CRM','Sales Funnel','Marketing Automation','Business Intelligence','ROI Optimization','Enterprise AI','Workflow Automation','Data Analytics'
+];
+
+
+Then render tagsToShow instead of featuredTags.
+
+4) Combine / filter recomputes every render
+
+combined, allPosts, filteredPosts, and featuredPosts are recomputed on every render.
+
+Why it matters: Unnecessary work as lists grow; avoidable re-renders.
+
+Fix (memoize)
+import { useMemo } from 'react';
+
+const combined = useMemo(() => [...(filePosts || []), ...(blogPosts || [])].map(normalize), [filePosts, blogPosts]);
+
+const allPosts = useMemo(() => {
+  const seen = new Set<string>();
+  return combined
+    .filter(p => (seen.has(p.slug) ? false : (seen.add(p.slug), true)))
+    .sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')));
+}, [combined]);
+
+const filteredPosts = useMemo(() => {
+  const q = searchQuery.trim().toLowerCase();
+  return allPosts.filter(p => {
+    const matchesCategory = currentCategory === 'all' || p.category === currentCategory;
+    const matchesSearch = !q || [p.title, p.description, p.preview].some(s => (s||'').toLowerCase().includes(q));
+    return matchesCategory && matchesSearch;
+  });
+}, [allPosts, currentCategory, searchQuery]);
+
+const featuredPosts = useMemo(() => [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3), [allPosts]);
+
+5) Search triggers on every keystroke (no debounce)
+
+Why it matters: For large lists, causes UI churn.
+
+Fix (light debounce)
+const [rawQuery, setRawQuery] = useState('');
+const searchQuery = useDebouncedValue(rawQuery, 300);
+
+// simple hook
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [v, setV] = useState(value);
+  useEffect(() => { const id = setTimeout(()=>setV(value), delay); return () => clearTimeout(id); }, [value, delay]);
+  return v;
+}
+
+
+Then bind the input to rawQuery and leave the rest unchanged.
+
+6) View counts not shown (even though you collect them)
+
+You import Eye but the UI didn’t display views; fixed in #1.
+
+Also ensure: Your post page calls /api/blog/view on mount (that’s in the post page, not here).
+
+7) Status pill counts “automated insights” using combined posts
+
+It includes legacy posts too (if present).
+
+Why it matters: The copy implies “automated” only.
+
+Fix (use filePosts count)
+<span>Live AI System: {(filePosts?.length ?? 0)} automated insights generated</span>
+
+8) Minor a11y & semantics
+
+Icon-only buttons need aria-label.
+
+Images should have meaningful alt when available (you pass the title—good).
+
+Fix
+
+Add aria-labels where relevant (done in pagination above).
+
+Optional niceties (good to have)
+
+Persist currentCategory and searchQuery in the URL (?category=...&q=...) so filters are shareable.
+
+Add an empty-state CTA when no results (e.g., “Clear filters” button).
+
+Preload images on hover using link rel="prefetch" (micro-perf).
+
+Quick patch diff (summary)
+
+Replace FA icons with Lucide (ChevronLeft, ChevronRight, PenSquare) and show Eye+viewCount in cards.
+
+Remove unused imports (useEffect, TabsContent, BlogPost) after you add the Eye usage.
+
+(Optional) Compute featuredTags from API tags; otherwise relabel comment.
+
+useMemo for combined, allPosts, filteredPosts, featuredPosts.
+
+(Optional) Debounce search with a tiny hook.
+
+Status pill uses filePosts.length for “automated” count.
+
+Add aria-labels to icon-only buttons.
