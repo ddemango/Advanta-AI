@@ -5409,6 +5409,15 @@ Please provide analysis in this exact JSON format (no additional text):
 
 
 
+  // Legacy redirect for old travel-hack endpoint
+  app.post('/api/travel-hack', async (req: Request, res: Response) => {
+    res.status(301).json({ 
+      error: 'This endpoint has been upgraded. Please use /api/travel/deals/find instead.',
+      redirect: '/api/travel/deals/find',
+      message: 'Travel Hacker AI has been upgraded with enhanced features at /travel-hacker-ai-v2'
+    });
+  });
+
   // AI Assistant endpoint for various AI-powered tasks
   app.post('/api/ai-assistant', async (req: Request, res: Response) => {
     try {

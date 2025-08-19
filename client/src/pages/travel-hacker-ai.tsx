@@ -117,6 +117,10 @@ export default function TravelHackerAI() {
         
         Find the best deals, mistake fares, and travel hacks.`;
 
+      // Redirect to new Travel Hacker AI v2
+      window.location.href = '/travel-hacker-ai-v2';
+      return;
+      
       const response = await fetch('/api/travel-hack', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
