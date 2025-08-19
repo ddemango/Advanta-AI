@@ -61,6 +61,7 @@
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.2.0",
     "bull": "^4.16.5",
+    "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -118,7 +119,7 @@
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
-    "zod": "^3.24.2",
+    "zod": "^3.25.76",
     "zod-validation-error": "^3.4.0",
     "zustand": "^5.0.6"
   },

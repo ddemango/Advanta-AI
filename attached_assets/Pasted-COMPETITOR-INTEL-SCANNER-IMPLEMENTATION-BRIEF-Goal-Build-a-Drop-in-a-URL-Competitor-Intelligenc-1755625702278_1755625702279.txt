@@ -1,0 +1,558 @@
+COMPETITOR INTEL SCANNER — IMPLEMENTATION BRIEF
+Goal
+
+Build a “Drop in a URL” Competitor Intelligence Scanner that returns a detailed marketing report: traffic signal (rank proxy), SEO insights, ad/analytics stack, tech/CMS hints, robots/sitemap health, and actionable recommendations.
+
+Stack
+
+Frontend: Next.js 14 (App Router) + React 18 + Tailwind
+
+API / Server: Next.js Route Handler (Node 18+) with fetch
+
+Parsing: cheerio for HTML; small regex detectors for trackers/tech
+
+Optional enrichments (behind env flags):
+
+RDAP (domain age): https://rdap.org/domain/{domain}
+
+Tranco rank (popularity proxy): https://tranco-list.eu/api/ranks/{domain} (requires key)
+
+Caching (nice-to-have): Upstash Redis or file cache by domain (TTL 24h)
+
+Deliverables
+
+UI: /competitor-intel page with a single URL input + “Scan” button + results view (cards/accordion).
+
+API: POST /api/scan → returns JSON per the schema below.
+
+Markdown report download button.
+
+Env-guarded optional calls: RDAP + Tranco.
+
+Unit tests for core parsers (SEO parsing, tracker detection).
+
+Defensive timeouts and helpful errors (no hangs).
+
+Endpoint & Schema
+POST /api/scan
+
+Body:
+
+{ "url": "https://competitor.com" }
+
+
+Response (abridged):
+
+{
+  "input": { "url": "https://competitor.com", "domain": "competitor.com" },
+  "response": { "status": 200, "elapsedMs": 480, "server": "cloudflare", "xPoweredBy": null },
+  "seo": {
+    "title": "...", "titleLength": 54,
+    "metaDescription": "...", "metaDescriptionLength": 152,
+    "canonical": "https://...",
+    "robotsMeta": "index,follow",
+    "openGraphCount": 6,
+    "twitterTagCount": 3,
+    "jsonLdBlocks": 2,
+    "headings": { "h1": 1, "h2": 5, "h3": 7 },
+    "images": { "total": 24, "withAlt": 18, "withoutAlt": 6 },
+    "links": { "internal": 42, "external": 9 }
+  },
+  "tech": { "cms": "WordPress", "frameworks": ["React"], "evidence": ["wp-content"] },
+  "tracking": {
+    "analytics": ["Google Analytics (gtag.js)"],
+    "ads": ["Google Ads / DoubleClick"],
+    "tagManagers": ["Google Tag Manager"],
+    "socialPixels": ["Meta Pixel"]
+  },
+  "robots": {
+    "robotsTxt": { "present": true, "disallowCount": 3, "sitemaps": ["https://.../sitemap.xml"] },
+    "sitemaps": [{ "url": "https://.../sitemap.xml", "urlCount": 134 }]
+  },
+  "traffic": { "trancoRank": 18234, "source": "Tranco", "available": true },
+  "domain": { "created": "2014-06-02", "ageDays": 4088, "source": "RDAP", "available": true },
+  "recommendations": [ "Add JSON-LD Product schema...", "Fix duplicate H1..." ],
+  "generatedAt": "2025-08-16T23:00:00Z"
+}
+
+Acceptance Criteria (DoD)
+
+Entering a valid URL returns a full JSON with all sections above populated or explicitly marked unavailable (never silently missing).
+
+Handles common errors: invalid URL, 4xx/5xx, JS-heavy sites, timeouts (10s), CORS blocks (server-side fetch).
+
+No third-party scraping that violates ToS; only public pages and officially documented APIs (RDAP, Tranco).
+
+Recommendations are deterministic (rule-based) and actionable (what to change + why).
+
+UI is clean, mobile-friendly, and renders each section in cards with copy and “Download .md”.
+
+Project Setup
+1) Dependencies
+npm i cheerio zod marked
+npm i -D @types/cheerio @types/node typescript
+
+2) Env (create .env.local)
+# Optional – only if you have these:
+TRONCO_API_BASE=https://tranco-list.eu/api
+TRONCO_API_KEY= # leave empty if none
+ALLOW_RDAP=true
+
+API Implementation (Next.js App Router)
+
+File: app/api/scan/route.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+import * as cheerio from 'cheerio';
+
+type TrackerHit = {
+  analytics: string[];
+  ads: string[];
+  tagManagers: string[];
+  socialPixels: string[];
+};
+
+const UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
+
+function normalizeUrl(input: string): URL {
+  try {
+    const url = new URL(input);
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error('invalid protocol');
+    return url;
+  } catch {
+    return new URL(`https://${input}`);
+  }
+}
+
+function pickDomain(u: URL): string {
+  return u.hostname.replace(/^www\./i, '');
+}
+
+function timeLimit<T>(p: Promise<T>, ms = 10000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), ms);
+    p.then(v => { clearTimeout(t); resolve(v); }).catch(e => { clearTimeout(t); reject(e); });
+  });
+}
+
+async function fetchText(url: string, init: RequestInit = {}): Promise<{text: string; res: Response; ms: number}> {
+  const start = Date.now();
+  const res = await fetch(url, {
+    ...init,
+    headers: { 'user-agent': UA, ...(init.headers || {}) },
+    cache: 'no-store',
+  });
+  const text = await res.text();
+  return { text, res, ms: Date.now() - start };
+}
+
+function parseSEO($: cheerio.CheerioAPI) {
+  const title = $('title').first().text().trim() || '';
+  const metaDescription = $('meta[name="description"]').attr('content')?.trim() || '';
+  const canonical = $('link[rel="canonical"]').attr('href') || null;
+  const robotsMeta = $('meta[name="robots"]').attr('content') || null;
+
+  const og = Object.keys($('meta[property^="og:"]').toArray()).length;
+  const tw = Object.keys($('meta[name^="twitter:"]').toArray()).length;
+  const jsonLdBlocks = $('script[type="application/ld+json"]').length;
+
+  const headings = {
+    h1: $('h1').length,
+    h2: $('h2').length,
+    h3: $('h3').length,
+    h4: $('h4').length,
+    h5: $('h5').length,
+    h6: $('h6').length,
+  };
+
+  const imgs = $('img').toArray();
+  const withAlt = imgs.filter(i => !!($(i).attr('alt') || '').trim()).length;
+  const images = { total: imgs.length, withAlt, withoutAlt: imgs.length - withAlt };
+
+  // Links
+  const a = $('a[href]').toArray().map(e => ($(e).attr('href') || '').trim());
+  const internal = a.filter(h => h.startsWith('/') || h.startsWith('#') || (!/^https?:\/\//i.test(h))).length;
+  const external = a.filter(h => /^https?:\/\//i.test(h)).length;
+
+  return {
+    title,
+    titleLength: title.length,
+    metaDescription,
+    metaDescriptionLength: metaDescription.length,
+    canonical,
+    robotsMeta,
+    openGraphCount: og,
+    twitterTagCount: tw,
+    jsonLdBlocks,
+    headings,
+    images,
+    links: { internal, external }
+  };
+}
+
+function detectTech(html: string, $: cheerio.CheerioAPI) {
+  const evid: string[] = [];
+  let cms: string | null = null;
+  const frameworks: string[] = [];
+
+  if (html.includes('wp-content') || html.includes('wp-json')) { cms = 'WordPress'; evid.push('wp-content'); }
+  if (html.includes('cdn.shopify.com')) { cms = 'Shopify'; evid.push('cdn.shopify.com'); }
+  if (html.includes('__NEXT_DATA__') || $('script[id="__NEXT_DATA__"]').length) { frameworks.push('Next.js'); evid.push('__NEXT_DATA__'); }
+  if (html.includes('data-reactroot') || html.includes('React.createElement')) { frameworks.push('React'); evid.push('React signature'); }
+  if (html.includes('window.__NUXT__')) { frameworks.push('Nuxt'); evid.push('__NUXT__'); }
+
+  return { cms, frameworks, evidence: evid };
+}
+
+function detectTrackers($: cheerio.CheerioAPI): TrackerHit {
+  const srcs: string[] = [];
+  const inlines: string[] = [];
+  $('script').each((_, el) => {
+    const src = $(el).attr('src');
+    if (src) srcs.push(src);
+    else inlines.push($(el).text() || '');
+  });
+
+  const hits: TrackerHit = { analytics: [], ads: [], tagManagers: [], socialPixels: [] };
+  const test = (re: RegExp) => srcs.some(s => re.test(s)) || inlines.some(c => re.test(c));
+
+  // Analytics
+  if (test(/googletagmanager\.com\/gtag\/js/i)) hits.analytics.push('Google Analytics (gtag.js)');
+  if (test(/www\.google-analytics\.com\/analytics\.js/i)) hits.analytics.push('Universal Analytics');
+  if (test(/hotjar\.com\/c\/|static\.hotjar\.com/i)) hits.analytics.push('Hotjar');
+  if (test(/cdn\.segment\.com\/analytics\.js/i)) hits.analytics.push('Segment');
+  if (test(/cdn\.mixpanel\.com|mixpanel\.com\/site_media/i)) hits.analytics.push('Mixpanel');
+
+  // Ads
+  if (test(/googletagservices\.com|doubleclick\.net|googlesyndication\.com/i)) hits.ads.push('Google Ads / DoubleClick');
+  if (test(/taboola\.com|outbrain\.com/i)) hits.ads.push('Native Ads (Taboola/Outbrain)');
+
+  // Tag managers
+  if (test(/gtm\.js|googletagmanager\.com/i)) hits.tagManagers.push('Google Tag Manager');
+  if (test(/cdn\.segment\.com\/analytics\.js|tealium|tagcommander/i)) hits.tagManagers.push('Other TMS');
+
+  // Social pixels
+  if (test(/connect\.facebook\.net\/.+\/fbevents\.js/i)) hits.socialPixels.push('Meta Pixel');
+  if (test(/snap\.sc\/static\/pixie/i)) hits.socialPixels.push('Snap Pixel');
+  if (test(/static\.ads-twitter\.com\/uwt\.js/i)) hits.socialPixels.push('Twitter Pixel');
+
+  return hits;
+}
+
+async function getRobotsAndSitemaps(origin: string) {
+  const robotsUrl = `${origin}/robots.txt`;
+  try {
+    const { text, res } = await timeLimit(fetchText(robotsUrl));
+    if (!res.ok) return { robotsTxt: { present: false, disallowCount: 0, sitemaps: [] }, sitemaps: [] };
+
+    const lines = text.split('\n');
+    const disallowCount = lines.filter(l => /^disallow:/i.test(l)).length;
+    const sitemaps = lines.filter(l => /^sitemap:/i.test(l))
+      .map(l => l.split(':')[1] ? l.split(':').slice(1).join(':').trim() : '')
+      .filter(Boolean);
+
+    const sitemapSummaries = [];
+    for (const sm of sitemaps.slice(0, 3)) { // safety limit
+      try {
+        const { text: smText } = await timeLimit(fetchText(sm, { redirect: 'follow' }));
+        const count = (smText.match(/<loc>/g) || []).length || 0;
+        sitemapSummaries.push({ url: sm, urlCount: count });
+      } catch { /* ignore */ }
+    }
+
+    return { robotsTxt: { present: true, disallowCount, sitemaps }, sitemaps: sitemapSummaries };
+  } catch {
+    return { robotsTxt: { present: false, disallowCount: 0, sitemaps: [] }, sitemaps: [] };
+  }
+}
+
+async function getRDAP(domain: string) {
+  if (process.env.ALLOW_RDAP !== 'true') return { available: false };
+  try {
+    const { text, res } = await timeLimit(fetchText(`https://rdap.org/domain/${domain}`));
+    if (!res.ok) return { available: false };
+    const json = JSON.parse(text);
+    // Find creation event
+    const ev = (json.events || []).find((e: any) => e.eventAction === 'registration');
+    const created = ev?.eventDate || null;
+    let ageDays = null;
+    if (created) {
+      const d = new Date(created).getTime();
+      ageDays = Math.floor((Date.now() - d) / 86400000);
+    }
+    return { available: true, created, ageDays, source: 'RDAP' };
+  } catch { return { available: false }; }
+}
+
+async function getTrancoRank(domain: string) {
+  const base = process.env.TRONCO_API_BASE;
+  const key = process.env.TRONCO_API_KEY;
+  if (!base || !key) return { available: false };
+  try {
+    const { text, res } = await timeLimit(fetchText(`${base}/ranks/${domain}`, {
+      headers: { Authorization: `Bearer ${key}` }
+    }));
+    if (!res.ok) return { available: false };
+    const data = JSON.parse(text);
+    // Expected shape: { rank: number }
+    return { available: true, trancoRank: data.rank, source: 'Tranco' };
+  } catch { return { available: false }; }
+}
+
+function recommend(seo: any, tracking: TrackerHit, robots: any) {
+  const recs: string[] = [];
+  if (!seo.title || seo.titleLength < 15 || seo.titleLength > 60) recs.push('Optimise <title> to ~50–60 chars with primary keyword + benefit.');
+  if (!seo.metaDescription || seo.metaDescriptionLength < 120 || seo.metaDescriptionLength > 170) recs.push('Write a compelling meta description (~140–160 chars) with a CTA.');
+  if (seo.headings.h1 !== 1) recs.push('Ensure exactly one <h1> that states the primary topic clearly.');
+  if (!seo.canonical) recs.push('Add <link rel="canonical"> to prevent duplicate-content dilution.');
+  if (seo.images.withoutAlt > 0) recs.push('Add descriptive alt text to images to improve accessibility and image SEO.');
+  if (seo.jsonLdBlocks === 0) recs.push('Add JSON-LD structured data (Organization, WebSite, Breadcrumb, Product/FAQ as relevant).');
+  if (!robots.robotsTxt.present) recs.push('Publish robots.txt with clear crawl rules and a sitemap reference.');
+  if (!robots.robotsTxt.sitemaps?.length) recs.push('Add sitemap.xml and submit to GSC; link it in robots.txt.');
+  if (tracking.analytics.length === 0) recs.push('Install analytics (e.g., GA4) to measure acquisition and outcomes.');
+  if (tracking.ads.length === 0) recs.push('Consider paid media tests; add conversion tags and offline upload if applicable.');
+  if (tracking.tagManagers.length === 0) recs.push('Adopt a tag manager to manage pixels and QA changes safely.');
+  return recs;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const raw = (body?.url || '').toString().trim();
+    if (!raw) return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+
+    const url = normalizeUrl(raw);
+    const domain = pickDomain(url);
+
+    const { text: html, res, ms } = await timeLimit(fetchText(url.toString(), { redirect: 'follow' }));
+    const $ = cheerio.load(html);
+
+    const seo = parseSEO($);
+    const tech = detectTech(html, $);
+    const tracking = detectTrackers($);
+
+    const origin = `${url.protocol}//${url.host}`;
+    const robots = await getRobotsAndSitemaps(origin);
+    const rdap = await getRDAP(domain);
+    const tranco = await getTrancoRank(domain);
+
+    const recommendations = recommend(seo, tracking, robots);
+
+    const payload = {
+      input: { url: url.toString(), domain },
+      response: { status: res.status, elapsedMs: ms, server: res.headers.get('server'), xPoweredBy: res.headers.get('x-powered-by') },
+      seo, tech, tracking, robots,
+      traffic: tranco.available ? { ...tranco } : { available: false },
+      domain: rdap.available ? { ...rdap } : { available: false },
+      recommendations,
+      generatedAt: new Date().toISOString()
+    };
+
+    return NextResponse.json(payload, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Failed to scan' }, { status: 500 });
+  }
+}
+
+UI (minimal, clean)
+
+File: app/competitor-intel/page.tsx
+
+'use client';
+
+import { useState } from 'react';
+import { marked } from 'marked';
+
+export default function CompetitorIntelPage() {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function onScan() {
+    setLoading(true); setErr(null); setData(null);
+    try {
+      const res = await fetch('/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Scan failed');
+      setData(json);
+    } catch (e: any) { setErr(e.message); } finally { setLoading(false); }
+  }
+
+  function downloadMarkdown() {
+    if (!data) return;
+    const md = buildMarkdown(data);
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `competitor-report-${data.input.domain}.md`;
+    a.click();
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">Competitor Intel Scanner</h1>
+
+      <div className="flex gap-2">
+        <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://competitor.com"
+               className="flex-1 border rounded px-3 py-2" />
+        <button onClick={onScan} disabled={loading} className="bg-black text-white rounded px-4 py-2">
+          {loading ? 'Scanning…' : 'Scan'}
+        </button>
+      </div>
+
+      {err && <div className="text-red-600">{err}</div>}
+
+      {data && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-medium">Report: {data.input.domain}</h2>
+            <button className="border rounded px-3 py-1" onClick={downloadMarkdown}>Download .md</button>
+          </div>
+
+          <Section title="Overview">
+            <KV label="Status" value={`${data.response.status} (${data.response.elapsedMs}ms)`} />
+            <KV label="Server" value={data.response.server || '—'} />
+            <KV label="X-Powered-By" value={data.response.xPoweredBy || '—'} />
+          </Section>
+
+          <Section title="Tech / CMS">
+            <KV label="CMS" value={data.tech.cms || '—'} />
+            <KV label="Frameworks" value={(data.tech.frameworks || []).join(', ') || '—'} />
+          </Section>
+
+          <Section title="SEO">
+            <KV label="Title" value={`${data.seo.title || '—'} (${data.seo.titleLength} chars)`} />
+            <KV label="Meta Description" value={`${data.seo.metaDescription || '—'} (${data.seo.metaDescriptionLength} chars)`} />
+            <KV label="Canonical" value={data.seo.canonical || '—'} />
+            <KV label="OG tags" value={data.seo.openGraphCount} />
+            <KV label="Twitter tags" value={data.seo.twitterTagCount} />
+            <KV label="JSON-LD Blocks" value={data.seo.jsonLdBlocks} />
+            <KV label="Headings" value={`H1:${data.seo.headings.h1} H2:${data.seo.headings.h2} H3:${data.seo.headings.h3}`} />
+            <KV label="Images" value={`Total:${data.seo.images.total} Alt:${data.seo.images.withAlt} NoAlt:${data.seo.images.withoutAlt}`} />
+            <KV label="Links" value={`Internal:${data.seo.links.internal} External:${data.seo.links.external}`} />
+          </Section>
+
+          <Section title="Tracking / Ads">
+            <KV label="Analytics" value={(data.tracking.analytics || []).join(', ') || '—'} />
+            <KV label="Ads" value={(data.tracking.ads || []).join(', ') || '—'} />
+            <KV label="Tag Managers" value={(data.tracking.tagManagers || []).join(', ') || '—'} />
+            <KV label="Social Pixels" value={(data.tracking.socialPixels || []).join(', ') || '—'} />
+          </Section>
+
+          <Section title="Robots & Sitemaps">
+            <KV label="robots.txt" value={data.robots.robotsTxt.present ? 'Present' : 'Missing'} />
+            <KV label="Disallow rules" value={data.robots.robotsTxt.disallowCount} />
+            <KV label="Sitemaps" value={(data.robots.robotsTxt.sitemaps || []).join(', ') || '—'} />
+            {data.robots.sitemaps?.length > 0 && (
+              <ul className="list-disc pl-6">
+                {data.robots.sitemaps.map((s: any) => <li key={s.url}>{s.url} — {s.urlCount} URLs</li>)}
+              </ul>
+            )}
+          </Section>
+
+          <Section title="Traffic & Domain">
+            <KV label="Tranco Rank" value={data.traffic.available ? data.traffic.trancoRank : '—'} />
+            <KV label="Domain Created" value={data.domain.available ? data.domain.created : '—'} />
+            <KV label="Age (days)" value={data.domain.available ? data.domain.ageDays : '—'} />
+          </Section>
+
+          <Section title="Actionable Recommendations">
+            <ul className="list-disc pl-6">
+              {data.recommendations.map((r: string, i: number) => <li key={i}>{r}</li>)}
+            </ul>
+          </Section>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Section({ title, children }: any) {
+  return (
+    <div className="border rounded p-4">
+      <h3 className="font-medium mb-2">{title}</h3>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function KV({ label, value }: any) {
+  return <div className="flex gap-2"><div className="w-40 text-gray-500">{label}</div><div className="flex-1">{String(value)}</div></div>;
+}
+
+function buildMarkdown(d: any) {
+  return `# Competitor Intelligence Report — ${d.input.domain}
+
+## Overview
+- Status: ${d.response.status} (${d.response.elapsedMs}ms)
+- Server: ${d.response.server || '—'}
+- X-Powered-By: ${d.response.xPoweredBy || '—'}
+
+## Tech / CMS
+- CMS: ${d.tech.cms || '—'}
+- Frameworks: ${(d.tech.frameworks || []).join(', ') || '—'}
+
+## SEO
+- Title: ${d.seo.title || '—'} (${d.seo.titleLength})
+- Description: ${d.seo.metaDescription || '—'} (${d.seo.metaDescriptionLength})
+- Canonical: ${d.seo.canonical || '—'}
+- OG tags: ${d.seo.openGraphCount}  |  Twitter tags: ${d.seo.twitterTagCount}
+- JSON-LD blocks: ${d.seo.jsonLdBlocks}
+- Headings: H1:${d.seo.headings.h1} H2:${d.seo.headings.h2} H3:${d.seo.headings.h3}
+- Images: Total:${d.seo.images.total} Alt:${d.seo.images.withAlt} NoAlt:${d.seo.images.withoutAlt}
+- Links: Internal:${d.seo.links.internal} External:${d.seo.links.external}
+
+## Tracking / Ads
+- Analytics: ${(d.tracking.analytics || []).join(', ') || '—'}
+- Ads: ${(d.tracking.ads || []).join(', ') || '—'}
+- Tag Managers: ${(d.tracking.tagManagers || []).join(', ') || '—'}
+- Social Pixels: ${(d.tracking.socialPixels || []).join(', ') || '—'}
+
+## Robots & Sitemaps
+- robots.txt: ${d.robots.robotsTxt.present ? 'Present' : 'Missing'}
+- Disallow rules: ${d.robots.robotsTxt.disallowCount}
+- Sitemaps: ${(d.robots.robotsTxt.sitemaps || []).join(', ') || '—'}
+${(d.robots.sitemaps || []).map((s: any) => `- ${s.url} — ${s.urlCount} URLs`).join('\n')}
+
+## Traffic & Domain
+- Tranco Rank: ${d.traffic.available ? d.traffic.trancoRank : '—'}
+- Domain Created: ${d.domain.available ? d.domain.created : '—'}
+- Age (days): ${d.domain.available ? d.domain.ageDays : '—'}
+
+## Recommendations
+${(d.recommendations || []).map((r: string) => `- ${r}`).join('\n')}
+`;
+}
+
+Minimal Tailwind (optional)
+
+If Tailwind isn’t already set up, use basic CSS or add Tailwind per your standard project template.
+
+Testing / QA Checklist
+
+Happy path: Popular sites return 200 with full sections populated.
+
+Errors: 403/404 gracefully reported; recommendations still generate from partial HTML.
+
+Timeouts: Set to 10s cap; UI never hangs.
+
+International domains: IDNs normalize; RDAP failures don’t break the report.
+
+Robots/Sitemaps: Large sitemaps are capped at 3 files; counts don’t stall the API.
+
+Security: No client-side cross-origin scraping; all fetches occur server-side.
+
+Accessibility: ALT ratio computed; recommendation appears if missing.
+
+Notes / Compliance
+
+Use only publicly accessible pages and documented APIs (RDAP/Tranco).
+
+Do NOT scrape authenticated areas or bypass protections.
+
+Tranco and other paid providers (Semrush/Ahrefs/Similarweb, Wappalyzer/BuiltWith) should be optional modules behind keys and toggles.
+
+Done = merged code + deploy preview + sample reports for 3 domains + checklist signed.

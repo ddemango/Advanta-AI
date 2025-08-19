@@ -7287,6 +7287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const travelApiModule = await import('./travel-api');
   app.use('/api/travel', travelApiModule.default);
 
+  // Competitor Intel Scanner endpoints
+  const competitorIntelModule = await import('./competitor-intel');
+  app.use('/api/competitor-intel', competitorIntelModule.default);
+
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {
     try {
