@@ -186,10 +186,13 @@ function mockFlightSearch(params: any) {
     
     offers.push({
       id: `FLIGHT_${i}_${Date.now()}`,
+      source: ['amadeus', 'travelpayouts'][Math.floor(Math.random() * 2)],
       priceUSD: Math.round(price * 100) / 100,
+      currency: 'USD',
       tier,
-      cpm: Math.round(cpm * 10000) / 10000,
+      cpm: Math.round(cpm * 100) / 100,
       validatingAirline: ['AA', 'UA', 'DL', 'LH', 'AF'][Math.floor(Math.random() * 5)],
+      bookUrl: `https://booking.example.com/flight/${Date.now()}_${i}?price=${Math.round(price)}`,
       itineraries: [
         {
           duration: `PT${Math.floor(Math.random() * 12) + 6}H${Math.floor(Math.random() * 60)}M`,
@@ -470,8 +473,11 @@ router.post('/deals/find', async (req, res) => {
       region = null,
       departDate = null,
       returnDate = null,
+      month = null,
       flexibility = "exact",
       includeNearby = true,
+      includeHotels = false,
+      includeCars = false,
       cabin = "ECONOMY",
       currency = "USD",
       mistakeBias = true,
@@ -493,8 +499,14 @@ router.post('/deals/find', async (req, res) => {
     };
 
     const REGION_TO_CITIES: { [key: string]: string[] } = {
-      "EUROPE": ["LHR", "CDG", "FCO", "BCN", "AMS", "FRA"],
-      "ASIA": ["HND", "ICN", "BKK", "SIN"]
+      "EUROPE": ["LHR", "CDG", "FCO", "BCN", "AMS", "FRA", "MAD", "LIS", "VIE", "ZUR"],
+      "ASIA": ["HND", "ICN", "BKK", "SIN", "HKG", "PVG", "KUL", "MNL", "TPE"],
+      "AFRICA": ["CAI", "JNB", "LOS", "ACC", "CMN", "TUN"],
+      "MIDDLE_EAST": ["DXB", "DOH", "AUH", "KWI", "BAH", "CAI"],
+      "NORTH_AMERICA": ["JFK", "LAX", "YYZ", "YVR", "MEX", "CUN"],
+      "LATAM": ["MEX", "BOG", "LIM", "SCL", "GRU", "EZE"],
+      "SOUTH_AMERICA": ["GRU", "EZE", "SCL", "LIM", "BOG", "CCS"],
+      "OCEANIA": ["SYD", "MEL", "AKL", "BNE", "PER", "ADL"]
     };
 
     const expandOrigin = (code: string, includeNearby: boolean): string[] => {
@@ -515,11 +527,22 @@ router.post('/deals/find', async (req, res) => {
     };
 
     // Build date pairs based on flexibility
-    const buildDatePairs = (depart: string | null, ret: string | null, flex: string) => {
+    const buildDatePairs = (depart: string | null, ret: string | null, monthParam: string | null, flex: string) => {
       const pairs: Array<[string, string]> = [];
       const now = new Date();
-      const depDate = depart ? new Date(depart) : new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-      const retDate = ret ? new Date(ret) : new Date(depDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+      
+      // For month mode, use the month parameter to determine date ranges
+      let depDate: Date;
+      let retDate: Date;
+      
+      if (flex === "month" && monthParam) {
+        const [year, monthNum] = monthParam.split('-').map(Number);
+        depDate = new Date(year, monthNum - 1, 8); // 8th of the month
+        retDate = new Date(year, monthNum - 1, 15); // 15th of the month
+      } else {
+        depDate = depart ? new Date(depart) : new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        retDate = ret ? new Date(ret) : new Date(depDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+      }
 
       const toYMD = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -556,7 +579,7 @@ router.post('/deals/find', async (req, res) => {
     // Expand origins and destinations
     const origins = expandOrigin(origin, includeNearby);
     const destinations = expandDestinations(destination, region);
-    const datePairs = buildDatePairs(departDate, returnDate, flexibility);
+    const datePairs = buildDatePairs(departDate, returnDate, month, flexibility);
 
     // Search across all combinations
     const allOffers: any[] = [];

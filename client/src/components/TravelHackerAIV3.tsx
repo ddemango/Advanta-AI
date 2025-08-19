@@ -1,11 +1,28 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+
+type Segment = { from: string; to: string; depart?: string; arrive?: string; carrier?: string; flightNumber?: string };
+type Itinerary = { segments: Segment[]; durationMin?: number };
+type OfferTier = "unicorn" | "great" | "cheap" | "standard";
+export type Offer = {
+  id: string;
+  source: "amadeus" | "travelpayouts" | "booking" | "rentalcars";
+  priceUSD: number;
+  currency: string;
+  validatingAirline?: string;
+  itineraries: Itinerary[];
+  distanceMiles?: number;
+  cpm?: number;
+  tier?: OfferTier;
+  bookUrl?: string;
+  _route?: string;
+};
 
 /* ---- tiny style tokens ---- */
 const CSS = `
 :root{--bg:#f7fafc;--panel:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--cta:#275afe}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui}
-.container{max-width:980px;margin:0 auto;padding:0 16px}
+.container{max-width:980px;margin:0 auto;padding:0 16px;padding-bottom:80px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:840px){.row{grid-template-columns:1fr}}
@@ -23,20 +40,22 @@ const CSS = `
 @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .disclosure{margin-top:10px}
 .disclosure summary{cursor:pointer;color:#334155}
+.sort-row{display:flex;align-items:center;gap:12px;margin-top:16px;margin-bottom:8px}
+.book-btn{background:#10b981;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+.book-btn:hover{background:#059669}
 `;
 
-type Offer = any;
+const REGION_RE = /EUROPE|ASIA|AFRICA|MIDDLE_EAST|NORTH_AMERICA|LATAM|SOUTH_AMERICA|OCEANIA/i;
 
-export default function TravelHackerAIV3() {
+export default function TravelHackerAIV3(){
   const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");        // IATA or region (EUROPE/ASIA) or blank = Anywhere
+  const [to, setTo] = useState("");
   const [depart, setDepart] = useState("");
   const [ret, setRet] = useState("");
-  const [flex, setFlex] = useState<"exact"|"+-3"|"weekend"|"month">("exact");
+  const [flex, setFlex] = useState<"exact" | "+-3" | "weekend" | "month">("exact");
   const [nearby, setNearby] = useState(true);
-
   const [cabin, setCabin] = useState("ECONOMY");
-  const [maxStops, setMaxStops] = useState<string>("any"); // 'any'|'0'
+  const [maxStops, setMaxStops] = useState<string>("any");
   const [includeHotels, setIncludeHotels] = useState(false);
   const [includeCars, setIncludeCars] = useState(false);
   const [mistakeBias, setMistakeBias] = useState(true);
@@ -45,8 +64,8 @@ export default function TravelHackerAIV3() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [summary, setSummary] = useState("");
   const [error, setError] = useState("");
-
-  useEffect(()=>{ document.title = "Travel Hacker AI — Simple"; }, []);
+  const [sortBy, setSortBy] = useState<'price'|'cpm'|'duration'>('price');
+  const abortRef = useRef<AbortController | null>(null);
 
   const chip = (k:string, label:string, onClick:()=>void, active?:boolean)=>(
     <button type="button" className={`chip ${active?"active":""}`} onClick={onClick} aria-pressed={active}>{label}</button>
@@ -60,37 +79,54 @@ export default function TravelHackerAIV3() {
   }
   function toYMD(d:Date){ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-"); }
 
-  const disabled = useMemo(()=> loading || (!from && !to), [loading, from, to]);
+  const disabled = loading; // allow Anywhere searches
 
   async function findDeals(){
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
     setLoading(true); setError(""); setOffers([]); setSummary("");
     try{
       const payload:any = {
         origin: (from||"JFK").toUpperCase(),
-        destination: to && !/EUROPE|ASIA/i.test(to) ? to.toUpperCase() : null,
-        region: /EUROPE|ASIA/i.test(to) ? to.toUpperCase() : null,
-        departDate: depart || null,
-        returnDate: ret || null,
+        destination: to && !REGION_RE.test(to) ? to.toUpperCase() : null,
+        region: REGION_RE.test(to) ? to.toUpperCase() : null,
+        departDate: flex==="month" ? null : (depart || null),
+        returnDate: flex==="month" ? null : (ret || null),
+        month: flex==="month" ? new Date().toISOString().slice(0,7) : null,
         flexibility: flex,
         includeNearby: nearby,
+        includeHotels, includeCars,
         cabin,
         currency: "USD",
         mistakeBias,
         filters: { maxStops: maxStops==="0"?0:null }
       };
-      const r = await post("/api/travel/deals/find", payload);
+      const r = await postWithSignal("/api/travel/deals/find", payload, ctrl.signal);
       const list:Offer[] = (r.offers||[]).slice(0,20);
       setOffers(list);
       if (list.length){
-        const s = await post("/api/travel/summary", { offers:list.slice(0,8), origin:payload.origin, destination: payload.destination || payload.region || "Anywhere" });
+        const s = await postWithSignal("/api/travel/summary", { offers:list.slice(0,8), origin:payload.origin, destination: payload.destination || payload.region || "Anywhere" }, ctrl.signal);
         if (s.summary) setSummary(s.summary);
       }
     }catch(e:any){
-      setError("Hmm, something went wrong. Try again or widen dates.");
-    }finally{
-      setLoading(false);
-    }
+      if (e?.name !== "AbortError"){
+        setError(import.meta.env.DEV ? String(e?.message||e) : "Hmm, something went wrong. Try again or widen dates.");
+      }
+    }finally{ setLoading(false); }
   }
+
+  const sortedOffers = useMemo(()=>{
+    const arr = [...offers];
+    const dur = (x:Offer)=> x.itineraries.reduce((m,it)=>m+(it.durationMin||0),0);
+    arr.sort((a,b)=>{
+      if (sortBy==='price') return (a.priceUSD||999999)-(b.priceUSD||999999);
+      if (sortBy==='cpm') return ((a.cpm??999)-(b.cpm??999));
+      return dur(a)-dur(b);
+    });
+    return arr;
+  }, [offers, sortBy]);
 
   return (
     <div>
@@ -121,18 +157,10 @@ export default function TravelHackerAIV3() {
 
           {/* Chips */}
           <div className="chips" role="group" aria-label="Quick date picks" style={{marginTop:10}}>
-            {chip("spont","⚡ Spontaneous", ()=>{
-              const d1=new Date(); d1.setDate(d1.getDate()+7);
-              const d2=new Date(); d2.setDate(d2.getDate()+11);
-              setDepart(toYMD(d1)); setRet(toYMD(d2));
-            })}
-            {chip("this","📅 This Month", ()=>setMonthRange(0))}
-            {chip("next","📅 Next Month", ()=>setMonthRange(1))}
-            {chip("week","🗓️ Weekend", ()=>{
-              const d1=new Date(); while(d1.getDay()!==5) d1.setDate(d1.getDate()+1);
-              const d2=new Date(d1); d2.setDate(d1.getDate()+2);
-              setDepart(toYMD(d1)); setRet(toYMD(d2)); setFlex("weekend");
-            }, flex==="weekend")}
+            <button type="button" className="chip" onClick={()=>{ const d1=new Date(); d1.setDate(d1.getDate()+7); const d2=new Date(); d2.setDate(d2.getDate()+11); setDepart(toYMD(d1)); setRet(toYMD(d2)); }}>⚡ Spontaneous</button>
+            <button type="button" className="chip" onClick={()=>setMonthRange(0)}>📅 This Month</button>
+            <button type="button" className="chip" onClick={()=>setMonthRange(1)}>📅 Next Month</button>
+            <button type="button" className={`chip ${flex==="weekend"?"active":""}`} onClick={()=>{ const d1=new Date(); while(d1.getDay()!==5) d1.setDate(d1.getDate()+1); const d2=new Date(d1); d2.setDate(d1.getDate()+2); setDepart(toYMD(d1)); setRet(toYMD(d2)); setFlex("weekend"); }}>🗓️ Weekend</button>
           </div>
 
           {/* Dates + Flex */}
@@ -200,25 +228,52 @@ export default function TravelHackerAIV3() {
           {error && <div role="alert" className="card" style={{marginTop:10, borderColor:"#fecaca", background:"#fff1f2", color:"#7f1d1d"}}>{error}</div>}
         </section>
 
+        {/* Sort Controls */}
+        {offers.length > 0 && (
+          <div className="sort-row">
+            <span className="muted">Sort by:</span>
+            <select className="select" style={{width:"auto",padding:"8px 12px",fontSize:14}} value={sortBy} onChange={e=>setSortBy(e.target.value as any)}>
+              <option value="price">Price (lowest)</option>
+              <option value="cpm">Cost per mile</option>
+              <option value="duration">Duration</option>
+            </select>
+          </div>
+        )}
+
         {/* Results */}
-        <section aria-live="polite" className="grid">
+        <section aria-live="polite" aria-busy={loading} className="grid">
           {loading && Array.from({length:6}).map((_,i)=><div key={i} className="skeleton" />)}
           {!loading && offers.length===0 && !error && (
             <div className="card" style={{gridColumn:"1/-1",textAlign:"center"}}>No results yet—try "± 3 days" or "Weekend".</div>
           )}
-          {offers.map((o, i)=>(
+          {sortedOffers.map((o, i)=>(
             <article key={i} className="card">
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <h3 style={{margin:0}}>${Number(o.priceUSD||0).toFixed(0)} <span className="muted">USD</span></h3>
-                <span className="badge">
-                  {o.tier==="unicorn"?"🦄 mistake-fare-like":o.tier==="great"?"🔥 great":o.tier==="cheap"?"✅ cheap":"—"}
-                </span>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <span className="badge" style={{fontSize:10}}>
+                    {o.source.toUpperCase()}
+                  </span>
+                  <span className="badge">
+                    {o.tier==="unicorn"?"🦄 mistake-fare-like":o.tier==="great"?"🔥 great":o.tier==="cheap"?"✅ cheap":"—"}
+                  </span>
+                </div>
               </div>
-              <div className="muted" style={{fontSize:12,marginTop:6}}>
+              <div className="muted" style={{fontSize:12,marginBottom:8}}>
                 {o._route?`${o._route} • `:""}
                 {pathLine(o)}
-                {o.validatingAirline?` • ${o.validatingAirline}`:""} • CPM ~${(o.cpm||0).toFixed(2)}/mile
+                {o.validatingAirline?` • ${o.validatingAirline}`:""}
+                {o.cpm && o.cpm > 0 ? ` • CPM ~$${o.cpm.toFixed(2)}/mile` : ""}
               </div>
+              {o.bookUrl && (
+                <button 
+                  className="book-btn" 
+                  onClick={()=>window.open(o.bookUrl, "_blank", "noopener,noreferrer")}
+                  style={{marginTop:4}}
+                >
+                  📖 Book
+                </button>
+              )}
             </article>
           ))}
         </section>
@@ -234,6 +289,14 @@ async function post(url:string, body:any){
   if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
   return data;
 }
+
+async function postWithSignal(url:string, body:any, signal:AbortSignal){
+  const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal});
+  let data:any; try{ data = await r.json(); }catch{ data = {error:"bad_json"}; }
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
 function pathLine(o:any){
   const segs = (o.itineraries||[]).flatMap((it:any)=>it.segments||[]);
   if (!segs.length) return "";

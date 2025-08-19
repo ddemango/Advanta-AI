@@ -1,0 +1,713 @@
+# Travel Hacker AI — Full Agent Implementation Brief (V2→V3)
+
+**Goal:** Ship a production-ready Travel Hacker AI page that finds ultra-cheap flights (incl. “mistake-fare-like”), hotels, and car rentals using free/freemium APIs. Implement frontend fixes, SEO, server routes, data models, caching, heuristics, and tests. Do **not** skip steps.
+
+---
+
+## 0) Tech assumptions
+
+* Next.js **App Router** preferred. If using Pages Router, follow the alternate snippets.
+* TypeScript everywhere.
+* Node 18+.
+* Use **server-side** calls for provider APIs; never expose keys to the browser.
+* Add Redis (Upstash or self-host) for caching & simple analytics.
+
+---
+
+## 1) Environment & secrets
+
+Create/update `.env.local` (do not commit):
+
+```bash
+# Domain
+NEXT_PUBLIC_SITE_URL=https://www.advanta-ai.com
+
+# Amadeus Self-Service (OAuth2 Client Credentials)
+AMADEUS_API_KEY=xxxxx
+AMADEUS_API_SECRET=xxxxx
+AMADEUS_ENV=production # or test
+
+# Travelpayouts (affiliate & Data API; cached flight prices)
+TRAVELPAYOUTS_TOKEN=xxxxx
+TRAVELPAYOUTS_MARKER=xxxxx # optional tracking
+
+# Optional: Booking.com Demand API (managed affiliate) — if unavailable, skip
+BOOKING_DEMAND_API_KEY=xxxxx
+
+# Redis for caching
+REDIS_URL=xxxxx
+REDIS_TOKEN=xxxxx # if Upstash REST mode
+```
+
+Install deps:
+
+```bash
+npm i amadeus @upstash/redis zod
+```
+
+> If using Pages Router, also ensure `next/head` is available. Do **not** use `react-helmet` in App Router.
+
+---
+
+## 2) SEO & page wrapper (App Router)
+
+Create `app/travel-hacker-ai-v2/page.tsx`:
+
+```tsx
+import dynamic from "next/dynamic";
+import type { Metadata } from "next";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.advanta-ai.com";
+const PAGE_URL = `${SITE_URL}/travel-hacker-ai-v2`;
+const OG_IMAGE = `${SITE_URL}/og/travel-hacker-ai-v2.png`;
+
+export const metadata: Metadata = {
+  title: "Travel Hacker AI — Cheap Flights, Mistake Fares, Hotels & Cars",
+  description:
+    "AI-powered travel search to find ultra-cheap flights, mistake-fare-like deals, hotels and car rentals with flexible dates.",
+  alternates: { canonical: PAGE_URL },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    url: PAGE_URL,
+    title: "Travel Hacker AI — Cheap Flights & Mistake Fares",
+    description:
+      "Find ultra-cheap flights and mistake-fare-like deals, plus hotels and cars. Flexible dates & weekend mode.",
+    siteName: "Advanta AI",
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "Travel Hacker AI" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Travel Hacker AI — Cheap Flights & Mistake Fares",
+    description:
+      "AI travel search for ultra-cheap flights, hotels, and cars. Flexible dates & weekend mode.",
+    images: [OG_IMAGE],
+  },
+};
+
+const TravelHackerAIV3 = dynamic(() => import("@/components/TravelHackerAIV3"), { ssr: false });
+
+export default function Page() {
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Travel Hacker AI",
+            url: PAGE_URL,
+            applicationCategory: "TravelApplication",
+            operatingSystem: "Web",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            publisher: { "@type": "Organization", name: "Advanta AI", url: SITE_URL },
+          }),
+        }}
+      />
+      <TravelHackerAIV3 />
+    </>
+  );
+}
+```
+
+> If you remain on Pages Router, replace with a `pages/travel-hacker-ai-v2.tsx` file using `next/head`. Remove **all** `react-helmet` usage and any `document.title` code inside the component.
+
+---
+
+## 3) Component fixes (TravelHackerAIV3)
+
+**Actions:**
+
+1. Remove `useEffect(()=>{ document.title = ... }, [])`.
+2. Expand region parsing: `EUROPE|ASIA|AFRICA|MIDDLE_EAST|NORTH_AMERICA|LATAM|SOUTH_AMERICA|OCEANIA`.
+3. Wire `includeHotels`, `includeCars` into payload.
+4. Add `month` mode (YYYY-MM) when `flex === "month"`; ignore date fields in that case.
+5. Fix CTA disabled state to only reflect `loading`.
+6. Guard CPM display (don’t show `$0.00`).
+7. Add `AbortController` to cancel in-flight searches.
+8. Add sort control: Price / CPM / Duration.
+9. Add `Source` badge and **Book** deep link.
+10. Add `aria-busy={loading}` to result grid; pad bottom so sticky CTA doesn’t overlap.
+
+**Drop-in updated component** (replace your file contents):
+
+```tsx
+"use client";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type Segment = { from: string; to: string; depart?: string; arrive?: string; carrier?: string; flightNumber?: string };
+type Itinerary = { segments: Segment[]; durationMin?: number };
+type OfferTier = "unicorn" | "great" | "cheap" | "standard";
+export type Offer = {
+  id: string;
+  source: "amadeus" | "travelpayouts" | "booking" | "rentalcars";
+  priceUSD: number;
+  currency: string;
+  validatingAirline?: string;
+  itineraries: Itinerary[];
+  distanceMiles?: number;
+  cpm?: number;
+  tier?: OfferTier;
+  bookUrl?: string;
+  _route?: string;
+};
+
+/* ---- tiny style tokens ---- */
+const CSS = `
+:root{--bg:#f7fafc;--panel:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--cta:#275afe}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui}
+.container{max-width:980px;margin:0 auto;padding:0 16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:840px){.row{grid-template-columns:1fr}}
+.input,.select{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:#fff;cursor:pointer}
+.chip.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.toggle{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+.muted{color:var(--muted);font-size:13px}
+.cta{position:sticky;bottom:12px;width:100%;background:var(--cta);color:#fff;border:none;border-radius:12px;padding:14px 16px;font-weight:600}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:16px}
+@media (max-width:840px){.grid{grid-template-columns:1fr}}
+.badge{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:#334155}
+.skeleton{height:88px;border-radius:12px;background:linear-gradient(90deg,#eee,#f5f7fb 40%,#eee 80%);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.disclosure{margin-top:10px}
+.disclosure summary{cursor:pointer;color:#334155}
+.container{padding-bottom:80px} /* room for sticky CTA */
+`;
+
+const REGION_RE = /EUROPE|ASIA|AFRICA|MIDDLE_EAST|NORTH_AMERICA|LATAM|SOUTH_AMERICA|OCEANIA/i;
+
+export default function TravelHackerAIV3(){
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [depart, setDepart] = useState("");
+  const [ret, setRet] = useState("");
+  const [flex, setFlex] = useState<"exact" | "+-3" | "weekend" | "month">("exact");
+  const [nearby, setNearby] = useState(true);
+  const [cabin, setCabin] = useState("ECONOMY");
+  const [maxStops, setMaxStops] = useState<string>("any");
+  const [includeHotels, setIncludeHotels] = useState(false);
+  const [includeCars, setIncludeCars] = useState(false);
+  const [mistakeBias, setMistakeBias] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [summary, setSummary] = useState("");
+  const [error, setError] = useState("");
+  const [sortBy, setSortBy] = useState<'price'|'cpm'|'duration'>('price');
+  const abortRef = useRef<AbortController | null>(null);
+
+  const chip = (k:string, label:string, onClick:()=>void, active?:boolean)=> (
+    <button type="button" className={`chip ${active?"active":""}`} onClick={onClick} aria-pressed={active}>{label}</button>
+  );
+
+  function setMonthRange(offset=0){
+    const now = new Date();
+    const d1 = new Date(now.getFullYear(), now.getMonth()+offset, 8);
+    const d2 = new Date(now.getFullYear(), now.getMonth()+offset, 15);
+    setDepart(toYMD(d1)); setRet(toYMD(d2));
+  }
+  function toYMD(d:Date){ return [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-"); }
+
+  const disabled = loading; // allow Anywhere searches
+
+  async function findDeals(){
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
+    setLoading(true); setError(""); setOffers([]); setSummary("");
+    try{
+      const payload:any = {
+        origin: (from||"JFK").toUpperCase(),
+        destination: to && !REGION_RE.test(to) ? to.toUpperCase() : null,
+        region: REGION_RE.test(to) ? to.toUpperCase() : null,
+        departDate: flex==="month" ? null : (depart || null),
+        returnDate: flex==="month" ? null : (ret || null),
+        month: flex==="month" ? new Date().toISOString().slice(0,7) : null,
+        flexibility: flex,
+        includeNearby: nearby,
+        includeHotels, includeCars,
+        cabin,
+        currency: "USD",
+        mistakeBias,
+        filters: { maxStops: maxStops==="0"?0:null }
+      };
+      const r = await post("/api/travel/deals/find", payload, ctrl.signal);
+      const list:Offer[] = (r.offers||[]).slice(0,20);
+      setOffers(list);
+      if (list.length){
+        const s = await post("/api/travel/summary", { offers:list.slice(0,8), origin:payload.origin, destination: payload.destination || payload.region || "Anywhere" }, ctrl.signal);
+        if (s.summary) setSummary(s.summary);
+      }
+    }catch(e:any){
+      if (e?.name !== "AbortError"){
+        setError(process.env.NODE_ENV==="development" ? String(e?.message||e) : "Hmm, something went wrong. Try again or widen dates.");
+      }
+    }finally{ setLoading(false); }
+  }
+
+  const sortedOffers = useMemo(()=>{
+    const arr = [...offers];
+    const dur = (x:Offer)=> x.itineraries.reduce((m,it)=>m+(it.durationMin||0),0);
+    arr.sort((a,b)=>{
+      if (sortBy==='price') return (a.priceUSD||999999)-(b.priceUSD||999999);
+      if (sortBy==='cpm') return ((a.cpm??999)-(b.cpm??999));
+      return dur(a)-dur(b);
+    });
+    return arr;
+  }, [offers, sortBy]);
+
+  return (
+    <div>
+      <style dangerouslySetInnerHTML={{__html: CSS}} />
+      <header style={{textAlign:"center",padding:"32px 16px"}}>
+        <div className="container">
+          <h1 style={{fontSize:36,margin:"10px 0"}}>Travel Hacker AI</h1>
+          <p className="muted">Ultra-cheap roundtrips · ⚡ mistake-fare-like · 🧳 budget plans</p>
+        </div>
+      </header>
+
+      <main className="container">
+        <section className="card" aria-labelledby="deal-title">
+          <h2 id="deal-title" style={{margin:"0 0 8px"}}>Find My Travel Deal</h2>
+
+          {/* Basic row */}
+          <div className="row">
+            <div>
+              <label htmlFor="from">Departure</label>
+              <input id="from" className="input" placeholder="e.g., BNA or Nashville" value={from} onChange={e=>setFrom(e.target.value)} />
+              <div className="muted">Tip: turn on "nearby airports" below.</div>
+            </div>
+            <div>
+              <label htmlFor="to">Destination (or Region)</label>
+              <input id="to" className="input" placeholder="IATA (FCO) · City (Rome) · Region (EUROPE) · blank = Anywhere" value={to} onChange={e=>setTo(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Chips */}
+          <div className="chips" role="group" aria-label="Quick date picks" style={{marginTop:10}}>
+            { /* Spontaneous */ }
+            <button type="button" className="chip" onClick={()=>{ const d1=new Date(); d1.setDate(d1.getDate()+7); const d2=new Date(); d2.setDate(d2.getDate()+11); setDepart(toYMD(d1)); setRet(toYMD(d2)); }}>⚡ Spontaneous</button>
+            <button type="button" className="chip" onClick={()=>setMonthRange(0)}>📅 This Month</button>
+            <button type="button" className="chip" onClick={()=>setMonthRange(1)}>📅 Next Month</button>
+            <button type="button" className={`chip ${flex==="weekend"?"active":""}`} onClick={()=>{ const d1=new Date(); while(d1.getDay()!==5) d1.setDate(d1.getDate()+1); const d2=new Date(d1); d2.setDate(d1.getDate()+2); setDepart(toYMD(d1)); setRet(toYMD(d2)); setFlex("weekend"); }} aria-pressed={flex==="weekend"}>🗓️ Weekend</button>
+          </div>
+
+          {/* Dates + Flex */}
+          <div className="row" style={{marginTop:10}}>
+            <div>
+              <label htmlFor="depart">Departure date</label>
+              <input id="depart" type="date" className="input" value={depart} onChange={e=>setDepart(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="return">Return date</label>
+              <input id="return" type="date" className="input" value={ret} onChange={e=>setRet(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="row" style={{marginTop:10}}>
+            <div>
+              <label htmlFor="flex">Date flexibility</label>
+              <select id="flex" className="select" value={flex} onChange={e=>setFlex(e.target.value as any)}>
+                <option value="exact">Exact dates</option>
+                <option value="+-3">± 3 days</option>
+                <option value="weekend">Weekend only</option>
+                <option value="month">Any weekend this month</option>
+              </select>
+            </div>
+            <div className="toggle" style={{alignSelf:"end"}}>
+              <input id="nearby" type="checkbox" checked={nearby} onChange={e=>setNearby(e.target.checked)} />
+              <label htmlFor="nearby">Include nearby airports</label>
+            </div>
+          </div>
+
+          {/* Advanced (collapsed) */}
+          <details className="disclosure">
+            <summary>More options</summary>
+            <div className="row" style={{marginTop:10}}>
+              <div>
+                <label>Cabin</label>
+                <select className="select" value={cabin} onChange={e=>setCabin(e.target.value)}>
+                  <option>ECONOMY</option><option>PREMIUM_ECONOMY</option><option>BUSINESS</option><option>FIRST</option>
+                </select>
+              </div>
+              <div>
+                <label>Stops</label>
+                <select className="select" value={maxStops} onChange={e=>setMaxStops(e.target.value)}>
+                  <option value="any">Any</option>
+                  <option value="0">Non-stop only</option>
+                </select>
+              </div>
+            </div>
+            <div className="row" style={{marginTop:10}}>
+              <label className="toggle"><input type="checkbox" checked={includeHotels} onChange={e=>{setIncludeHotels(e.target.checked)}}/> Include hotels</label>
+              <label className="toggle"><input type="checkbox" checked={includeCars} onChange={e=>{setIncludeCars(e.target.checked)}}/> Include car rentals</label>
+            </div>
+            <div style={{marginTop:8}}>
+              <label className="toggle"><input type="checkbox" checked={mistakeBias} onChange={e=>setMistakeBias(e.target.checked)}/> Prefer mistake-fare-like deals</label>
+            </div>
+          </details>
+
+          {/* Controls */}
+          <div className="row" style={{marginTop:10}}>
+            <div>
+              <label htmlFor="sort">Sort</label>
+              <select id="sort" className="select" value={sortBy} onChange={e=>setSortBy(e.target.value as any)}>
+                <option value="price">Price</option>
+                <option value="cpm">CPM</option>
+                <option value="duration">Duration</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Sticky CTA */}
+          <button className="cta" disabled={disabled} onClick={findDeals} aria-disabled={disabled} style={{marginTop:14}}>
+            🎯 Find My Deal
+          </button>
+
+          {/* Summary / Errors */}
+          {summary && <div className="muted" style={{marginTop:10,whiteSpace:"pre-wrap"}}>{summary}</div>}
+          {error && <div role="alert" className="card" style={{marginTop:10, borderColor:"#fecaca", background:"#fff1f2", color:"#7f1d1d"}}>{error}</div>}
+        </section>
+
+        {/* Results */}
+        <section aria-live="polite" className="grid" aria-busy={loading}>
+          {loading && Array.from({length:6}).map((_,i)=><div key={i} className="skeleton" />)}
+          {!loading && offers.length===0 && !error && (
+            <div className="card" style={{gridColumn:"1/-1",textAlign:"center"}}>No results yet—try "± 3 days" or "Weekend".</div>
+          )}
+          {sortedOffers.map((o, i)=> (
+            <article key={o.id || i} className="card">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <h3 style={{margin:0}}>${Number(o.priceUSD||0).toFixed(0)} <span className="muted">USD</span></h3>
+                <span className="badge">
+                  {o.tier==="unicorn"?"🦄 mistake-fare-like":o.tier==="great"?"🔥 great":o.tier==="cheap"?"✅ cheap":"—"}
+                </span>
+              </div>
+              <div className="muted" style={{fontSize:12,marginTop:6}}>
+                {o._route?`${o._route} • `:""}
+                {pathLine(o)}
+                {o.validatingAirline?` • ${o.validatingAirline}`:""}
+                {o.cpm!=null?` • CPM ~$${(o.cpm).toFixed(2)}/mile`:""}
+                {o.source?` • Source: ${o.source}`:""}
+              </div>
+              {o.bookUrl && <a className="badge" href={o.bookUrl} target="_blank" rel="nofollow sponsored noopener">Book</a>}
+            </article>
+          ))}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+async function post(url:string, body:any, signal?:AbortSignal){
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
+  let data:any; try{ data = await r.json(); }catch{ data = { error: "bad_json" }; }
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+function pathLine(o:Offer){
+  const segs = (o.itineraries||[]).flatMap((it:any)=>it.segments||[]);
+  if (!segs.length) return "";
+  return segs.map((s:any)=>`${s.from}→${s.to}`).join(" · ");
+}
+```
+
+---
+
+## 4) Server routes (App Router)
+
+**Routes:**
+
+* `app/api/travel/deals/find/route.ts` — main aggregator
+* `app/api/travel/summary/route.ts` — LLM-ish summary (can be simple templating for now)
+
+### 4.1 `app/api/travel/deals/find/route.ts`
+
+```ts
+import { NextResponse } from "next/server";
+import Amadeus from "amadeus";
+import { Redis } from "@upstash/redis";
+import { z } from "zod";
+
+const amadeus = new Amadeus({
+  clientId: process.env.AMADEUS_API_KEY!,
+  clientSecret: process.env.AMADEUS_API_SECRET!,
+  hostname: process.env.AMADEUS_ENV === "production" ? "api" : "test",
+});
+
+const redis = process.env.REDIS_URL ? new Redis({ url: process.env.REDIS_URL!, token: process.env.REDIS_TOKEN }) : null as any;
+
+const Input = z.object({
+  origin: z.string().min(3),
+  destination: z.string().nullable(),
+  region: z.string().nullable(),
+  departDate: z.string().nullable(),
+  returnDate: z.string().nullable(),
+  month: z.string().nullable(), // YYYY-MM when flex === 'month'
+  flexibility: z.enum(["exact","+-3","weekend","month"]),
+  includeNearby: z.boolean().default(true),
+  includeHotels: z.boolean().default(false),
+  includeCars: z.boolean().default(false),
+  cabin: z.string().default("ECONOMY"),
+  currency: z.string().default("USD"),
+  mistakeBias: z.boolean().default(true),
+  filters: z.object({ maxStops: z.number().nullable() }).default({ maxStops: null })
+});
+
+export async function POST(req: Request){
+  const body = await req.json();
+  const p = Input.parse(body);
+
+  // cache key
+  const key = `th:v3:${JSON.stringify(p)}`;
+  const cached = redis ? await redis.get(key) : null;
+  if (cached) return NextResponse.json(cached);
+
+  // 1) gather candidates
+  const candidates: any[] = [];
+  if (p.flexibility === "exact"){
+    const live = await amadeusSearch(amadeus, p);
+    candidates.push(...live);
+  } else {
+    const ideas = await travelpayoutsDiscovery(p); // cached, cheap exploration
+    const top = ideas.slice(0, 12);
+    const verified = await Promise.all(top.map(it => amadeusVerify(amadeus, it, p)));
+    candidates.push(...verified.filter(Boolean));
+  }
+
+  // 2) score + enrich
+  for (const o of candidates){
+    o.distanceMiles = computeMiles(o.itineraries);
+    o.cpm = o.distanceMiles ? +(o.priceUSD / o.distanceMiles).toFixed(2) : undefined;
+    o.tier = scoreTier(o, p.mistakeBias);
+  }
+
+  // 3) hotels & cars (optional)
+  const [hotels, cars] = await Promise.all([
+    p.includeHotels ? hotelSearch(p) : Promise.resolve([]),
+    p.includeCars ? carSearch(p) : Promise.resolve([])
+  ]);
+
+  const result = { offers: dedupeAndSort(candidates), hotels, cars };
+  if (redis) await redis.set(key, result, { ex: 60 * 10 }); // 10m cache
+  return NextResponse.json(result);
+}
+
+/* ---------------- helpers ---------------- */
+function dedupeAndSort(arr:any[]){
+  const seen = new Set<string>();
+  const out: any[] = [];
+  for (const o of arr){
+    const k = `${o.validatingAirline || ""}|${o.priceUSD}|${o._route || ""}`;
+    if (!seen.has(k)){ seen.add(k); out.push(o); }
+  }
+  return out.sort((a,b)=>a.priceUSD-b.priceUSD);
+}
+
+function computeMiles(its:any[]): number{
+  // if segments have lat/lon, use haversine; else use rough lookups or sum of great-circle by airport coords (preload a code->lat/lon map)
+  // Placeholder: rely on precomputed distance if present
+  try{
+    // implement your airport coord map here if needed
+    return its?.length ? its.reduce((sum,it)=> sum + (it.distanceMiles || 0), 0) : 0;
+  }catch{ return 0; }
+}
+
+function scoreTier(o:any, mistakeBias:boolean){
+  const cpm = o.cpm ?? 999;
+  let tier: "unicorn"|"great"|"cheap"|"standard" = "standard";
+  if (cpm < 3) tier = "great"; // intl ballpark; adjust with OD
+  if (cpm < 2) tier = "cheap";
+  // If price < 40% of rolling 90d median for OD, call it unicorn
+  if (mistakeBias && o._pctOfMedian && o._pctOfMedian < 0.4) tier = "unicorn";
+  return tier;
+}
+
+async function amadeusSearch(amadeus:any, p:any){
+  // map cabin
+  const cabinMap:any = { ECONOMY: "ECONOMY", PREMIUM_ECONOMY: "PREMIUM_ECONOMY", BUSINESS: "BUSINESS", FIRST: "FIRST" };
+  const params:any = {
+    originLocationCode: p.origin,
+    destinationLocationCode: p.destination,
+    departureDate: p.departDate,
+    returnDate: p.returnDate,
+    adults: 1,
+    currencyCode: p.currency,
+    travelClass: cabinMap[p.cabin] || "ECONOMY",
+    nonStop: p.filters?.maxStops === 0 ? true : undefined,
+  };
+  const res = await amadeus.shopping.flightOffersSearch.get(params);
+  const offers = res.data?.map((x:any)=> normalizeAmadeusOffer(x)) || [];
+  // Optional: price confirm top N
+  return offers.slice(0, 20);
+}
+
+async function amadeusVerify(amadeus:any, idea:any, p:any){
+  // idea contains origin, destination, dates; verify with live price
+  try{
+    const res = await amadeus.shopping.flightOffersSearch.get({
+      originLocationCode: idea.origin,
+      destinationLocationCode: idea.destination,
+      departureDate: idea.departDate,
+      returnDate: idea.returnDate,
+      adults: 1,
+      currencyCode: p.currency,
+      travelClass: p.cabin,
+      nonStop: p.filters?.maxStops === 0 ? true : undefined,
+    });
+    const first = res.data?.[0];
+    return first ? normalizeAmadeusOffer(first) : null;
+  }catch{ return null; }
+}
+
+function normalizeAmadeusOffer(x:any){
+  const priceUSD = Number(x.price?.total || x.price?.grandTotal || 0);
+  const validatingAirline = x.validatingAirlineCodes?.[0] || undefined;
+  const its = (x.itineraries||[]).map((it:any)=>({
+    durationMin: parseISODurationToMin(it.duration),
+    segments: (it.segments||[]).map((s:any)=>({
+      from: s.departure?.iataCode,
+      to: s.arrival?.iataCode,
+      depart: s.departure?.at,
+      arrive: s.arrival?.at,
+      carrier: s.carrierCode,
+      flightNumber: s.number,
+    }))
+  }));
+  const route = its.flatMap((it:any)=>it.segments).map((s:any)=>`${s.from}→${s.to}`).join(" · ");
+  return { id: x.id, source: "amadeus", priceUSD, currency: x.price?.currency || "USD", validatingAirline, itineraries: its, _route: route };
+}
+
+function parseISODurationToMin(iso?:string){
+  if (!iso) return undefined;
+  // Very simple PT#H#M parser
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+  if (!m) return undefined;
+  const h = Number(m[1]||0), mm = Number(m[2]||0);
+  return h*60 + mm;
+}
+
+async function travelpayoutsDiscovery(p:any){
+  // Use Travelpayouts Data API for cached cheap routes / month calendars.
+  // Example: fetch month matrix or directions; fill an array of { origin, destination, departDate, returnDate, priceUSD, bookUrl }
+  // IMPORTANT: This API is cached; we only use it for exploration, then verify with Amadeus.
+  const ideas:any[] = [];
+  // TODO: implement actual calls with TRAVELPAYOUTS_TOKEN and TRAVELPAYOUTS_MARKER
+  return ideas;
+}
+
+async function hotelSearch(p:any){
+  // If Booking Demand API not available, use Amadeus Hotels v3 (Hotel Search + Offers)
+  return [];
+}
+
+async function carSearch(p:any){
+  // If Booking Demand API not available, return affiliate deep links to providers
+  return [];
+}
+```
+
+> NOTE: Implement the real Travelpayouts/Booking calls using their docs and returned JSON formats. Keep those calls on the server and sanitize outputs.
+
+### 4.2 `app/api/travel/summary/route.ts`
+
+For now, a deterministic template (can be replaced by LLM later):
+
+```ts
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request){
+  const { offers = [], origin, destination } = await req.json();
+  if (!offers.length) return NextResponse.json({ summary: "" });
+  const cheapest = offers.reduce((m:any,o:any)=> o.priceUSD < m.priceUSD ? o : m, offers[0]);
+  const lines = [
+    `From ${origin} to ${destination}: ${offers.length} solid options. Cheapest around $${Math.round(cheapest.priceUSD)}.`,
+  ];
+  const unicorns = offers.filter((o:any)=>o.tier === 'unicorn').length;
+  if (unicorns) lines.push(`Heads up: ${unicorns} look mistake-fare-like (very low CPM).`);
+  return NextResponse.json({ summary: lines.join("\n") });
+}
+```
+
+---
+
+## 5) Mistake-fare-like logic
+
+* Compute **CPM** = price / great-circle miles; store per offer.
+* Maintain a rolling **90-day median** price per OD pair in Redis (update when live results return). Store as `th:median:${origin}:${dest}`.
+* Label `unicorn` when `price < 0.4 * median` (40%).
+* Suppress label on obvious LCC barebones if you detect “Basic” brand and user didn’t opt in.
+
+---
+
+## 6) Deep links & sources
+
+* Add `source` and `bookUrl` to each offer.
+
+  * Amadeus: prefer airline website deep link if available; otherwise show carrier name and route. If you integrate Orders later, replace with your checkout.
+  * Travelpayouts: use affiliate deeplinks returned from their API (include `marker`).
+  * Hotels/cars: Booking Demand or partner links with `rel="nofollow sponsored noopener"`.
+
+---
+
+## 7) Validation, rate limits, caching
+
+* **Zod**-validate POST bodies (already shown).
+* **Cache** search responses 10 minutes in Redis. Key by full payload JSON.
+* Implement a simple **rate-limit** (e.g., IP+minute counter) to protect provider quotas.
+
+---
+
+## 8) Accessibility & UX polish
+
+* `aria-busy` on results grid.
+* Ensure sticky CTA doesn’t cover content (`padding-bottom` on container).
+* Add empty states and helpful tips.
+* Add sort control (implemented), and consider a price range filter in a follow-up.
+
+---
+
+## 9) Testing checklist (don’t skip)
+
+* ✅ Exact-dates search (origin set, destination empty → Anywhere) returns results.
+* ✅ Region search (`EUROPE`) dispatches correctly.
+* ✅ `month` mode ignores day fields and returns weekend options.
+* ✅ Nonstop filter actually affects results.
+* ✅ Hotels/Cars toggles are passed to backend; arrays returned (can be empty now).
+* ✅ CPM never shows when missing.
+* ✅ Book links open in new tab with `nofollow sponsored`.
+* ✅ Cache hit path returns instantly.
+* ✅ Error path shows friendly message; dev env shows real error.
+* ✅ Lighthouse: no CLS from sticky CTA; meta tags render.
+
+---
+
+## 10) Deliverables for this task
+
+1. Updated `app/travel-hacker-ai-v2/page.tsx` (or Pages Router equivalent) with Metadata API and JSON-LD.
+2. Replaced `components/TravelHackerAIV3.tsx` with the version above.
+3. Implemented `app/api/travel/deals/find/route.ts` and `app/api/travel/summary/route.ts` (skeleton provided). Fill in provider calls.
+4. `.env.local` populated with keys; all keys server-only.
+5. Redis connected; 10-minute cache for searches.
+6. README note: which providers are live (Amadeus, Travelpayouts) and what’s mocked.
+7. Test evidence: screenshots or logs of successful searches + cache hits.
+
+---
+
+## 11) Nice-to-haves (post-MVP)
+
+* IATA resolution endpoint to accept city names and pick top airport(s).
+* Airport coords map for precise great-circle miles.
+* Hotel & car cards UI with pricing and rating chips.
+* FAQ accordion + FAQPage JSON-LD.
+* Metrics panel (Redis counters) for searches/day and conversion clicks.
+
+---
+
+**End of brief — implement all items, commit, and run tests before returning.**
