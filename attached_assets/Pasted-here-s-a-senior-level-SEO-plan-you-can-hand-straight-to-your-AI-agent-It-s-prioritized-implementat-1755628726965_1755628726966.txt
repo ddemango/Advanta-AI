@@ -1,0 +1,176 @@
+here’s a senior-level SEO plan you can hand straight to your AI agent. It’s prioritized, implementation-ready, and tailored to rank an About page (and improve sitewide trust).
+
+1) Highest-impact quick wins (do first)
+
+URL & indexability: use /about (not /about-us-123), set <link rel="canonical" href="https://www.advanta-ai.com/about" />, ensure no noindex.
+
+Title & meta:
+
+Title: About Advanta AI & Founder Davide DeMango | AI Automation with Measurable Outcomes (≤ 60 chars if you prefer: About Advanta AI | Founder Davide DeMango)
+
+Meta description: Advanta AI turns AI into measurable results—clean data, smart automation, and simple interfaces. Meet founder Davide DeMango and see why we built it.
+
+H1 + header hierarchy: one H1 only: About Advanta AI. H2s for: What we do, Founded by Davide DeMango, Why I built Advanta AI, Values, Free Tools, FAQ.
+
+Internal links (contextual): add 6–10 internal links with descriptive anchors:
+
+From homepage hero/footer: “About Advanta AI”
+
+From services pages: “Our founder’s approach”, “Why we built Advanta”
+
+From each free tool: “Who built these tools?” → /about
+
+From blog posts: “About Advanta AI” / “Meet Davide DeMango”
+
+Add 4–6 trust elements: authenticated headshot, client mentions, awards/press, privacy/ethics blurb, contact CTA, and your two trust quotes.
+
+2) Content blocks to include on the page
+
+Founder paragraph (you’ve got it) + “Why I built Advanta AI” section (done).
+
+Mini case snapshots (3 tiles): Problem → What we built → Result (include a metric if possible).
+
+FAQ (targets People-Also-Ask; answers ~50–75 words):
+
+What does Advanta AI do?
+
+Who is Davide DeMango?
+
+Are there free tools?
+
+How does your pilot work?
+
+How do you handle data privacy?
+
+Last updated date (visible), e.g., “Updated: August 2025”.
+
+3) Structured data (paste these JSON-LD blocks)
+3.1 Organization + Person + WebPage + Breadcrumbs
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.advanta-ai.com/#org",
+      "name": "Advanta AI",
+      "url": "https://www.advanta-ai.com",
+      "logo": "https://www.advanta-ai.com/assets/logo.png",
+      "sameAs": [
+        "https://www.linkedin.com/company/advanta-ai",
+        "https://twitter.com/advanta_ai"
+      ],
+      "founder": {
+        "@type": "Person",
+        "@id": "https://www.advanta-ai.com/#founder"
+      }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://www.advanta-ai.com/#founder",
+      "name": "Davide DeMango",
+      "jobTitle": "Founder",
+      "worksFor": { "@id": "https://www.advanta-ai.com/#org" },
+      "image": "https://www.advanta-ai.com/assets/davide-demango.jpg",
+      "sameAs": [
+        "https://www.linkedin.com/in/your-handle",
+        "https://twitter.com/your-handle"
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.advanta-ai.com/about#webpage",
+      "url": "https://www.advanta-ai.com/about",
+      "name": "About Advanta AI",
+      "description": "Advanta AI turns AI into measurable results—clean data, smart automation, and simple interfaces. Meet founder Davide DeMango and see why we built it.",
+      "isPartOf": { "@id": "https://www.advanta-ai.com/#org" },
+      "primaryImageOfPage": "https://www.advanta-ai.com/assets/davide-demango.jpg",
+      "dateModified": "2025-08-19"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://www.advanta-ai.com/about#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.advanta-ai.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "About",
+          "item": "https://www.advanta-ai.com/about"
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+3.2 FAQPage markup (match the on-page FAQ)
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"What does Advanta AI do?","acceptedAnswer":{"@type":"Answer","text":"Advanta AI helps teams turn AI into measurable wins—reducing busywork, improving data quality, and automating repeatable steps across marketing, revenue, and analytics operations."}},
+    {"@type":"Question","name":"Who is Davide DeMango?","acceptedAnswer":{"@type":"Answer","text":"Davide DeMango is the founder of Advanta AI. He previously built enterprise software for Hilton Worldwide and Millennium Hotels and created Grampresso, a growth platform for creators and marketers."}},
+    {"@type":"Question","name":"Are there free tools?","acceptedAnswer":{"@type":"Answer","text":"Yes. Advanta AI provides free tools for marketing ops, analytics, and automation so you can get value before you purchase—privacy-first and no email wall for core tools."}},
+    {"@type":"Question","name":"How does the pilot work?","acceptedAnswer":{"@type":"Answer","text":"We map your workflow, define success metrics, and ship a scoped 30-day pilot. If it doesn’t hit the agreed signals, we revisit the plan—no surprise invoices."}},
+    {"@type":"Question","name":"How do you handle data privacy?","acceptedAnswer":{"@type":"Answer","text":"We operate privacy-first: clear data boundaries, opt-in model usage, and transparent documentation of how data flows through each build."}}
+  ]
+}
+</script>
+
+4) Head tags & social cards (paste in <head> of /about)
+<link rel="canonical" href="https://www.advanta-ai.com/about" />
+<meta name="robots" content="index,follow" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="About Advanta AI & Founder Davide DeMango" />
+<meta property="og:description" content="Clean data, smart automation, and interfaces people actually use. Meet the founder and the mission behind Advanta AI." />
+<meta property="og:url" content="https://www.advanta-ai.com/about" />
+<meta property="og:image" content="https://www.advanta-ai.com/assets/davide-demango-og.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="About Advanta AI & Founder Davide DeMango" />
+<meta name="twitter:description" content="Turning AI from buzzword to business results—meet the founder and the method." />
+<meta name="twitter:image" content="https://www.advanta-ai.com/assets/davide-demango-og.jpg" />
+
+5) Technical & performance (Core Web Vitals)
+
+LCP < 2.5s, INP < 200ms, CLS < 0.1 on mobile.
+
+Serve hero/headshot as AVIF/WebP with srcset and explicit width/height; lazy-load below-the-fold images.
+
+Inline critical CSS for the about fold; defer non-critical JS.
+
+Use HTTP/2 or HTTP/3, gzip/br, long-cache immutable assets, and a fast edge CDN.
+
+6) Internal linking map (sitewide tasks)
+
+Add “About” to the main nav and footer.
+
+Link from /free-tools, /pricing, and top blog posts with descriptive anchors (“why we built it”, “meet the founder”).
+
+On the About page, link out to: /pricing, /free-tools, 2–3 relevant blog posts, and your contact page.
+
+7) Off-page trust & E-E-A-T boosters
+
+Create/update LinkedIn Company and Founder profiles; ensure name, logo, and URL match your site (use sameAs in schema).
+
+Publish one founder interview or guest post; link back to /about.
+
+Add business listings (Crunchbase, Product Hunt launch post, relevant industry directories) with consistent NAP.
+
+Encourage 2–3 public testimonials with a named person + company (link to their profile).
+
+8) Tracking & monitoring
+
+Verify Search Console and submit sitemap.
+
+Track /about in GA4 (scroll-depth, outbound clicks to LinkedIn, demo CTA).
+
+Monitor keywords: advanta ai, about advanta ai, davide demango, advanta ai founder, ai automation agency nashville (or your target geo).
+
+Set alerts for Core Web Vitals regressions on /about.

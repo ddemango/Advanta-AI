@@ -1,0 +1,73 @@
+About Advanta AI
+
+Advanta AI helps teams turn artificial intelligence into real, measurable wins—automating the repetitive, surfacing the signal, and giving people interfaces they actually use. Our mission is simple: deliver cutting-edge AI that’s innovative and practical, scalable, and designed for real-world impact—no hype, just outcomes.
+
+What we do (in plain English)
+
+We build AI systems that accelerate growth and remove busywork across three core lanes:
+
+Marketing Ops: creative/asset generation, campaign automation, UTM & feed hygiene, ROAS insights.
+
+Revenue Ops: lead scoring & routing, follow-up automations, inbox triage, next-best-action prompts.
+
+Analytics Ops: data cleaning and stitching, anomaly alerts, benchmark dashboards, executive summaries.
+
+Typical results: fewer manual hours, faster lead response, cleaner reporting, higher campaign efficiency, and clearer decision-making.
+
+Why free tools matter
+
+Great software should be useful before it’s purchased. That’s why we invest in a growing library of free tools for solo operators and teams—utilities that help you ship faster, clean your data, and make smarter calls. No email wall for core tools, privacy-first by default, and clear explanations of what each tool does. Try it, see value, then decide if you need more.
+
+Explore the Free Tools → (link to your /free-tools hub)
+
+How we work
+
+Map the workflow → find the highest-leverage steps.
+
+Ship a scoped pilot (usually 30 days) → set success metrics up front.
+
+Measure what matters → keep dashboards honest, not “chart art.”
+
+Scale the wins → automate more, keep humans in the loop where it counts.
+
+Risk-reversal: if a pilot doesn’t hit the agreed signals, we revisit scope—no surprise invoices.
+
+Founded by Davide DeMango
+
+Davide DeMango leads Advanta AI with equal parts professionalism and wit. Before founding the company, he built enterprise software for Hilton Worldwide and Millennium Hotels, modernizing hospitality tech to enhance guest experience and streamline operations. He also created Grampresso, a platform for Instagram, TikTok, and X that equipped creators and marketers with automation, analytics, and AI-driven growth tools.
+
+This blend of enterprise rigor and creator-speed execution shapes Advanta’s approach: clean data, practical automation, and interfaces people actually enjoy using. Davide stays hands-on from scoping and data design to deployment and measurement, with a straightforward standard—ship fast, explain the “why,” and iterate until it moves the numbers. The tone is professional, and there’s just enough dry humor to keep complex work human. (If it doesn’t improve results, it’s a punchline—not a product.)
+
+Why I built Advanta AI
+
+I built Advanta AI because too many AI projects looked impressive in decks and under-delivered in the real world. After shipping enterprise software for Hilton Worldwide and Millennium Hotels—and creating Grampresso for creators—I saw the same pattern everywhere: messy data, manual busywork, and interfaces no one wanted to use. Advanta AI is my answer: clean the data, automate the high-leverage steps, and ship tools people actually enjoy using. We lead with free, useful utilities to earn trust, then scale what works with clear metrics and plain English. No hype, no black boxes—just measurable outcomes and a partner who stays hands-on from idea to deployment (with the occasional dry joke to keep it human).
+
+Proof & progress (snapshots)
+
+Add 2–3 short tiles beneath this line:
+
+Problem → one sentence
+
+What we built → one sentence
+
+Result → one sentence (metric if you have it)
+
+(Swap in real examples as they’re ready.)
+
+Values (founder-signed)
+
+Ship > slide decks
+
+Privacy first (clear data boundaries and opt-in)
+
+Simple beats clever (unless clever is simpler)
+
+Test small, scale what works
+
+Explain the “why” behind every build
+
+— Davide DeMango, Founder
+
+Call to action
+
+See a live demo (link) • Book a 15-minute fit call (link) • Ask Davide which tools fit your stack (link to contact with “Send to Davide” toggle)
