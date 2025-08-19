@@ -5387,7 +5387,7 @@ Please provide analysis in this exact JSON format (no additional text):
         });
       }
 
-      const { searchFlights } = await import('./flight-search-api.js');
+      const { searchFlights } = await import('./flight-search-api');
       
       const results = await searchFlights({
         origin,
@@ -5407,175 +5407,7 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
-  app.post('/api/travel-hack', async (req: Request, res: Response) => {
-    try {
-      const { prompt, from, to, startDate, endDate, budget, preferences } = req.body;
-      
-      if (!prompt) {
-        return res.status(400).json({ message: 'Prompt is required' });
-      }
 
-      // Import unified travel API
-      const { fetchUnifiedTravelData } = await import('./travel-api.js');
-      
-      // Use structured data when available, otherwise parse from prompt
-      let fromCity = from;
-      let toCity = to;
-      
-      // Parse locations from prompt if not provided in structured format
-      if (!fromCity || !toCity) {
-        const fromMatch = prompt.match(/from\s+([a-zA-Z\s]+?)(?:\s+to|\s+in|\s*→|\s*->)/i);
-        
-        // Check for global search keywords
-        const globalKeywords = ['anywhere', 'any destination', 'best deals', 'cheapest flights', 'global'];
-        const isGlobalSearch = globalKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
-        
-        let toMatch;
-        if (!isGlobalSearch) {
-          toMatch = prompt.match(/to\s+([a-zA-Z\s]+?)(?:\s+in|\s+on|\s*$|\s+for)/i);
-        }
-        
-        fromCity = fromCity || (fromMatch ? fromMatch[1].trim() : 'Nashville');
-        toCity = toCity || (toMatch ? toMatch[1].trim() : (isGlobalSearch ? '' : 'London'));
-      }
-      const userBudget = budget || undefined;
-      
-      // Use structured dates when available
-      let departDate = req.body.departDate || null; // Don't use fallback date if none provided
-      let returnDate = req.body.returnDate || '';
-      
-      console.log(`🐛 Date debug: req.body.departDate=${req.body.departDate}, startDate=${startDate}, endDate=${endDate}`);
-      
-      if (startDate && endDate) {
-        // Convert MM/DD/YYYY to YYYY-MM-DD if needed
-        const parseDate = (dateStr: string) => {
-          if (dateStr.includes('/')) {
-            const [month, day, year] = dateStr.split('/');
-            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          }
-          return dateStr;
-        };
-        
-        departDate = parseDate(startDate);
-        returnDate = parseDate(endDate);
-        
-        // For flexible date ranges, use the actual start date selected by user
-        // This preserves the user's preferred departure timeframe  
-        console.log(`📅 Date range parsed: start=${startDate} end=${endDate} → departDate=${departDate} returnDate=${returnDate}`);
-      } else if (startDate) {
-        // Single date
-        if (startDate.includes('/')) {
-          const [month, day, year] = startDate.split('/');
-          departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        } else {
-          departDate = startDate;
-        }
-      } else if (!req.body.departDate) {
-        // Fallback to parsing from prompt
-        const specificDateMatch = prompt.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
-        if (specificDateMatch) {
-          departDate = specificDateMatch[1];
-          if (departDate.includes('/')) {
-            const [month, day, year] = departDate.split('/');
-            departDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          }
-        } else {
-          // Try to extract specific date from prompt (e.g., "August 29", "29th", etc.)
-          const dayMatch = prompt.match(/(?:august|aug)\s*(\d{1,2})(?:th|st|nd|rd)?/i);
-          if (dayMatch) {
-            const day = dayMatch[1].padStart(2, '0');
-            departDate = `2025-08-${day}`;
-          } else {
-            const monthMatch = prompt.match(/(january|february|march|april|may|june|july|august|september|october|november|december)\s*(\d{4})?/i);
-            if (monthMatch) {
-              const monthName = monthMatch[1].toLowerCase();
-              const year = monthMatch[2] || '2025';
-              const monthMap = {
-                january: '01', february: '02', march: '03', april: '04',
-                may: '05', june: '06', july: '07', august: '08',
-                september: '09', october: '10', november: '11', december: '12'
-              };
-              const month = monthMap[monthName as keyof typeof monthMap];
-              departDate = `${year}-${month}-15`;
-            } else {
-              // If no date found anywhere, use fallback for API compatibility
-              departDate = '2025-07-08';
-            }
-          }
-        }
-      }
-      
-      // If still no departDate, use fallback for API compatibility
-      if (!departDate) {
-        departDate = '2025-07-08';
-      }
-
-      // Get unified travel data from all sources
-      console.log(`🚀 Calling fetchUnifiedTravelData with: from=${fromCity}, to=${toCity}, departDate=${departDate}, returnDate=${returnDate}`);
-      const travelData = await fetchUnifiedTravelData(fromCity, toCity, departDate, returnDate, userBudget);
-
-      // Convert unified data format to match frontend expectations with enhanced flight details
-      const flightDeals = travelData.flights.map(flight => ({
-        route: flight.route,
-        price: flight.price,
-        dates: new Date(flight.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        airline: flight.airline,
-        departureTime: flight.departureTime,
-        duration: flight.duration,
-        stops: flight.stops,
-        links: flight.links || {
-          googleFlights: 'https://flights.google.com',
-          skyscanner: 'https://www.skyscanner.com',
-          momondo: 'https://www.momondo.com'
-        }
-      }));
-
-      const hotels = travelData.hotels.map(hotel => ({
-        location: hotel.location,
-        price: hotel.price,
-        hotel: hotel.name,
-        rating: `${hotel.rating}★`,
-        tips: ['Book directly for perks', 'Compare rates on multiple sites']
-      }));
-
-      const carRentals = travelData.carRentals.map(rental => ({
-        location: rental.location,
-        price: rental.price,
-        company: rental.company,
-        vehicleType: rental.vehicleType,
-        tips: rental.features
-      }));
-
-      // Return unified travel data in expected format
-      res.json({
-        flights: travelData.flights,
-        hotels: travelData.hotels,
-        carRentals: travelData.carRentals,
-        mistakeFares: travelData.mistakeFares,
-        flightDeals: flightDeals,
-        bonusHacks: [
-          'Consider flying into nearby airports for potential savings',
-          'Book Tuesday-Thursday departures for better rates', 
-          'Use incognito mode when searching to avoid price tracking'
-        ],
-        helpfulLinks: [
-          {
-            name: 'Google Flights',
-            url: 'https://flights.google.com',
-            description: 'Compare flight prices across airlines'
-          },
-          {
-            name: 'Booking.com',
-            url: 'https://booking.com',
-            description: 'Hotel and accommodation booking'
-          }
-        ]
-      });
-    } catch (error) {
-      console.error('Error generating travel hack:', error);
-      res.status(500).json({ message: 'Failed to generate travel recommendations' });
-    }
-  });
 
   // AI Assistant endpoint for various AI-powered tasks
   app.post('/api/ai-assistant', async (req: Request, res: Response) => {
@@ -7443,7 +7275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/admin', adminRouter);
 
   // Travel Hacker AI endpoints
-  const travelApiModule = await import('./travel-api.js');
+  const travelApiModule = await import('./travel-api');
   app.use('/api/travel', travelApiModule.default);
 
   // AI Chatbot Processing Endpoint
