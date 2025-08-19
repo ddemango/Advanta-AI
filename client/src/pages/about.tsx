@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet';
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -350,8 +351,15 @@ export default function About() {
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-8">
-                <h2 className="text-3xl font-bold mb-2">Founded by Davide DeMango</h2>
-                <p className="text-gray-300">Equal parts professionalism and wit</p>
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">D</span>
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold mb-1">Founded by Davide DeMango</h2>
+                    <p className="text-gray-300">Equal parts professionalism and wit</p>
+                  </div>
+                </div>
               </div>
               <div className="p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -409,7 +409,7 @@ export default function FreeTools() {
                 <span className="block text-primary">Completely Free</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Access our complete suite of AI-powered tools. No credit card required.
+                Access our complete suite of AI-powered tools. No credit card required. <a href="/about" className="text-primary hover:underline">Who built these tools?</a>
               </p>
             </motion.div>
           </motion.div>

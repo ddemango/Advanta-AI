@@ -60,6 +60,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold mb-6">Resources</h3>
             <ul className="space-y-3">
+              <li><Link href="/about" className="text-muted-foreground hover:text-white transition-colors">About Advanta AI</Link></li>
               <li><Link href="#case-studies" className="text-muted-foreground hover:text-white transition-colors">Case Studies</Link></li>
               <li><Link href="/calculator" className="text-muted-foreground hover:text-white transition-colors">AI Cost Calculator</Link></li>
               <li><Link href="#" className="text-muted-foreground hover:text-white transition-colors">Blog</Link></li>

@@ -20,6 +20,7 @@ export function NewHeader() {
   }, []);
 
   const navigation = [
+    { name: 'About', href: '/about' },
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
     { name: 'Blog', href: '/blog' },
@@ -32,6 +33,7 @@ export function NewHeader() {
 
   const mobileNavigation = [
     { name: 'Home', href: '/' },
+    { name: 'About Advanta AI', href: '/about' },
     { name: 'Solutions', href: '/services' },
     { name: 'Case Studies', href: '/case-studies' },
     { name: 'Blog', href: '/blog' },

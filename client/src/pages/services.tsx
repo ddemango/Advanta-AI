@@ -465,7 +465,7 @@ export default function ServicesPage() {
                   <strong>Advanta AI is an AI-driven automation and workflow integration agency</strong> designed to help businesses streamline operations, eliminate repetitive tasks, and provide seamless ways for customers to interact with companies using AI.
                 </p>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business.
+                  We specialize in combining APIs, ChatGPT, and intelligent automation tools to build smarter, more connected websites and workflows that scale with your business. <a href="/about" className="text-blue-600 hover:text-blue-800 underline">Learn about our founder's approach</a> to practical AI automation.
                 </p>
               </motion.div>
             </div>
