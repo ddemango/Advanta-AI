@@ -1,0 +1,161 @@
+About Page SEO Implementation Checklist
+0) Inputs to collect first
+
+ Final About copy (incl. “Why I built Advanta AI” section)
+
+ Headshot (AVIF/WebP + JPG fallback), OG/Twitter image (1200×630)
+
+ 2 trust quotes you chose
+
+ Links: /free-tools, /pricing, /contact, 2–3 relevant blog posts
+
+ Social handles (LinkedIn, X) and logo asset paths
+
+ 2–3 mini case snapshots (Problem → Built → Result w/ metric if possible)
+
+Done when: All assets organized in /public/assets/about/ with predictable names.
+
+1) URL, Title, Meta
+
+ Page path is /about (no params; one canonical URL)
+
+ <title>: About Advanta AI & Founder Davide DeMango
+
+ <meta name="description">:
+“Advanta AI turns AI into measurable results—clean data, smart automation, and simple interfaces. Meet founder Davide DeMango and see why we built it.”
+
+ <link rel="canonical" href="https://www.advanta-ai.com/about" />
+
+ <meta name="robots" content="index,follow" />
+
+Done when: URL Inspection in GSC renders the canonical and noindex is not present.
+
+2) Headings & Content Structure
+
+ Single H1: About Advanta AI
+
+ H2s in this order: What we do · Why free tools matter · How we work · Founded by Davide DeMango · Why I built Advanta AI · Proof & progress · Values · FAQ · Call to action
+
+ Insert the two trust quotes (one near CTA, one mid-page)
+
+ “Last updated” date visible (e.g., “Updated: August 2025”)
+
+Done when: Page outline has 1×H1, semantic H2s only (no skipped levels).
+
+3) Internal Linking
+
+ From homepage hero/footer → /about (anchor: “About Advanta AI”)
+
+ From Services pages → “Our founder’s approach” → /about#founded-by-davide-demango
+
+ From /free-tools → “Who built these tools?” → /about
+
+ From 2–3 top blog posts → “About Advanta AI” or “Meet the founder”
+
+ On About page, link out to /pricing, /free-tools, /contact, and 2–3 relevant blog posts
+
+Done when: 6–10 descriptive internal links exist; no “Click here” anchors.
+
+4) Structured Data (JSON-LD)
+
+ Organization + Person + WebPage + BreadcrumbList graph added (as provided)
+
+ FAQPage markup added (questions & answers present on-page)
+
+ sameAs includes LinkedIn/X profiles; logo/headshot URLs valid
+
+Done when: Rich Results Test passes with 0 errors/warnings.
+
+5) Social Cards (OG/Twitter)
+
+ og:title, og:description, og:url, og:image
+
+ twitter:card=summary_large_image, twitter:title, twitter:description, twitter:image
+
+Done when: Facebook Sharing Debugger and Twitter Card Validator show the correct preview.
+
+6) Performance (Core Web Vitals targets)
+
+ LCP < 2.5s (mobile), INP < 200ms, CLS < 0.1
+
+ Headshot/OG images served as AVIF/WebP with srcset, explicit width/height
+
+ Lazy-load images below the fold (loading="lazy", fetchpriority="low")
+
+ Inline critical CSS for above-the-fold; defer non-critical JS
+
+ Enable compression (gzip/br) and long-cache immutable assets via CDN
+
+Done when: Lighthouse mobile scores 90+ Performance and CWV pass in PageSpeed.
+
+7) Accessibility & UX
+
+ Alt text on all images (descriptive, not keyword-stuffed)
+
+ Color contrast meets WCAG AA
+
+ Keyboard focus visible on links/CTAs
+
+ Skip-to-content link enabled (if site-wide pattern used)
+
+Done when: WAVE/axe scans show no critical issues.
+
+8) Content Enhancements (Trust & Proof)
+
+ 2–3 mini case snapshots (Problem → Built → Result)
+
+ Founder headshot + short bio blurb
+
+ Privacy/ethics one-liner (data boundaries, opt-in)
+
+ “Risk-reversal” statement for the 30-day pilot
+
+ Free tools block + link to /free-tools
+
+Done when: Above elements are visible and scannable within 3 scrolls.
+
+9) Analytics & Search Console
+
+ GA4: track scroll depth (25/50/75/100), demo/CTA clicks, outbound clicks to LinkedIn/X
+
+ Google Search Console: verify property, submit sitemap, Request indexing for /about
+
+ Set Looker Studio (optional) view of /about engagement + conversions
+
+Done when: GA4 events firing; GSC shows page discovered and indexed.
+
+10) Off-Page E-E-A-T Boosters
+
+ Update LinkedIn Company + Davide profiles to match site (name/logo/URL)
+
+ Publish 1 founder interview or guest post linking to /about
+
+ Add business listings (Crunchbase/ProductHunt or relevant directories) with consistent NAP
+
+ Add 2–3 attributable testimonials (name + company + role), link to source when possible
+
+Done when: At least 2 authoritative backlinks point to /about.
+
+11) QA & Regression Tests
+
+ Mobile/desktop cross-browser test (Chrome, Safari, Firefox)
+
+ 404/500 handling verified; 301s correct if any legacy URLs
+
+ No duplicate content (check for old /about-us or staging variants)
+
+ Schema, OG, and robots validated after deploy
+
+Done when: All checks pass on production URL.
+
+12) Definition of Done (DoD)
+
+ /about indexed, shows correct title/meta in SERP
+
+ Page passes Core Web Vitals (mobile)
+
+ Schema valid with FAQ rich result eligibility
+
+ Internal links live; social cards render
+
+ GA4 + GSC configured; first indexing request submitted
