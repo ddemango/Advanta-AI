@@ -164,6 +164,20 @@ blogRouter.get('/posts', async (req, res) => {
   }
 });
 
+// Get blog system status - MUST BE BEFORE parameterized routes
+blogRouter.get('/status', async (req, res) => {
+  try {
+    // Import automatedScheduler dynamically to avoid circular dependencies
+    const { automatedScheduler } = await import('./automated-scheduler');
+    const status = automatedScheduler.getStatus();
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+    res.json(status);
+  } catch (error: any) {
+    log.error({ error: error?.message || String(error) }, 'Failed to get blog status');
+    res.status(500).json({ error: 'Failed to get blog status' });
+  }
+});
+
 // Enhanced single post endpoint
 blogRouter.get('/file/:slug', async (req, res) => {
   try {
@@ -249,3 +263,4 @@ blogRouter.get('/popular', async (req, res) => {
     res.status(500).json({ error: 'Failed to get popular posts' });
   }
 });
+
