@@ -1,0 +1,239 @@
+Implementation Brief — Blog System Hardening & Unification
+Goals
+
+Make blog rendering safe (HTML sanitization).
+
+Use a single API shape under /api/blog.
+
+Fix the blog post page fetch logic & slug handling.
+
+Replace ad‑hoc Markdown regex with markdown-it (+ sanitize).
+
+Unify schedules & base URL.
+
+Keep Lucide icons only.
+
+Tasks (exact steps)
+1) Add shared utils
+
+Create server/lib/web.ts:
+
+export function getBaseUrl() {
+  const fromEnv = process.env.PUBLIC_BASE_URL;
+  const fromReplit = process.env.REPLIT_DOMAINS?.split(',')[0];
+  if (fromEnv) return fromEnv.replace(/\/+$/, '');
+  if (fromReplit) return `https://${fromReplit}`.replace(/\/+$/, '');
+  return 'https://advanta-ai.com';
+}
+
+
+Create server/lib/markdown.ts:
+
+import MarkdownIt from 'markdown-it';
+import sanitizeHtml from 'sanitize-html';
+
+const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
+
+export function mdToSafeHtml(mdText: string) {
+  const raw = md.render(mdText ?? '');
+  return sanitizeHtml(raw, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h2','h3','img','figure','figcaption']),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      img: ['src','alt','title','loading','width','height'],
+      a: ['href','name','target','rel'],
+    },
+    transformTags: {
+      a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' }),
+      img: sanitizeHtml.simpleTransform('img', { loading: 'lazy' }),
+    },
+  });
+}
+
+
+Install deps (if missing): npm i markdown-it sanitize-html
+
+2) Fix generator to use MarkdownIt + base URL + regexes
+
+In server/enhanced-daily-blog.ts:
+
+Import: import { getBaseUrl } from './lib/web'; import { mdToSafeHtml } from './lib/markdown';
+
+In createEnhancedHtmlTemplate, replace base URL logic with:
+
+const baseUrl = getBaseUrl();
+
+
+Fix word‑boundary casing:
+
+category.replace('_',' ').replace(/\b\w/g, l => l.toUpperCase())
+
+
+Replace your old convertMarkdownToHtml usage with:
+
+content = mdToSafeHtml(content);
+
+
+Delete the old convertMarkdownToHtml function.
+
+In the generated HTML template, change view tracking to:
+
+<script>fetch('/api/blog/view/${canonicalSlug}',{method:'POST'}).catch(()=>{});</script>
+
+3) Unify blog API under /api/blog with one response shape
+
+Replace/standardize the router module (keep filename you’re already using; if it’s server/enhanced-blog-routes.ts, keep it) to export blogRouter that mounts:
+
+GET /posts → returns { items, nextCursor, total, categories, tags }
+
+GET /file/:slug → returns { ...meta, content } where content is sanitized with sanitize-html
+
+POST /view/:slug
+
+GET /popular
+
+Mount once in server/routes.ts:
+
+import { blogRouter } from './enhanced-blog-routes';
+app.use('/api/blog', blogRouter);
+
+
+Remove any duplicate /api/blog/posts routes that return plain arrays.
+
+4) Schedules — one source of truth
+
+In server/automated-scheduler.ts, define:
+
+const TZ = 'America/New_York';
+const POSTS_CRONS = ['0 8 * * *','0 13 * * *','0 18 * * *']; // 8am, 1pm, 6pm
+const NEWSLETTER_CRON = '0 8 * * 1,3,5'; // Mon/Wed/Fri 8am
+
+
+Start those cron jobs once. Ensure newsletter is not scheduled elsewhere.
+
+5) Newsletter — one base URL
+
+In server/newsletter-system.ts, import getBaseUrl() and use it for all links (article URLs, unsubscribe, website).
+
+Do not schedule here if scheduler already handles it.
+
+6) Frontend blog list page
+
+In client/src/pages/blog.tsx:
+
+The /api/blog/posts response is now an object. Update:
+
+type PostsResp = { items: any[]; nextCursor?: string|null; total: number; categories: string[]; tags: string[]; meta?: any };
+
+const { data: postsResp, isLoading, error } = useQuery({
+  queryKey: ['/api/blog/posts'],
+  queryFn: () => fetch('/api/blog/posts').then(r=>r.json() as Promise<PostsResp>),
+  staleTime: 60_000,
+  refetchOnWindowFocus: false,
+});
+
+const filePosts = postsResp?.items ?? [];
+
+
+Build your arrays from filePosts (normalize as you already do).
+
+For the tags row, prefer postsResp?.tags?.slice(0,8) with a sensible fallback.
+
+Keep Lucide icons (no Font Awesome).
+
+7) Frontend blog post page
+
+In client/src/pages/blog-post.tsx:
+
+Fix slug parsing:
+
+const [location] = useLocation();
+const raw = location.split('/').pop() || '';
+const slug = raw.split('?')[0].split('#')[0];
+
+
+Add queryFns:
+
+const fetchJson = <T,>(u:string)=>fetch(u).then(r=>{ if(!r.ok) throw new Error(`${r.status} ${u}`); return r.json() as Promise<T>; });
+
+const { data: post, isLoading: isLoadingPost, error: postError } = useQuery({
+  queryKey: ['post', slug],
+  queryFn: () => fetchJson<any>(`/api/blog/file/${slug}`),
+  enabled: !!slug,
+  staleTime: 60_000,
+});
+
+const { data: allPosts = [] } = useQuery({
+  queryKey: ['posts'],
+  queryFn: () => fetchJson<{items:any[]}>(`/api/blog/posts`).then(r => r.items),
+  enabled: !!post,
+  staleTime: 60_000,
+});
+
+
+Related posts:
+
+const relatedPosts = allPosts.filter((p:any)=> p.slug!==slug && p.category===post?.category).slice(0,3);
+
+
+Replace Font Awesome with Lucide (ArrowLeft, Clock, Twitter, Linkedin, Facebook, Link).
+
+Keep dangerouslySetInnerHTML (server content is sanitized now).
+
+Acceptance Criteria (DoD)
+
+API
+
+GET /api/blog/posts returns { items, total, categories, tags }.
+
+GET /api/blog/file/:slug returns sanitized content plus meta.
+
+POST /api/blog/view/:slug increments view count.
+
+Frontend
+
+Blog list loads from postsResp.items.
+
+Tags display from API tags.
+
+Cards navigate correctly; featured shows top by viewCount.
+
+Post page fetches the post & related posts; no console errors.
+
+No Font Awesome; Lucide only.
+
+Security
+
+No XSS via post content (sanitized on server).
+
+window.open usages (if any) use noopener,noreferrer or SPA navigation.
+
+Pipeline
+
+Generated posts render correctly (headings, lists, links).
+
+createEnhancedHtmlTemplate uses unified view endpoint and correct category casing regex.
+
+Ops
+
+Cron: posts at 08:00/13:00/18:00 ET; newsletter M/W/F 08:00 ET.
+
+PUBLIC_BASE_URL respected everywhere; no hardcoded localhost unless env missing.
+
+Env expectations
+
+PUBLIC_BASE_URL (preferred) or REPLIT_DOMAINS set.
+
+OPENAI_API_KEY, RESEND_API_KEY configured.
+
+Quick test commands
+
+Start server & client.
+
+Hit GET /api/blog/posts → should return { items: [...] }.
+
+Open a post URL /blog/:slug → content shows, reading time visible.
+
+Verify network call POST /api/blog/view/:slug fires.
+
+Check newsletter template links resolve to PUBLIC_BASE_URL.

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
@@ -6,22 +6,39 @@ import { useLocation, Link } from 'wouter';
 import { NewHeader } from '@/components/redesign/NewHeader';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
-import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
+import { ArrowLeft, Clock, Twitter, Linkedin, Facebook, Link as LinkIcon } from 'lucide-react';
+
+// Types
+interface BlogPost {
+  slug: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string[];
+  created_at: string;
+  reading_time?: number;
+  author?: {
+    firstName: string;
+    lastName: string;
+  };
+  featured_image?: string;
+  filename?: string;
+}
+
+interface PostsResponse {
+  items: BlogPost[];
+  meta?: any;
+}
 
 // Function to format date with error handling
 const formatDate = (dateString: string | Date | null | undefined) => {
   if (!dateString) return 'Recent';
   
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    return 'Recent';
-  }
+  if (isNaN(date.getTime())) return 'Recent';
   
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -30,9 +47,8 @@ const formatDate = (dateString: string | Date | null | undefined) => {
   });
 };
 
-// Related post card component - ONLY FOR REAL FILE-BASED POSTS
-const RelatedPostCard = ({ post }: { post: any }) => {
-  // Generate category-based image URL
+// Related post card component
+const RelatedPostCard = ({ post }: { post: BlogPost }) => {
   const getImageUrl = (category: string) => {
     const categoryImages: { [key: string]: string } = {
       'ai_technology': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=300&fit=crop&auto=format&q=80',
@@ -45,12 +61,10 @@ const RelatedPostCard = ({ post }: { post: any }) => {
       'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&h=300&fit=crop&auto=format&q=80',
       'resources': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=300&fit=crop&auto=format&q=80'
     };
-    
     return categoryImages[category] || categoryImages['ai_technology'];
   };
 
   const imageUrl = getImageUrl(post.category || 'ai_technology');
-  
   const postSlug = post.filename ? post.filename.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '') : post.slug;
   
   return (
@@ -70,8 +84,8 @@ const RelatedPostCard = ({ post }: { post: any }) => {
         </CardTitle>
       </CardHeader>
       <CardFooter className="pt-0 pb-3 flex justify-between items-center text-sm text-muted-foreground">
-        <span>{formatDate(post.date)}</span>
-        <span>5 min read</span>
+        <span>{formatDate(post.created_at)}</span>
+        <span>{post.reading_time || 5} min read</span>
       </CardFooter>
     </Card>
   );
@@ -82,29 +96,38 @@ export default function BlogPostPage() {
   const [location] = useLocation();
   const slug = location.split('/').pop() || '';
   
-  // Fetch file-based blog post by slug
-  const { data: post, isLoading: isLoadingPost, error: postError } = useQuery({
-    queryKey: [`/api/blog/file/${slug}`],
+  // Fetch the blog post
+  const { data: post, isLoading, error } = useQuery<BlogPost>({
+    queryKey: ['/api/blog/file', slug],
+    queryFn: () => fetch(`/api/blog/file/${slug}`).then(r => r.json()),
     enabled: !!slug,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
-  
-  // Fetch related file-based blog posts
-  const { data: allPosts, isLoading: isLoadingAll } = useQuery({
+
+  // Fetch other blog posts for related content
+  const { data: postsResponse } = useQuery<PostsResponse>({
     queryKey: ['/api/blog/posts'],
-    enabled: !!post,
+    queryFn: () => fetch('/api/blog/posts').then(r => r.json()),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
-  
-  // Get related posts from the same category
-  const relatedPosts = allPosts ? 
-    allPosts
-      .filter((p: any) => p.filename && p.slug !== slug) // Exclude current post
-      .filter((p: any) => p.category === post?.category) // Same category
-      .slice(0, 3) : 
-    [];
-  
+
+  const allPosts = postsResponse?.items || [];
+
+  // Select related posts by category (limit to 3)
+  const relatedPosts = useMemo(() => {
+    if (!allPosts || allPosts.length === 0 || !post?.category) return [];
+    
+    return allPosts.filter((p: BlogPost) => 
+      p.category === post.category && 
+      p.slug !== post.slug
+    ).slice(0, 3);
+  }, [allPosts, post?.category, post?.slug]);
+
   // Social sharing functionality
   const shareOnTwitter = () => {
-    const title = post?.title;
+    const title = post?.title || 'AI Insights';
     const url = window.location.href;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
   };
@@ -121,12 +144,11 @@ export default function BlogPostPage() {
   
   const copyLinkToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
-    // You could add a toast notification here
     alert('Link copied to clipboard!');
   };
-  
-  // If post is loading, show skeleton
-  if (isLoadingPost) {
+
+  // Loading state
+  if (isLoading) {
     return (
       <>
         <NewHeader />
@@ -143,11 +165,9 @@ export default function BlogPostPage() {
               </div>
               <Skeleton className="h-64 w-full mb-8" />
               <div className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
+                {[...Array(8)].map((_, i) => (
+                  <Skeleton key={i} className="h-4 w-full" />
+                ))}
               </div>
             </div>
           </div>
@@ -156,192 +176,201 @@ export default function BlogPostPage() {
       </>
     );
   }
-  
-  // If there's an error or no post found
-  if (postError || !post) {
+
+  // Error state
+  if (error || !post) {
     return (
       <>
         <NewHeader />
         <main className="py-28 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-3xl font-bold mb-4">Blog Post Not Found</h1>
-            <p className="text-muted-foreground mb-8">The blog post you're looking for doesn't exist or may have been moved.</p>
-            <Button asChild>
-              <Link href="/blog">Back to Blog</Link>
-            </Button>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="text-4xl font-bold mb-4">Post Not Found</h1>
+              <p className="text-muted-foreground mb-8">
+                The blog post you're looking for could not be found.
+              </p>
+              <Link href="/blog">
+                <Button>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Blog
+                </Button>
+              </Link>
+            </div>
           </div>
         </main>
         <Footer />
       </>
     );
   }
-  
+
   return (
     <>
       <Helmet>
-        <title>{post.title} | Advanta AI Blog</title>
-        <meta name="description" content={post.summary} />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.summary} />
-        {post.featured_image && <meta property="og:image" content={post.featured_image} />}
-        <meta property="og:type" content="article" />
-        <meta property="article:published_time" content={post.created_at ? new Date(post.created_at).toISOString() : new Date().toISOString()} />
-        <meta property="article:section" content={post.category} />
-        {post.tags?.map(tag => (
-          <meta key={tag} property="article:tag" content={tag} />
-        ))}
+        <title>{post.title?.replace(/[\*]/g, '') || 'AI Insights'} | Advanta AI</title>
+        <meta name="description" content={post.content?.substring(0, 160).replace(/<[^>]*>/g, '') + '...' || 'Latest AI insights and technology updates'} />
+        <meta property="og:title" content={post.title?.replace(/[\*]/g, '') || 'AI Insights'} />
+        <meta property="og:description" content={post.content?.substring(0, 160).replace(/<[^>]*>/g, '') + '...' || 'Latest AI insights and technology updates'} />
+        <meta property="og:image" content={post.featured_image || `https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80`} />
+        <meta property="og:url" content={`https://advanta-ai.com/blog/${slug}`} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title?.replace(/[\*]/g, '') || 'AI Insights'} />
+        <meta name="twitter:description" content={post.content?.substring(0, 160).replace(/<[^>]*>/g, '') + '...' || 'Latest AI insights and technology updates'} />
+        <meta name="twitter:image" content={post.featured_image || `https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80`} />
       </Helmet>
-      
+
       <NewHeader />
       
       <main className="py-28 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <motion.div 
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-              className="mb-12"
-            >
-              {/* Back to Blog */}
-              <motion.div variants={fadeInUp} className="mb-6">
-                <Button variant="ghost" asChild className="flex items-center text-muted-foreground hover:text-foreground">
-                  <Link href="/blog">
-                    <i className="fas fa-arrow-left mr-2"></i>
-                    Back to Blog
-                  </Link>
-                </Button>
-              </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="container mx-auto px-4 sm:px-6 lg:px-8"
+        >
+          {/* Back to Blog button */}
+          <div className="max-w-3xl mx-auto mb-8">
+            <Link href="/blog">
+              <Button variant="ghost" className="mb-6">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Blog
+              </Button>
+            </Link>
+          </div>
+
+          {/* Article Header */}
+          <motion.article
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="max-w-3xl mx-auto"
+          >
+            <header className="mb-8">
+              <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
+                {post.title?.replace(/[\*]/g, '') || 'AI Insights'}
+              </h1>
               
-              {/* Post Header */}
-              <motion.h1 variants={fadeInUp} className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-                {post.title}
-              </motion.h1>
-              
-              {/* Author and Meta */}
-              <motion.div variants={fadeInUp} className="flex flex-wrap items-center gap-5 mb-8">
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 mr-3">
-                    <AvatarImage src={post.author?.profileImageUrl || ''} />
-                    <AvatarFallback>AI</AvatarFallback>
-                  </Avatar>
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-medium text-primary">
+                      {post.author ? `${post.author.firstName[0]}${post.author.lastName[0]}` : 'AA'}
+                    </span>
+                  </div>
                   <div>
-                    <p className="font-medium">{post.author?.firstName || 'Advanta'} {post.author?.lastName || 'AI'}</p>
+                    <p className="font-medium">
+                      {post.author ? `${post.author.firstName} ${post.author.lastName}` : 'Advanta AI'}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(post.created_at)}
                     </p>
                   </div>
                 </div>
                 
-                <Separator orientation="vertical" className="h-8 hidden md:block" />
-                
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <i className="fas fa-clock mr-2"></i>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
                   <span>{post.reading_time || 5} min read</span>
                 </div>
-                
-                <Separator orientation="vertical" className="h-8 hidden md:block" />
-                
-                <Badge variant="outline" className="bg-primary/10 text-primary">
-                  {post.category}
+              </div>
+
+              {/* Category badge */}
+              <div className="mb-6">
+                <Badge variant="secondary">
+                  {post.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'AI Technology'}
                 </Badge>
-              </motion.div>
-              
-              {/* Featured Image */}
+              </div>
+
+              {/* Featured image */}
               {post.featured_image && (
-                <motion.div variants={fadeInUp} className="mb-10 rounded-xl overflow-hidden shadow-lg">
-                  <img 
-                    src={post.featured_image} 
-                    alt={post.title}
-                    className="w-full object-cover h-72 md:h-96"
+                <div className="mb-8 rounded-lg overflow-hidden">
+                  <img
+                    src={post.featured_image}
+                    alt={post.title?.replace(/[\*]/g, '') || 'AI Technology'}
+                    className="w-full h-64 lg:h-80 object-cover"
+                    loading="lazy"
                   />
-                </motion.div>
-              )}
-              
-              {/* Content */}
-              <motion.div 
-                variants={fadeInUp} 
-                className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-a:text-primary prose-blockquote:border-primary prose-blockquote:text-foreground/80"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
-              
-              {/* Tags */}
-              {post.tags && post.tags.length > 0 && (
-                <motion.div variants={fadeInUp} className="mt-12">
-                  <h3 className="text-lg font-medium mb-3">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {post.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-sm">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-              
-              {/* Social Sharing */}
-              <motion.div variants={fadeInUp} className="mt-12 border-t border-b border-border py-6">
-                <h3 className="text-lg font-medium mb-4">Share this article</h3>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" size="sm" onClick={shareOnTwitter}>
-                    <i className="fab fa-twitter mr-2"></i>
-                    Twitter
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={shareOnLinkedIn}>
-                    <i className="fab fa-linkedin mr-2"></i>
-                    LinkedIn
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={shareOnFacebook}>
-                    <i className="fab fa-facebook mr-2"></i>
-                    Facebook
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={copyLinkToClipboard}>
-                    <i className="fas fa-link mr-2"></i>
-                    Copy Link
-                  </Button>
                 </div>
-              </motion.div>
-              
-              {/* Author Bio */}
-              <motion.div variants={fadeInUp} className="mt-12 bg-card rounded-lg p-6 border border-border">
-                <div className="flex items-start gap-5">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={post.author?.profileImageUrl || ''} />
-                    <AvatarFallback className="text-xl">AI</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-lg font-medium">
-                      {post.author?.firstName || 'Advanta'} {post.author?.lastName || 'AI'}
-                    </h3>
-                    <p className="text-muted-foreground mt-1 mb-3">
-                      AI Solutions Expert
-                    </p>
-                    <p className="text-sm">
-                      Our team of AI specialists is dedicated to helping businesses leverage the power of artificial intelligence to drive growth, increase efficiency, and create new opportunities.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-            
-            {/* Related Posts */}
-            {relatedPosts.length > 0 && (
-              <section className="mt-16">
-                <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {relatedPosts.map((relatedPost: any) => (
-                    <RelatedPostCard key={relatedPost.filename || relatedPost.slug} post={relatedPost} />
+              )}
+            </header>
+
+            {/* Article content */}
+            <div 
+              className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline"
+              dangerouslySetInnerHTML={{ __html: post.content || '' }}
+            />
+
+            {/* Tags */}
+            {post.tags && post.tags.length > 0 && (
+              <div className="mt-12 pt-8 border-t">
+                <h3 className="text-lg font-semibold mb-4">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag: string, index: number) => (
+                    <Badge key={index} variant="outline">{tag}</Badge>
                   ))}
                 </div>
-              </section>
+              </div>
             )}
-            
-            {/* Newsletter CTA */}
-            <section className="mt-20">
-              <NewsletterSignup variant="hero" />
-            </section>
-          </div>
-        </div>
+
+            {/* Social sharing */}
+            <div className="mt-12 pt-8 border-t">
+              <h3 className="text-lg font-semibold mb-4">Share this article</h3>
+              <div className="flex space-x-4">
+                <Button variant="outline" size="sm" onClick={shareOnTwitter}>
+                  <Twitter className="h-4 w-4 mr-2" />
+                  Twitter
+                </Button>
+                <Button variant="outline" size="sm" onClick={shareOnLinkedIn}>
+                  <Linkedin className="h-4 w-4 mr-2" />
+                  LinkedIn
+                </Button>
+                <Button variant="outline" size="sm" onClick={shareOnFacebook}>
+                  <Facebook className="h-4 w-4 mr-2" />
+                  Facebook
+                </Button>
+                <Button variant="outline" size="sm" onClick={copyLinkToClipboard}>
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  Copy Link
+                </Button>
+              </div>
+            </div>
+
+            {/* Author bio */}
+            <div className="mt-12 pt-8 border-t">
+              <div className="flex items-start space-x-4">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg font-medium text-primary">
+                    {post.author ? `${post.author.firstName[0]}${post.author.lastName[0]}` : 'AA'}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold mb-2">
+                    {post.author ? `${post.author.firstName} ${post.author.lastName}` : 'Advanta AI Team'}
+                  </h4>
+                  <p className="text-muted-foreground">
+                    Expert in AI automation and business process optimization. 
+                    Helping businesses implement AI solutions that deliver measurable results.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.article>
+
+          {/* Related Posts */}
+          {relatedPosts.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="max-w-6xl mx-auto mt-20"
+            >
+              <h2 className="text-3xl font-bold mb-8 text-center">Related Articles</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedPosts.map((relatedPost) => (
+                  <RelatedPostCard key={relatedPost.slug} post={relatedPost} />
+                ))}
+              </div>
+            </motion.section>
+          )}
+        </motion.div>
       </main>
       
       <Footer />

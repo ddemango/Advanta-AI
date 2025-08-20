@@ -46,36 +46,20 @@ export class AutomatedBlogScheduler {
 
   // Schedule enhanced blog post generation (3 times daily)
   private scheduleEnhancedBlogPosts(): void {
-    const timezone = process.env.APP_TZ || 'America/New_York';
+    const TZ = 'America/New_York';
+    const POSTS_CRONS = ['0 8 * * *','0 13 * * *','0 18 * * *']; // 8am, 1pm, 6pm
     
-    // 8:00 AM - Morning post
-    const morningTask = cron.schedule('0 8 * * *', async () => {
-      await this.executeWithRetry('morning-blog', generateEnhancedBlogPost);
-    }, { 
-      scheduled: true, 
-      timezone,
-      name: 'morning-blog-generation'
+    POSTS_CRONS.forEach((cronExpr, index) => {
+      const taskName = ['morning', 'afternoon', 'evening'][index];
+      const task = cron.schedule(cronExpr, async () => {
+        await this.executeWithRetry(`${taskName}-blog`, generateEnhancedBlogPost);
+      }, { 
+        scheduled: true, 
+        timezone: TZ,
+        name: `${taskName}-blog-generation`
+      });
+      this.tasks.push(task);
     });
-
-    // 1:00 PM - Afternoon post  
-    const afternoonTask = cron.schedule('0 13 * * *', async () => {
-      await this.executeWithRetry('afternoon-blog', generateEnhancedBlogPost);
-    }, { 
-      scheduled: true, 
-      timezone,
-      name: 'afternoon-blog-generation'
-    });
-
-    // 6:00 PM - Evening post
-    const eveningTask = cron.schedule('0 18 * * *', async () => {
-      await this.executeWithRetry('evening-blog', generateEnhancedBlogPost);
-    }, { 
-      scheduled: true, 
-      timezone,
-      name: 'evening-blog-generation'
-    });
-
-    this.tasks.push(morningTask, afternoonTask, eveningTask);
     
     const nextRuns = [
       this.getNextRun(8),
@@ -84,31 +68,32 @@ export class AutomatedBlogScheduler {
     ];
     
     log.info({ 
-      timezone,
+      timezone: TZ,
       nextRuns: nextRuns.map(r => r.toLocaleString())
     }, '📝 Blog generation scheduled 3x daily');
   }
 
   // Schedule newsletter sending (Monday, Wednesday, Friday at 8:00 AM)
   private scheduleNewsletterSending(): void {
-    const timezone = process.env.APP_TZ || 'America/New_York';
+    const TZ = 'America/New_York';
+    const NEWSLETTER_CRON = '0 8 * * 1,3,5'; // Mon/Wed/Fri 8am
     
-    const newsletterTask = cron.schedule('0 8 * * 1,3,5', async () => {
+    const newsletterTask = cron.schedule(NEWSLETTER_CRON, async () => {
       await this.executeWithRetry('newsletter', sendEnhancedDailyNewsletter);
     }, { 
       scheduled: true, 
-      timezone,
+      timezone: TZ,
       name: 'newsletter-sending'
     });
 
     this.tasks.push(newsletterTask);
     
-    log.info({ timezone }, '📧 Newsletter scheduled for Mon/Wed/Fri at 8:00 AM');
+    log.info({ timezone: TZ }, '📧 Newsletter scheduled for Mon/Wed/Fri at 8:00 AM');
   }
 
   // Schedule RSS and sitemap generation
   private scheduleFeedGeneration(): void {
-    const timezone = process.env.APP_TZ || 'America/New_York';
+    const TZ = 'America/New_York';
     
     // After each blog generation (with delay)
     const feedUpdateTask = cron.schedule('5 8,13,18 * * *', async () => {
@@ -118,7 +103,7 @@ export class AutomatedBlogScheduler {
       });
     }, { 
       scheduled: true, 
-      timezone,
+      timezone: TZ,
       name: 'feeds-generation'
     });
 
@@ -130,31 +115,31 @@ export class AutomatedBlogScheduler {
       });
     }, { 
       scheduled: true, 
-      timezone,
+      timezone: TZ,
       name: 'daily-feeds-rebuild'
     });
 
     this.tasks.push(feedUpdateTask, dailyRebuildTask);
     
-    log.info({ timezone }, '🔄 RSS/Sitemap generation scheduled');
+    log.info({ timezone: TZ }, '🔄 RSS/Sitemap generation scheduled');
   }
 
   // Schedule maintenance tasks
   private scheduleMaintenance(): void {
-    const timezone = process.env.APP_TZ || 'America/New_York';
+    const TZ = 'America/New_York';
     
     // Weekly log cleanup (Sunday at 3:00 AM)
     const logCleanupTask = cron.schedule('0 3 * * 0', async () => {
       await this.executeWithRetry('log-cleanup', cleanupLogs);
     }, { 
       scheduled: true, 
-      timezone,
+      timezone: TZ,
       name: 'log-cleanup'
     });
 
     this.tasks.push(logCleanupTask);
     
-    log.info({ timezone }, '🧹 Maintenance tasks scheduled');
+    log.info({ timezone: TZ }, '🧹 Maintenance tasks scheduled');
   }
 
   // Execute task with retry logic and proper logging

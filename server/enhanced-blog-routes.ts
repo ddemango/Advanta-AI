@@ -2,10 +2,11 @@ import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import Fuse from 'fuse.js';
+import sanitizeHtml from 'sanitize-html';
 import { getViews, incView } from './blog-db';
 import { log, blogLog } from './logger';
 
-export const enhancedBlogRouter = express.Router();
+export const blogRouter = express.Router();
 
 interface BlogPost {
   slug: string;
@@ -87,7 +88,7 @@ export async function buildEnhancedIndex(): Promise<BlogPost[]> {
 }
 
 // Enhanced posts endpoint with search, filtering, and pagination
-enhancedBlogRouter.get('/posts', async (req, res) => {
+blogRouter.get('/posts', async (req, res) => {
   const startTime = Date.now();
   
   try {
@@ -164,7 +165,7 @@ enhancedBlogRouter.get('/posts', async (req, res) => {
 });
 
 // Enhanced single post endpoint
-enhancedBlogRouter.get('/file/:slug', async (req, res) => {
+blogRouter.get('/file/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     const postsDir = path.join(process.cwd(), 'posts');
@@ -188,10 +189,24 @@ enhancedBlogRouter.get('/file/:slug', async (req, res) => {
       return res.status(500).json({ error: 'Failed to parse post metadata' });
     }
 
+    // Sanitize content for safe rendering
+    const sanitizedContent = sanitizeHtml(content, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h2','h3','img','figure','figcaption']),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        img: ['src','alt','title','loading','width','height'],
+        a: ['href','name','target','rel'],
+      },
+      transformTags: {
+        a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' }),
+        img: sanitizeHtml.simpleTransform('img', { loading: 'lazy' }),
+      },
+    });
+
     res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     res.json({
       ...meta,
-      content
+      content: sanitizedContent
     });
   } catch (error: any) {
     log.error({ error: error?.message || String(error), slug: req.params.slug }, 'Failed to get blog post');
@@ -200,7 +215,7 @@ enhancedBlogRouter.get('/file/:slug', async (req, res) => {
 });
 
 // View tracking endpoint
-enhancedBlogRouter.post('/view/:slug', async (req, res) => {
+blogRouter.post('/view/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     const newCount = incView(slug);
@@ -217,7 +232,7 @@ enhancedBlogRouter.post('/view/:slug', async (req, res) => {
 });
 
 // Get popular posts
-enhancedBlogRouter.get('/popular', async (req, res) => {
+blogRouter.get('/popular', async (req, res) => {
   try {
     const { limit = '10' } = req.query as Record<string, string>;
     const cap = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);

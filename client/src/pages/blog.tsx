@@ -39,6 +39,9 @@ function useDebouncedValue<T>(value: T, delay: number) {
 const fetchJson = <T,>(url: string) =>
   fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.json() as Promise<T>; });
 
+// Type for posts response
+type PostsResp = { items: any[]; nextCursor?: string|null; total: number; categories: string[]; tags: string[]; meta?: any };
+
 const canonicalSlug = (p: any) => {
   if (p.slug) return String(p.slug);
   if (p.filename) return String(p.filename).replace(/\.html$/,'').replace(/^\d{4}-\d{2}-\d{2}-/,'');
@@ -244,13 +247,15 @@ export default function Blog() {
   const [rawQuery, setRawQuery] = useState<string>('');
   const searchQuery = useDebouncedValue(rawQuery, 300);
   
-  // Fetch automated blog posts from file system (priority)
-  const { data: filePosts = [], isLoading: filePostsLoading } = useQuery({
+  // Fetch posts from unified API
+  const { data: postsResp, isLoading, error } = useQuery({
     queryKey: ['/api/blog/posts'],
-    queryFn: () => fetchJson<any[]>('/api/blog/posts'),
+    queryFn: () => fetchJson<PostsResp>('/api/blog/posts'),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
+
+  const filePosts = postsResp?.items ?? [];
 
   // Fetch blog system status
   const { data: blogStatus } = useQuery({
@@ -259,17 +264,9 @@ export default function Blog() {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
-
-  // Legacy database posts (fallback)
-  const { data: blogPosts = [], isLoading, error } = useQuery({
-    queryKey: ['/api/blog'],
-    queryFn: () => fetchJson<any[]>('/api/blog'),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
   
   // Memoized post processing
-  const combined = useMemo(() => [...(filePosts || []), ...(blogPosts || [])].map(normalize), [filePosts, blogPosts]);
+  const combined = useMemo(() => [...(filePosts || [])].map(normalize), [filePosts]);
 
   const allPosts = useMemo(() => {
     const seen = new Set<string>();
@@ -289,15 +286,13 @@ export default function Blog() {
 
   const featuredPosts = useMemo(() => [...allPosts].sort((a,b)=> b.viewCount - a.viewCount).slice(0,3), [allPosts]);
 
-  // Compute tags from posts or use fallback
+  // Use tags from API response or compute fallback
   const tagsToShow = useMemo(() => {
-    const tagCounts = new Map<string, number>();
-    (filePosts ?? []).forEach((p: any) => (p.tags ?? []).forEach((t: string) => tagCounts.set(t, (tagCounts.get(t) || 0) + 1)));
-    const computedTags = Array.from(tagCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([t])=>t);
-    return computedTags.length ? computedTags : [
+    const apiTags = postsResp?.tags?.slice(0, 8);
+    return apiTags?.length ? apiTags : [
       'AI-Enhanced CRM','Sales Funnel','Marketing Automation','Business Intelligence','ROI Optimization','Enterprise AI','Workflow Automation','Data Analytics'
     ];
-  }, [filePosts]);
+  }, [postsResp?.tags]);
 
   return (
     <>

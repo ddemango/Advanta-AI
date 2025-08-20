@@ -41,7 +41,7 @@ import { triggerSystem, parseAdvancedSchedule } from "./advanced-triggers";
 import { aiCapabilities } from "./ai-capabilities";
 import { log } from "./vite";
 import rateLimit from 'express-rate-limit';
-import { enhancedBlogRouter } from './enhanced-blog-routes';
+import { blogRouter } from './enhanced-blog-routes';
 import { statusRouter } from './status-routes';
 import { adminRouter } from './admin-routes';
 import Stripe from "stripe";
@@ -1590,136 +1590,10 @@ function setupAuthEndpoints(app: Express) {
     }
   });
 
-  // ---------- Blog API Routes ----------
+  // ---------- Legacy Blog Routes (for compatibility) ----------
   
-  // Get all blog posts from file system (HTML files in /posts)
-  app.get('/api/blog/posts', async (req, res) => {
-    try {
-      const posts = await buildEnhancedIndex();
-      return res.json(posts);
-    } catch (error) {
-      console.error('Error fetching file-based blog posts:', error);
-      return res.status(500).json({ message: 'Error fetching blog posts' });
-    }
-  });
-  
-  // Get a specific blog post HTML file
-  app.get('/api/blog/posts/:slug', async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const postPath = path.join(process.cwd(), 'posts', `${slug}.html`);
-      
-      if (!fs.existsSync(postPath)) {
-        return res.status(404).json({ message: 'Blog post not found' });
-      }
-      
-      const htmlContent = fs.readFileSync(postPath, 'utf8');
-      return res.send(htmlContent);
-    } catch (error) {
-      console.error('Error fetching blog post:', error);
-      return res.status(500).json({ message: 'Error fetching blog post' });
-    }
-  });
-
-  // Get file-based blog post by slug with metadata
-  app.get('/api/blog/file/:slug', async (req, res) => {
-    try {
-      const { slug } = req.params;
-      const postsDir = path.join(process.cwd(), 'posts');
-      
-      if (!fs.existsSync(postsDir)) {
-        return res.status(404).json({ error: 'Blog post not found' });
-      }
-      
-      const files = fs.readdirSync(postsDir);
-      const postFile = files.find(file => 
-        file.endsWith('.html') && file.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '') === slug
-      );
-      
-      if (!postFile) {
-        return res.status(404).json({ error: 'Blog post not found' });
-      }
-      
-      const filepath = path.join(postsDir, postFile);
-      const content = fs.readFileSync(filepath, 'utf-8');
-      
-      // Extract metadata from HTML
-      const titleMatch = content.match(/<title>(.*?)\|/);
-      const categoryMatch = content.match(/meta name="category" content="([^"]+)"/);
-      const dateMatch = content.match(/meta name="date" content="([^"]+)"/);
-      const descriptionMatch = content.match(/meta name="description" content="([^"]+)"/);
-      
-      // Extract body content and make it professional
-      const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-      let bodyContent = bodyMatch ? bodyMatch[1] : content;
-      
-      // Clean up the content and add professional styling
-      bodyContent = bodyContent
-        .replace(/<h1[^>]*>.*?<\/h1>/gi, '') // Remove h1 tags (we'll use title)
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
-        .trim();
-      
-      const post = {
-        slug,
-        filename: postFile,
-        title: titleMatch ? titleMatch[1].trim() : 'AI Insights',
-        category: categoryMatch ? categoryMatch[1].replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'AI Technology',
-        created_at: dateMatch ? dateMatch[1] : new Date().toISOString(),
-        summary: descriptionMatch ? descriptionMatch[1] : 'Latest AI insights and technology updates',
-        content: bodyContent,
-        reading_time: Math.ceil(bodyContent.replace(/<[^>]*>/g, '').split(' ').length / 200),
-        author: {
-          firstName: 'Advanta',
-          lastName: 'AI',
-          profileImageUrl: ''
-        },
-        tags: [],
-        featured_image: `https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop&auto=format&q=80`
-      };
-      
-      res.json(post);
-    } catch (error) {
-      console.error('Error fetching file-based blog post:', error);
-      res.status(500).json({ error: 'Failed to fetch blog post' });
-    }
-  });
-  
-  // Get daily blog scheduler status
-  app.get('/api/blog/scheduler/status', (req, res) => {
-    try {
-      const status = blogSystem.getSystemStatus();
-      res.json(status);
-    } catch (error) {
-      console.error('Error getting scheduler status:', error);
-      res.status(500).json({ error: 'Failed to get scheduler status' });
-    }
-  });
-
-  // Manual trigger for blog generation (admin use)
-  app.post('/api/blog/generate', async (req, res) => {
-    try {
-      await blogSystem.triggerBlogGeneration();
-      return res.json({ success: true, message: 'Blog post generated successfully' });
-    } catch (error) {
-      console.error('Error generating blog post:', error);
-      return res.status(500).json({ message: 'Error generating blog post' });
-    }
-  });
-  
-  // Get blog system status
-  app.get('/api/blog/status', async (req, res) => {
-    try {
-      const status = blogSystem.getSystemStatus();
-      return res.json(status);
-    } catch (error) {
-      console.error('Error getting blog status:', error);
-      return res.status(500).json({ message: 'Error getting blog status' });
-    }
-  });
-  
-  // Mount enhanced blog routes with rate limiting
-  app.use('/api/enhanced-blog', publicApiLimiter, enhancedBlogRouter);
+  // Mount unified blog routes with rate limiting
+  app.use('/api/blog', publicApiLimiter, blogRouter);
   
   // Mount status and health endpoints
   app.use('/api/status', statusRouter);
@@ -7278,8 +7152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize the enhanced blog automation system
   await blogSystem.initialize();
   
-  // Mount enhanced blog routes
-  app.use('/api/enhanced-blog', enhancedBlogRouter);
+  // Blog routes are mounted above in the unified API section
   app.use('/api/status', statusRouter);
   app.use('/api/admin', adminRouter);
 

@@ -2,9 +2,9 @@ import { Resend } from 'resend';
 import { db } from './db';
 import { newsletterSubscribers, blogPosts } from '@shared/schema';
 import { eq, and, desc, gte } from 'drizzle-orm';
+import { getBaseUrl } from './lib/web';
 import fs from 'fs';
 import path from 'path';
-import * as cron from 'node-cron';
 
 // Function to get recent blog posts from file system (last 7 days)
 async function getRecentBlogPosts(): Promise<any[]> {
@@ -54,7 +54,7 @@ async function getRecentBlogPosts(): Promise<any[]> {
                 category: categoryMatch ? categoryMatch[1] : 'ai_technology',
                 date: dateMatchContent ? dateMatchContent[1] : dateMatch[1],
                 slug: slug,
-                url: `${process.env.REPLIT_DOMAINS?.split(',')[0] ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000'}/blog/${slug}`,
+                url: `${getBaseUrl()}/blog/${slug}`,
                 fileDate: fileDate
               });
             }
@@ -76,9 +76,7 @@ async function getRecentBlogPosts(): Promise<any[]> {
 
 // Function to create newsletter email template
 function createNewsletterTemplate(posts: any[]): string {
-  const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] 
-    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-    : 'http://localhost:5000';
+  const baseUrl = getBaseUrl();
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',

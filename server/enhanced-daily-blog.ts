@@ -3,6 +3,8 @@ import { logGeneration, trackAPIUsage } from './blog-db';
 import { runQualityGates } from './quality-gates';
 import { shareToAllPlatforms } from './social';
 import { buildRSSandSitemap } from './feeds';
+import { getBaseUrl } from './lib/web';
+import { mdToSafeHtml } from './lib/markdown';
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -81,13 +83,12 @@ function createEnhancedHtmlTemplate({
   bodyHtml: string;
   canonicalSlug: string;
   dateStr: string;
+  readingTime: number;
 }): string {
-  const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] 
-    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-    : 'https://advanta-ai.com';
+  const baseUrl = getBaseUrl();
     
   const tagsMeta = tags.length ? `<meta name="tags" content="${tags.join(',')}">` : '';
-  const readingTime = Math.max(1, Math.ceil(bodyHtml.split(' ').length / 200));
+
   
   const structuredData = {
     "@context": "https://schema.org",
@@ -323,7 +324,7 @@ function createEnhancedHtmlTemplate({
                 <h1>${title}</h1>
                 <div class="meta">
                     <span class="meta-item">📅 ${new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                    <span class="meta-item">📂 ${category.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</span>
+                    <span class="meta-item">📂 ${category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
                     <span class="meta-item">⏱️ ${readingTime} min read</span>
                 </div>
                 ${tags.length ? `
@@ -349,11 +350,7 @@ function createEnhancedHtmlTemplate({
     </div>
     
     <!-- View tracking -->
-    <script>
-        // Track page view
-        fetch('/api/enhanced-blog/view/${canonicalSlug}', { method: 'POST' })
-          .catch(err => console.log('View tracking failed:', err));
-    </script>
+    <script>fetch('/api/blog/view/${canonicalSlug}',{method:'POST'}).catch(()=>{});</script>
 </body>
 </html>`;
 }
@@ -443,8 +440,8 @@ Ensure the content is actionable, includes specific examples, and positions AI a
       content = content.replace(/^```html\\s*/i, '').replace(/\\s*```$/, '');
       content = content.replace(/^```\\s*/, '').replace(/\\s*```$/, '');
       
-      // Convert markdown to HTML
-      content = convertMarkdownToHtml(content);
+      // Convert markdown to HTML with sanitization
+      content = mdToSafeHtml(content);
       
       // Generate enhanced tags
       const tags = generateEnhancedTags(content, category);
@@ -471,6 +468,10 @@ Ensure the content is actionable, includes specific examples, and positions AI a
         fs.mkdirSync(postsDir, { recursive: true });
       }
       
+      // Calculate reading time
+      const wordCount = content.replace(/<[^>]*>/g, '').split(/\s+/).length;
+      const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+      
       // Create enhanced HTML
       const description = content.substring(0, 160).replace(/<[^>]*>/g, '') + '...';
       const htmlContent = createEnhancedHtmlTemplate({
@@ -480,7 +481,8 @@ Ensure the content is actionable, includes specific examples, and positions AI a
         tags,
         bodyHtml: content,
         canonicalSlug: slug,
-        dateStr: date
+        dateStr: date,
+        readingTime
       });
       
       // Save file
@@ -521,35 +523,7 @@ Ensure the content is actionable, includes specific examples, and positions AI a
   }, 'enhanced-blog-generation', 2);
 }
 
-// Helper function to convert markdown to HTML
-function convertMarkdownToHtml(content: string): string {
-  // Convert markdown headings to HTML
-  content = content.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  content = content.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  
-  // Convert markdown bold to HTML
-  content = content.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
-  
-  // Convert markdown italic to HTML
-  content = content.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
-  
-  // Convert bullet points
-  content = content.replace(/^[-•]\\s+(.+)$/gm, '<li>$1</li>');
-  content = content.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
-  content = content.replace(/<\/ul>\\s*<ul>/g, '');
-  
-  // Convert line breaks to paragraphs
-  const paragraphs = content.split('\\n\\n');
-  content = paragraphs.map(p => {
-    p = p.trim();
-    if (p.startsWith('<h2>') || p.startsWith('<h3>') || p.startsWith('<ul>')) {
-      return p;
-    }
-    return p ? `<p>${p}</p>` : '';
-  }).filter(p => p).join('\\n\\n');
-  
-  return content;
-}
+
 
 // Helper function to create URL-friendly slugs
 function slugify(text: string): string {
