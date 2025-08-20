@@ -31,7 +31,15 @@ function extractEnhancedMeta(html: string, filename: string): BlogPost | null {
     
     if (!titleMatch) return null;
 
-    const slug = filename.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '');
+    let slug = filename.replace('.html', '').replace(/^\d{4}-\d{2}-\d{2}-/, '');
+    // If slug is empty after removing date prefix, generate from title
+    if (!slug) {
+      slug = titleMatch[1].toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .replace(/\*+/g, '') // Remove asterisks
+        .substring(0, 60);
+    }
     const tags = tagsMatch ? tagsMatch[1].split(',').map(t => t.trim()).filter(Boolean) : [];
     
     // Calculate reading time (average 200 words per minute)
