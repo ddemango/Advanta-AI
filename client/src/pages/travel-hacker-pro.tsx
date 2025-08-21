@@ -564,7 +564,7 @@ export default function TravelHackerPro() {
       <div className="min-h-screen bg-gray-50">
         <NewHeader />
         
-        <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="mx-auto max-w-7xl px-4 pt-20 pb-6">
           <header className="mb-6">
             <h1 className="text-xl sm:text-2xl font-bold">Travel Hacker AI Pro</h1>
             <p className="text-sm text-gray-600">One search for flights, mistake fares, hotels, and cars — with TrueTotal™ pricing & DealRank™.</p>
