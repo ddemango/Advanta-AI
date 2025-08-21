@@ -1,0 +1,976 @@
+Below is a complete, minimal-yet-production-grade codebase for a **Trending Content Generator** (Next.js 14 App Router + TypeScript + Prisma + SQLite + Tailwind). It ingests RSS sources, scores trends (velocity, acceleration, consensus), stores time-series signals, and generates multi-format content assets with citations via OpenAI. It includes a live trend feed UI, explainability, asset generation, a basic calendar, and a simple collector worker you run separately.
+
+> Repo name suggestion: `trending-content-generator`
+
+---
+
+## 0) Directory Tree
+
+```
+trending-content-generator/
+├─ package.json
+├─ tsconfig.json
+├─ next.config.mjs
+├─ postcss.config.mjs
+├─ tailwind.config.ts
+├─ .env.example
+├─ prisma/
+│  └─ schema.prisma
+├─ data/
+│  └─ feeds.json
+├─ src/
+│  ├─ app/
+│  │  ├─ globals.css
+│  │  ├─ layout.tsx
+│  │  ├─ page.tsx
+│  │  ├─ api/
+│  │  │  ├─ trends/route.ts
+│  │  │  ├─ generate/route.ts
+│  │  │  ├─ sparkline/route.ts
+│  │  │  └─ calendar/route.ts
+│  │  └─ assets/page.tsx
+│  ├─ components/
+│  │  ├─ TrendTable.tsx
+│  │  ├─ AssetDrawer.tsx
+│  │  └─ Sparkline.tsx
+│  ├─ lib/
+│  │  ├─ db.ts
+│  │  ├─ score.ts
+│  │  ├─ rss.ts
+│  │  ├─ generate.ts
+│  │  ├─ utils.ts
+│  │  └─ types.ts
+│  └─ scripts/
+│     ├─ collect.ts
+│     └─ seed.ts
+└─ README.md
+```
+
+---
+
+## 1) package.json
+
+```json
+{
+  "name": "trending-content-generator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "seed": "tsx src/scripts/seed.ts",
+    "collect": "tsx src/scripts/collect.ts"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "next": "14.2.9",
+    "openai": "^4.57.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "rss-parser": "^3.12.0",
+    "zod": "^3.23.8",
+    "@prisma/client": "^5.19.1",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.9",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.38",
+    "prisma": "^5.19.1",
+    "tailwindcss": "^3.4.10",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "5.5.4",
+    "tsx": "^4.16.2"
+  }
+}
+```
+
+---
+
+## 2) tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "paths": {
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+```
+
+---
+
+## 3) next.config.mjs
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    typedRoutes: true
+  }
+};
+export default nextConfig;
+```
+
+---
+
+## 4) postcss.config.mjs
+
+```js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+```
+
+---
+
+## 5) tailwind.config.ts
+
+```ts
+import type { Config } from 'tailwindcss'
+
+export default {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          DEFAULT: '#0ea5e9',
+          dark: '#0369a1',
+        }
+      }
+    },
+  },
+  plugins: [],
+} satisfies Config
+```
+
+---
+
+## 6) .env.example
+
+```
+# Copy to .env.local and fill values
+OPENAI_API_KEY=sk-...
+DATABASE_URL="file:./dev.db" # SQLite for local dev
+# Optional: adjust collector interval (ms)
+COLLECT_INTERVAL_MS=300000
+```
+
+---
+
+## 7) prisma/schema.prisma
+
+```prisma
+// SQLite for quick start; switch to Postgres in prod if desired
+// generator client
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id        String  @id @default(cuid())
+  name      String
+  type      String  // e.g. 'rss'
+  url       String  @unique
+  rateLimit Int     @default(60) // seconds between polls per-source (not enforced in this MVP)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  signals   Signal[]
+}
+
+model Topic {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  title     String
+  summary   String?
+  entities  String  // comma-separated keywords (simple heuristic)
+  embedding Json?   // store numeric[] as JSON for portability
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  signals   Signal[]
+  assets    Asset[]
+  trends    Trend[]
+}
+
+model Signal {
+  id        String   @id @default(cuid())
+  topicId   String
+  sourceId  String
+  ts        DateTime
+  value     Float    // count increment (mentions/views proxy)
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  source    Source   @relation(fields: [sourceId], references: [id])
+}
+
+model Trend {
+  id        String   @id @default(cuid())
+  topicId   String
+  window    String   // '15m' | '60m' | '24h'
+  score     Float
+  components Json    // { velZ, accZ, consensus, audienceFit, freshness, saturation, risk }
+  rank      Int
+  updatedAt DateTime @default(now())
+  topic     Topic    @relation(fields: [topicId], references: [id])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  voice     Json     // {tone, readingLevel, emoji, taboo}
+  keywords  String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+  calendar  Calendar[]
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  topicId   String
+  brandId   String
+  kind      String   // 'thread' | 'reel_script' | 'yt_short_outline' | 'linkedin' | 'blog_brief' | 'thumbnail_prompts'
+  content   Json
+  citations Json
+  createdAt DateTime @default(now())
+  topic     Topic    @relation(fields: [topicId], references: [id])
+  brand     Brand    @relation(fields: [brandId], references: [id])
+  perf      Perf[]
+}
+
+model Calendar {
+  id        String   @id @default(cuid())
+  brandId   String
+  platform  String   // 'twitter' | 'tiktok' | 'youtube' | 'linkedin' | 'blog'
+  slot      DateTime
+  assetId   String?
+  status    String   // 'planned' | 'published'
+  brand     Brand    @relation(fields: [brandId], references: [id])
+}
+
+model Perf {
+  id        String   @id @default(cuid())
+  assetId   String
+  platform  String
+  metric    String   // 'views' | 'likes' | 'ctr' | etc
+  value     Float
+  ts        DateTime
+  asset     Asset    @relation(fields: [assetId], references: [id])
+}
+```
+
+---
+
+## 8) data/feeds.json
+
+```json
+{
+  "rss": [
+    "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en",
+    "https://www.theverge.com/rss/index.xml",
+    "https://www.reddit.com/r/technology/new.rss",
+    "https://www.reddit.com/r/artificial/new.rss",
+    "https://hnrss.org/newest"
+  ]
+}
+```
+
+---
+
+## 9) src/app/globals.css
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 255 255 255;
+  --fg: 17 24 39;
+}
+
+html, body, #__next { height: 100%; }
+body { color: rgb(var(--fg)); background: rgb(var(--bg)); }
+
+.container { @apply mx-auto max-w-6xl px-4; }
+.card { @apply rounded-2xl border border-gray-200 bg-white shadow-sm; }
+.btn { @apply inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-white hover:bg-brand-dark transition; }
+.badge { @apply inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700; }
+.table { @apply w-full text-sm; }
+.table thead th { @apply text-left text-gray-500 font-medium; }
+.table tbody tr { @apply border-t; }
+```
+
+---
+
+## 10) src/app/layout.tsx
+
+```tsx
+import "./globals.css";
+import { ReactNode } from "react";
+
+export const metadata = {
+  title: "Trending Content Generator",
+  description: "Detect trends, generate multi-format assets, and schedule posts.",
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <header className="border-b bg-white">
+          <div className="container py-4 flex items-center justify-between">
+            <h1 className="text-xl font-semibold">Trending Content Generator</h1>
+            <a href="/assets" className="btn">Assets</a>
+          </div>
+        </header>
+        <main className="container py-6">{children}</main>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+## 11) src/lib/types.ts
+
+```ts
+export type TrendRow = {
+  id: string;
+  title: string;
+  score: number;
+  reasons: {
+    velZ: number; accZ: number; consensus: number; audienceFit: number;
+    freshness: number; saturation: number; risk: number;
+  };
+  sparkline: { ts: string; value: number }[];
+};
+```
+
+---
+
+## 12) src/lib/db.ts
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+```
+
+---
+
+## 13) src/lib/utils.ts
+
+```ts
+import { createHash } from "crypto";
+
+export function slugify(input: string) {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function stableId(input: string) {
+  return createHash("sha1").update(input).digest("hex").slice(0, 16);
+}
+
+export function zscore(values: number[], x: number) {
+  if (values.length < 2) return 0;
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const std = Math.sqrt(values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / (values.length - 1)) || 1;
+  return (x - mean) / std;
+}
+
+export function now() { return new Date(); }
+```
+
+---
+
+## 14) src/lib/score.ts
+
+```ts
+export type Components = {
+  velZ: number; accZ: number; consensus: number; audienceFit: number;
+  freshness: number; saturation: number; risk: number;
+};
+
+export function score(c: Components, w = { w1: 1.2, w2: 1.0, w3: 1.0, w4: 1.1, w5: 0.6, w6: 0.8, w7: 0.7 }) {
+  return (
+    w.w1 * c.velZ +
+    w.w2 * c.accZ +
+    w.w3 * c.consensus +
+    w.w4 * c.audienceFit +
+    w.w5 * c.freshness -
+    w.w6 * c.saturation -
+    w.w7 * c.risk
+  );
+}
+```
+
+---
+
+## 15) src/lib/rss.ts
+
+```ts
+import Parser from "rss-parser";
+import { prisma } from "@/lib/db";
+import { slugify, stableId } from "@/lib/utils";
+
+const parser = new Parser();
+
+export async function ensureSource(url: string) {
+  const name = new URL(url).host;
+  return prisma.source.upsert({
+    where: { url },
+    create: { url, name, type: "rss" },
+    update: {}
+  });
+}
+
+function extractEntities(title: string) {
+  // Simple heuristic: keywords >= 4 letters, dedupe
+  const words = (title.match(/[A-Za-z][A-Za-z0-9\-]{3,}/g) || []).map(w => w.toLowerCase());
+  return Array.from(new Set(words)).slice(0, 10).join(",");
+}
+
+export async function ingestFeed(url: string) {
+  const source = await ensureSource(url);
+  const feed = await parser.parseURL(url);
+  const now = new Date();
+
+  for (const item of feed.items) {
+    const title = item.title?.trim();
+    if (!title) continue;
+    const link = (item.link || title) + "";
+    const slug = slugify(title).slice(0, 80) || stableId(link);
+
+    // Topic upsert
+    const topic = await prisma.topic.upsert({
+      where: { slug },
+      create: {
+        slug,
+        title,
+        summary: item.contentSnippet?.slice(0, 240) || "",
+        entities: extractEntities(title),
+      },
+      update: { summary: item.contentSnippet?.slice(0, 240) || undefined }
+    });
+
+    // Each item counts as 1 mention; you can enhance with score from comments/views if available
+    await prisma.signal.create({
+      data: {
+        topicId: topic.id,
+        sourceId: source.id,
+        ts: item.isoDate ? new Date(item.isoDate) : now,
+        value: 1,
+      }
+    });
+  }
+}
+```
+
+---
+
+## 16) src/lib/generate.ts
+
+```ts
+import OpenAI from "openai";
+import { prisma } from "@/lib/db";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+export async function generateAssetsForTopic(topicId: string, brandId: string) {
+  const topic = await prisma.topic.findUnique({ where: { id: topicId } });
+  const brand = await prisma.brand.findUnique({ where: { id: brandId } });
+  if (!topic || !brand) throw new Error("Topic or Brand missing");
+
+  // Fetch recent sources for light citations (top 5 recent signals and their sources)
+  const signals = await prisma.signal.findMany({
+    where: { topicId }, orderBy: { ts: "desc" }, take: 5, include: { source: true }
+  });
+  const sources = signals.map((s, i) => ({ index: i + 1, title: s.source.name, url: s.source.url }));
+
+  const system = `You are a content editor. Write in the brand voice (JSON provided). Always include citations [n] where facts appear and return JSON with keys: thread, reel_script, yt_short_outline, linkedin, blog_brief, hashtags, thumbnail_prompts, citations (array of {n, url}). Avoid claims not in sources.`;
+
+  const user = `
+TOPIC: ${topic.title}
+WHY NOW: ${topic.summary || "A fast-rising topic across multiple feeds"}
+BRAND: ${JSON.stringify(brand.voice)}
+KEYWORDS: ${(brand.keywords || []).join(", ")}
+SOURCES:\n${sources.map(s => `[${s.index}] ${s.title} - ${s.url}`).join("\n")}
+`;
+
+  const resp = await openai.responses.create({ model: "gpt-5", input: [
+    { role: "system", content: system },
+    { role: "user", content: user }
+  ], temperature: 0.7 });
+
+  let json: any;
+  try { json = JSON.parse(resp.output_text); } catch (e) { throw new Error("LLM did not return valid JSON"); }
+
+  const kinds = ["thread", "reel_script", "yt_short_outline", "linkedin", "blog_brief", "thumbnail_prompts"] as const;
+  for (const k of kinds) {
+    await prisma.asset.create({ data: {
+      topicId, brandId, kind: k, content: json[k] || {}, citations: json.citations || []
+    }});
+  }
+  return true;
+}
+```
+
+---
+
+## 17) src/components/Sparkline.tsx
+
+```tsx
+'use client';
+import React from 'react';
+
+export default function Sparkline({ points }: { points: { ts: string; value: number }[] }) {
+  if (!points?.length) return <div className="h-6" />;
+  const width = 120, height = 24, padding = 2;
+  const xs = points.map((_, i) => i);
+  const ys = points.map(p => p.value);
+  const minY = Math.min(...ys), maxY = Math.max(...ys) || 1;
+  const path = xs.map((x, i) => {
+    const px = padding + (x / (xs.length - 1)) * (width - padding * 2);
+    const py = height - padding - ((ys[i] - minY) / (maxY - minY || 1)) * (height - padding * 2);
+    return `${i === 0 ? 'M' : 'L'}${px.toFixed(1)},${py.toFixed(1)}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} className="text-brand">
+      <path d={path} fill="none" stroke="currentColor" strokeWidth={2} />
+    </svg>
+  );
+}
+```
+
+---
+
+## 18) src/components/AssetDrawer.tsx
+
+```tsx
+'use client';
+import { useState } from 'react';
+import { TrendRow } from '@/lib/types';
+
+export default function AssetDrawer({ trend, onGenerate }:{ trend: TrendRow; onGenerate: () => Promise<void>; }){
+  const [open, setOpen] = useState(false);
+  const r = trend.reasons;
+  return (
+    <div className="card p-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">{trend.title}</h3>
+          <p className="text-sm text-gray-600">Score: {trend.score.toFixed(2)}</p>
+        </div>
+        <button className="btn" onClick={() => setOpen(!open)}>{open ? 'Hide' : 'Details'}</button>
+      </div>
+      {open && (
+        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+          <div className="badge">velZ: {r.velZ.toFixed(2)}</div>
+          <div className="badge">accZ: {r.accZ.toFixed(2)}</div>
+          <div className="badge">consensus: {r.consensus.toFixed(2)}</div>
+          <div className="badge">audienceFit: {r.audienceFit.toFixed(2)}</div>
+          <div className="badge">freshness: {r.freshness.toFixed(2)}</div>
+          <div className="badge">saturation: {r.saturation.toFixed(2)}</div>
+          <div className="badge">risk: {r.risk.toFixed(2)}</div>
+        </div>
+      )}
+      <div className="mt-4 flex gap-3">
+        <button className="btn" onClick={onGenerate}>Generate Asset Pack</button>
+        <a className="btn bg-gray-900" href="/assets">View Assets</a>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 19) src/components/TrendTable.tsx
+
+```tsx
+'use client';
+import useSWR from 'swr';
+import Sparkline from './Sparkline';
+import AssetDrawer from './AssetDrawer';
+import { TrendRow } from '@/lib/types';
+
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+export default function TrendTable() {
+  const { data, isLoading, mutate } = useSWR<TrendRow[]>(`/api/trends?window=24h&limit=25`, fetcher, { refreshInterval: 30000 });
+
+  async function onGenerate(topicId: string) {
+    await fetch('/api/generate', { method: 'POST', body: JSON.stringify({ topicId }), headers: { 'Content-Type': 'application/json' } });
+    mutate();
+  }
+
+  if (isLoading) return <div>Loading trends…</div>;
+  if (!data?.length) return <div>No trends yet. Run the collector script.</div>;
+
+  return (
+    <div className="space-y-4">
+      {data.map((t) => (
+        <div key={t.id} className="card p-4">
+          <div className="flex items-center justify-between gap-6">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold truncate">{t.title}</h3>
+                <span className="badge">Score: {t.score.toFixed(2)}</span>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">Reasons: velZ {t.reasons.velZ.toFixed(1)} • accZ {t.reasons.accZ.toFixed(1)} • cons {t.reasons.consensus.toFixed(1)} • fresh {t.reasons.freshness.toFixed(1)}</div>
+            </div>
+            <Sparkline points={t.sparkline} />
+          </div>
+          <div className="mt-3">
+            <AssetDrawer trend={t} onGenerate={() => onGenerate(t.id)} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+## 20) src/app/page.tsx
+
+```tsx
+import TrendTable from '@/components/TrendTable';
+
+export default function Page() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Live Trend Feed</h2>
+        <a className="btn" href="/assets">Go to Assets</a>
+      </div>
+      <p className="text-gray-600">Ranked by velocity, acceleration, consensus, freshness, and audience fit. Click a trend to generate an on-brand multi-format asset pack with citations.</p>
+      <TrendTable />
+    </div>
+  );
+}
+```
+
+---
+
+## 21) src/app/assets/page.tsx
+
+```tsx
+import { prisma } from '@/lib/db';
+
+export default async function AssetsPage() {
+  const assets = await prisma.asset.findMany({ orderBy: { createdAt: 'desc' }, include: { topic: true, brand: true } });
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Generated Assets</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {assets.map(a => (
+          <div key={a.id} className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-500">{a.brand.name} • {new Date(a.createdAt).toLocaleString()}</div>
+                <h3 className="font-semibold">{a.topic.title}</h3>
+              </div>
+              <span className="badge">{a.kind}</span>
+            </div>
+            <pre className="mt-3 whitespace-pre-wrap text-sm bg-gray-50 p-3 rounded-lg">{JSON.stringify(a.content, null, 2)}</pre>
+            {Array.isArray(a.citations) && a.citations.length > 0 && (
+              <div className="mt-2 text-xs text-gray-600">
+                Citations: {a.citations.map((c:any, i:number) => <a key={i} className="underline mr-2" href={c.url} target="_blank">[{c.n}]</a>)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 22) src/app/api/trends/route.ts
+
+```ts
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { score } from '@/lib/score';
+import { zscore } from '@/lib/utils';
+import { subMinutes } from 'date-fns';
+
+function sum(values: number[]) { return values.reduce((a,b)=>a+b,0); }
+
+export async function GET(req: NextRequest) {
+  const window = req.nextUrl.searchParams.get('window') ?? '24h';
+  const limit = Number(req.nextUrl.searchParams.get('limit') ?? 25);
+
+  // Pull topics touched in last 24h
+  const since = subMinutes(new Date(), 24 * 60);
+  const topics = await prisma.topic.findMany({
+    where: { signals: { some: { ts: { gte: since } } } },
+    include: { signals: { where: { ts: { gte: since } }, include: { source: true } } }
+  });
+
+  // Prepare scoring components
+  const rows = topics.map(t => {
+    const now = new Date();
+    const w15 = subMinutes(now, 15);
+    const w60 = subMinutes(now, 60);
+    const w24 = subMinutes(now, 24*60);
+
+    const s15 = t.signals.filter(s => s.ts >= w15).length;
+    const s60 = t.signals.filter(s => s.ts >= w60).length;
+    const s24 = t.signals.filter(s => s.ts >= w24).length;
+
+    // velocity: mentions in last 60m; acceleration: last 15m - previous 15m
+    const prev15 = t.signals.filter(s => s.ts < w15 && s.ts >= subMinutes(now, 30)).length;
+    const vel = s60;
+    const acc = s15 - prev15;
+
+    const consensus = new Set(t.signals.map(s => s.sourceId)).size; // rough proxy across sources
+
+    const freshness = Math.min(1, s15 / 5) + Math.min(1, s60 / 10); // 0-2 scale
+    const saturation = Math.max(0, (s24 - s60) / 50); // if most mentions are stale (>60m), penalize
+    const risk = 0.2; // simple constant; you can enhance with a keyword linter
+    const audienceFit = 0.5; // placeholder: wire to your perf model later
+
+    return { topic: t, comps: { vel, acc, consensus, freshness, saturation, risk, audienceFit }, spark: t.signals.sort((a,b)=>a.ts.getTime()-b.ts.getTime()).slice(-20).map(s=>({ ts: s.ts.toISOString(), value: s.value })) };
+  });
+
+  // Compute z-scores for vel/acc across the cohort
+  const velAll = rows.map(r => r.comps.vel);
+  const accAll = rows.map(r => r.comps.acc);
+
+  const scored = rows.map(r => {
+    const comps = {
+      velZ: zscore(velAll, r.comps.vel),
+      accZ: zscore(accAll, r.comps.acc),
+      consensus: Math.log(1 + r.comps.consensus),
+      audienceFit: r.comps.audienceFit,
+      freshness: r.comps.freshness,
+      saturation: r.comps.saturation,
+      risk: r.comps.risk,
+    };
+    const s = score(comps);
+    return { id: r.topic.id, title: r.topic.title, score: s, reasons: comps, sparkline: r.spark };
+  }).sort((a,b)=> b.score - a.score).slice(0, limit);
+
+  return NextResponse.json(scored);
+}
+```
+
+---
+
+## 23) src/app/api/generate/route.ts
+
+```ts
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { generateAssetsForTopic } from '@/lib/generate';
+
+export async function POST(req: NextRequest) {
+  const { topicId, brandId } = await req.json();
+  const brand = await prisma.brand.findFirst();
+  const useBrandId = brandId || brand?.id;
+  if (!useBrandId) return NextResponse.json({ error: 'No brand configured. Run seed.' }, { status: 400 });
+
+  try {
+    await generateAssetsForTopic(topicId, useBrandId);
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || 'Generation failed' }, { status: 500 });
+  }
+}
+```
+
+---
+
+## 24) src/app/api/sparkline/route.ts
+
+```ts
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+
+export async function GET(req: NextRequest) {
+  const topicId = req.nextUrl.searchParams.get('topicId');
+  if (!topicId) return NextResponse.json({ error: 'topicId required' }, { status: 400 });
+  const signals = await prisma.signal.findMany({ where: { topicId }, orderBy: { ts: 'asc' }, take: 50 });
+  return NextResponse.json(signals.map(s => ({ ts: s.ts, value: s.value })));
+}
+```
+
+---
+
+## 25) src/app/api/calendar/route.ts
+
+```ts
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+
+export async function POST(req: NextRequest) {
+  const { brandId, platform, slot, assetId } = await req.json();
+  if (!brandId || !platform || !slot) return NextResponse.json({ error: 'brandId, platform, slot required' }, { status: 400 });
+  const cal = await prisma.calendar.create({ data: { brandId, platform, slot: new Date(slot), assetId, status: 'planned' } });
+  return NextResponse.json(cal);
+}
+```
+
+---
+
+## 26) src/scripts/seed.ts
+
+```ts
+import { prisma } from '@/lib/db';
+import feeds from '../../data/feeds.json';
+
+async function main() {
+  // brand
+  const brand = await prisma.brand.upsert({
+    where: { name: 'Default Brand' },
+    update: {},
+    create: {
+      name: 'Default Brand',
+      voice: { tone: 'concise, confident, playful', readingLevel: 'Grade 7', emoji: true, taboo: ['politics', 'NSFW'] },
+      keywords: ['AI', 'automation', 'marketing', 'growth', 'productivity']
+    }
+  });
+  console.log('Brand ready:', brand.name);
+
+  // sources
+  for (const url of feeds.rss) {
+    await prisma.source.upsert({ where: { url }, create: { url, name: new URL(url).host, type: 'rss' }, update: {} });
+  }
+  console.log('Sources ready:', feeds.rss.length);
+}
+
+main().then(()=>process.exit(0)).catch(e=>{ console.error(e); process.exit(1); });
+```
+
+---
+
+## 27) src/scripts/collect.ts
+
+```ts
+import { prisma } from '@/lib/db';
+import feeds from '../../data/feeds.json';
+import { ingestFeed } from '@/lib/rss';
+
+const INTERVAL = Number(process.env.COLLECT_INTERVAL_MS || 300000); // 5 min
+
+async function tick() {
+  console.log(`[collector] start ${new Date().toISOString()}`);
+  for (const url of feeds.rss) {
+    try {
+      await ingestFeed(url);
+      console.log(`[collector] ok ${url}`);
+    } catch (e: any) {
+      console.warn(`[collector] fail ${url}:`, e.message);
+    }
+  }
+  console.log(`[collector] end ${new Date().toISOString()}`);
+}
+
+async function main() {
+  await tick();
+  setInterval(tick, INTERVAL);
+}
+
+main();
+```
+
+---
+
+## 28) README.md (quick start)
+
+````md
+# Trending Content Generator (Next.js + Prisma)
+
+Detect fast-rising topics from RSS feeds, score them (velocity/acceleration/consensus), and generate multi-format content assets with citations via OpenAI. Includes a live trend feed UI, explainability, asset viewer, basic calendar API, and a simple collector worker.
+
+## 1) Setup
+```bash
+pnpm i # or npm i / yarn
+cp .env.example .env.local
+# fill OPENAI_API_KEY if you want generation
+````
+
+## 2) Database
+
+```bash
+npm run db:push
+npm run seed
+npm run db:studio # optional inspector
+```
+
+## 3) Run
+
+Open two terminals:
+
+```bash
+npm run dev       # Next.js app on http://localhost:3000
+npm run collect   # Collector worker (ingests feeds every 5 min)
+```
+
+Visit `/` to see trends. Click **Generate Asset Pack** to create content (requires OPENAI\_API\_KEY).
+
+## Notes
+
+* This MVP uses **RSS** sources for simplicity and stability. Add connectors for Reddit, YouTube, X, TikTok using approved APIs where available.
+* Scoring components are explainable and extendable. Plug your audience-fit model in `api/trends` where `audienceFit` is set.
+* Switch to Postgres by changing `schema.prisma` datasource and `DATABASE_URL`.
+* Add publishing integrations (e.g., YouTube/LinkedIn/Meta) behind `api/publish` in a follow-up.
+
+```
+
+---
+
+### That’s everything you need to clone, install, run, ingest, score, view, and generate assets. Replace or expand feeds in `data/feeds.json`, wire additional connectors, and tie in your performance telemetry for audience-fit. Enjoy!
+
+```

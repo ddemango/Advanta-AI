@@ -44,6 +44,7 @@ import rateLimit from 'express-rate-limit';
 import { blogRouter } from './enhanced-blog-routes';
 import { statusRouter } from './status-routes';
 import { adminRouter } from './admin-routes';
+import trendingContentRoutes from './trending-content-routes';
 import Stripe from "stripe";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -7163,6 +7164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Competitor Intel Scanner endpoints
   const competitorIntelModule = await import('./competitor-intel');
   app.use('/api/competitor-intel', competitorIntelModule.default);
+  
+  // Trending content generator routes
+  app.use('/api', trendingContentRoutes);
 
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {

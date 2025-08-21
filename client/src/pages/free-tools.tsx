@@ -77,7 +77,15 @@ export default function FreeTools() {
       route: '/ai-tool-quiz',
       featured: true
     },
-
+    {
+      id: 'trending-content-generator',
+      name: 'Trending Content Generator',
+      description: 'Generate viral content based on real-time trend analysis. AI-powered content creation for all platforms.',
+      icon: TrendingUp,
+      category: 'Content Creation',
+      route: '/trending-content-generator',
+      featured: true
+    },
     {
       id: 'competitor-intel-scanner',
       name: 'Competitor Intel Scanner',
@@ -299,6 +307,7 @@ export default function FreeTools() {
   // Quick access tools (most popular/useful)
   const quickAccessTools = [
     tools.find(t => t.id === 'build-ai-stack'),
+    tools.find(t => t.id === 'trending-content-generator'),
     tools.find(t => t.id === 'competitor-intel-scanner'),
     tools.find(t => t.id === 'movie-matchmaker'),
     tools.find(t => t.id === 'travel-hacker-pro'),
