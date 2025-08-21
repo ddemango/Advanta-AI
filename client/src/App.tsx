@@ -70,7 +70,6 @@ import TravelHackerPro from "@/pages/travel-hacker-pro";
 import About from "@/pages/about";
 import FlightFinder from "@/pages/flight-finder";
 import FantasyFootballTools from "@/pages/fantasy-football-tools";
-import MovieMatchmaker from "@/pages/movie-matchmaker";
 import TVMatchmaker from "@/pages/tv-matchmaker";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import { BestAIAgencyPage, AIMarketingAgencyPage } from "@/pages/seo-landing-pages";
@@ -221,9 +220,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/flight-finder" component={FlightFinder} />
       <Route path="/fantasy-football-tools" component={FantasyFootballTools} />
-      <Route path="/movie-matchmaker" component={MovieMatchmaker} />
       <Route path="/tv-matchmaker" component={TVMatchmaker} />
-      <Route path="/movie-matchmaker-simple" component={MovieMatchmaker} />
       <Route path="/free-tools" component={FreeTools} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
