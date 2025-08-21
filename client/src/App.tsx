@@ -68,6 +68,7 @@ import TrendingContentGenerator from "@/pages/trending-content-generator";
 import CompetitorIntelScanner from "@/pages/competitor-intel-scanner";
 import TravelHackerAI from "@/pages/travel-hacker-ai";
 import TravelHackerAIV2 from "@/pages/travel-hacker-ai-v2";
+import TravelHackerPro from "@/pages/travel-hacker-pro";
 import About from "@/pages/about";
 import FlightFinder from "@/pages/flight-finder";
 import FantasyFootballTools from "@/pages/fantasy-football-tools";
@@ -220,6 +221,7 @@ function Router() {
       <Route path="/competitor-intel-scanner" component={CompetitorIntelScanner} />
       <Route path="/travel-hacker-ai" component={TravelHackerAI} />
       <Route path="/travel-hacker-ai-v2" component={TravelHackerAIV2} />
+      <Route path="/travel-hacker-pro" component={TravelHackerPro} />
       <Route path="/about" component={About} />
       <Route path="/flight-finder" component={FlightFinder} />
       <Route path="/fantasy-football-tools" component={FantasyFootballTools} />
