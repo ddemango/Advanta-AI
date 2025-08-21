@@ -95,15 +95,7 @@ export default function FreeTools() {
       route: '/competitor-intel-scanner',
       featured: true
     },
-    {
-      id: 'travel-hacker-ai',
-      name: 'Travel Hacker AI',
-      description: 'Find ultra-cheap flights, mistake fares, and budget travel deals with AI-powered search.',
-      icon: Plane,
-      category: 'Travel & Lifestyle',
-      route: '/travel-hacker-ai',
-      featured: true
-    },
+
     {
       id: 'socialclip-analyzer',
       name: 'SocialClip Analyzer AI',
@@ -290,12 +282,12 @@ export default function FreeTools() {
       route: '/crm-use-case-finder'
     },
     {
-      id: 'travel-hacker-ai-v2',
+      id: 'travel-hacker-pro',
       name: 'Travel Hacker AI Pro',
-      description: 'Complete trip planning with flights, hotels, and car rentals. Powered by live Amadeus data and AI parsing.',
-      icon: SearchIcon,
+      description: 'Advanced AI-powered travel planning with TrueTotal™ pricing, DealRank™ scoring, and Mistake Fare Radar.',
+      icon: Plane,
       category: 'Travel & Lifestyle',
-      route: '/travel-hacker-ai-v2',
+      route: '/travel-hacker-pro',
       featured: true
     }
   ];
@@ -318,7 +310,7 @@ export default function FreeTools() {
     tools.find(t => t.id === 'trending-content-generator'),
     tools.find(t => t.id === 'competitor-intel-scanner'),
     tools.find(t => t.id === 'movie-matchmaker'),
-    tools.find(t => t.id === 'travel-hacker-ai'),
+    tools.find(t => t.id === 'travel-hacker-pro'),
     tools.find(t => t.id === 'ai-tool-quiz')
   ].filter(Boolean);
 
