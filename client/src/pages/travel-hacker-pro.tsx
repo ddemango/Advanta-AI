@@ -358,7 +358,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="mb-6">
       <div className="mb-2 text-sm font-semibold text-gray-700">{title}</div>
-      <div className="rounded-2xl border p-4 shadow-sm">{children}</div>
+      <div className="rounded-2xl border p-3 sm:p-4 shadow-sm overflow-hidden">{children}</div>
     </section>
   );
 }
@@ -374,13 +374,15 @@ function CalendarHeatmap({ days = 14, basePrice = 200, onPick }: { days?: number
   });
 
   return (
-    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-7">
-      {cells.map(({ iso, price }) => (
-        <button key={iso} onClick={() => onPick(iso)} className="rounded-xl border p-2 sm:p-3 text-left hover:shadow">
-          <div className="text-xs text-gray-500">{new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-          <div className="text-sm sm:text-base font-semibold">{currency(price)}</div>
-        </button>
-      ))}
+    <div className="w-full overflow-x-auto">
+      <div className="grid grid-cols-3 gap-1.5 min-w-fit sm:grid-cols-4 sm:gap-2 md:grid-cols-7">
+        {cells.map(({ iso, price }) => (
+          <button key={iso} onClick={() => onPick(iso)} className="min-w-[90px] sm:min-w-[100px] rounded-lg border p-2 text-left hover:shadow-md transition-shadow">
+            <div className="text-xs text-gray-500 truncate">{new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+            <div className="text-sm font-semibold truncate">{currency(price)}</div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -570,35 +572,35 @@ export default function TravelHackerPro() {
 
           {/* Search controls */}
           <Section title="Search">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-              <div className="md:col-span-2">
-                <label className="text-xs text-gray-600">From (comma‑separated IATA)</label>
-                <input className="w-full rounded-xl border p-2" value={params.origins.join(",")} onChange={(e) => setParams((s) => ({ ...s, origins: e.target.value.split(",").map((x) => x.trim().toUpperCase()).filter(Boolean) }))} />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="text-xs text-gray-600">From (IATA)</label>
+                <input className="w-full rounded-xl border p-2 text-sm" value={params.origins.join(",")} onChange={(e) => setParams((s) => ({ ...s, origins: e.target.value.split(",").map((x) => x.trim().toUpperCase()).filter(Boolean) }))} />
               </div>
-              <div className="md:col-span-2">
-                <label className="text-xs text-gray-600">To (IATA or City)</label>
-                <input className="w-full rounded-xl border p-2" value={params.destination} onChange={(e) => setParams((s) => ({ ...s, destination: e.target.value.toUpperCase() }))} />
+              <div className="sm:col-span-1 lg:col-span-2">
+                <label className="text-xs text-gray-600">To (IATA/City)</label>
+                <input className="w-full rounded-xl border p-2 text-sm" value={params.destination} onChange={(e) => setParams((s) => ({ ...s, destination: e.target.value.toUpperCase() }))} />
               </div>
-              <div className="md:col-span-2">
+              <div className="sm:col-span-1 lg:col-span-2">
                 <label className="text-xs text-gray-600">Depart</label>
-                <input type="date" className="w-full rounded-xl border p-2" value={params.departDate} onChange={(e) => setParams((s) => ({ ...s, departDate: e.target.value }))} />
+                <input type="date" className="w-full rounded-xl border p-2 text-sm" value={params.departDate} onChange={(e) => setParams((s) => ({ ...s, departDate: e.target.value }))} />
               </div>
-              <div className="md:col-span-1">
+              <div className="sm:col-span-1 lg:col-span-1">
                 <label className="text-xs text-gray-600">Nights</label>
-                <input type="number" min={1} max={14} className="w-full rounded-xl border p-2" value={params.nights} onChange={(e) => setParams((s) => ({ ...s, nights: Number(e.target.value) }))} />
+                <input type="number" min={1} max={14} className="w-full rounded-xl border p-2 text-sm" value={params.nights} onChange={(e) => setParams((s) => ({ ...s, nights: Number(e.target.value) }))} />
               </div>
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2 lg:col-span-2">
                 <label className="text-xs text-gray-600">Flex (± days)</label>
                 <input type="range" min={0} max={7} value={params.flexDays} onChange={(e) => setParams((s) => ({ ...s, flexDays: Number(e.target.value) }))} className="w-full" />
                 <div className="text-xs text-gray-600">± {params.flexDays} days</div>
               </div>
-              <div className="md:col-span-1">
+              <div className="sm:col-span-1 lg:col-span-1">
                 <label className="text-xs text-gray-600">Adults</label>
-                <input type="number" min={1} max={8} className="w-full rounded-xl border p-2" value={params.adults} onChange={(e) => setParams((s) => ({ ...s, adults: Number(e.target.value) }))} />
+                <input type="number" min={1} max={8} className="w-full rounded-xl border p-2 text-sm" value={params.adults} onChange={(e) => setParams((s) => ({ ...s, adults: Number(e.target.value) }))} />
               </div>
-              <div className="md:col-span-2">
+              <div className="sm:col-span-1 lg:col-span-2">
                 <label className="text-xs text-gray-600">Cabin</label>
-                <select className="w-full rounded-xl border p-2" value={params.cabin} onChange={(e) => setParams((s) => ({ ...s, cabin: e.target.value as any }))}>
+                <select className="w-full rounded-xl border p-2 text-sm" value={params.cabin} onChange={(e) => setParams((s) => ({ ...s, cabin: e.target.value as any }))}>
                   <option value="economy">Economy</option>
                   <option value="premium">Premium Economy</option>
                   <option value="business">Business</option>
