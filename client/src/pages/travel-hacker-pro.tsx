@@ -374,11 +374,11 @@ function CalendarHeatmap({ days = 14, basePrice = 200, onPick }: { days?: number
   });
 
   return (
-    <div className="grid grid-cols-7 gap-2">
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-7">
       {cells.map(({ iso, price }) => (
-        <button key={iso} onClick={() => onPick(iso)} className="rounded-xl border p-3 text-left hover:shadow">
-          <div className="text-xs text-gray-500">{iso}</div>
-          <div className="font-semibold">{currency(price)}</div>
+        <button key={iso} onClick={() => onPick(iso)} className="rounded-xl border p-2 sm:p-3 text-left hover:shadow">
+          <div className="text-xs text-gray-500">{new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+          <div className="text-sm sm:text-base font-semibold">{currency(price)}</div>
         </button>
       ))}
     </div>
@@ -393,8 +393,8 @@ function FlightCard({ f, adults, selected, onSelect, cabin }: { f: FlightOption;
   const totalMins = totalDuration(f.legs);
   return (
     <div className={`rounded-2xl border p-4 hover:shadow ${selected ? "ring-2 ring-indigo-500" : ""}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="space-y-1 flex-1">
           <div className="text-sm text-gray-600">{f.legs.map((l, i) => (
             <span key={i}>{l.from}→{l.to}{i < f.legs.length - 1 ? ", " : ""}</span>
           ))}</div>
@@ -406,11 +406,11 @@ function FlightCard({ f, adults, selected, onSelect, cabin }: { f: FlightOption;
             {mf.likely && <Badge>⚡ Mistake fare {mf.severity}</Badge>}
           </div>
         </div>
-        <div className="text-right">
+        <div className="text-right sm:text-right">
           <div className="text-lg font-bold">{currency(f.price)}</div>
           <div className="text-xs text-gray-500">Extras est. {currency(extras)}</div>
           <div className="text-sm">TrueTotal {currency(ttf)}</div>
-          <button onClick={onSelect} className="mt-2 rounded-xl bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">{selected ? "Selected" : "Select"}</button>
+          <button onClick={onSelect} className="mt-2 w-full sm:w-auto rounded-xl bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">{selected ? "Selected" : "Select"}</button>
         </div>
       </div>
     </div>
@@ -421,8 +421,8 @@ function HotelCard({ h, nights, selected, onSelect }: { h: HotelOption; nights: 
   const tt = hotelTrueTotal(h, nights);
   return (
     <div className={`rounded-2xl border p-4 hover:shadow ${selected ? "ring-2 ring-emerald-500" : ""}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex-1">
           <div className="font-medium">{h.name}</div>
           <div className="text-xs text-gray-500">{h.stars || 4}★ · {h.walkToCenterMin ?? 10} min to center</div>
           <div className="flex flex-wrap gap-2 pt-1 text-xs">
@@ -434,7 +434,7 @@ function HotelCard({ h, nights, selected, onSelect }: { h: HotelOption; nights: 
           <div className="text-sm">Nightly {currency(h.nightlyBase)}</div>
           <div className="text-xs text-gray-500">Taxes/fees {currency(h.taxesFeesNight)}/night</div>
           <div className="text-sm font-semibold">TrueTotal {currency(tt)}</div>
-          <button onClick={onSelect} className="mt-2 rounded-xl bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">{selected ? "Selected" : "Select"}</button>
+          <button onClick={onSelect} className="mt-2 w-full sm:w-auto rounded-xl bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">{selected ? "Selected" : "Select"}</button>
         </div>
       </div>
     </div>
@@ -564,7 +564,7 @@ export default function TravelHackerPro() {
         
         <div className="mx-auto max-w-7xl px-4 py-6">
           <header className="mb-6">
-            <h1 className="text-2xl font-bold">Travel Hacker AI Pro</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Travel Hacker AI Pro</h1>
             <p className="text-sm text-gray-600">One search for flights, mistake fares, hotels, and cars — with TrueTotal™ pricing & DealRank™.</p>
           </header>
 
@@ -606,10 +606,10 @@ export default function TravelHackerPro() {
                 </select>
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={params.includeHotels} onChange={(e) => setParams((s) => ({ ...s, includeHotels: e.target.checked }))} /> Include hotels</label>
               <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={params.includeCars} onChange={(e) => setParams((s) => ({ ...s, includeCars: e.target.checked }))} /> Include cars</label>
-              <button onClick={runSearch} disabled={loading} className="ml-auto rounded-xl bg-black px-4 py-2 text-white hover:bg-gray-900 disabled:opacity-50">{loading ? "Searching…" : "Search"}</button>
+              <button onClick={runSearch} disabled={loading} className="w-full sm:w-auto sm:ml-auto rounded-xl bg-black px-4 py-2 text-white hover:bg-gray-900 disabled:opacity-50">{loading ? "Searching…" : "Search"}</button>
             </div>
           </Section>
 
@@ -618,9 +618,9 @@ export default function TravelHackerPro() {
             <CalendarHeatmap days={14} basePrice={selectedFlightObj ? trueTotalFlight(selectedFlightObj, params.adults) : 200} onPick={(iso) => setParams((s) => ({ ...s, departDate: iso }))} />
           </Section>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Flights */}
-            <div className="md:col-span-6">
+            <div className="lg:col-span-6">
               <Section title="Flights">
                 <div className="space-y-3">
                   {flights.map((f) => (
@@ -632,7 +632,7 @@ export default function TravelHackerPro() {
             </div>
 
             {/* Hotels */}
-            <div className="md:col-span-3">
+            <div className="lg:col-span-3">
               <Section title="Hotels">
                 {params.includeHotels ? (
                   <div className="space-y-3">
@@ -648,7 +648,7 @@ export default function TravelHackerPro() {
             </div>
 
             {/* Cars */}
-            <div className="md:col-span-3">
+            <div className="lg:col-span-3">
               <Section title="Cars">
                 {params.includeCars ? (
                   <div className="space-y-3">
@@ -666,7 +666,7 @@ export default function TravelHackerPro() {
 
           {/* Bundles */}
           <Section title="Best Combos (DealRank™)">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {bundles.slice(0, 6).map((b, i) => (
                 <div key={i} className="rounded-2xl border p-4">
                   <div className="mb-2 flex items-center justify-between">
