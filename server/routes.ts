@@ -5435,6 +5435,32 @@ Format the resume professionally with clear sections and consistent formatting.`
 
   // ===== MOVIE RECOMMENDATIONS API =====
 
+  // Movie & TV Matchmaker API endpoints
+  app.post('/api/matchmaker/retrieve', async (req: Request, res: Response) => {
+    const { retrieveContent } = await import('./matchmaker-routes');
+    return retrieveContent(req, res);
+  });
+
+  app.post('/api/matchmaker/rerank', async (req: Request, res: Response) => {
+    const { rerankContent } = await import('./matchmaker-routes');
+    return rerankContent(req, res);
+  });
+
+  app.post('/api/matchmaker/explain', async (req: Request, res: Response) => {
+    const { explainRecommendation } = await import('./matchmaker-routes');
+    return explainRecommendation(req, res);
+  });
+
+  app.post('/api/matchmaker/providers', async (req: Request, res: Response) => {
+    const { fetchProviders } = await import('./matchmaker-routes');
+    return fetchProviders(req, res);
+  });
+
+  app.post('/api/matchmaker/track', async (req: Request, res: Response) => {
+    const { trackInteraction } = await import('./matchmaker-routes');
+    return trackInteraction(req, res);
+  });
+
   // ATS Resume Tailoring API endpoint
   app.post('/api/ats/analyze', async (req: Request, res: Response) => {
     try {

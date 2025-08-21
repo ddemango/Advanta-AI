@@ -67,6 +67,7 @@ import SocialClipAnalyzer from "@/pages/socialclip-analyzer";
 import TrendingContentGenerator from "@/pages/trending-content-generator";
 import CompetitorIntelScanner from "@/pages/competitor-intel-scanner";
 import TravelHackerPro from "@/pages/travel-hacker-pro";
+import MovieTVMatchmaker from "@/pages/movie-tv-matchmaker";
 import About from "@/pages/about";
 import FlightFinder from "@/pages/flight-finder";
 import FantasyFootballTools from "@/pages/fantasy-football-tools";
@@ -217,6 +218,7 @@ function Router() {
       <Route path="/trending-content-generator" component={TrendingContentGenerator} />
       <Route path="/competitor-intel-scanner" component={CompetitorIntelScanner} />
       <Route path="/travel-hacker-pro" component={TravelHackerPro} />
+      <Route path="/movie-tv-matchmaker" component={MovieTVMatchmaker} />
       <Route path="/about" component={About} />
       <Route path="/flight-finder" component={FlightFinder} />
       <Route path="/fantasy-football-tools" component={FantasyFootballTools} />

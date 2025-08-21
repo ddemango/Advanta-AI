@@ -218,12 +218,13 @@ export default function FreeTools() {
       route: '/content-calendar-generator'
     },
     {
-      id: 'movie-matchmaker',
-      name: 'Movie and TV Show Matchmaker',
-      description: 'AI-powered watchlist generator that matches your mood, preferences and content type to find perfect movies and TV shows.',
+      id: 'movie-tv-matchmaker',
+      name: 'Movies & TV Shows Matchmaker',
+      description: 'AI-powered recommendations based on your mood, available time, and streaming services.',
       icon: Film,
       category: 'Entertainment',
-      route: '/movie-matchmaker'
+      route: '/movie-tv-matchmaker',
+      featured: true
     },
     {
       id: 'pricing-strategy-assistant',
