@@ -7948,6 +7948,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Travel Hacker AI Pro API endpoints
+  app.post('/api/flights', async (req, res) => {
+    try {
+      const params = req.body;
+      
+      // For now, return mock data as API integration is complex
+      // In production, this would call Tequila Kiwi API
+      const mockFlights = [
+        {
+          id: "F1",
+          price: 138,
+          currency: "USD",
+          legs: [
+            { from: params.origins[0] || "BOS", to: params.destination || "TPA", depart: `${params.departDate}T07:10:00`, arrive: `${params.departDate}T10:12:00`, flightNumber: "NK123", airline: "NK", durationMin: 182, aircraft: "A320" },
+          ],
+          fareBrand: "basic",
+          bagIncluded: false,
+          seatPitch: 28,
+          onTimeScore: 0.65,
+          provider: "MOCK",
+        },
+        {
+          id: "F2",
+          price: 189,
+          currency: "USD",
+          legs: [
+            { from: params.origins[0] || "BOS", to: params.destination || "TPA", depart: `${params.departDate}T09:00:00`, arrive: `${params.departDate}T12:00:00`, flightNumber: "DL456", airline: "DL", durationMin: 180, aircraft: "737-900" },
+          ],
+          fareBrand: "standard",
+          bagIncluded: true,
+          seatPitch: 31,
+          onTimeScore: 0.8,
+          provider: "MOCK",
+        }
+      ];
+      
+      res.json({ flights: mockFlights });
+    } catch (error) {
+      console.error('Flights API error:', error);
+      res.status(500).json({ error: 'Failed to fetch flights' });
+    }
+  });
+
+  app.post('/api/hotels', async (req, res) => {
+    try {
+      const params = req.body;
+      
+      // Use Amadeus API if credentials are available
+      if (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET) {
+        try {
+          // Get Amadeus access token
+          const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'client_credentials',
+              client_id: process.env.AMADEUS_CLIENT_ID,
+              client_secret: process.env.AMADEUS_CLIENT_SECRET
+            })
+          });
+          
+          if (tokenResponse.ok) {
+            const tokenData = await tokenResponse.json();
+            const accessToken = tokenData.access_token;
+            
+            // Get hotel locations by city
+            const hotelsResponse = await fetch(`https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode=${params.destination}`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            
+            if (hotelsResponse.ok) {
+              const hotelsData = await hotelsResponse.json();
+              const hotels = (hotelsData?.data || []).slice(0, 3).map((h: any, i: number) => ({
+                id: `A_${h.hotelId || i}`,
+                name: h.name || `Hotel ${i + 1}`,
+                stars: Math.min(5, 3 + (i % 3)),
+                nightlyBase: 120 + i * 15,
+                taxesFeesNight: 22,
+                resortFeeNight: i % 2 === 0 ? 15 : 0,
+                parkingNight: 25,
+                walkToCenterMin: 8 + i * 2,
+                provider: "AMADEUS",
+              }));
+              
+              if (hotels.length > 0) {
+                return res.json({ hotels });
+              }
+            }
+          }
+        } catch (amadeusError) {
+          console.error('Amadeus API error:', amadeusError);
+        }
+      }
+      
+      // Fallback to mock data
+      const mockHotels = [
+        { id: "H1", name: "Harbourview Suites", stars: 4, nightlyBase: 129, taxesFeesNight: 22, resortFeeNight: 15, parkingNight: 25, walkToCenterMin: 10, provider: "MOCK" },
+        { id: "H2", name: "Downtown Modern", stars: 4.5, nightlyBase: 149, taxesFeesNight: 28, resortFeeNight: 0, parkingNight: 35, walkToCenterMin: 6, provider: "MOCK" },
+        { id: "H3", name: "Seabreeze Tower", stars: 4, nightlyBase: 115, taxesFeesNight: 20, resortFeeNight: 25, parkingNight: 20, walkToCenterMin: 14, provider: "MOCK" },
+      ];
+      
+      res.json({ hotels: mockHotels });
+    } catch (error) {
+      console.error('Hotels API error:', error);
+      res.status(500).json({ error: 'Failed to fetch hotels' });
+    }
+  });
+
+  app.post('/api/cars', async (req, res) => {
+    try {
+      const mockCars = [
+        { id: "C1", vendor: "Alamo", carClass: "Midsize", baseTotal: 78, airportFacilityFee: 12, concessionRecoveryFee: 9, counterless: true, provider: "MOCK" },
+        { id: "C2", vendor: "Avis", carClass: "Compact", baseTotal: 69, airportFacilityFee: 12, concessionRecoveryFee: 9, offAirportShuttleMin: 8, provider: "MOCK" },
+      ];
+      
+      res.json({ cars: mockCars });
+    } catch (error) {
+      console.error('Cars API error:', error);
+      res.status(500).json({ error: 'Failed to fetch cars' });
+    }
+  });
+
   // Health check endpoint
   app.get('/healthz', async (req, res) => {
     try {
