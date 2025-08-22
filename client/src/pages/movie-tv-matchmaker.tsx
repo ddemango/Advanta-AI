@@ -15,7 +15,8 @@ import {
   Play,
   Heart,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Filter as FilterIcon
 } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
@@ -438,7 +439,7 @@ export default function MovieTVMatchmaker() {
                 variant="outline"
                 className="border-white/20 hover:bg-white/10"
               >
-                <Filter className="mr-2 h-4 w-4" />
+                <FilterIcon className="mr-2 h-4 w-4" />
                 Adjust Preferences
               </Button>
             </div>
