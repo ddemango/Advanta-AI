@@ -59,6 +59,9 @@ export async function POST(req: Request, res: Response) {
       languages = ['en-US'],
       mediaTypes = ['movie', 'tv'],
       genres = [],
+      yearFrom,
+      yearTo,
+      ratings = [],
       count = 100
     } = req.body;
 
@@ -84,6 +87,9 @@ export async function POST(req: Request, res: Response) {
         ...(media === 'movie' && timeWindow
           ? { 'with_runtime.lte': String(timeWindow + 20) }
           : {}),
+        // Add year range filtering
+        ...(yearFrom ? { 'primary_release_date.gte': `${yearFrom}-01-01` } : {}),
+        ...(yearTo ? { 'primary_release_date.lte': `${yearTo}-12-31` } : {}),
       });
 
       const response = await fetch(`${TMDB_BASE}/discover/${media}?${params}`);

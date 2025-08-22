@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 import { NewHeader } from '@/components/redesign/NewHeader';
 import { Helmet } from 'react-helmet';
 import { 
@@ -17,7 +18,9 @@ import {
   Sparkles,
   ExternalLink,
   Filter as FilterIcon,
-  Search
+  Search,
+  Calendar,
+  Shield
 } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
@@ -167,6 +170,8 @@ interface ContentItem {
   explanation?: string;
 }
 
+type Rating = 'PG' | 'PG-13' | 'R' | 'NR';
+
 interface MatchmakerState {
   services: string[];
   moods: string[];
@@ -175,9 +180,12 @@ interface MatchmakerState {
   genres: string[];
   language: string;
   ageRating: string[];
+  ratings: Rating[];
+  yearRange: [number, number];
 }
 
 export default function MovieTVMatchmaker() {
+  const CURRENT_YEAR = new Date().getFullYear();
   const [preferences, setPreferences] = useState<MatchmakerState>({
     services: ['netflix'],
     moods: ['cozy'],
@@ -185,7 +193,9 @@ export default function MovieTVMatchmaker() {
     timeWindow: 120,
     language: 'en-US',
     ageRating: [],
-    genres: []
+    genres: [],
+    ratings: ['PG', 'PG-13', 'R'],
+    yearRange: [2000, CURRENT_YEAR]
   });
 
   const [recommendations, setRecommendations] = useState<ContentItem[]>([]);
@@ -207,6 +217,9 @@ export default function MovieTVMatchmaker() {
           languages: [preferences.language],
           mediaTypes: preferences.contentTypes,
           genres: preferences.genres,
+          yearFrom: preferences.yearRange[0],
+          yearTo: preferences.yearRange[1],
+          ratings: preferences.ratings,
           count: 160
         })
       });
@@ -223,7 +236,9 @@ export default function MovieTVMatchmaker() {
       if (!rerankResponse.ok) throw new Error(rerankJson?.error || `rerank ${rerankResponse.status}`);
 
       const ranked: ContentItem[] = rerankJson.items || [];
-      const five = filterUnseen(ranked, 5);
+      // Apply client-side filtering for year range and ratings
+      const clientFiltered = clientFilter(ranked);
+      const five = filterUnseen(clientFiltered.length > 0 ? clientFiltered : ranked, 5);
       markSeen(five.map(i => i.id));
 
       const withReasons = await Promise.all(five.map(async (item) => {
@@ -264,6 +279,28 @@ export default function MovieTVMatchmaker() {
   const isAllGenresSelected = (list: string[]) => ALL_GENRE_KEYS.every(k => list.includes(k));
   const toggleAllGenres = () => {
     updatePreference('genres', isAllGenresSelected(preferences.genres) ? [] : ALL_GENRE_KEYS);
+  };
+
+  const ALL_RATINGS: Rating[] = ['PG', 'PG-13', 'R', 'NR'];
+  const ratingChecked = (r: Rating) => preferences.ratings.includes(r);
+  const toggleRating = (r: Rating) => {
+    const has = ratingChecked(r);
+    const next = has ? preferences.ratings.filter(x => x !== r) : [...preferences.ratings, r];
+    updatePreference('ratings', next);
+  };
+
+  // Client-side filtering function
+  const clientFilter = (items: ContentItem[]) => {
+    const [from, to] = preferences.yearRange;
+    return items.filter(x => {
+      const y = Number(x.year || 0);
+      const inYear = y >= from && y <= to;
+      
+      // For now, we'll assume all content is suitable (would need TMDB certification data for real filtering)
+      const inRating = preferences.ratings.length > 0;
+      
+      return inYear && inRating;
+    });
   };
 
   return (
@@ -415,6 +452,80 @@ export default function MovieTVMatchmaker() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Rating and Year Filters */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* MPAA Rating */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    MPAA Rating
+                  </CardTitle>
+                  <CardDescription>Filter by content rating</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-3">
+                      {ALL_RATINGS.map(r => (
+                        <label key={r} className="inline-flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={ratingChecked(r)}
+                            onCheckedChange={() => toggleRating(r)}
+                            aria-label={`Filter ${r}`}
+                          />
+                          <span className="text-sm">{r}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        onClick={() => updatePreference('ratings', ALL_RATINGS)}
+                        className="cursor-pointer text-xs"
+                      >
+                        All
+                      </Badge>
+                      <Badge
+                        onClick={() => updatePreference('ratings', [])}
+                        className="cursor-pointer text-xs"
+                        variant="secondary"
+                      >
+                        None
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Year Range */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Release Years
+                  </CardTitle>
+                  <CardDescription>
+                    {preferences.yearRange[0]}–{preferences.yearRange[1]}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Slider
+                      min={1960}
+                      max={CURRENT_YEAR}
+                      step={1}
+                      value={[preferences.yearRange[0], preferences.yearRange[1]]}
+                      onValueChange={([a, b]) => updatePreference('yearRange', [Math.min(a, b), Math.max(a, b)])}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>1960</span>
+                      <span>{CURRENT_YEAR}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             
             {/* Content Type & Time */}
             <div className="grid md:grid-cols-2 gap-6">

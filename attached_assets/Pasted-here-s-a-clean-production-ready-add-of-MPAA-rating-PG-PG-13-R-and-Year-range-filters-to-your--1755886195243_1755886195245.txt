@@ -1,0 +1,290 @@
+here’s a clean, production-ready add of MPAA rating (PG / PG-13 / R) and Year range filters to your React/Next.js app using shadcn/ui + Tailwind. It drops in as a panel, updates URL query building, and applies server-side (if you support it) plus client-side filtering for safety.
+
+1) Types
+// types/filters.ts
+export type Rating = 'PG' | 'PG-13' | 'R';
+
+export type Filters = {
+  ratings: Rating[];            // e.g., ['PG', 'PG-13']
+  yearRange: [number, number];  // e.g., [1995, 2025]
+};
+
+2) Filters Panel (UI)
+// components/FiltersPanel.tsx
+'use client';
+import { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import type { Filters, Rating } from '@/types/filters';
+
+type Props = {
+  value: Filters;
+  onChange: (next: Filters) => void;
+  minYear?: number;
+  maxYear?: number;
+};
+
+const ALL_RATINGS: Rating[] = ['PG', 'PG-13', 'R'];
+
+export default function FiltersPanel({
+  value,
+  onChange,
+  minYear = 1960,
+  maxYear = new Date().getFullYear(),
+}: Props) {
+  const [minVal, maxVal] = value.yearRange;
+
+  const ratingChecked = (r: Rating) => value.ratings.includes(r);
+  const toggleRating = (r: Rating) => {
+    const has = ratingChecked(r);
+    const next = has ? value.ratings.filter(x => x !== r) : [...value.ratings, r];
+    onChange({ ...value, ratings: next });
+  };
+
+  const yearMarks = useMemo(
+    () => ({
+      min: minYear,
+      max: maxYear,
+    }),
+    [minYear, maxYear]
+  );
+
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-lg">Filters</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Ratings */}
+        <div className="space-y-3">
+          <Label className="text-sm text-muted-foreground">MPAA Rating</Label>
+          <div className="flex flex-wrap gap-3">
+            {ALL_RATINGS.map(r => (
+              <label key={r} className="inline-flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={ratingChecked(r)}
+                  onCheckedChange={() => toggleRating(r)}
+                  aria-label={`Filter ${r}`}
+                />
+                <span className="text-sm">{r}</span>
+              </label>
+            ))}
+            {/* quick “all” / “none” helpers */}
+            <div className="flex items-center gap-2 ml-2">
+              <Badge
+                onClick={() => onChange({ ...value, ratings: ALL_RATINGS })}
+                className="cursor-pointer"
+              >
+                All
+              </Badge>
+              <Badge
+                onClick={() => onChange({ ...value, ratings: [] })}
+                className="cursor-pointer"
+                variant="secondary"
+              >
+                None
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Year Range */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm text-muted-foreground">Release Years</Label>
+            <div className="text-sm tabular-nums">
+              {minVal}–{maxVal}
+            </div>
+          </div>
+          <Slider
+            min={yearMarks.min}
+            max={yearMarks.max}
+            step={1}
+            value={[minVal, maxVal]}
+            onValueChange={([a, b]) => onChange({ ...value, yearRange: [Math.min(a, b), Math.max(a, b)] })}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{yearMarks.min}</span>
+            <span>{yearMarks.max}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+3) Wire it into your page
+// app/(your-page)/page.tsx  OR wherever your “Get Recommendations” lives
+'use client';
+import { useState } from 'react';
+import FiltersPanel from '@/components/FiltersPanel';
+import type { Filters } from '@/types/filters';
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+export default function MoviesMatchmaker() {
+  const [filters, setFilters] = useState<Filters>({
+    ratings: ['PG', 'PG-13', 'R'],
+    yearRange: [2000, CURRENT_YEAR],
+  });
+
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function getRecommendations() {
+    setLoading(true); setErr(null);
+    try {
+      // 1) server-side filtering if your API supports it
+      const url = `/api/recommendations${toQuery(filters)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // 2) client-side guard filter (works even if API can’t filter by rating/cert)
+      const visible = clientFilter(data, filters);
+      setItems(visible);
+    } catch (e: any) {
+      setErr(e.message || 'Failed to fetch');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      <div className="md:col-span-1 space-y-4">
+        {/* other control cards (mood, streaming services) */}
+        <FiltersPanel value={filters} onChange={setFilters} />
+        <button
+          onClick={getRecommendations}
+          className="w-full bg-black text-white rounded-xl py-3"
+          disabled={loading}
+        >
+          {loading ? 'Getting recommendations…' : 'Get My Recommendations'}
+        </button>
+        {err && <div className="text-red-600 text-sm">{err}</div>}
+      </div>
+
+      <div className="md:col-span-2">
+        {/* render items */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map(item => (
+            <div key={item.id} className="rounded-2xl border p-3">
+              <div className="font-medium">{item.title}</div>
+              <div className="text-xs text-muted-foreground">
+                {item.year} · {item.mpaa || 'NR'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Build query string for server side filtering */
+function toQuery(f: Filters): string {
+  const [from, to] = f.yearRange;
+  const params = new URLSearchParams();
+
+  // Years (server-side friendly)
+  params.set('yearFrom', String(from));
+  params.set('yearTo', String(to));
+
+  // Ratings: pass discrete list
+  if (f.ratings.length) params.set('mpaa', f.ratings.join(','));
+
+  return `?${params.toString()}`;
+}
+
+/** Client-side guard filter */
+function clientFilter(items: any[], f: Filters) {
+  const [from, to] = f.yearRange;
+  return items.filter(x => {
+    const y = Number(x.year || x.release_year || String(x.release_date || '').slice(0,4));
+    const inYear = !isNaN(y) ? (y >= from && y <= to) : true;
+
+    // Normalise MPAA (examples: 'PG-13', 'PG13', 'PG_13', 'R', etc.)
+    const raw = (x.mpaa || x.certification || x.rating || '').toUpperCase().replace('_','-').replace('PG13','PG-13');
+    const inRating = f.ratings.length ? f.ratings.includes(raw as any) : true;
+
+    return inYear && inRating;
+  });
+}
+
+4) If you’re using TMDB “discover” (optional, nice-to-have)
+
+Server route can translate filters to TMDB params:
+
+Years:
+primary_release_date.gte=${yearFrom}-01-01
+primary_release_date.lte=${yearTo}-12-31
+
+Ratings (US certifications): TMDB can’t OR multiple with_certification values in one call. Use:
+
+Request broader: certification_country=US&certification.lte=R
+
+Then client-filter to PG / PG-13 / R subset using the item’s certification (from release_dates or watch/providers detail).
+
+Or, make multiple calls (one per selected rating) and merge results de-duplicated by id.
+
+Example (Node server handler):
+
+// app/api/recommendations/route.ts (sketch)
+import { NextResponse } from 'next/server';
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const yearFrom = searchParams.get('yearFrom') || '2000';
+  const yearTo = searchParams.get('yearTo') || String(new Date().getFullYear());
+  const mpaa = (searchParams.get('mpaa') || '').split(',').filter(Boolean); // ['PG','PG-13','R']
+
+  // Broad TMDB fetch (you’ll need your TMDB key)
+  const url =
+    `https://api.themoviedb.org/3/discover/movie?` +
+    new URLSearchParams({
+      include_adult: 'false',
+      include_video: 'false',
+      sort_by: 'popularity.desc',
+      'primary_release_date.gte': `${yearFrom}-01-01`,
+      'primary_release_date.lte': `${yearTo}-12-31`,
+      certification_country: 'US',
+      'certification.lte': 'R',
+      page: '1',
+    });
+
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.TMDB_BEARER}` }});
+  const data = await res.json();
+
+  // Optional: hydrate each result to get explicit certification, then filter to mpaa[].
+  // (Or map to 'NR' when unknown)
+  const results = (data.results || []).map((r: any) => ({
+    id: r.id,
+    title: r.title,
+    year: (r.release_date || '').slice(0,4),
+    mpaa: r.adult ? 'R' : 'PG-13', // placeholder: ideally pull real certification via /movie/{id}/release_dates
+    poster: r.poster_path,
+  }));
+
+  // client-like filter as a server fallback
+  const filtered = results.filter((r: any) => {
+    const okYear = Number(r.year) >= Number(yearFrom) && Number(r.year) <= Number(yearTo);
+    const okRating = mpaa.length ? mpaa.includes(r.mpaa) : true;
+    return okYear && okRating;
+  });
+
+  return NextResponse.json(filtered);
+}
+
+5) UX polish tips
+
+Persist last used filters in localStorage so users don’t re-do them.
+
+Show active chips (“PG, PG-13 · 2008–2024”) above results; one-click to clear.
+
+If no results, show an “expand your range” hint (widen years; include PG-13).
+
+Add a quick-select for decades (e.g., 1990s, 2000s) that sets the slider.
