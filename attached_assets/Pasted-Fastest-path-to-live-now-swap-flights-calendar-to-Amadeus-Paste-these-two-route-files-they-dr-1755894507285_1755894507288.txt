@@ -1,0 +1,125 @@
+Fastest path to “live now”: swap flights & calendar to Amadeus
+
+Paste these two route files (they drop into the canvas structure I gave you):
+
+/app/api/flights/route.ts (Amadeus Flight Offers Search)
+import { NextRequest, NextResponse } from "next/server";
+
+async function getAmadeusToken() {
+  const id = process.env.AMADEUS_CLIENT_ID;
+  const secret = process.env.AMADEUS_CLIENT_SECRET;
+  if (!id || !secret) throw new Error("Amadeus keys missing");
+  const r = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+  });
+  if (!r.ok) throw new Error("Amadeus token error");
+  return (await r.json()).access_token as string;
+}
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  try {
+    const { origins, destination, departDate, adults, cabin } = await req.json();
+    const token = await getAmadeusToken();
+
+    const cabinMap: Record<string, string> = { economy: "ECONOMY", premium: "PREMIUM_ECONOMY", business: "BUSINESS", first: "FIRST" };
+
+    const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
+    url.search = new URLSearchParams({
+      originLocationCode: origins[0],
+      destinationLocationCode: destination,
+      departureDate: departDate,
+      adults: String(adults || 1),
+      currencyCode: "USD",
+      max: "12",
+      travelClass: cabinMap[cabin] || "ECONOMY",
+    }).toString();
+
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return NextResponse.json({ error: `Amadeus flights error ${r.status}` }, { status: 502 });
+    const data = await r.json();
+
+    const flights = (data?.data || []).map((offer: any, idx: number) => {
+      const it = offer.itineraries?.[0];
+      const segs = it?.segments || [];
+      return {
+        id: `A_${offer.id || idx}`,
+        price: Number(offer.price?.grandTotal || offer.price?.total || 0),
+        currency: offer.price?.currency || "USD",
+        legs: segs.map((s: any) => ({
+          from: s.departure?.iataCode,
+          to: s.arrival?.iataCode,
+          depart: s.departure?.at,
+          arrive: s.arrival?.at,
+          flightNumber: `${s.carrierCode}${s.number}`,
+          airline: s.carrierCode,
+          aircraft: s.aircraft?.code || "—",
+          durationMin: Math.max(1, Math.round((new Date(s.arrival?.at).getTime() - new Date(s.departure?.at).getTime()) / 60000)),
+        })),
+        fareBrand: "standard",
+        bagIncluded: !!offer.travelerPricings?.[0]?.fareDetailsBySegment?.some((fd: any) => (fd?.includedCheckedBags?.quantity ?? 0) > 0),
+        seatPitch: 31,
+        onTimeScore: 0.75,
+        provider: "AMADEUS",
+      };
+    });
+
+    return NextResponse.json({ flights });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "provider error" }, { status: 502 });
+  }
+}
+
+/app/api/price-calendar/route.ts (Amadeus per-day lowest)
+import { NextRequest, NextResponse } from "next/server";
+
+async function getAmadeusToken() {
+  const id = process.env.AMADEUS_CLIENT_ID;
+  const secret = process.env.AMADEUS_CLIENT_SECRET;
+  if (!id || !secret) throw new Error("Amadeus keys missing");
+  const r = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+  });
+  if (!r.ok) throw new Error("Amadeus token error");
+  return (await r.json()).access_token as string;
+}
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({}));
+  const startDate = body?.startDate as string;
+  const days = Number(body?.days || 14);
+  const params = body?.params || {};
+  const token = await getAmadeusToken();
+
+  const origin = params?.origins?.[0];
+  const destination = params?.destination;
+  const out: string[] = [];
+  const start = new Date(startDate);
+  for (let i = 0; i < days; i++) out.push(new Date(start.getTime() + i * 86400000).toISOString().slice(0, 10));
+
+  const results: any[] = [];
+  for (const date of out) {
+    const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
+    url.search = new URLSearchParams({
+      originLocationCode: origin,
+      destinationLocationCode: destination,
+      departureDate: date,
+      adults: String(params?.adults || 1),
+      currencyCode: "USD",
+      max: "1",
+      sort: "price",
+    }).toString();
+
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const data = r.ok ? await r.json() : null;
+    const price = data?.data?.[0]?.price?.grandTotal ?? data?.data?.[0]?.price?.total ?? null;
+    results.push({ date, lowestPrice: price ? Number(price) : null });
+  }
+
+  return NextResponse.json({ days: results });

@@ -5119,7 +5119,21 @@ Please provide analysis in this exact JSON format (no additional text):
     }
   });
 
-  // New Flight Search API endpoint using flights-search3
+  // Amadeus Token Helper Function
+  async function getAmadeusToken() {
+    const id = process.env.AMADEUS_CLIENT_ID;
+    const secret = process.env.AMADEUS_CLIENT_SECRET;
+    if (!id || !secret) throw new Error("Amadeus keys missing");
+    const r = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+    });
+    if (!r.ok) throw new Error("Amadeus token error");
+    return (await r.json()).access_token as string;
+  }
+
+  // New Flight Search API endpoint using Amadeus
   app.post('/api/flights/search', async (req: Request, res: Response) => {
     try {
       const { origin, destination, departureDate, returnDate, passengers } = req.body;
@@ -5130,22 +5144,59 @@ Please provide analysis in this exact JSON format (no additional text):
         });
       }
 
-      const { searchFlights } = await import('./flight-search-api');
-      
-      const results = await searchFlights({
-        origin,
-        destination,
-        departureDate,
-        returnDate,
-        passengers: passengers || 1
+      const token = await getAmadeusToken();
+      const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
+      url.search = new URLSearchParams({
+        originLocationCode: origin,
+        destinationLocationCode: destination,
+        departureDate: departureDate,
+        adults: String(passengers || 1),
+        currencyCode: "USD",
+        max: "12",
+        travelClass: "ECONOMY",
+      }).toString();
+
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) return res.status(502).json({ error: `Amadeus flights error ${r.status}` });
+      const data = await r.json();
+
+      const flights = (data?.data || []).map((offer: any, idx: number) => {
+        const it = offer.itineraries?.[0];
+        const segs = it?.segments || [];
+        return {
+          id: `A_${offer.id || idx}`,
+          airline: segs[0]?.carrierCode || 'Unknown',
+          airlineLogo: null,
+          departure: {
+            airport: segs[0]?.departure?.iataCode,
+            city: origin,
+            time: segs[0]?.departure?.at?.split('T')[1]?.slice(0, 5) || '00:00',
+            date: departureDate
+          },
+          arrival: {
+            airport: segs[segs.length - 1]?.arrival?.iataCode,
+            city: destination,
+            time: segs[segs.length - 1]?.arrival?.at?.split('T')[1]?.slice(0, 5) || '00:00',
+            date: departureDate
+          },
+          duration: Math.round(segs.reduce((total: number, s: any) => {
+            return total + Math.max(1, Math.round((new Date(s.arrival?.at).getTime() - new Date(s.departure?.at).getTime()) / 60000));
+          }, 0) / 60) + 'h',
+          stops: segs.length - 1,
+          price: {
+            amount: Number(offer.price?.grandTotal || offer.price?.total || 0),
+            currency: offer.price?.currency || "USD"
+          },
+          deepLink: '#'
+        };
       });
 
-      res.json(results);
+      res.json({ flights });
     } catch (error: any) {
-      console.error('Flight search API error:', error);
+      console.error('Amadeus flight search error:', error);
       res.status(500).json({ 
         error: error.message || 'Failed to search flights',
-        details: 'Unable to retrieve flight data from external APIs'
+        details: 'Unable to retrieve flight data from Amadeus API'
       });
     }
   });
@@ -7248,46 +7299,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Travel Hacker AI Pro API endpoints
+  // Travel Hacker AI Pro API endpoints - Amadeus Flight Search
   app.post('/api/flights', async (req, res) => {
     try {
-      const params = req.body;
-      
-      // For now, return mock data as API integration is complex
-      // In production, this would call Tequila Kiwi API
-      const mockFlights = [
-        {
-          id: "F1",
-          price: 138,
-          currency: "USD",
-          legs: [
-            { from: params.origins[0] || "BOS", to: params.destination || "TPA", depart: `${params.departDate}T07:10:00`, arrive: `${params.departDate}T10:12:00`, flightNumber: "NK123", airline: "NK", durationMin: 182, aircraft: "A320" },
-          ],
-          fareBrand: "basic",
-          bagIncluded: false,
-          seatPitch: 28,
-          onTimeScore: 0.65,
-          provider: "MOCK",
-        },
-        {
-          id: "F2",
-          price: 189,
-          currency: "USD",
-          legs: [
-            { from: params.origins[0] || "BOS", to: params.destination || "TPA", depart: `${params.departDate}T09:00:00`, arrive: `${params.departDate}T12:00:00`, flightNumber: "DL456", airline: "DL", durationMin: 180, aircraft: "737-900" },
-          ],
+      const { origins, destination, departDate, adults, cabin } = req.body;
+      const token = await getAmadeusToken();
+
+      const cabinMap: Record<string, string> = { economy: "ECONOMY", premium: "PREMIUM_ECONOMY", business: "BUSINESS", first: "FIRST" };
+
+      const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
+      url.search = new URLSearchParams({
+        originLocationCode: origins[0],
+        destinationLocationCode: destination,
+        departureDate: departDate,
+        adults: String(adults || 1),
+        currencyCode: "USD",
+        max: "12",
+        travelClass: cabinMap[cabin] || "ECONOMY",
+      }).toString();
+
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) return res.status(502).json({ error: `Amadeus flights error ${r.status}` });
+      const data = await r.json();
+
+      const flights = (data?.data || []).map((offer: any, idx: number) => {
+        const it = offer.itineraries?.[0];
+        const segs = it?.segments || [];
+        return {
+          id: `A_${offer.id || idx}`,
+          price: Number(offer.price?.grandTotal || offer.price?.total || 0),
+          currency: offer.price?.currency || "USD",
+          legs: segs.map((s: any) => ({
+            from: s.departure?.iataCode,
+            to: s.arrival?.iataCode,
+            depart: s.departure?.at,
+            arrive: s.arrival?.at,
+            flightNumber: `${s.carrierCode}${s.number}`,
+            airline: s.carrierCode,
+            aircraft: s.aircraft?.code || "—",
+            durationMin: Math.max(1, Math.round((new Date(s.arrival?.at).getTime() - new Date(s.departure?.at).getTime()) / 60000)),
+          })),
           fareBrand: "standard",
-          bagIncluded: true,
+          bagIncluded: !!offer.travelerPricings?.[0]?.fareDetailsBySegment?.some((fd: any) => (fd?.includedCheckedBags?.quantity ?? 0) > 0),
           seatPitch: 31,
-          onTimeScore: 0.8,
-          provider: "MOCK",
-        }
-      ];
-      
-      res.json({ flights: mockFlights });
-    } catch (error) {
-      console.error('Flights API error:', error);
-      res.status(500).json({ error: 'Failed to fetch flights' });
+          onTimeScore: 0.75,
+          provider: "AMADEUS",
+        };
+      });
+
+      res.json({ flights });
+    } catch (error: any) {
+      console.error('Amadeus flights API error:', error);
+      res.status(500).json({ error: error?.message || "provider error" });
+    }
+  });
+
+  // Amadeus Price Calendar endpoint
+  app.post('/api/price-calendar', async (req, res) => {
+    try {
+      const body = req.body || {};
+      const startDate = body?.startDate as string;
+      const days = Number(body?.days || 14);
+      const params = body?.params || {};
+      const token = await getAmadeusToken();
+
+      const origin = params?.origins?.[0];
+      const destination = params?.destination;
+      const out: string[] = [];
+      const start = new Date(startDate);
+      for (let i = 0; i < days; i++) out.push(new Date(start.getTime() + i * 86400000).toISOString().slice(0, 10));
+
+      const results: any[] = [];
+      for (const date of out) {
+        const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
+        url.search = new URLSearchParams({
+          originLocationCode: origin,
+          destinationLocationCode: destination,
+          departureDate: date,
+          adults: String(params?.adults || 1),
+          currencyCode: "USD",
+          max: "1",
+          sort: "price",
+        }).toString();
+
+        const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data = r.ok ? await r.json() : null;
+        const price = data?.data?.[0]?.price?.grandTotal ?? data?.data?.[0]?.price?.total ?? null;
+        results.push({ date, lowestPrice: price ? Number(price) : null });
+      }
+
+      res.json({ days: results });
+    } catch (error: any) {
+      console.error('Price calendar API error:', error);
+      res.status(500).json({ error: error?.message || "provider error" });
     }
   });
 
