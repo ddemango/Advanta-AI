@@ -166,9 +166,8 @@ export default function MovieTVMatchmaker() {
   const handleGenerateRecommendations = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // First, retrieve candidates based on preferences
       const retrieveResponse = await fetch('/api/matchmaker/retrieve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,70 +176,46 @@ export default function MovieTVMatchmaker() {
           timeWindow: preferences.timeWindow,
           languages: [preferences.language],
           mediaTypes: preferences.contentTypes,
-          count: 120
+          count: 160
         })
       });
+      const retrieveJson = await safeJson(retrieveResponse);
+      if (!retrieveResponse.ok) throw new Error(retrieveJson?.error || `retrieve ${retrieveResponse.status}`);
+      const candidates: ContentItem[] = retrieveJson.items || [];
 
-      if (!retrieveResponse.ok) {
-        throw new Error('Failed to retrieve content suggestions');
-      }
-
-      const { items: candidates } = await retrieveResponse.json();
-
-      // Then rerank based on mood preferences
       const rerankResponse = await fetch('/api/matchmaker/rerank', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          candidates,
-          moods: preferences.moods,
-          timeWindow: preferences.timeWindow
-        })
+        body: JSON.stringify({ candidates, moods: preferences.moods, timeWindow: preferences.timeWindow })
       });
+      const rerankJson = await safeJson(rerankResponse);
+      if (!rerankResponse.ok) throw new Error(rerankJson?.error || `rerank ${rerankResponse.status}`);
 
-      if (!rerankResponse.ok) {
-        throw new Error('Failed to rank recommendations');
-      }
-
-      const { items: ranked } = await rerankResponse.json();
-      
-      // Filter to exactly 5 unique picks (never seen before when possible)
+      const ranked: ContentItem[] = rerankJson.items || [];
       const five = filterUnseen(ranked, 5);
-      markSeen(five.map((i) => i.id));
+      markSeen(five.map(i => i.id));
 
-      // Get explanations for the 5 selected items
-      const resultsWithExplanations = await Promise.all(
-        five.map(async (item: ContentItem) => {
-          try {
-            const explainResponse = await fetch('/api/matchmaker/explain', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                item,
-                moods: preferences.moods,
-                timeWindow: preferences.timeWindow
-              })
-            });
-            
-            if (explainResponse.ok) {
-              const explanation = await explainResponse.json();
-              return { ...item, explanation: explanation.reason };
-            }
-          } catch (err) {
-            console.warn('Failed to get explanation for:', item.title);
-          }
-          return item;
-        })
-      );
+      const withReasons = await Promise.all(five.map(async (item) => {
+        const ex = await fetch('/api/matchmaker/explain', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item, moods: preferences.moods, timeWindow: preferences.timeWindow })
+        });
+        const exJson = await safeJson(ex);
+        return ex.ok && exJson?.reason ? { ...item, explanation: exJson.reason } : item;
+      }));
 
-      setRecommendations(resultsWithExplanations);
+      setRecommendations(withReasons);
       setShowResults(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } catch (err: any) {
+      setError(err.message || 'Unexpected error');
     } finally {
       setIsLoading(false);
     }
   };
+
+  async function safeJson(r: Response) {
+    try { return await r.json(); } catch { return null; }
+  }
 
   const updatePreference = <K extends keyof MatchmakerState>(
     key: K,
@@ -517,55 +492,33 @@ export default function MovieTVMatchmaker() {
                         <p className="text-purple-300 text-xs italic mb-3">"{item.explanation}"</p>
                       )}
                       
-                      {/* Streaming Provider Buttons */}
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {providerKeys(item).map(p => (
+                          <Badge key={p} variant="secondary" className="bg-black/60">{p}</Badge>
+                        ))}
+                      </div>
                       {(() => {
-                        const availableProviders = providerKeys(item);
-                        return availableProviders.length > 0 && (
-                          <div className="mb-3">
-                            <p className="text-xs text-neutral-500 mb-2">Available on:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {availableProviders.slice(0, 2).map((provider) => {
-                                const service = STREAMING_SERVICES.find(s => s.key === provider);
-                                const watchUrl = WATCH_URL[provider]?.(item.title);
-                                
-                                return (
-                                  <Button
-                                    key={provider}
-                                    variant="outline"
-                                    size="sm"
-                                    asChild
-                                    className="text-xs h-7 px-2 border-white/20 hover:border-purple-400"
-                                  >
-                                    <a
-                                      href={watchUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1"
-                                    >
-                                      <div className={`w-2 h-2 rounded-full ${service?.color || 'bg-neutral-500'}`} />
-                                      {service?.name || provider}
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                  </Button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
+                        const prefFirst = providerKeys(item).find(p => preferences.services.includes(p)) || providerKeys(item)[0];
+                        return prefFirst ? (
+                          <Button asChild className="w-full bg-purple-600 hover:bg-purple-700" size="sm">
+                            <a href={WATCH_URL[prefFirst](item.title)} target="_blank" rel="noopener noreferrer">
+                              Open on {prefFirst}
+                              <ExternalLink className="ml-1 h-3 w-3" />
+                            </a>
+                          </Button>
+                        ) : item.tmdb_url ? (
+                          <Button 
+                            asChild
+                            className="w-full bg-purple-600 hover:bg-purple-700"
+                            size="sm"
+                          >
+                            <a href={item.tmdb_url} target="_blank" rel="noopener noreferrer">
+                              View Details
+                              <ExternalLink className="ml-1 h-3 w-3" />
+                            </a>
+                          </Button>
+                        ) : null;
                       })()}
-                      
-                      {item.tmdb_url && (
-                        <Button 
-                          asChild
-                          className="w-full bg-purple-600 hover:bg-purple-700"
-                          size="sm"
-                        >
-                          <a href={item.tmdb_url} target="_blank" rel="noopener noreferrer">
-                            View Details
-                            <ExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </Button>
-                      )}
                     </CardContent>
                   </Card>
                 </motion.div>

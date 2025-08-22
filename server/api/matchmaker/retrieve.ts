@@ -24,17 +24,21 @@ function apiKey() {
   return k;
 }
 
+async function pjToJsonSafe(res: any) {
+  try { return await res.json(); } catch { return {}; }
+}
+
 export async function POST(req: Request, res: Response) {
   try {
     const {
       services,
-      timeWindow,
+      timeWindow = 120,
       languages = ['en-US'],
       mediaTypes = ['movie', 'tv'],
       count = 100
     } = req.body;
 
-    if (!services?.length) {
+    if (!Array.isArray(services) || services.length === 0) {
       return res.status(400).json({ error: 'services required' });
     }
 
@@ -61,7 +65,7 @@ export async function POST(req: Request, res: Response) {
       
       const json = await response.json();
       return (json.results || [])
-        .slice(0, Math.ceil(count / mediaTypes.length))
+        .slice(0, Math.ceil(count / (mediaTypes as string[]).length))
         .map((item: any) => ({
           id: item.id,
           media_type: media,
@@ -81,7 +85,7 @@ export async function POST(req: Request, res: Response) {
     const lists = await Promise.all(
       (mediaTypes as ('movie' | 'tv')[]).map(discover)
     );
-    let items = lists.flat();
+    const candidates = lists.flat();
 
     // Enrich first N with runtime + providers (keeps TMDb calls reasonable)
     const detail = async (item: any) => {
@@ -98,9 +102,9 @@ export async function POST(req: Request, res: Response) {
         `${TMDB_BASE}/${item.media_type}/${item.id}/watch/providers?api_key=${apiKey()}`
       );
       const providerJson = providerResponse.ok
-        ? await providerResponse.json()
+        ? await pjToJsonSafe(providerResponse)
         : {};
-      const regionInfo = providerJson.results?.[region];
+      const regionInfo = (providerJson as any)?.results?.[region];
       const normalize = (arr?: any[]) => arr?.map((p) => p.provider_name) || [];
 
       return {
@@ -117,7 +121,7 @@ export async function POST(req: Request, res: Response) {
       };
     };
 
-    const enriched = await Promise.all(items.slice(0, 40).map(detail)); // enrich top 40
+    const enriched = await Promise.all(candidates.slice(0, 40).map(detail)); // enrich top 40
     res.json({ items: enriched, total: enriched.length });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'retrieve_failed' });

@@ -16,8 +16,8 @@ export async function POST(req: Request, res: Response) {
 
   try {
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    const systemPrompt = 'Return ONE spoiler-safe reason under 20 words. Mention mood/length, never reveal twists.';
-    const userPrompt = `Title: ${item.title}\nMoods: ${moods.join(', ')}\nTime: ${timeWindow} min\nOverview: ${item.overview || ''}`;
+    const sys = 'Return ONE spoiler-safe reason under 20 words. Mention mood/length; no twists.';
+    const user = `Title: ${item.title}\nMoods: ${moods.join(', ')}\nTime: ${timeWindow} min\nOverview: ${item.overview || ''}`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -28,8 +28,8 @@ export async function POST(req: Request, res: Response) {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          { role: 'system', content: sys },
+          { role: 'user', content: user },
         ],
         temperature: 0.5,
         max_tokens: 40,

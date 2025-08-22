@@ -50,7 +50,7 @@ export async function POST(req: Request, res: Response) {
         match_score: Math.round(score(c, moods, timeWindow) * 100),
       }))
       .sort((a: any, b: any) => (b.match_score || 0) - (a.match_score || 0))
-      .slice(0, 20);
+      .slice(0, 30);
 
     res.json({ items, total: items.length });
   } catch (e: any) {
