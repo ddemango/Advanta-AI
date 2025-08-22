@@ -119,16 +119,34 @@ export async function POST(req: Request, res: Response) {
     );
     const candidates = lists.flat();
 
-    // Enrich first N with runtime + providers (keeps TMDb calls reasonable)
+    // Extract US certification from TMDB data
+    const movieCert = (dj: any, region: string) => {
+      const r = dj.release_dates?.results?.find((x: any) => x.iso_3166_1 === region) ||
+                dj.release_dates?.results?.find((x: any) => x.iso_3166_1 === "US");
+      return r?.release_dates?.map((rd: any) => rd.certification).find((c: string) => c && c.trim()) || "";
+    };
+
+    const tvCert = (dj: any, region: string) => {
+      const r = dj.content_ratings?.results?.find((x: any) => x.iso_3166_1 === region) ||
+                dj.content_ratings?.results?.find((x: any) => x.iso_3166_1 === "US");
+      return r?.rating || "";
+    };
+
+    // Enrich first N with runtime + providers + certification (keeps TMDb calls reasonable)
     const detail = async (item: any) => {
       const detailResponse = await fetch(
-        `${TMDB_BASE}/${item.media_type}/${item.id}?api_key=${apiKey()}`
+        `${TMDB_BASE}/${item.media_type}/${item.id}?api_key=${apiKey()}&append_to_response=release_dates,content_ratings`
       );
       const detailJson = detailResponse.ok ? await detailResponse.json() : {};
       const runtime =
         item.media_type === 'movie'
           ? detailJson.runtime
           : detailJson.episode_run_time?.[0] || undefined;
+
+      // Extract US (or region) certification
+      const certification = item.media_type === "movie" 
+        ? movieCert(detailJson, region) 
+        : tvCert(detailJson, region);
 
       const providerResponse = await fetch(
         `${TMDB_BASE}/${item.media_type}/${item.id}/watch/providers?api_key=${apiKey()}`
@@ -142,6 +160,7 @@ export async function POST(req: Request, res: Response) {
       return {
         ...item,
         runtime,
+        certification, // Add certification to returned item
         providers: regionInfo
           ? {
               flatrate: normalize(regionInfo.flatrate),
@@ -159,10 +178,14 @@ export async function POST(req: Request, res: Response) {
 
     // Sports: not a TMDb genre; filter by common words
     if (genres.includes('sports')) {
-      items = items.filter(it => textHas(
-        ['sport','sports','soccer','football','nba','nfl','mlb','baseball','basketball','hockey','tennis','ufc','mma','boxing','golf'],
-        it
-      ));
+      const hasSports = (it: any) => {
+        const hay = `${it.title || ""} ${it.overview || ""}`.toLowerCase();
+        return [
+          "sport", "sports", "soccer", "football", "nba", "nfl", "mlb", "baseball", "basketball",
+          "hockey", "tennis", "ufc", "mma", "boxing", "golf", "f1", "formula 1", "wrestling"
+        ].some(w => hay.includes(w));
+      };
+      items = items.filter(hasSports);
     }
 
     // TV "Horror" fallback: use textual hints if TV genre missing
@@ -171,6 +194,36 @@ export async function POST(req: Request, res: Response) {
         it.media_type === 'movie' ? true :
         textHas(['horror','haunted','ghost','vampire','zombie','slasher','possession','supernatural'], it)
       );
+    }
+
+    // MPAA / TV rating enforcement (movies: exact; tv: mapped)
+    if (ratings.length) {
+      // Map film ratings to TV equivalents for mixed content (only used if TV is requested)
+      const mpaaToTv: Record<string, string> = { 
+        G: "TV-G", 
+        PG: "TV-PG", 
+        "PG-13": "TV-14", 
+        R: "TV-MA", 
+        NR: "NR" 
+      };
+
+      const allowedMovies = new Set(ratings);
+      const allowedTv = new Set(ratings.map((r: string) => mpaaToTv[r]).filter(Boolean));
+
+      items = items.filter((it: any) => {
+        const cert = (it.certification || "").toUpperCase().replace(/\s+/g, '');
+        if (it.media_type === "movie") {
+          if (allowedMovies.has("NR")) {
+            return cert === "NR" || cert === "" || /NOTRATED|UNRATED/i.test(it.certification || "");
+          }
+          return allowedMovies.has(cert);
+        } else {
+          if (allowedTv.has("NR")) {
+            return cert === "NR" || cert === "" || /NOTRATED|UNRATED/i.test(it.certification || "");
+          }
+          return allowedTv.size ? allowedTv.has(cert) : true; // if only movies selected, don't exclude tv here
+        }
+      });
     }
 
     res.json({ items, total: items.length });

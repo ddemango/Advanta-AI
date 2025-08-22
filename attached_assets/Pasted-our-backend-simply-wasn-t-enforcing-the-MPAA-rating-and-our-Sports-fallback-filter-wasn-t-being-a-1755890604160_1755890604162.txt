@@ -1,0 +1,192 @@
+our backend simply wasn’t enforcing the MPAA rating (and our “Sports” fallback filter wasn’t being applied). That’s why The Super Mario Bros. Movie (PG, Adventure/Animation) slipped through even though you picked R + Action + Sports, and why you sometimes saw just one item.
+
+Below are precise patches so the results will strictly match your filters:
+
+✅ What we’re fixing
+
+MPAA rating filter (R, PG-13, etc.) was collected in the UI but never applied server-side.
+
+Sports isn’t a first-class TMDb genre; we need a text/keyword fallback when users pick it.
+
+Ensure we always have enough candidates (increase fetch + filter order), and only return items that match all active filters.
+
+1) Server: enforce ratings + better genres
+
+Open app/api/matchmaker/retrieve/route.ts and apply these edits.
+
+A) Read ratings and genres from the request
+
+Find your const { … } = await req.json() and make it:
+
+const {
+  services,
+  timeWindow = 120,
+  languages = ["en-US"],
+  mediaTypes = ["movie","tv"],
+  genres = [],            // <-- from UI
+  ratings = [],           // <-- from UI (e.g., ["R"])
+  count = 100,
+} = await req.json();
+
+B) Map UI genre keys -> TMDb IDs (movies & tv)
+
+(Place near the top; keep your existing map if you already added one.)
+
+const GENRE_ID_MAP: Record<string, { movie?: number|null; tv?: number|null }> = {
+  action:{movie:28,tv:10759}, adventure:{movie:12,tv:10759}, animation:{movie:16,tv:16},
+  comedy:{movie:35,tv:35}, crime:{movie:80,tv:80}, documentary:{movie:99,tv:99},
+  drama:{movie:18,tv:18}, family:{movie:10751,tv:10751}, fantasy:{movie:14,tv:10765},
+  history:{movie:36,tv:null}, horror:{movie:27,tv:null}, music:{movie:10402,tv:null},
+  mystery:{movie:9648,tv:9648}, romance:{movie:10749,tv:null}, scifi:{movie:878,tv:10765},
+  thriller:{movie:53,tv:9648}, war:{movie:10752,tv:10768}, western:{movie:37,tv:37},
+  sports:{movie:null,tv:null}, // fallback text filter
+};
+function genreParamFor(media:'movie'|'tv', keys:string[]) {
+  const ids = keys.map(k => GENRE_ID_MAP[k]?.[media]).filter((x): x is number => typeof x === 'number');
+  return ids.length ? ids.join(',') : null;
+}
+
+C) When calling discover, include with_genres (when possible)
+
+Inside your discover(media) function:
+
+const withGenres = genreParamFor(media, genres);
+const params = new URLSearchParams({
+  api_key: apiKey(),
+  language: languages[0] || "en-US",
+  sort_by: "popularity.desc",
+  watch_region: region,
+  ...(providers ? { with_watch_providers: providers } : {}),
+  ...(withGenres ? { with_genres: withGenres } : {}),
+  ...(media === "movie" && timeWindow ? { "with_runtime.lte": String(timeWindow + 20) } : {}),
+});
+
+D) Fetch certification in the detail call and add it to each item
+
+Change your detail fetch to append extra fields and extract ratings:
+
+const det = await fetch(
+  `${TMDB_BASE}/${item.media_type}/${item.id}?api_key=${apiKey()}&append_to_response=release_dates,content_ratings`,
+  { next: { revalidate: 86400 } }
+);
+const dj = det.ok ? await det.json() : {};
+
+const runtime = item.media_type === "movie" ? dj.runtime : (dj.episode_run_time?.[0] || undefined);
+
+// Extract US (or region) certification
+function movieCert(d:any, region:string) {
+  const r = d.release_dates?.results?.find((x:any)=>x.iso_3166_1===region) ||
+            d.release_dates?.results?.find((x:any)=>x.iso_3166_1==="US");
+  // take first non-empty certification if present
+  return r?.release_dates?.map((rd:any)=>rd.certification).find((c:string)=>c && c.trim()) || "";
+}
+function tvCert(d:any, region:string) {
+  const r = d.content_ratings?.results?.find((x:any)=>x.iso_3166_1===region) ||
+            d.content_ratings?.results?.find((x:any)=>x.iso_3166_1==="US");
+  return r?.rating || "";
+}
+
+const certification = item.media_type === "movie" ? movieCert(dj, region) : tvCert(dj, region);
+
+
+Then return the enriched item including certification:
+
+return {
+  ...item,
+  runtime,
+  certification,                // <-- add this
+  providers: rinfo ? {
+    flatrate: norm(rinfo.flatrate),
+    ads: norm(rinfo.ads),
+    rent: norm(rinfo.rent),
+    buy: norm(rinfo.buy),
+  } : {},
+};
+
+E) After enrichment, apply filters for Sports and MPAA
+
+Right before return NextResponse.json({ items: enriched … }), do:
+
+let items = enriched;
+
+// SPORTS fallback: narrow to sports-only if selected
+if (genres.includes("sports")) {
+  const hasSports = (it:any) => {
+    const hay = `${it.title || ""} ${it.overview || ""}`.toLowerCase();
+    return [
+      "sport","sports","soccer","football","nba","nfl","mlb","baseball","basketball",
+      "hockey","tennis","ufc","mma","boxing","golf","f1","formula 1","wrestling"
+    ].some(w => hay.includes(w));
+  };
+  items = items.filter(hasSports);
+}
+
+// MPAA / TV rating enforcement (movies: exact; tv: mapped)
+if (ratings.length) {
+  // Map film ratings to TV equivalents for mixed content (only used if TV is requested)
+  const mpaaToTv: Record<string,string> = { G:"TV-G", PG:"TV-PG", "PG-13":"TV-14", R:"TV-MA", NR:"NR" };
+
+  const allowedMovies = new Set(ratings);
+  const allowedTv = new Set(ratings.map(r => mpaaToTv[r]).filter(Boolean));
+
+  items = items.filter((it:any) => {
+    const cert = (it.certification || "").toUpperCase().replace(/\s+/g,'');
+    if (it.media_type === "movie") {
+      if (allowedMovies.has("NR")) {
+        return cert === "NR" || cert === "" || /NOTRATED|UNRATED/i.test(it.certification || "");
+      }
+      return allowedMovies.has(cert);
+    } else {
+      if (allowedTv.has("NR")) {
+        return cert === "NR" || cert === "" || /NOTRATED|UNRATED/i.test(it.certification || "");
+      }
+      return allowedTv.size ? allowedTv.has(cert) : true; // if only movies selected, don't exclude tv here
+    }
+  });
+}
+
+return NextResponse.json({ items, total: items.length });
+
+
+With this, if you choose R + Action + Sports, anything not rated R (like Mario, rated PG) will be filtered out, and “Sports” will further narrow to sports-related titles.
+
+2) Client: make sure you send the selected ratings + genres
+
+In your handleGenerateRecommendations fetch to /api/matchmaker/retrieve, ensure both arrays go over the wire:
+
+body: JSON.stringify({
+  services: preferences.services,
+  timeWindow: preferences.timeWindow,
+  languages: [preferences.language],
+  mediaTypes: preferences.contentTypes,
+  genres: preferences.genres,        // <-- already added
+  ratings: preferences.ageRating,    // <-- ensure this is the MPAA list (["R"], ["PG-13","R"], etc.)
+  count: 160
+})
+
+
+Also make sure your ContentItem type includes the new field:
+
+interface ContentItem {
+  // ...
+  genres?: number[];
+  certification?: string;  // <-- add
+}
+
+
+(Optional) Display the certification on the card:
+
+{item.certification && <span className="badge">{item.certification}</span>}
+
+3) Why you saw “only one result”
+
+Because we weren’t filtering by rating and “Sports” wasn’t applied—your remaining filters combined with small candidate batches sometimes left very few items after the (partial) filtering pipeline.
+
+The patches above fetch a bigger candidate set and enforce filters after enrichment, so you’ll consistently get 5 valid results (or a clear “No matches” state if the combination is impossible).
+
+4) Quick test (to verify R-only works)
+
+Run this (replace YOUR_V3_KEY if you’re testing outside the app):
+
+curl -s "https://api.themoviedb.org/3/discover/movie?api_key=YOUR_V3_KEY&watch_region=US&sort_by=popularity.desc&with_genres=28" | jq '.results[0,1,2] | {title:.title, id:.id}'
+# Then call your route and confirm all returned items have certification === "R"

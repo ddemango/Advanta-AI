@@ -158,6 +158,7 @@ interface ContentItem {
   overview: string;
   poster_url?: string;
   tmdb_url?: string;
+  certification?: string; // Add certification field
   providers?: {
     flatrate?: string[];
     ads?: string[];
