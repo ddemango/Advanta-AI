@@ -232,7 +232,7 @@ export default function MovieTVMatchmaker() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>Movies & TV Shows Matchmaker - AI-Powered Recommendations | Advanta AI</title>
         <meta name="description" content="Find your perfect movie or TV show match with AI-powered recommendations based on your mood, available time, and streaming services." />
@@ -241,35 +241,49 @@ export default function MovieTVMatchmaker() {
         <meta property="og:type" content="website" />
       </Helmet>
       <NewHeader />
+      
+      {/* Hero Section */}
+      <section className="pt-16 pb-6 bg-gradient-to-br from-background via-background/95 to-primary/5">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="text-center max-w-4xl mx-auto"
+          >
+            <motion.div variants={fadeInUp} className="mb-6">
+              <Badge className="bg-primary/10 text-primary border-primary/20 mb-4">
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI-Powered Matchmaker
+              </Badge>
+              <h1 className="text-3xl md:text-5xl font-bold mb-4">
+                Movies & TV Shows
+                <span className="block text-primary">Perfect Match Finder</span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Get personalized recommendations based on your mood, available time, and streaming services
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       <motion.div 
-        className="container mx-auto px-4 py-8 bg-[#ffffff00]"
+        className="container mx-auto px-4 py-8"
         variants={staggerContainer}
         initial="initial"
         animate="animate"
       >
-        {/* Hero Section */}
-        <motion.div variants={fadeInUp} className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500">
-              <Sparkles className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-              Movies & TV Matchmaker
-            </h1>
-          </div>
-          <p className="text-xl text-neutral-400 max-w-3xl mx-auto">
-            AI-powered recommendations that match your mood, available time, and streaming services
-          </p>
-        </motion.div>
+
 
         {!showResults ? (
           /* Preference Selection */
           (<motion.div variants={fadeIn} className="max-w-4xl mx-auto space-y-8">
             {/* Streaming Services */}
-            <Card className="bg-neutral-900/50 border-white/10">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Play className="h-5 w-5 text-purple-400" />
+                  <Play className="h-5 w-5 text-primary" />
                   Streaming Services
                 </CardTitle>
                 <CardDescription>Which platforms do you have access to?</CardDescription>
@@ -282,7 +296,7 @@ export default function MovieTVMatchmaker() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <label className="flex items-center space-x-3 p-3 rounded-xl bg-neutral-800/50 hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <label className="flex items-center space-x-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
                         <Checkbox
                           checked={preferences.services.includes(service.key)}
                           onCheckedChange={() => 
@@ -298,10 +312,10 @@ export default function MovieTVMatchmaker() {
               </CardContent>
             </Card>
             {/* Mood Selection */}
-            <Card className="bg-neutral-900/50 border-white/10">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-pink-400" />
+                  <Heart className="h-5 w-5 text-primary" />
                   Current Mood
                 </CardTitle>
                 <CardDescription>What vibe are you going for? (Select multiple)</CardDescription>
@@ -316,8 +330,8 @@ export default function MovieTVMatchmaker() {
                     >
                       <label className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all cursor-pointer ${
                         preferences.moods.includes(mood.key)
-                          ? 'border-purple-500 bg-purple-500/10'
-                          : 'border-white/10 bg-neutral-800/30 hover:border-white/20'
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border bg-muted/50 hover:border-primary/50'
                       }`}>
                         <input
                           type="checkbox"
@@ -329,7 +343,7 @@ export default function MovieTVMatchmaker() {
                         />
                         <span className="text-2xl mb-2">{mood.icon}</span>
                         <span className="font-medium text-sm">{mood.name}</span>
-                        <span className="text-xs text-neutral-400 text-center mt-1">{mood.description}</span>
+                        <span className="text-xs text-muted-foreground text-center mt-1">{mood.description}</span>
                       </label>
                     </motion.div>
                   ))}
@@ -338,17 +352,17 @@ export default function MovieTVMatchmaker() {
             </Card>
             {/* Content Type & Time */}
             <div className="grid md:grid-cols-2 gap-6">
-              <Card className="bg-neutral-900/50 border-white/10">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Film className="h-5 w-5 text-blue-400" />
+                    <Film className="h-5 w-5 text-primary" />
                     Content Type
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {CONTENT_TYPES.map(type => (
-                      <label key={type.key} className="flex items-center space-x-3 p-3 rounded-xl bg-neutral-800/50 hover:bg-neutral-800 transition-colors cursor-pointer">
+                      <label key={type.key} className="flex items-center space-x-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
                         <Checkbox
                           checked={preferences.contentTypes.includes(type.key)}
                           onCheckedChange={() => 
@@ -363,10 +377,10 @@ export default function MovieTVMatchmaker() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-neutral-900/50 border-white/10">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-green-400" />
+                    <Clock className="h-5 w-5 text-primary" />
                     Available Time
                   </CardTitle>
                   <CardDescription>How much time do you have? ({preferences.timeWindow} minutes)</CardDescription>
@@ -381,7 +395,7 @@ export default function MovieTVMatchmaker() {
                       step={15}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-sm text-neutral-400">
+                    <div className="flex justify-between text-sm text-muted-foreground">
                       <span>30 min</span>
                       <span>2.5 hours</span>
                       <span>5 hours</span>
@@ -399,7 +413,7 @@ export default function MovieTVMatchmaker() {
               <Button
                 onClick={handleGenerateRecommendations}
                 disabled={isLoading || preferences.services.length === 0 || preferences.moods.length === 0}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-6 text-lg font-semibold rounded-2xl"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-semibold"
                 size="lg"
               >
                 {isLoading ? (
@@ -418,9 +432,9 @@ export default function MovieTVMatchmaker() {
             {error && (
               <motion.div 
                 variants={fadeIn}
-                className="bg-red-900/20 border border-red-500/20 rounded-xl p-4 text-center"
+                className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-center"
               >
-                <p className="text-red-400">{error}</p>
+                <p className="text-destructive">{error}</p>
               </motion.div>
             )}
           </motion.div>)
@@ -430,14 +444,13 @@ export default function MovieTVMatchmaker() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-2">Your Perfect Matches</h2>
-                <p className="text-neutral-400">
+                <p className="text-muted-foreground">
                   Based on your {preferences.moods.map(m => MOOD_OPTIONS.find(o => o.key === m)?.name).join(', ')} mood
                 </p>
               </div>
               <Button
                 onClick={() => setShowResults(false)}
                 variant="outline"
-                className="border-white/20 hover:bg-white/10"
               >
                 <FilterIcon className="mr-2 h-4 w-4" />
                 Adjust Preferences
@@ -452,7 +465,7 @@ export default function MovieTVMatchmaker() {
                   whileHover={{ scale: 1.02, y: -4 }}
                   className="group"
                 >
-                  <Card className="bg-neutral-900/50 border-white/10 overflow-hidden h-full hover:border-purple-500/30 transition-all duration-300">
+                  <Card className="overflow-hidden h-full hover:border-primary/30 transition-all duration-300">
                     <div className="aspect-[2/3] relative overflow-hidden">
                       {item.poster_url ? (
                         <img
@@ -461,18 +474,18 @@ export default function MovieTVMatchmaker() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
-                          <Film className="h-12 w-12 text-neutral-600" />
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <Film className="h-12 w-12 text-muted-foreground" />
                         </div>
                       )}
                       <div className="absolute top-3 right-3">
-                        <Badge className="bg-purple-600 text-white">
+                        <Badge className="bg-primary text-primary-foreground">
                           <Star className="h-3 w-3 mr-1" />
                           {item.match_score || 85}%
                         </Badge>
                       </div>
                       <div className="absolute bottom-3 left-3">
-                        <Badge variant="secondary" className="bg-black/70 text-white">
+                        <Badge variant="secondary">
                           {item.media_type === 'movie' ? 'Movie' : 'TV Show'}
                         </Badge>
                       </div>
@@ -480,28 +493,28 @@ export default function MovieTVMatchmaker() {
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.title}</h3>
                       {item.year && (
-                        <p className="text-neutral-400 text-sm mb-2">{item.year}</p>
+                        <p className="text-muted-foreground text-sm mb-2">{item.year}</p>
                       )}
                       {item.runtime && (
-                        <div className="flex items-center gap-1 text-neutral-400 text-sm mb-3">
+                        <div className="flex items-center gap-1 text-muted-foreground text-sm mb-3">
                           <Clock className="h-3 w-3" />
                           {item.runtime} min
                         </div>
                       )}
-                      <p className="text-neutral-300 text-sm mb-4 line-clamp-3">{item.overview}</p>
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-3">{item.overview}</p>
                       {item.explanation && (
-                        <p className="text-purple-300 text-xs italic mb-3">"{item.explanation}"</p>
+                        <p className="text-primary text-xs italic mb-3">"{item.explanation}"</p>
                       )}
                       
                       <div className="flex flex-wrap gap-2 mb-3">
                         {providerKeys(item).map(p => (
-                          <Badge key={p} variant="secondary" className="bg-black/60">{p}</Badge>
+                          <Badge key={p} variant="secondary">{p}</Badge>
                         ))}
                       </div>
                       {(() => {
                         const prefFirst = providerKeys(item).find(p => preferences.services.includes(p)) || providerKeys(item)[0];
                         return prefFirst ? (
-                          <Button asChild className="w-full bg-purple-600 hover:bg-purple-700" size="sm">
+                          <Button asChild className="w-full bg-primary hover:bg-primary/90" size="sm">
                             <a href={WATCH_URL[prefFirst](item.title)} target="_blank" rel="noopener noreferrer">
                               Open on {prefFirst}
                               <ExternalLink className="ml-1 h-3 w-3" />
@@ -510,7 +523,7 @@ export default function MovieTVMatchmaker() {
                         ) : item.tmdb_url ? (
                           <Button 
                             asChild
-                            className="w-full bg-purple-600 hover:bg-purple-700"
+                            className="w-full bg-primary hover:bg-primary/90"
                             size="sm"
                           >
                             <a href={item.tmdb_url} target="_blank" rel="noopener noreferrer">
