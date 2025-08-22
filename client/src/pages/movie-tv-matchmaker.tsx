@@ -200,11 +200,9 @@ export default function MovieTVMatchmaker() {
         <meta property="og:description" content="Discover personalized entertainment recommendations tailored to your preferences and viewing time." />
         <meta property="og:type" content="website" />
       </Helmet>
-
       <NewHeader />
-
       <motion.div 
-        className="container mx-auto px-4 py-8"
+        className="container mx-auto px-4 py-8 bg-[#ffffff00]"
         variants={staggerContainer}
         initial="initial"
         animate="animate"
@@ -226,7 +224,7 @@ export default function MovieTVMatchmaker() {
 
         {!showResults ? (
           /* Preference Selection */
-          <motion.div variants={fadeIn} className="max-w-4xl mx-auto space-y-8">
+          (<motion.div variants={fadeIn} className="max-w-4xl mx-auto space-y-8">
             {/* Streaming Services */}
             <Card className="bg-neutral-900/50 border-white/10">
               <CardHeader>
@@ -259,7 +257,6 @@ export default function MovieTVMatchmaker() {
                 </div>
               </CardContent>
             </Card>
-
             {/* Mood Selection */}
             <Card className="bg-neutral-900/50 border-white/10">
               <CardHeader>
@@ -299,7 +296,6 @@ export default function MovieTVMatchmaker() {
                 </div>
               </CardContent>
             </Card>
-
             {/* Content Type & Time */}
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="bg-neutral-900/50 border-white/10">
@@ -354,7 +350,6 @@ export default function MovieTVMatchmaker() {
                 </CardContent>
               </Card>
             </div>
-
             {/* Generate Button */}
             <motion.div 
               className="text-center"
@@ -380,7 +375,6 @@ export default function MovieTVMatchmaker() {
                 )}
               </Button>
             </motion.div>
-
             {error && (
               <motion.div 
                 variants={fadeIn}
@@ -389,10 +383,10 @@ export default function MovieTVMatchmaker() {
                 <p className="text-red-400">{error}</p>
               </motion.div>
             )}
-          </motion.div>
+          </motion.div>)
         ) : (
           /* Results Section */
-          <motion.div variants={fadeIn} className="space-y-8">
+          (<motion.div variants={fadeIn} className="space-y-8">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-2">Your Perfect Matches</h2>
@@ -409,7 +403,6 @@ export default function MovieTVMatchmaker() {
                 Adjust Preferences
               </Button>
             </div>
-
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {recommendations.map((item, index) => (
                 <motion.div
@@ -476,7 +469,6 @@ export default function MovieTVMatchmaker() {
                 </motion.div>
               ))}
             </div>
-
             {recommendations.length === 0 && (
               <Card className="bg-neutral-900/50 border-white/10 p-8 text-center">
                 <Film className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
@@ -489,7 +481,7 @@ export default function MovieTVMatchmaker() {
                 </Button>
               </Card>
             )}
-          </motion.div>
+          </motion.div>)
         )}
       </motion.div>
     </div>
