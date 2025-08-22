@@ -1,0 +1,195 @@
+let’s add Genre filters end-to-end (UI ➜ API ➜ results). Below are minimal, copy-paste patches for your current codebase that already uses /api/matchmaker/*.
+
+1) UI: add a Genre selector
+a) Add constants (near your other constants)
+// TMDb genre keys → { movie, tv } IDs
+const GENRE_OPTIONS = [
+  { key: 'action',       name: 'Action',        ids: { movie: 28,    tv: 10759 } },
+  { key: 'adventure',    name: 'Adventure',     ids: { movie: 12,    tv: 10759 } },
+  { key: 'animation',    name: 'Animation',     ids: { movie: 16,    tv: 16 } },
+  { key: 'comedy',       name: 'Comedy',        ids: { movie: 35,    tv: 35 } },
+  { key: 'crime',        name: 'Crime',         ids: { movie: 80,    tv: 80 } },
+  { key: 'documentary',  name: 'Documentary',   ids: { movie: 99,    tv: 99 } },
+  { key: 'drama',        name: 'Drama',         ids: { movie: 18,    tv: 18 } },
+  { key: 'family',       name: 'Family',        ids: { movie: 10751, tv: 10751 } },
+  { key: 'fantasy',      name: 'Fantasy',       ids: { movie: 14,    tv: 10765 } },
+  { key: 'history',      name: 'History',       ids: { movie: 36,    tv: null as any } },
+  { key: 'horror',       name: 'Horror',        ids: { movie: 27,    tv: null as any } }, // TV doesn't have a Horror genre
+  { key: 'music',        name: 'Music',         ids: { movie: 10402, tv: null as any } },
+  { key: 'mystery',      name: 'Mystery',       ids: { movie: 9648,  tv: 9648 } },
+  { key: 'romance',      name: 'Romance',       ids: { movie: 10749, tv: null as any } },
+  { key: 'scifi',        name: 'Sci-Fi',        ids: { movie: 878,   tv: 10765 } },
+  { key: 'thriller',     name: 'Thriller',      ids: { movie: 53,    tv: 9648 } },
+  { key: 'war',          name: 'War',           ids: { movie: 10752, tv: 10768 } },
+  { key: 'western',      name: 'Western',       ids: { movie: 37,    tv: 37 } },
+  // Not a first-class TMDb genre, so we’ll keyword/fallback filter on the server:
+  { key: 'sports',       name: 'Sports',        ids: { movie: null as any, tv: null as any } },
+];
+
+const ALL_GENRE_KEYS = GENRE_OPTIONS.map(g => g.key);
+
+
+Note: TMDb TV genres differ a bit (e.g., no explicit “Horror”). We’ll compensate server-side with a keyword fallback for those.
+
+b) Extend state shape
+interface MatchmakerState {
+  services: string[];
+  moods: string[];
+  contentTypes: string[];
+  timeWindow: number;
+  language: string;
+  ageRating: string[];
+  genres: string[];            // <-- add this
+}
+
+c) Add default
+const [preferences, setPreferences] = useState<MatchmakerState>({
+  services: ['netflix'],
+  moods: ['cozy'],
+  contentTypes: ['movie', 'tv'],
+  timeWindow: 120,
+  language: 'en-US',
+  ageRating: [],
+  genres: [],                  // <-- new
+});
+
+d) Helpers
+const isAllGenresSelected = (list: string[]) => ALL_GENRE_KEYS.every(k => list.includes(k));
+const toggleAllGenres = () => {
+  updatePreference('genres', isAllGenresSelected(preferences.genres) ? [] : ALL_GENRE_KEYS);
+};
+
+e) Add a Genres card (put it under “Current Mood”, above “Streaming Services”)
+<Card className="bg-neutral-900/50 border-white/10">
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Search className="h-5 w-5 text-blue-400" />
+      Genres
+    </CardTitle>
+    <CardDescription>Filter by one or more genres</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {/* ALL GENRES */}
+      <label className="flex items-center space-x-3 p-3 rounded-xl bg-neutral-800/50 hover:bg-neutral-800 cursor-pointer">
+        <Checkbox checked={isAllGenresSelected(preferences.genres)} onCheckedChange={toggleAllGenres} />
+        <span className="text-sm font-medium">All Genres</span>
+      </label>
+      {/* INDIVIDUAL GENRES */}
+      {GENRE_OPTIONS.map(g => (
+        <label key={g.key} className="flex items-center space-x-3 p-3 rounded-xl bg-neutral-800/50 hover:bg-neutral-800 cursor-pointer">
+          <Checkbox
+            checked={preferences.genres.includes(g.key)}
+            onCheckedChange={() => updatePreference('genres', toggleArrayItem(preferences.genres, g.key))}
+          />
+          <span className="text-sm font-medium">{g.name}</span>
+        </label>
+      ))}
+    </div>
+  </CardContent>
+</Card>
+
+f) Include genres in the retrieve request
+// inside handleGenerateRecommendations() → fetch('/api/matchmaker/retrieve', …)
+body: JSON.stringify({
+  services: preferences.services,
+  timeWindow: preferences.timeWindow,
+  languages: [preferences.language],
+  mediaTypes: preferences.contentTypes,
+  genres: preferences.genres,        // <-- NEW
+  count: 160
+})
+
+2) API: honor genre filters (with TMDb IDs per media) + sports/horror TV fallback
+
+Open app/api/matchmaker/retrieve/route.ts and:
+
+a) Add a map helper
+// Add near the top (match the UI keys)
+const GENRE_ID_MAP: Record<string, { movie?: number|null; tv?: number|null }> = {
+  action:{movie:28,tv:10759}, adventure:{movie:12,tv:10759}, animation:{movie:16,tv:16},
+  comedy:{movie:35,tv:35}, crime:{movie:80,tv:80}, documentary:{movie:99,tv:99},
+  drama:{movie:18,tv:18}, family:{movie:10751,tv:10751}, fantasy:{movie:14,tv:10765},
+  history:{movie:36,tv:null}, horror:{movie:27,tv:null}, music:{movie:10402,tv:null},
+  mystery:{movie:9648,tv:9648}, romance:{movie:10749,tv:null}, scifi:{movie:878,tv:10765},
+  thriller:{movie:53,tv:9648}, war:{movie:10752,tv:10768}, western:{movie:37,tv:37},
+  sports:{movie:null,tv:null}, // fallback keyword filter below
+};
+
+function genreParamFor(media:'movie'|'tv', keys:string[]) {
+  const ids = keys
+    .map(k => GENRE_ID_MAP[k]?.[media])
+    .filter((x): x is number => typeof x === 'number');
+  return ids.length ? ids.join(',') : null;
+}
+
+b) Read genres from the request and pass to TMDb
+
+Find:
+
+const { services, timeWindow = 120, languages = ["en-US"], mediaTypes = ["movie","tv"], count = 100 } = await req.json();
+
+
+Replace with:
+
+const {
+  services,
+  timeWindow = 120,
+  languages = ["en-US"],
+  mediaTypes = ["movie","tv"],
+  genres = [],
+  count = 100
+} = await req.json();
+
+
+In the discover(media) function, include with_genres when present:
+
+const withGenres = genreParamFor(media, genres);
+const params = new URLSearchParams({
+  api_key: apiKey(),
+  language: languages[0] || "en-US",
+  sort_by: "popularity.desc",
+  watch_region: region,
+  ...(providers ? { with_watch_providers: providers } : {}),
+  ...(withGenres ? { with_genres: withGenres } : {}),
+  ...(media === "movie" && timeWindow ? { "with_runtime.lte": String(timeWindow + 20) } : {}),
+});
+
+c) Fallback keyword filter for cases TMDb lacks a TV genre
+
+After you build enriched (or right before returning), do a best-effort filter if genres includes keys that TV doesn’t support (horror, sports):
+
+function textHas(wordList: string[], item: any) {
+  const hay = `${item.title || ''} ${item.overview || ''}`.toLowerCase();
+  return wordList.some(w => hay.includes(w));
+}
+
+let items = enriched;
+
+// Sports: not a TMDb genre; filter by common words
+if (genres.includes('sports')) {
+  items = items.filter(it => textHas(
+    ['sport','sports','soccer','football','nba','nfl','mlb','baseball','basketball','hockey','tennis','ufc','mma','boxing','golf'],
+    it
+  ));
+}
+
+// TV “Horror” fallback: use textual hints if TV genre missing
+if (genres.includes('horror')) {
+  items = items.filter(it =>
+    it.media_type === 'movie' ? true :
+    textHas(['horror','haunted','ghost','vampire','zombie','slasher','possession','supernatural'], it)
+  );
+}
+
+return NextResponse.json({ items, total: items.length });
+
+
+This keeps results reasonable where TMDb doesn’t provide a first-class genre.
+
+3) Reranker types (one line)
+
+Ensure your frontend ContentItem uses numeric genre IDs so mood scoring still works:
+
+// ContentItem
+genres?: number[];   // not string[]

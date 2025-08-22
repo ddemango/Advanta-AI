@@ -14,6 +14,29 @@ const SERVICE_TO_TMDB_PROVIDER: Record<string, number> = {
   apple: 350,
 };
 
+// Genre mapping (match the UI keys)
+const GENRE_ID_MAP: Record<string, { movie?: number|null; tv?: number|null }> = {
+  action:{movie:28,tv:10759}, adventure:{movie:12,tv:10759}, animation:{movie:16,tv:16},
+  comedy:{movie:35,tv:35}, crime:{movie:80,tv:80}, documentary:{movie:99,tv:99},
+  drama:{movie:18,tv:18}, family:{movie:10751,tv:10751}, fantasy:{movie:14,tv:10765},
+  history:{movie:36,tv:null}, horror:{movie:27,tv:null}, music:{movie:10402,tv:null},
+  mystery:{movie:9648,tv:9648}, romance:{movie:10749,tv:null}, scifi:{movie:878,tv:10765},
+  thriller:{movie:53,tv:9648}, war:{movie:10752,tv:10768}, western:{movie:37,tv:37},
+  sports:{movie:null,tv:null}, // fallback keyword filter below
+};
+
+function genreParamFor(media:'movie'|'tv', keys:string[]) {
+  const ids = keys
+    .map(k => GENRE_ID_MAP[k]?.[media])
+    .filter((x): x is number => typeof x === 'number');
+  return ids.length ? ids.join(',') : null;
+}
+
+function textHas(wordList: string[], item: any) {
+  const hay = `${item.title || ''} ${item.overview || ''}`.toLowerCase();
+  return wordList.some(w => hay.includes(w));
+}
+
 function poster(path?: string | null) {
   return path ? `${IMG_BASE}${path}` : undefined;
 }
@@ -35,6 +58,7 @@ export async function POST(req: Request, res: Response) {
       timeWindow = 120,
       languages = ['en-US'],
       mediaTypes = ['movie', 'tv'],
+      genres = [],
       count = 100
     } = req.body;
 
@@ -49,12 +73,14 @@ export async function POST(req: Request, res: Response) {
       .join('|');
 
     const discover = async (media: 'movie' | 'tv') => {
+      const withGenres = genreParamFor(media, genres);
       const params = new URLSearchParams({
         api_key: apiKey(),
         language: languages[0] || 'en-US',
         sort_by: 'popularity.desc',
         watch_region: region,
         ...(providers ? { with_watch_providers: providers } : {}),
+        ...(withGenres ? { with_genres: withGenres } : {}),
         ...(media === 'movie' && timeWindow
           ? { 'with_runtime.lte': String(timeWindow + 20) }
           : {}),
@@ -121,8 +147,27 @@ export async function POST(req: Request, res: Response) {
       };
     };
 
-    const enriched = await Promise.all(candidates.slice(0, 40).map(detail)); // enrich top 40
-    res.json({ items: enriched, total: enriched.length });
+    let enriched = await Promise.all(candidates.slice(0, 40).map(detail)); // enrich top 40
+
+    let items = enriched;
+
+    // Sports: not a TMDb genre; filter by common words
+    if (genres.includes('sports')) {
+      items = items.filter(it => textHas(
+        ['sport','sports','soccer','football','nba','nfl','mlb','baseball','basketball','hockey','tennis','ufc','mma','boxing','golf'],
+        it
+      ));
+    }
+
+    // TV "Horror" fallback: use textual hints if TV genre missing
+    if (genres.includes('horror')) {
+      items = items.filter(it =>
+        it.media_type === 'movie' ? true :
+        textHas(['horror','haunted','ghost','vampire','zombie','slasher','possession','supernatural'], it)
+      );
+    }
+
+    res.json({ items, total: items.length });
   } catch (e: any) {
     res.status(500).json({ error: e.message || 'retrieve_failed' });
   }

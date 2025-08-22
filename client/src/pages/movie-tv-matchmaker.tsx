@@ -16,7 +16,8 @@ import {
   Heart,
   Sparkles,
   ExternalLink,
-  Filter as FilterIcon
+  Filter as FilterIcon,
+  Search
 } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
 
@@ -119,6 +120,32 @@ const CONTENT_TYPES = [
   { key: 'tv', name: 'TV Shows', icon: Tv }
 ];
 
+// TMDb genre keys → { movie, tv } IDs
+const GENRE_OPTIONS = [
+  { key: 'action',       name: 'Action',        ids: { movie: 28,    tv: 10759 } },
+  { key: 'adventure',    name: 'Adventure',     ids: { movie: 12,    tv: 10759 } },
+  { key: 'animation',    name: 'Animation',     ids: { movie: 16,    tv: 16 } },
+  { key: 'comedy',       name: 'Comedy',        ids: { movie: 35,    tv: 35 } },
+  { key: 'crime',        name: 'Crime',         ids: { movie: 80,    tv: 80 } },
+  { key: 'documentary',  name: 'Documentary',   ids: { movie: 99,    tv: 99 } },
+  { key: 'drama',        name: 'Drama',         ids: { movie: 18,    tv: 18 } },
+  { key: 'family',       name: 'Family',        ids: { movie: 10751, tv: 10751 } },
+  { key: 'fantasy',      name: 'Fantasy',       ids: { movie: 14,    tv: 10765 } },
+  { key: 'history',      name: 'History',       ids: { movie: 36,    tv: null as any } },
+  { key: 'horror',       name: 'Horror',        ids: { movie: 27,    tv: null as any } }, // TV doesn't have a Horror genre
+  { key: 'music',        name: 'Music',         ids: { movie: 10402, tv: null as any } },
+  { key: 'mystery',      name: 'Mystery',       ids: { movie: 9648,  tv: 9648 } },
+  { key: 'romance',      name: 'Romance',       ids: { movie: 10749, tv: null as any } },
+  { key: 'scifi',        name: 'Sci-Fi',        ids: { movie: 878,   tv: 10765 } },
+  { key: 'thriller',     name: 'Thriller',      ids: { movie: 53,    tv: 9648 } },
+  { key: 'war',          name: 'War',           ids: { movie: 10752, tv: 10768 } },
+  { key: 'western',      name: 'Western',       ids: { movie: 37,    tv: 37 } },
+  // Not a first-class TMDb genre, so we'll keyword/fallback filter on the server:
+  { key: 'sports',       name: 'Sports',        ids: { movie: null as any, tv: null as any } },
+];
+
+const ALL_GENRE_KEYS = GENRE_OPTIONS.map(g => g.key);
+
 interface ContentItem {
   id: number;
   media_type: 'movie' | 'tv';
@@ -145,6 +172,7 @@ interface MatchmakerState {
   moods: string[];
   contentTypes: string[];
   timeWindow: number;
+  genres: string[];
   language: string;
   ageRating: string[];
 }
@@ -156,7 +184,8 @@ export default function MovieTVMatchmaker() {
     contentTypes: ['movie', 'tv'],
     timeWindow: 120,
     language: 'en-US',
-    ageRating: []
+    ageRating: [],
+    genres: []
   });
 
   const [recommendations, setRecommendations] = useState<ContentItem[]>([]);
@@ -177,6 +206,7 @@ export default function MovieTVMatchmaker() {
           timeWindow: preferences.timeWindow,
           languages: [preferences.language],
           mediaTypes: preferences.contentTypes,
+          genres: preferences.genres,
           count: 160
         })
       });
@@ -229,6 +259,11 @@ export default function MovieTVMatchmaker() {
     return array.includes(item) 
       ? array.filter(i => i !== item)
       : [...array, item];
+  };
+
+  const isAllGenresSelected = (list: string[]) => ALL_GENRE_KEYS.every(k => list.includes(k));
+  const toggleAllGenres = () => {
+    updatePreference('genres', isAllGenresSelected(preferences.genres) ? [] : ALL_GENRE_KEYS);
   };
 
   return (
@@ -350,6 +385,37 @@ export default function MovieTVMatchmaker() {
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Genres */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5 text-primary" />
+                  Genres
+                </CardTitle>
+                <CardDescription>Filter by one or more genres</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {/* ALL GENRES */}
+                  <label className="flex items-center space-x-3 p-3 rounded-xl bg-muted/50 hover:bg-muted cursor-pointer">
+                    <Checkbox checked={isAllGenresSelected(preferences.genres)} onCheckedChange={toggleAllGenres} />
+                    <span className="text-sm font-medium">All Genres</span>
+                  </label>
+                  {/* INDIVIDUAL GENRES */}
+                  {GENRE_OPTIONS.map(g => (
+                    <label key={g.key} className="flex items-center space-x-3 p-3 rounded-xl bg-muted/50 hover:bg-muted cursor-pointer">
+                      <Checkbox
+                        checked={preferences.genres.includes(g.key)}
+                        onCheckedChange={() => updatePreference('genres', toggleArrayItem(preferences.genres, g.key))}
+                      />
+                      <span className="text-sm font-medium">{g.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
             {/* Content Type & Time */}
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
