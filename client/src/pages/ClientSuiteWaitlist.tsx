@@ -47,7 +47,7 @@ export default function ClientSuiteWaitlist() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-background">
         <Helmet>
           <title>Welcome to the Exclusive List - Advanta AI Client Suite</title>
           <meta name="description" content="You're now on the exclusive waitlist for Advanta AI's Client Suite Portal" />
@@ -64,35 +64,35 @@ export default function ClientSuiteWaitlist() {
             <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               You're In! 🎉
             </h1>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-xl text-muted-foreground mb-8">
               Welcome to the exclusive Client Suite Portal waitlist. You'll be among the first to experience the future of AI business automation.
             </p>
           </div>
           
-          <Card className="bg-white/10 backdrop-blur border-white/20">
+          <Card className="bg-background/30 backdrop-blur-sm border border-white/10">
             <CardContent className="p-8">
-              <h3 className="text-2xl font-semibold text-white mb-4">What happens next?</h3>
+              <h3 className="text-2xl font-semibold text-foreground mb-4">What happens next?</h3>
               <div className="space-y-4 text-left">
                 <div className="flex items-center gap-3">
                   <Crown className="w-5 h-5 text-yellow-400" />
-                  <span className="text-gray-300">Priority access when we launch (within 7 days)</span>
+                  <span className="text-muted-foreground">Priority access when we launch (within 7 days)</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-5 h-5 text-blue-400" />
-                  <span className="text-gray-300">Exclusive preview of premium features</span>
+                  <span className="text-muted-foreground">Exclusive preview of premium features</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300">Special founding member pricing</span>
+                  <span className="text-muted-foreground">Special founding member pricing</span>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <p className="text-gray-400 mt-8">
+          <p className="text-muted-foreground mt-8">
             Keep an eye on your inbox - something amazing is coming very soon.
           </p>
         </motion.div>
@@ -102,7 +102,7 @@ export default function ClientSuiteWaitlist() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>Exclusive Access - Advanta AI Client Suite Portal</title>
         <meta name="description" content="Join the exclusive waitlist for Advanta AI's premium Client Suite Portal. Limited early access for select businesses." />
@@ -128,7 +128,7 @@ export default function ClientSuiteWaitlist() {
               EXCLUSIVE INVITATION ONLY
             </Badge>
             
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-tight">
               Great things come
               <br />
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent italic">
@@ -136,12 +136,12 @@ export default function ClientSuiteWaitlist() {
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-300 mb-4 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-muted-foreground mb-4 max-w-3xl mx-auto leading-relaxed">
               The Client Suite Portal is our most advanced AI automation platform. 
               Built exclusively for ambitious businesses ready to transform their operations.
             </p>
             
-            <p className="text-lg text-gray-400 mb-8">
+            <p className="text-lg text-muted-foreground mb-8">
               Limited early access. Select businesses only.
             </p>
           </motion.div>
@@ -154,12 +154,12 @@ export default function ClientSuiteWaitlist() {
           className="grid md:grid-cols-2 gap-8 mb-12"
         >
           {/* Waitlist Form */}
-          <Card className="bg-white/10 backdrop-blur border-white/20">
+          <Card className="bg-background/30 backdrop-blur-sm border border-white/10">
             <CardContent className="p-8">
               <div className="mb-6">
                 <Lock className="w-8 h-8 text-yellow-400 mb-4" />
-                <h3 className="text-2xl font-semibold text-white mb-2">Request Exclusive Access</h3>
-                <p className="text-gray-300">Join the waitlist for priority access to our premium business automation suite.</p>
+                <h3 className="text-2xl font-semibold text-foreground mb-2">Request Exclusive Access</h3>
+                <p className="text-muted-foreground">Join the waitlist for priority access to our premium business automation suite.</p>
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -170,14 +170,14 @@ export default function ClientSuiteWaitlist() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-400"
+                    className="bg-background/50 border border-white/20 text-foreground placeholder:text-muted-foreground focus:border-primary"
                   />
                 </div>
                 
                 <Button 
                   type="submit" 
                   disabled={submitWaitlist.isPending || !email}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 text-lg"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 text-lg"
                 >
                   {submitWaitlist.isPending ? (
                     <div className="flex items-center gap-2">
@@ -193,7 +193,7 @@ export default function ClientSuiteWaitlist() {
                 </Button>
               </form>
               
-              <p className="text-xs text-gray-400 mt-4 text-center">
+              <p className="text-xs text-muted-foreground mt-4 text-center">
                 By joining, you agree to receive exclusive updates about the Client Suite Portal.
               </p>
             </CardContent>
@@ -201,7 +201,7 @@ export default function ClientSuiteWaitlist() {
 
           {/* Exclusive Features */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-semibold text-white mb-6">What makes it exclusive?</h3>
+            <h3 className="text-2xl font-semibold text-foreground mb-6">What makes it exclusive?</h3>
             
             <div className="space-y-4">
               <div className="flex items-start gap-4">
@@ -209,8 +209,8 @@ export default function ClientSuiteWaitlist() {
                   <Zap className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold mb-1">Enterprise-Grade AI Automation</h4>
-                  <p className="text-gray-300 text-sm">Advanced workflow automation that typically costs $50K+ to develop internally.</p>
+                  <h4 className="text-foreground font-semibold mb-1">Enterprise-Grade AI Automation</h4>
+                  <p className="text-muted-foreground text-sm">Advanced workflow automation that typically costs $50K+ to develop internally.</p>
                 </div>
               </div>
               
@@ -219,8 +219,8 @@ export default function ClientSuiteWaitlist() {
                   <Users className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold mb-1">Dedicated Success Manager</h4>
-                  <p className="text-gray-300 text-sm">Personal AI implementation specialist for your business transformation.</p>
+                  <h4 className="text-foreground font-semibold mb-1">Dedicated Success Manager</h4>
+                  <p className="text-muted-foreground text-sm">Personal AI implementation specialist for your business transformation.</p>
                 </div>
               </div>
               
@@ -229,8 +229,8 @@ export default function ClientSuiteWaitlist() {
                   <Star className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold mb-1">Custom API Integrations</h4>
-                  <p className="text-gray-300 text-sm">Connect any system, database, or tool to create seamless automated workflows.</p>
+                  <h4 className="text-foreground font-semibold mb-1">Custom API Integrations</h4>
+                  <p className="text-muted-foreground text-sm">Connect any system, database, or tool to create seamless automated workflows.</p>
                 </div>
               </div>
               
@@ -239,8 +239,8 @@ export default function ClientSuiteWaitlist() {
                   <Shield className="w-5 h-5 text-yellow-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold mb-1">Enterprise Security & Compliance</h4>
-                  <p className="text-gray-300 text-sm">Bank-level security with SOC 2, GDPR, and HIPAA compliance options.</p>
+                  <h4 className="text-foreground font-semibold mb-1">Enterprise Security & Compliance</h4>
+                  <p className="text-muted-foreground text-sm">Bank-level security with SOC 2, GDPR, and HIPAA compliance options.</p>
                 </div>
               </div>
             </div>
@@ -256,21 +256,21 @@ export default function ClientSuiteWaitlist() {
         >
           <div className="flex items-center justify-center gap-8 mb-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">200+</div>
-              <div className="text-sm text-gray-400">Businesses on waitlist</div>
+              <div className="text-3xl font-bold text-foreground">200+</div>
+              <div className="text-sm text-muted-foreground">Businesses on waitlist</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">7 Days</div>
-              <div className="text-sm text-gray-400">Until launch</div>
+              <div className="text-3xl font-bold text-foreground">7 Days</div>
+              <div className="text-sm text-muted-foreground">Until launch</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-white">$2M+</div>
-              <div className="text-sm text-gray-400">In automation savings</div>
+              <div className="text-3xl font-bold text-foreground">$2M+</div>
+              <div className="text-sm text-muted-foreground">In automation savings</div>
             </div>
           </div>
           
-          <p className="text-gray-400 text-sm">
-            <span className="text-yellow-400 font-medium">Limited to 50 founding members.</span> Join the exclusive list before spots fill up.
+          <p className="text-muted-foreground text-sm">
+            <span className="text-primary font-medium">Limited to 50 founding members.</span> Join the exclusive list before spots fill up.
           </p>
         </motion.div>
         </div>
