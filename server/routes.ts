@@ -7303,7 +7303,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/flights', async (req, res) => {
     try {
       const { origins, destination, departDate, adults, cabin } = req.body;
-      const token = await getAmadeusToken();
+      
+      // Get Amadeus token inline since function is scoped elsewhere
+      const id = process.env.AMADEUS_CLIENT_ID;
+      const secret = process.env.AMADEUS_CLIENT_SECRET;
+      if (!id || !secret) throw new Error("Amadeus keys missing");
+      const tokenResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+      });
+      if (!tokenResponse.ok) throw new Error("Amadeus token error");
+      const token = (await tokenResponse.json()).access_token as string;
 
       const cabinMap: Record<string, string> = { economy: "ECONOMY", premium: "PREMIUM_ECONOMY", business: "BUSINESS", first: "FIRST" };
 
@@ -7354,14 +7365,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Amadeus Price Calendar endpoint
+  // Amadeus Price Calendar endpoint - Enhanced with rate limiting
   app.post('/api/price-calendar', async (req, res) => {
     try {
       const body = req.body || {};
       const startDate = body?.startDate as string;
       const days = Number(body?.days || 14);
       const params = body?.params || {};
-      const token = await getAmadeusToken();
+      
+      // Get Amadeus token inline
+      const id = process.env.AMADEUS_CLIENT_ID;
+      const secret = process.env.AMADEUS_CLIENT_SECRET;
+      if (!id || !secret) throw new Error("Amadeus keys missing");
+      const tokenResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+      });
+      if (!tokenResponse.ok) throw new Error("Amadeus token error");
+      const token = (await tokenResponse.json()).access_token as string;
 
       const origin = params?.origins?.[0];
       const destination = params?.destination;
@@ -7370,22 +7392,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < days; i++) out.push(new Date(start.getTime() + i * 86400000).toISOString().slice(0, 10));
 
       const results: any[] = [];
-      for (const date of out) {
-        const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
-        url.search = new URLSearchParams({
-          originLocationCode: origin,
-          destinationLocationCode: destination,
-          departureDate: date,
-          adults: String(params?.adults || 1),
-          currencyCode: "USD",
-          max: "1",
-          sort: "price",
-        }).toString();
+      // Process in batches to avoid overwhelming the API
+      for (let i = 0; i < out.length; i += 3) {
+        const batch = out.slice(i, i + 3);
+        const batchPromises = batch.map(async (date) => {
+          try {
+            const url = new URL("https://test.api.amadeus.com/v2/shopping/flight-offers");
+            url.search = new URLSearchParams({
+              originLocationCode: origin,
+              destinationLocationCode: destination,
+              departureDate: date,
+              adults: String(params?.adults || 1),
+              currencyCode: "USD",
+              max: "1",
+              sort: "price",
+            }).toString();
 
-        const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        const data = r.ok ? await r.json() : null;
-        const price = data?.data?.[0]?.price?.grandTotal ?? data?.data?.[0]?.price?.total ?? null;
-        results.push({ date, lowestPrice: price ? Number(price) : null });
+            const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+            const data = r.ok ? await r.json() : null;
+            const price = data?.data?.[0]?.price?.grandTotal ?? data?.data?.[0]?.price?.total ?? null;
+            return { date, lowestPrice: price ? Number(price) : null };
+          } catch (error) {
+            console.error(`Error fetching price for ${date}:`, error);
+            return { date, lowestPrice: null };
+          }
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+        
+        // Add small delay between batches to respect rate limits
+        if (i + 3 < out.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
 
       res.json({ days: results });
@@ -7395,84 +7434,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Amadeus Hotels endpoint
   app.post('/api/hotels', async (req, res) => {
     try {
-      const params = req.body;
+      const { destination, departDate, nights, adults } = req.body;
       
-      // Use Amadeus API if credentials are available
-      if (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET) {
-        try {
-          // Get Amadeus access token
-          const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-              grant_type: 'client_credentials',
-              client_id: process.env.AMADEUS_CLIENT_ID,
-              client_secret: process.env.AMADEUS_CLIENT_SECRET
-            })
-          });
-          
-          if (tokenResponse.ok) {
-            const tokenData = await tokenResponse.json();
-            const accessToken = tokenData.access_token;
-            
-            // Get hotel locations by city
-            const hotelsResponse = await fetch(`https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city?cityCode=${params.destination}`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            
-            if (hotelsResponse.ok) {
-              const hotelsData = await hotelsResponse.json();
-              const hotels = (hotelsData?.data || []).slice(0, 3).map((h: any, i: number) => ({
-                id: `A_${h.hotelId || i}`,
-                name: h.name || `Hotel ${i + 1}`,
-                stars: Math.min(5, 3 + (i % 3)),
-                nightlyBase: 120 + i * 15,
-                taxesFeesNight: 22,
-                resortFeeNight: i % 2 === 0 ? 15 : 0,
-                parkingNight: 25,
-                walkToCenterMin: 8 + i * 2,
-                provider: "AMADEUS",
-              }));
-              
-              if (hotels.length > 0) {
-                return res.json({ hotels });
-              }
-            }
-          }
-        } catch (amadeusError) {
-          console.error('Amadeus API error:', amadeusError);
-        }
+      // Get Amadeus token inline
+      const id = process.env.AMADEUS_CLIENT_ID;
+      const secret = process.env.AMADEUS_CLIENT_SECRET;
+      if (!id || !secret) throw new Error("Amadeus keys missing");
+      const tokenResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+      });
+      if (!tokenResponse.ok) throw new Error("Amadeus token error");
+      const token = (await tokenResponse.json()).access_token as string;
+
+      const checkIn = departDate;
+      const checkOut = new Date(new Date(departDate).getTime() + (nights || 1) * 86400000).toISOString().slice(0, 10);
+
+      const url = `https://test.api.amadeus.com/v3/shopping/hotel-offers?cityCode=${destination}&checkInDate=${checkIn}&checkOutDate=${checkOut}&roomQuantity=1&adults=${adults || 1}&currency=USD&max=6`;
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      
+      if (!r.ok) {
+        console.error(`Amadeus hotels error: ${r.status}`);
+        return res.status(502).json({ error: `Amadeus hotels error ${r.status}` });
       }
       
-      // Fallback to mock data
-      const mockHotels = [
-        { id: "H1", name: "Harbourview Suites", stars: 4, nightlyBase: 129, taxesFeesNight: 22, resortFeeNight: 15, parkingNight: 25, walkToCenterMin: 10, provider: "MOCK" },
-        { id: "H2", name: "Downtown Modern", stars: 4.5, nightlyBase: 149, taxesFeesNight: 28, resortFeeNight: 0, parkingNight: 35, walkToCenterMin: 6, provider: "MOCK" },
-        { id: "H3", name: "Seabreeze Tower", stars: 4, nightlyBase: 115, taxesFeesNight: 20, resortFeeNight: 25, parkingNight: 20, walkToCenterMin: 14, provider: "MOCK" },
-      ];
-      
-      res.json({ hotels: mockHotels });
-    } catch (error) {
-      console.error('Hotels API error:', error);
-      res.status(500).json({ error: 'Failed to fetch hotels' });
+      const data = await r.json();
+
+      const hotels = (data?.data || []).map((h: any, i: number) => ({
+        id: h.hotel?.hotelId || `H_${i}`,
+        name: h.hotel?.name || `Hotel ${i + 1}`,
+        stars: h.hotel?.rating ? Number(h.hotel.rating) : 4,
+        nightlyBase: Number(h.offers?.[0]?.price?.base || h.offers?.[0]?.price?.total || 0),
+        taxesFeesNight: 0,
+        resortFeeNight: 0,
+        parkingNight: 0,
+        walkToCenterMin: 10,
+        provider: 'AMADEUS'
+      }));
+
+      res.json({ hotels });
+    } catch (error: any) {
+      console.error('Amadeus hotels API error:', error);
+      res.status(500).json({ error: error?.message || "provider error" });
     }
   });
 
-  app.post('/api/cars', async (req, res) => {
+  // Airport/City code resolution endpoint
+  app.post('/api/resolve', async (req, res) => {
     try {
-      const mockCars = [
-        { id: "C1", vendor: "Alamo", carClass: "Midsize", baseTotal: 78, airportFacilityFee: 12, concessionRecoveryFee: 9, counterless: true, provider: "MOCK" },
-        { id: "C2", vendor: "Avis", carClass: "Compact", baseTotal: 69, airportFacilityFee: 12, concessionRecoveryFee: 9, offAirportShuttleMin: 8, provider: "MOCK" },
-      ];
+      const { from, to } = req.body;
       
-      res.json({ cars: mockCars });
-    } catch (error) {
-      console.error('Cars API error:', error);
-      res.status(500).json({ error: 'Failed to fetch cars' });
+      // Get Amadeus token inline
+      const id = process.env.AMADEUS_CLIENT_ID;
+      const secret = process.env.AMADEUS_CLIENT_SECRET;
+      if (!id || !secret) throw new Error("Amadeus keys missing");
+      const tokenResponse = await fetch("https://test.api.amadeus.com/v1/security/oauth2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+      });
+      if (!tokenResponse.ok) throw new Error("Amadeus token error");
+      const token = (await tokenResponse.json()).access_token as string;
+
+      async function lookup(q: string) {
+        const url = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY,AIRPORT&keyword=${encodeURIComponent(q)}&page%5Blimit%5D=5`;
+        const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!r.ok) return { code: q };
+        const data = await r.json();
+        const first = (data?.data || [])[0];
+        return { code: first?.iataCode || first?.iata_code || q };
+      }
+
+      const fromRaw = String(from || '');
+      const toRaw = String(to || '');
+
+      const originParts = fromRaw.split(',').map(s => s.trim()).filter(Boolean);
+      const origins: string[] = [];
+      for (const p of originParts) { 
+        const o = await lookup(p); 
+        if (o.code) origins.push(o.code); 
+      }
+      const dest = await lookup(toRaw);
+
+      res.json({ 
+        originsResolved: Array.from(new Set(origins)).slice(0, 4), 
+        destinationResolved: dest.code 
+      });
+    } catch (error: any) {
+      console.error('Resolve API error:', error);
+      res.status(500).json({ error: error?.message || "provider error" });
     }
   });
+
+  // Cars placeholder endpoint - Enhanced structure for Travel Hacker Pro
+  app.post('/api/cars', async (req, res) => {
+    try {
+      // Return structured cars data matching the expected format
+      const cars = [
+        {
+          id: "C1",
+          vendor: "Alamo",
+          carClass: "Midsize",
+          dailyRate: 45,
+          taxesFees: 12,
+          counterless: false,
+          provider: "PLACEHOLDER"
+        },
+        {
+          id: "C2", 
+          vendor: "Budget",
+          carClass: "Economy",
+          dailyRate: 35,
+          taxesFees: 10,
+          counterless: true,
+          provider: "PLACEHOLDER"
+        },
+        {
+          id: "C3",
+          vendor: "Enterprise", 
+          carClass: "Full Size",
+          dailyRate: 55,
+          taxesFees: 15,
+          counterless: false,
+          provider: "PLACEHOLDER"
+        }
+      ];
+
+      res.json({ cars });
+    } catch (error: any) {
+      console.error('Cars API error:', error);
+      res.status(500).json({ error: error?.message || "No car provider configured" });
+    }
+  });
+
 
   // Health check endpoint
   app.get('/healthz', async (req, res) => {

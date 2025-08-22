@@ -49,7 +49,8 @@ Preferred communication style: Simple, everyday language.
 - **Neon Database**: Serverless PostgreSQL hosting
 - **OpenAI API**: GPT-4 for NLP and content generation
 - **Google OAuth**: Authentication provider
-- **RapidAPI**: For streaming platform data (Movie/TV Matchmaker) and flight search APIs (Travel Hacker AI)
+- **Amadeus Self-Service API**: Live flight search, hotels, and price calendar data for Travel Hacker AI Pro with authentic airline pricing and availability
+- **RapidAPI**: For streaming platform data (Movie/TV Matchmaker)
 - **Sleeper API**: For NFL player data (Fantasy Football tools)
 
 ### Development & Services
