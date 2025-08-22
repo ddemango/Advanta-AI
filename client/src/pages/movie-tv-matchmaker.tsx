@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -187,6 +187,8 @@ interface MatchmakerState {
 
 export default function MovieTVMatchmaker() {
   const CURRENT_YEAR = new Date().getFullYear();
+  const resultsTopRef = useRef<HTMLDivElement>(null);
+  
   const [preferences, setPreferences] = useState<MatchmakerState>({
     services: ['netflix'],
     moods: ['cozy'],
@@ -204,7 +206,21 @@ export default function MovieTVMatchmaker() {
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
+  function scrollToResultsTop() {
+    const el = resultsTopRef.current;
+    if (!el) return;
+    const header = document.querySelector('header') as HTMLElement | null;
+    const offset = (header?.offsetHeight || 0) + 12; // small padding
+    const y = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+
+  useEffect(() => {
+    if (showResults) scrollToResultsTop();
+  }, [showResults]);
+
   const handleGenerateRecommendations = async () => {
+    scrollToResultsTop(); // scroll immediately on button click
     setIsLoading(true);
     setError(null);
 
@@ -619,6 +635,7 @@ export default function MovieTVMatchmaker() {
         ) : (
           /* Results Section */
           (<motion.div variants={fadeIn} className="space-y-8">
+            <div ref={resultsTopRef} className="h-0 scroll-mt-24" />
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-2">Your Perfect Matches</h2>
