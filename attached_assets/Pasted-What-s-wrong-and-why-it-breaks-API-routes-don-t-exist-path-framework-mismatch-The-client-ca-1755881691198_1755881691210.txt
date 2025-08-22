@@ -1,0 +1,340 @@
+What’s wrong (and why it breaks)
+
+API routes don’t exist (path + framework mismatch).
+
+The client calls /api/matchmaker/retrieve|rerank|explain, but the server code only exports functions like retrieveContent(...)—no real HTTP routes.
+
+You also typed them with Express (Request, Response) while most modern setups here are Next.js App Router (NextRequest, NextResponse). Result: requests 404 or crash.
+
+“5 options, never the same” not implemented.
+
+You return 8 (see slice(0, 8)) and you don’t persist “seen” items between sessions. No dedupe.
+
+Where to watch isn’t shown.
+
+You never call the providers endpoint from the client, and the UI doesn’t render provider chips nor an “Open on {platform}” button.
+
+TMDb runtime is mostly missing in /discover responses.
+
+You’re using item.runtime straight from discover (usually undefined). That weakens time-fit scoring. You need a detail call per item (/movie/{id} or /tv/{id}) to get runtime or episode_run_time.
+
+Type mismatches and over-imports.
+
+Frontend ContentItem.genres?: string[]; server uses number[].
+
+A bunch of imports are unused (useEffect, Select, Input, Zap, Calendar, Users, Download…), bloating the bundle.
+
+Helmet in a Next.js world.
+
+If this is a Next.js App Router page, prefer export const metadata = { ... } or next/head. react-helmet can work but is non-idiomatic and can cause hydration warnings.
+
+req.sessionID won’t exist.
+
+You reference req.sessionID in trackInteraction but you didn’t configure express-session. In Next routes you won’t have it at all.
+
+Age rating & languages are accepted but not applied.
+
+You collect ageRating and language but don’t filter by certification or language in discovery beyond language=... (that changes response language, not content catalog).
+
+Fix pack (drop-in patches)
+A) Make the API endpoints real (Next.js App Router)
+
+Create these files:
+
+app/api/matchmaker/retrieve/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+const SERVICE_TO_TMDB_PROVIDER: Record<string, number> = {
+  netflix: 8, prime: 9, disney: 337, hulu: 15, max: 384, peacock: 387, paramount: 531, apple: 350,
+};
+
+function poster(path?: string|null) { return path ? `${IMG_BASE}${path}` : undefined; }
+function apiKey() {
+  const k = process.env.TMDB_API_KEY;
+  if (!k) throw new Error('TMDB_API_KEY not set');
+  return k;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { services, timeWindow, languages = ['en-US'], mediaTypes = ['movie','tv'], count = 100 } = await req.json();
+    if (!services?.length) return NextResponse.json({ error: 'services required' }, { status: 400 });
+
+    const region = process.env.WATCH_REGION || 'US';
+    const providers = services.map((s: string) => SERVICE_TO_TMDB_PROVIDER[s]).filter(Boolean).join('|');
+
+    async function discover(media: 'movie'|'tv') {
+      const params = new URLSearchParams({
+        api_key: apiKey(),
+        language: languages[0] || 'en-US',
+        sort_by: 'popularity.desc',
+        watch_region: region,
+        ...(providers ? { with_watch_providers: providers } : {}),
+        ...(media === 'movie' && timeWindow ? { 'with_runtime.lte': String(timeWindow + 20) } : {}),
+      });
+      const r = await fetch(`${TMDB_BASE}/discover/${media}?${params}`, { next: { revalidate: 3600 }});
+      if (!r.ok) throw new Error(`discover ${media} ${r.status}`);
+      const j = await r.json();
+      return (j.results || []).slice(0, Math.ceil(count / mediaTypes.length)).map((it: any) => ({
+        id: it.id,
+        media_type: media,
+        title: media === 'movie' ? it.title : it.name,
+        year: (it.release_date || it.first_air_date)?.slice(0,4) ? Number((it.release_date || it.first_air_date).slice(0,4)) : undefined,
+        overview: it.overview || '',
+        poster_url: poster(it.poster_path),
+        tmdb_url: `https://www.themoviedb.org/${media}/${it.id}`,
+        popularity: it.popularity,
+        genres: it.genre_ids || [],
+      }));
+    }
+
+    // Fetch candidates
+    const lists = await Promise.all((mediaTypes as ('movie'|'tv')[]).map(discover));
+    let items = lists.flat();
+
+    // Enrich first N with runtime + providers (keeps TMDb calls reasonable)
+    const detail = async (item: any) => {
+      const det = await fetch(`${TMDB_BASE}/${item.media_type}/${item.id}?api_key=${apiKey()}`, { next: { revalidate: 86400 }});
+      const dj = det.ok ? await det.json() : {};
+      const run = item.media_type === 'movie' ? dj.runtime : (dj.episode_run_time?.[0] || undefined);
+
+      const prov = await fetch(`${TMDB_BASE}/${item.media_type}/${item.id}/watch/providers?api_key=${apiKey()}`, { next: { revalidate: 3600 }});
+      const pj = prov.ok ? await prov.json() : {};
+      const rinfo = pj.results?.[region];
+      const norm = (arr?: any[]) => arr?.map(p => p.provider_name) || [];
+
+      return {
+        ...item,
+        runtime: run,
+        providers: rinfo ? {
+          flatrate: norm(rinfo.flatrate),
+          ads: norm(rinfo.ads),
+          rent: norm(rinfo.rent),
+          buy: norm(rinfo.buy),
+        } : {},
+      };
+    };
+
+    const enriched = await Promise.all(items.slice(0, 40).map(detail)); // enrich top 40
+    return NextResponse.json({ items: enriched, total: enriched.length });
+  } catch (e:any) {
+    return NextResponse.json({ error: e.message || 'retrieve_failed' }, { status: 500 });
+  }
+}
+
+app/api/matchmaker/rerank/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+const MOOD_GENRE_WEIGHTS: Record<string, Record<number, number>> = {
+  cozy: {35:1.0,10749:0.6,16:0.3}, light:{35:0.8,12:0.6}, intense:{53:1.0,28:0.8,80:0.6},
+  smart:{18:0.6,9648:0.8,99:0.6,878:0.5}, gritty:{80:0.9,18:0.5,53:0.7},
+  comfort:{35:0.7,10751:0.6}, high_energy:{28:0.8,12:0.7}, low_energy:{18:0.6,10749:0.4},
+  multitask:{35:0.5,10751:0.4}, focus:{9648:0.7,18:0.6,99:0.6},
+};
+function gauss(x:number, mu:number, sigma:number){ const d=x-mu; return Math.exp(-(d*d)/(2*sigma*sigma)); }
+function score(item:any, moods:string[], timeWindow:number){
+  const timeFit = item.runtime ? gauss(item.runtime, timeWindow, Math.max(15, timeWindow*0.25)) : 0.8;
+  const mood = moods.reduce((acc,m) => {
+    const w = MOOD_GENRE_WEIGHTS[m] || {};
+    return acc + (item.genres?.reduce((s:number,g:number)=> s + (w[g]||0), 0) || 0);
+  }, 0);
+  const recency = item.year ? Math.max(0, Math.min(1, (item.year - 1990) / 35)) : 0.3;
+  const pop = item.popularity ? Math.min(1, item.popularity / 100) : 0.3;
+  return 0.35*timeFit + 0.25*(mood/2) + 0.20*recency + 0.20*pop;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { candidates = [], moods = [], timeWindow = 120 } = await req.json();
+    if (!Array.isArray(candidates)) return NextResponse.json({ error: 'candidates required' }, { status: 400 });
+    if (!moods.length) return NextResponse.json({ error: 'moods required' }, { status: 400 });
+    const items = candidates
+      .map((c:any) => ({ ...c, match_score: Math.round(score(c, moods, timeWindow)*100) }))
+      .sort((a:any,b:any) => (b.match_score||0) - (a.match_score||0))
+      .slice(0, 20);
+    return NextResponse.json({ items, total: items.length });
+  } catch (e:any) {
+    return NextResponse.json({ error: e.message || 'rerank_failed' }, { status: 500 });
+  }
+}
+
+app/api/matchmaker/explain/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(req: NextRequest) {
+  const { item, moods = [], timeWindow = 120 } = await req.json();
+  if (!item) return NextResponse.json({ error: 'item required' }, { status: 400 });
+
+  if (!process.env.OPENAI_API_KEY) {
+    const primary = moods[0] || 'entertaining';
+    return NextResponse.json({ reason: `Fits your ${primary} mood and ~${item.runtime || 'flex'} min window without spoilers.` });
+  }
+
+  try {
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const sys = 'Return ONE spoiler-safe reason under 20 words. Mention mood/length, never reveal twists.';
+    const user = `Title: ${item.title}\nMoods: ${moods.join(', ')}\nTime: ${timeWindow} min\nOverview: ${item.overview || ''}`;
+
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${process.env.OPENAI_API_KEY}`},
+      body: JSON.stringify({ model, messages: [ {role:'system',content:sys}, {role:'user',content:user} ], temperature:0.5, max_tokens:40 })
+    });
+    const j = await r.json();
+    return NextResponse.json({ reason: j.choices?.[0]?.message?.content?.trim() || 'Great mood and length fit.' });
+  } catch {
+    return NextResponse.json({ reason: 'Great mood and length fit.' });
+  }
+}
+
+
+(You can add providers and track routes similarly if you want them separate. The retrieve handler above already returns providers.)
+
+B) Client: enforce exactly 5 unique picks + show “where to watch”
+
+Add a small “seen” store + provider rendering:
+
+// ABOVE your component:
+const SEEN_KEY = 'matchmaker_seen_v1';
+const SEEN_TTL_MS = 1000*60*60*24*14; // 14 days
+type Seen = { id:number; ts:number };
+const loadSeen = ():Seen[] => {
+  try { return (JSON.parse(localStorage.getItem(SEEN_KEY) || '[]') as Seen[]).filter(e=>Date.now()-e.ts < SEEN_TTL_MS); } catch { return []; }
+};
+const saveSeen = (arr:Seen[]) => localStorage.setItem(SEEN_KEY, JSON.stringify(arr.slice(-80)));
+const markSeen = (ids:number[]) => saveSeen([ ...loadSeen(), ...ids.map(id=>({id,ts:Date.now()})) ]);
+const filterUnseen = (items:ContentItem[], take:number) => {
+  const seen = new Set(loadSeen().map(s=>s.id));
+  const unseen = items.filter(i=>!seen.has(i.id));
+  return (unseen.length >= take ? unseen : [...unseen, ...items.filter(i=>seen.has(i.id))]).slice(0, take);
+};
+
+// provider helpers (map names -> primary platform + deep search link)
+const NAME_MAP: Record<string, string> = {
+  'netflix':'netflix', 'hulu':'hulu', 'amazon prime video':'prime', 'prime video':'prime',
+  'disney+':'disney','disney plus':'disney','max':'max','hbo max':'max','peacock':'peacock',
+  'paramount+':'paramount','paramount plus':'paramount','apple tv+':'apple','apple tv plus':'apple',
+};
+const WATCH_URL: Record<string,(t:string)=>string> = {
+  netflix:t=>`https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
+  hulu:t=>`https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
+  prime:t=>`https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
+  disney:t=>`https://www.disneyplus.com/search?q=${encodeURIComponent(t)}`,
+  max:t=>`https://play.max.com/search?q=${encodeURIComponent(t)}`,
+  peacock:t=>`https://www.peacocktv.com/search?query=${encodeURIComponent(t)}`,
+  paramount:t=>`https://www.paramountplus.com/shows/?searchTerm=${encodeURIComponent(t)}`,
+  apple:t=>`https://tv.apple.com/us/search?term=${encodeURIComponent(t)}`,
+};
+const providerKeys = (item:ContentItem) => {
+  const names = [
+    ...(item.providers?.flatrate||[]), ...(item.providers?.ads||[]),
+    ...(item.providers?.rent||[]), ...(item.providers?.buy||[])
+  ].map(n=>n.toLowerCase());
+  const keys = new Set<string>();
+  for (const n of names) for (const k in NAME_MAP) if (n.includes(k)) keys.add(NAME_MAP[k]);
+  return Array.from(keys);
+};
+
+
+Update your generate handler to request, rerank, pick 5 unseen, then mark seen, and (optionally) explain those 5:
+
+const handleGenerateRecommendations = async () => {
+  setIsLoading(true); setError(null);
+  try {
+    const retrieve = await fetch('/api/matchmaker/retrieve', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        services: preferences.services,
+        timeWindow: preferences.timeWindow,
+        languages: [preferences.language],
+        mediaTypes: preferences.contentTypes,
+        count: 120
+      })
+    });
+    if (!retrieve.ok) throw new Error('Failed to retrieve content');
+    const { items:candidates } = await retrieve.json();
+
+    const rerank = await fetch('/api/matchmaker/rerank', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ candidates, moods: preferences.moods, timeWindow: preferences.timeWindow })
+    });
+    if (!rerank.ok) throw new Error('Failed to rank');
+    const { items:ranked } = await rerank.json();
+
+    const five = filterUnseen(ranked, 5);
+    markSeen(five.map(i => i.id));
+
+    // (optional) explain the 5
+    const withReasons = await Promise.all(five.map(async (item) => {
+      const r = await fetch('/api/matchmaker/explain', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ item, moods: preferences.moods, timeWindow: preferences.timeWindow })
+      });
+      if (r.ok) { const { reason } = await r.json(); return { ...item, explanation: reason }; }
+      return item;
+    }));
+
+    setRecommendations(withReasons);
+    setShowResults(true);
+  } catch (e:any) {
+    setError(e.message || 'Unexpected error');
+  } finally { setIsLoading(false); }
+};
+
+
+Render where to watch + a one-click open:
+
+{/* inside each result card, below overview/explanation */}
+<div className="flex flex-wrap gap-2 mb-3">
+  {providerKeys(item).map(p => (
+    <Badge key={p} variant="secondary" className="bg-black/60">{p}</Badge>
+  ))}
+</div>
+{providerKeys(item)[0] && (
+  <Button asChild className="w-full bg-purple-600 hover:bg-purple-700" size="sm">
+    <a href={WATCH_URL[providerKeys(item)[0]](item.title)} target="_blank" rel="noopener noreferrer">
+      Open on {providerKeys(item)[0]}
+      <ChevronRight className="ml-1 h-3 w-3" />
+    </a>
+  </Button>
+)}
+
+
+If you prefer the user’s own services to determine the primary button, choose the first overlap of providerKeys(item) with preferences.services.
+
+C) Tighten types + clean imports
+
+Make genres?: number[] on the frontend ContentItem to match the server.
+
+Remove unused imports (useEffect, Select, Input, Zap, Calendar, Users, Download, etc.) to shrink your bundle.
+
+D) Remove req.sessionID usage
+
+Replace your trackInteraction payload with a client-side UUID you store in localStorage (e.g., mm_sid_v1). Send it as sid in the body.
+
+E) Next.js head/metadata (if applicable)
+
+If this is an App Router page, replace react-helmet with:
+
+export const metadata = {
+  title: 'Movies & TV Shows Matchmaker - AI-Powered Recommendations | Advanta AI',
+  description: 'Find your perfect movie or TV show match…',
+  openGraph: { title: 'Movies & TV…', description: 'Discover personalized…', type: 'website' },
+};
+
+
+…and remove <Helmet> from the component.
+
+Quick validation checklist
+
+POST /api/matchmaker/retrieve returns items with runtime and providers.
+
+POST /api/matchmaker/rerank returns ≥20 sorted candidates.
+
+Client picks exactly 5, deduped vs 14-day local history.
+
+Cards show provider chips and an Open on {platform} button.
+
+TMDb attribution present in the footer (required by ToS).

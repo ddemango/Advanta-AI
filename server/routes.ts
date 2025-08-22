@@ -5434,32 +5434,7 @@ Format the resume professionally with clear sections and consistent formatting.`
   }
 
   // ===== MOVIE RECOMMENDATIONS API =====
-
-  // Movie & TV Matchmaker API endpoints
-  app.post('/api/matchmaker/retrieve', async (req: Request, res: Response) => {
-    const { retrieveContent } = await import('./matchmaker-routes');
-    return retrieveContent(req, res);
-  });
-
-  app.post('/api/matchmaker/rerank', async (req: Request, res: Response) => {
-    const { rerankContent } = await import('./matchmaker-routes');
-    return rerankContent(req, res);
-  });
-
-  app.post('/api/matchmaker/explain', async (req: Request, res: Response) => {
-    const { explainRecommendation } = await import('./matchmaker-routes');
-    return explainRecommendation(req, res);
-  });
-
-  app.post('/api/matchmaker/providers', async (req: Request, res: Response) => {
-    const { fetchProviders } = await import('./matchmaker-routes');
-    return fetchProviders(req, res);
-  });
-
-  app.post('/api/matchmaker/track', async (req: Request, res: Response) => {
-    const { trackInteraction } = await import('./matchmaker-routes');
-    return trackInteraction(req, res);
-  });
+  // Removed old routes - using new API structure below
 
   // ATS Resume Tailoring API endpoint
   app.post('/api/ats/analyze', async (req: Request, res: Response) => {
@@ -6479,6 +6454,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Trending content generator routes
   app.use('/api', trendingContentRoutes);
+
+  // Movie & TV Matchmaker API routes
+  const retrieveModule = await import('./api/matchmaker/retrieve');
+  const rerankModule = await import('./api/matchmaker/rerank'); 
+  const explainModule = await import('./api/matchmaker/explain');
+  
+  app.post('/api/matchmaker/retrieve', (req, res) => retrieveModule.POST(req, res));
+  app.post('/api/matchmaker/rerank', (req, res) => rerankModule.POST(req, res));
+  app.post('/api/matchmaker/explain', (req, res) => explainModule.POST(req, res));
 
   // AI Chatbot Processing Endpoint
   app.post('/api/chatbot/process', async (req, res) => {

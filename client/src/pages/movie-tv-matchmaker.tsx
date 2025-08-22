@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { NewHeader } from '@/components/redesign/NewHeader';
@@ -13,19 +11,82 @@ import {
   Film, 
   Tv, 
   Clock, 
-  Search, 
   Star, 
   Play,
   Heart,
-  Zap,
   Sparkles,
-  ChevronRight,
-  Filter,
-  Calendar,
-  Users,
-  Download
+  ExternalLink
 } from 'lucide-react';
 import { fadeIn, fadeInUp, staggerContainer } from '@/lib/animations';
+
+// Storage for tracking seen content
+const SEEN_KEY = 'matchmaker_seen_v1';
+const SEEN_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
+type Seen = { id: number; ts: number };
+const loadSeen = (): Seen[] => {
+  try {
+    return (JSON.parse(localStorage.getItem(SEEN_KEY) || '[]') as Seen[]).filter(
+      (e) => Date.now() - e.ts < SEEN_TTL_MS
+    );
+  } catch {
+    return [];
+  }
+};
+const saveSeen = (arr: Seen[]) => localStorage.setItem(SEEN_KEY, JSON.stringify(arr.slice(-80)));
+const markSeen = (ids: number[]) =>
+  saveSeen([...loadSeen(), ...ids.map((id) => ({ id, ts: Date.now() }))]);
+const filterUnseen = (items: ContentItem[], take: number) => {
+  const seen = new Set(loadSeen().map((s) => s.id));
+  const unseen = items.filter((i) => !seen.has(i.id));
+  return (unseen.length >= take
+    ? unseen
+    : [...unseen, ...items.filter((i) => seen.has(i.id))]
+  ).slice(0, take);
+};
+
+// Provider helpers (map names -> primary platform + deep search link)
+const NAME_MAP: Record<string, string> = {
+  netflix: 'netflix',
+  hulu: 'hulu',
+  'amazon prime video': 'prime',
+  'prime video': 'prime',
+  'disney+': 'disney',
+  'disney plus': 'disney',
+  max: 'max',
+  'hbo max': 'max',
+  peacock: 'peacock',
+  'paramount+': 'paramount',
+  'paramount plus': 'paramount',
+  'apple tv+': 'apple',
+  'apple tv plus': 'apple',
+};
+
+const WATCH_URL: Record<string, (t: string) => string> = {
+  netflix: (t) => `https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
+  hulu: (t) => `https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
+  prime: (t) => `https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
+  disney: (t) => `https://www.disneyplus.com/search?q=${encodeURIComponent(t)}`,
+  max: (t) => `https://play.max.com/search?q=${encodeURIComponent(t)}`,
+  peacock: (t) => `https://www.peacocktv.com/search?query=${encodeURIComponent(t)}`,
+  paramount: (t) => `https://www.paramountplus.com/shows/?searchTerm=${encodeURIComponent(t)}`,
+  apple: (t) => `https://tv.apple.com/us/search?term=${encodeURIComponent(t)}`,
+};
+
+const providerKeys = (item: ContentItem) => {
+  const names = [
+    ...(item.providers?.flatrate || []),
+    ...(item.providers?.ads || []),
+    ...(item.providers?.rent || []),
+    ...(item.providers?.buy || []),
+  ].map((n) => n.toLowerCase());
+  const keys = new Set<string>();
+  for (const n of names) {
+    for (const k in NAME_MAP) {
+      if (n.includes(k)) keys.add(NAME_MAP[k]);
+    }
+  }
+  return Array.from(keys);
+};
 
 // Service options mapping
 const STREAMING_SERVICES = [
@@ -73,7 +134,7 @@ interface ContentItem {
     buy?: string[];
   };
   popularity?: number;
-  genres?: string[];
+  genres?: number[];
   match_score?: number;
   explanation?: string;
 }
@@ -115,9 +176,8 @@ export default function MovieTVMatchmaker() {
           services: preferences.services,
           timeWindow: preferences.timeWindow,
           languages: [preferences.language],
-          ageRatings: preferences.ageRating,
           mediaTypes: preferences.contentTypes,
-          count: 50
+          count: 120
         })
       });
 
@@ -125,14 +185,14 @@ export default function MovieTVMatchmaker() {
         throw new Error('Failed to retrieve content suggestions');
       }
 
-      const candidates = await retrieveResponse.json();
+      const { items: candidates } = await retrieveResponse.json();
 
       // Then rerank based on mood preferences
       const rerankResponse = await fetch('/api/matchmaker/rerank', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          candidates: candidates.items || [],
+          candidates,
           moods: preferences.moods,
           timeWindow: preferences.timeWindow
         })
@@ -142,11 +202,15 @@ export default function MovieTVMatchmaker() {
         throw new Error('Failed to rank recommendations');
       }
 
-      const rankedResults = await rerankResponse.json();
+      const { items: ranked } = await rerankResponse.json();
       
-      // Get explanations for top results
+      // Filter to exactly 5 unique picks (never seen before when possible)
+      const five = filterUnseen(ranked, 5);
+      markSeen(five.map((i) => i.id));
+
+      // Get explanations for the 5 selected items
       const resultsWithExplanations = await Promise.all(
-        rankedResults.items.slice(0, 8).map(async (item: ContentItem) => {
+        five.map(async (item: ContentItem) => {
           try {
             const explainResponse = await fetch('/api/matchmaker/explain', {
               method: 'POST',
@@ -403,7 +467,7 @@ export default function MovieTVMatchmaker() {
                 Adjust Preferences
               </Button>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               {recommendations.map((item, index) => (
                 <motion.div
                   key={item.id}
@@ -452,6 +516,44 @@ export default function MovieTVMatchmaker() {
                       {item.explanation && (
                         <p className="text-purple-300 text-xs italic mb-3">"{item.explanation}"</p>
                       )}
+                      
+                      {/* Streaming Provider Buttons */}
+                      {(() => {
+                        const availableProviders = providerKeys(item);
+                        return availableProviders.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-xs text-neutral-500 mb-2">Available on:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {availableProviders.slice(0, 2).map((provider) => {
+                                const service = STREAMING_SERVICES.find(s => s.key === provider);
+                                const watchUrl = WATCH_URL[provider]?.(item.title);
+                                
+                                return (
+                                  <Button
+                                    key={provider}
+                                    variant="outline"
+                                    size="sm"
+                                    asChild
+                                    className="text-xs h-7 px-2 border-white/20 hover:border-purple-400"
+                                  >
+                                    <a
+                                      href={watchUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1"
+                                    >
+                                      <div className={`w-2 h-2 rounded-full ${service?.color || 'bg-neutral-500'}`} />
+                                      {service?.name || provider}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      
                       {item.tmdb_url && (
                         <Button 
                           asChild
@@ -460,7 +562,7 @@ export default function MovieTVMatchmaker() {
                         >
                           <a href={item.tmdb_url} target="_blank" rel="noopener noreferrer">
                             View Details
-                            <ChevronRight className="ml-1 h-3 w-3" />
+                            <ExternalLink className="ml-1 h-3 w-3" />
                           </a>
                         </Button>
                       )}
