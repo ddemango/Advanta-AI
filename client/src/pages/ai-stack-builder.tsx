@@ -511,8 +511,20 @@ export default function AIStackBuilderPage() {
     }
     setSending(true);
     try {
-      // For demo purposes, we'll simulate sending an email
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch("/api/send-stack", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: emailInfo.name,
+          business: emailInfo.business,
+          email: emailInfo.email,
+          plan,
+          answers,
+          crm: { provider: "None" }
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to send");
       toast({ title: "Sent!", description: "Your personalized AI stack is on its way." });
     } catch (err: any) {
       toast({ title: "Email failed", description: err?.message || String(err), variant: "destructive" });

@@ -30,6 +30,7 @@ import { setupAuth, requireAuth } from "./auth";
 import { insertBlogPostSchema, insertResourceSchema, insertWorkflowSchema, workflows, workflowLogs, newsletterSubscribers, InsertNewsletterSubscriber, clientSuiteWaitlist, marketplaceWaitlist, tenants, themes, pages } from "@shared/schema";
 import { redis, deployQueue } from "./queue-service";
 import { sendWelcomeEmail, sendTestEmail, sendWaitlistWelcomeEmail, sendContactConfirmationEmail, sendQuoteRequestConfirmationEmail, sendAdminNotificationEmail } from "./welcome-email-service";
+import { sendStack } from "./api/send-stack";
 import { eq, sql, desc } from "drizzle-orm";
 import { db } from "./db";
 import { generateAndSaveBlogPost, generateMultipleBlogPosts } from "./auto-blog-generator";
@@ -6946,6 +6947,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Competitor Intel Scanner endpoints
   const competitorIntelModule = await import('./competitor-intel');
   app.use('/api/competitor-intel', competitorIntelModule.default);
+  
+  // AI Stack Builder API
+  app.all('/api/send-stack', sendStack);
   
   // Trending content generator routes
   app.use('/api', trendingContentRoutes);
