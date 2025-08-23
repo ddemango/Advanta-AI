@@ -1,0 +1,188 @@
+Frontend is calling /api/scan but there’s no server route (404/Network error).
+
+The route exists but throws 500 (no input validation, fetch blocked, or timeout).
+
+You’re trying to fetch competitor HTML from the browser (CORS blocks). Must fetch server-side.
+
+Input like barstool.com isn’t normalized to https://barstool.com.
+
+Method mismatch (frontend POST, backend GET).
+
+Below is a tight, drop-in fix for Replit (Node) that gives you a working server endpoint, error messages, and UI wiring. Copy/paste and you’ll see results immediately.
+
+1) Backend (Express) — /api/scan
+
+Create server.js (or add this to your existing Express server). This runs server-side fetches so CORS won’t block you.
+
+// server.js
+const express = require('express');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+const cheerio = require('cheerio');
+
+const app = express();
+app.use(bodyParser.json({ limit: '1mb' }));
+
+// Health check
+app.get('/api/health', (_, res) => res.json({ ok: true }));
+
+app.post('/api/scan', async (req, res) => {
+  try {
+    const raw = String(req.body?.url || '').trim();
+    if (!raw) return res.status(400).json({ error: 'Missing url' });
+
+    const url = normalizeUrl(raw);
+
+    const start = Date.now();
+    const resp = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+          '(KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'accept-language': 'en-US,en;q=0.9',
+      },
+    });
+
+    const html = await resp.text();
+    const ms = Date.now() - start;
+    const $ = cheerio.load(html);
+
+    // Minimal parse so you can confirm it works
+    const title = $('title').first().text().trim();
+    const h1 = $('h1').length;
+    const metaDescription = $('meta[name="description"]').attr('content') || '';
+    const ogCount = $('meta[property^="og:"]').length;
+    const twitterCount = $('meta[name^="twitter:"]').length;
+
+    res.json({
+      input: { url },
+      response: { status: resp.status, elapsedMs: ms, server: resp.headers.get('server') },
+      seo: {
+        title,
+        metaDescription,
+        headings: { h1 },
+        openGraphCount: ogCount,
+        twitterTagCount: twitterCount,
+      },
+    });
+  } catch (e) {
+    console.error('SCAN_ERROR', e);
+    res.status(500).json({ error: e.message || 'Scan failed' });
+  }
+});
+
+function normalizeUrl(input) {
+  try { return new URL(input).toString(); }
+  catch { return new URL(`https://${input}`).toString(); }
+}
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('Server listening on', PORT));
+
+
+package.json (scripts):
+
+{
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cheerio": "^1.0.0-rc.12",
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
+  }
+}
+
+
+On Replit: make sure your repl runs npm start and exposes the port.
+Test quickly: open /api/health → you should see { ok: true }.
+
+2) Frontend wiring (React)
+
+Make sure your button calls this POST and shows errors. Replace your current handler with:
+
+async function onScan() {
+  setLoading(true);
+  setError(null);
+  setData(null);
+
+  try {
+    const resp = await fetch('/api/scan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: inputUrl }), // e.g. "barstool.com"
+    });
+
+    const json = await resp.json();
+    if (!resp.ok) throw new Error(json.error || `HTTP ${resp.status}`);
+
+    setData(json); // render your cards from this object
+  } catch (err) {
+    setError(err.message || 'Failed to scan');
+  } finally {
+    setLoading(false);
+  }
+}
+
+
+And in your JSX, surface the error so you’re not staring at a blank page:
+
+{error && <div className="text-red-600 text-sm mt-2">Error: {error}</div>}
+
+3) Quick triage checklist
+
+Open DevTools → Network tab → click Scan → check /api/scan:
+
+404 ⇒ route not mounted (server didn’t start or path mismatch).
+
+405 ⇒ method mismatch (you did GET but server expects POST).
+
+CORS error in console ⇒ you were calling competitor URL directly from the browser (don’t; use server route).
+
+500 ⇒ check Replit console logs (missing dependency, parse error, or site blocked your user-agent).
+
+Hit /api/health in the browser to confirm the server is up.
+
+Try with a simpler site (https://example.com) to confirm the pipeline.
+
+4) Why your current scan likely “does nothing”
+
+If you were fetching barstool.com from the browser, CORS will block you and React state never receives data → nothing renders.
+
+If you posted to /api/scan but your backend isn’t there (static-only), the call returns 404.
+
+If your backend scanned with a default Node UA, some sites return 403. The code above sets a Chrome UA and follows redirects.
+
+5) Next.js version (if you’re not on Express)
+
+If you are using Next.js App Router on Replit, swap Express for a route handler:
+
+// app/api/scan/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import * as cheerio from 'cheerio';
+
+export async function POST(req: NextRequest) {
+  try {
+    const { url: raw } = await req.json();
+    if (!raw) return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    const url = normalize(raw);
+
+    const res = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119 Safari/537.36'
+      },
+      cache: 'no-store'
+    });
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const title = $('title').first().text().trim();
+    const h1 = $('h1').length;
+    return NextResponse.json({ input: { url }, seo: { title, headings: { h1 } } });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || 'Scan failed' }, { status: 500 });
+  }
+}
+function normalize(s: string) { try { return new URL(s).toString(); } catch { return `https://${s}`
