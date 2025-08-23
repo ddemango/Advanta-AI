@@ -1,0 +1,706 @@
+here’s a “drop-in” upgrade that adds your five advanced features to /competitor-intel-scanner with production-ready code. It assumes Next.js 14 (App Router) + TypeScript + Tailwind, and uses optional enrichments behind env flags so you can toggle providers on/off.
+
+0) Install deps
+npm i cheerio recharts zod
+# optional enrichments (only if you’ll use them)
+npm i node-fetch               # for server-only fetch helpers
+npm i @upstash/redis           # for history snapshots (serverless Redis)
+
+1) Types (shared)
+
+types/report.ts
+
+export type Pillar = 'Traffic' | 'Performance' | 'SEO' | 'Pixels' | 'Tech' | 'Sitemap' | 'Messaging' | 'Social';
+
+export type Scorecard = {
+  total: number;                         // 0–100
+  pillars: Record<Pillar, number>;       // each 0–100
+};
+
+export type Snapshot = {
+  ts: string;            // ISO date
+  trancoRank?: number;   // smaller is better
+  LCP?: number;          // s
+  INP?: number;          // ms
+  CLS?: number;          // unitless
+};
+
+export type Report = {
+  input: { url: string; domain: string };
+  response: { status: number; elapsedMs: number; server?: string | null; xPoweredBy?: string | null };
+  traffic: { available: boolean; trancoRank?: number; source?: string };
+  performance: { weightKB?: number; reqImages?: number; reqScripts?: number; LCP?: number; INP?: number; CLS?: number; passed?: boolean };
+  seo: {
+    title: string; titleLength: number; metaDescription: string; metaDescriptionLength: number;
+    canonical?: string | null; robotsMeta?: string | null;
+    openGraphCount: number; twitterTagCount: number; jsonLdBlocks: number;
+    headings: { h1: number; h2: number; h3: number; h4: number; h5: number; h6: number };
+    wordCount?: number;
+    links: { internal: number; external: number };
+  };
+  tech: { cms?: string | null; frameworks: string[]; evidence: string[]; thirdParties: string[] };
+  tracking: { analytics: string[]; ads: string[]; tagManagers: string[]; socialPixels: string[]; consentMode?: boolean };
+  robots: { robotsTxt: { present: boolean; disallowCount: number; sitemaps: string[] }; sitemaps: { url: string; urlCount: number }[] };
+  messaging: { hero?: { headline?: string; subhead?: string; primaryCTA?: string }; socialProof?: string[]; risks?: string[] };
+  social: { links: string[] };
+  score: Scorecard;
+  generatedAt: string;
+};
+
+2) Environment
+
+.env.local
+
+# Optional providers — leave blank to disable
+TRONCO_API_BASE=https://tranco-list.eu/api
+TRONCO_API_KEY=
+ALLOW_RDAP=true
+
+# Wappalyzer (https://www.wappalyzer.com/apps)
+WAPPALYZER_API_BASE=https://api.wappalyzer.com/v2
+WAPPALYZER_API_KEY=
+
+# BuiltWith (https://api.builtwith.com/)
+BUILTWITH_API_BASE=https://api.builtwith.com
+BUILTWITH_API_KEY=
+
+# History snapshots (Upstash Redis — or swap for your DB)
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
+# Watchlist for daily cron (comma-separated)
+WATCHLIST=advanta-ai.com,example.com
+
+3) API — scan (extend your existing route)
+
+app/api/scan/route.ts (additions only; keep your existing parsing, then merge these helpers)
+
+import { NextRequest, NextResponse } from 'next/server';
+import * as cheerio from 'cheerio';
+import { Report, Scorecard, Snapshot } from '@/types/report';
+import { kvPushSnapshot, kvGetSnapshots } from '@/lib/history';
+import { enrichWappalyzer, enrichBuiltWith } from '@/lib/tech-enrichment';
+import { computeScore } from '@/lib/scoring';
+import { fetchPage, timeLimit, parseSEO, detectTechAndTrackers, parseRobotsAndSitemaps, estimatePerf } from '@/lib/scan-core';
+
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
+  try {
+    const { url: raw } = await req.json();
+    if (!raw) return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+
+    const url = normalizeUrl(raw);
+    const domain = url.hostname.replace(/^www\./i, '');
+
+    // 1) Fetch HTML
+    const { html, res, ms } = await timeLimit(fetchPage(url.toString()), 10000);
+    const $ = cheerio.load(html);
+
+    // 2) Core analyses
+    const seo = parseSEO($, html);
+    const { tech, tracking } = detectTechAndTrackers($, html);
+    const robots = await parseRobotsAndSitemaps(url);
+
+    // 3) Optional: Traffic & Core Web Vitals (PageSpeed optional — leave blank if not using)
+    const traffic = await getTrancoRank(domain);      // behind env key
+    const performance = estimatePerf(html, $);        // weight + request counts (no PSI)
+    // If you add PSI/CrUX, set performance.{LCP, INP, CLS, passed}
+
+    // 4) Optional: Tech enrichment
+    const techExtra = await Promise.all([
+      enrichWappalyzer(url.toString()),
+      enrichBuiltWith(url.toString())
+    ]);
+    const thirdPartyMerged = Array.from(new Set([
+      ...tech.thirdParties,
+      ...techExtra.flat()
+    ]));
+
+    const fullTech = { ...tech, thirdParties: thirdPartyMerged };
+
+    // 5) Messaging & Social heuristics
+    const messaging = extractMessaging($);
+    const social = extractSocial($);
+
+    // 6) Score
+    const score: Scorecard = computeScore({ traffic, performance, seo, tracking, tech: fullTech, robots, messaging, social });
+
+    const report: Report = {
+      input: { url: url.toString(), domain },
+      response: { status: res.status, elapsedMs: ms, server: res.headers.get('server'), xPoweredBy: res.headers.get('x-powered-by') },
+      traffic, performance, seo, tech: fullTech, tracking, robots, messaging, social,
+      score,
+      generatedAt: new Date().toISOString()
+    };
+
+    // 7) History snapshot (for sparklines)
+    await kvPushSnapshot(domain, {
+      ts: report.generatedAt,
+      trancoRank: report.traffic.trancoRank,
+      LCP: report.performance.LCP,
+      INP: report.performance.INP,
+      CLS: report.performance.CLS,
+    });
+
+    return NextResponse.json(report, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Scan failed' }, { status: 500 });
+  }
+}
+
+/** helpers */
+function normalizeUrl(input: string) {
+  try { return new URL(input); } catch { return new URL(`https://${input}`); }
+}
+
+async function getTrancoRank(domain: string) {
+  const base = process.env.TRONCO_API_BASE;
+  const key = process.env.TRONCO_API_KEY;
+  if (!base || !key) return { available: false };
+  try {
+    const res = await fetch(`${base}/ranks/${domain}`, {
+      headers: { Authorization: `Bearer ${key}` }, cache: 'no-store'
+    });
+    if (!res.ok) return { available: false };
+    const { rank } = await res.json();
+    return { available: true, trancoRank: rank, source: 'Tranco' };
+  } catch { return { available: false }; }
+}
+
+/** crude heuristics for messaging/social */
+function extractMessaging($: cheerio.CheerioAPI) {
+  const h1 = $('h1').first().text().trim() || undefined;
+  const sub = $('h1').nextAll('p').first().text().trim() || $('p').first().text().trim() || undefined;
+  const cta = $('a,button').filter((_, el) => /get started|demo|trial|contact|book/i.test($(el).text())).first().text().trim() || undefined;
+  const proof: string[] = [];
+  $('[class*="logo"], [class*="badge"], img[alt*="trusted"]').each((_, el) => {
+    const t = $(el).attr('alt') || $(el).text();
+    if (t) proof.push(t.trim());
+  });
+  return { hero: { headline: h1, subhead: sub, primaryCTA: cta }, socialProof: proof.slice(0, 6), risks: [] };
+}
+
+function extractSocial($: cheerio.CheerioAPI) {
+  const links = new Set<string>();
+  $('a[href]').each((_, el) => {
+    const href = ($(el).attr('href') || '').trim();
+    if (/facebook\.com|twitter\.com|x\.com|tiktok\.com|instagram\.com|youtube\.com|linkedin\.com/i.test(href)) {
+      links.add(href);
+    }
+  });
+  return { links: Array.from(links) };
+}
+
+
+Core scan helpers
+
+lib/scan-core.ts
+
+import * as cheerio from 'cheerio';
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119 Safari/537.36';
+
+export async function fetchPage(url: string) {
+  const start = Date.now();
+  const res = await fetch(url, { headers: { 'user-agent': UA }, cache: 'no-store', redirect: 'follow' });
+  const html = await res.text();
+  return { html, res, ms: Date.now() - start };
+}
+
+export function timeLimit<T>(p: Promise<T>, ms = 10000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), ms);
+    p.then(v => { clearTimeout(t); resolve(v); }).catch(e => { clearTimeout(t); reject(e); });
+  });
+}
+
+export function parseSEO($: cheerio.CheerioAPI, html: string) {
+  const title = $('title').first().text().trim() || '';
+  const metaDescription = $('meta[name="description"]').attr('content')?.trim() || '';
+  const canonical = $('link[rel="canonical"]').attr('href') || null;
+  const robotsMeta = $('meta[name="robots"]').attr('content') || null;
+  const og = $('meta[property^="og:"]').length;
+  const tw = $('meta[name^="twitter:"]').length;
+  const jsonLdBlocks = $('script[type="application/ld+json"]').length;
+  const headings = { h1: $('h1').length, h2: $('h2').length, h3: $('h3').length, h4: $('h4').length, h5: $('h5').length, h6: $('h6').length };
+  const text = $('body').text().replace(/\s+/g, ' ');
+  const wordCount = text ? text.trim().split(/\s+/).length : 0;
+  const imgs = $('img').toArray();
+  const withAlt = imgs.filter(i => !!($(i).attr('alt') || '').trim()).length;
+  const links = $('a[href]').toArray().map(e => ($(e).attr('href') || '').trim());
+  const internal = links.filter(h => h.startsWith('/') || h.startsWith('#') || (!/^https?:\/\//i.test(h))).length;
+  const external = links.filter(h => /^https?:\/\//i.test(h)).length;
+
+  return {
+    title, titleLength: title.length,
+    metaDescription, metaDescriptionLength: metaDescription.length,
+    canonical, robotsMeta,
+    openGraphCount: og, twitterTagCount: tw, jsonLdBlocks,
+    headings, wordCount,
+    images: { total: imgs.length, withAlt, withoutAlt: imgs.length - withAlt },
+    links: { internal, external },
+  };
+}
+
+export function detectTechAndTrackers($: cheerio.CheerioAPI, html: string) {
+  const evidence: string[] = [];
+  let cms: string | null = null;
+  const frameworks: string[] = [];
+  const thirdParties: string[] = [];
+
+  if (html.includes('wp-content') || html.includes('wp-json')) { cms = 'WordPress'; evidence.push('wp-content'); }
+  if (html.includes('cdn.shopify.com')) { cms = 'Shopify'; evidence.push('cdn.shopify.com'); }
+  if (html.includes('__NEXT_DATA__') || $('script#__NEXT_DATA__').length) { frameworks.push('Next.js'); evidence.push('__NEXT_DATA__'); }
+  if (html.includes('window.__NUXT__')) { frameworks.push('Nuxt'); evidence.push('__NUXT__'); }
+  if (html.includes('data-reactroot') || html.includes('React.createElement')) { frameworks.push('React'); evidence.push('React'); }
+
+  const srcs: string[] = []; const inlines: string[] = [];
+  $('script').each((_, el) => {
+    const src = $(el).attr('src'); if (src) srcs.push(src); else inlines.push($(el).text() || '');
+  });
+  const test = (re: RegExp) => srcs.some(s => re.test(s)) || inlines.some(c => re.test(c));
+
+  const analytics: string[] = [];
+  const ads: string[] = [];
+  const tagManagers: string[] = [];
+  const socialPixels: string[] = [];
+
+  if (test(/googletagmanager\.com\/gtag\/js/i)) analytics.push('GA4 (gtag.js)');
+  if (test(/www\.google-analytics\.com\/analytics\.js/i)) analytics.push('Universal Analytics');
+  if (test(/static\.hotjar\.com|hotjar\.com\/c\//i)) analytics.push('Hotjar');
+  if (test(/cdn\.segment\.com\/analytics\.js/i)) analytics.push('Segment');
+  if (test(/mixpanel\.com/i)) analytics.push('Mixpanel');
+
+  if (test(/doubleclick\.net|googlesyndication\.com|googletagservices\.com/i)) ads.push('Google Ads / DoubleClick');
+  if (test(/taboola\.com|outbrain\.com/i)) ads.push('Native Ads (Taboola/Outbrain)');
+  if (test(/snap\.sc\/static\/pixie/i)) socialPixels.push('Snap Pixel');
+  if (test(/connect\.facebook\.net\/.+\/fbevents\.js/i)) socialPixels.push('Meta Pixel');
+  if (test(/ads-twitter\.com\/uwt\.js/i)) socialPixels.push('Twitter Pixel');
+  if (test(/tiktok\.com\/i18n\/pixel/i)) socialPixels.push('TikTok Pixel');
+
+  if (test(/gtm\.js|googletagmanager\.com/i)) tagManagers.push('Google Tag Manager');
+
+  return { tech: { cms, frameworks, evidence, thirdParties }, tracking: { analytics, ads, tagManagers, socialPixels } };
+}
+
+export async function parseRobotsAndSitemaps(url: URL) {
+  const robotsUrl = `${url.protocol}//${url.host}/robots.txt`;
+  try {
+    const res = await fetch(robotsUrl, { cache: 'no-store' });
+    if (!res.ok) return { robotsTxt: { present: false, disallowCount: 0, sitemaps: [] }, sitemaps: [] };
+    const txt = await res.text();
+    const lines = txt.split('\n');
+    const disallowCount = lines.filter(l => /^disallow:/i.test(l)).length;
+    const sitemaps = lines.filter(l => /^sitemap:/i.test(l)).map(l => l.split(':').slice(1).join(':').trim()).filter(Boolean);
+
+    const sitemapSummaries: { url: string; urlCount: number }[] = [];
+    for (const sm of sitemaps.slice(0, 3)) {
+      try {
+        const xml = await (await fetch(sm, { cache: 'no-store' })).text();
+        const count = (xml.match(/<loc>/g) || []).length;
+        sitemapSummaries.push({ url: sm, urlCount: count });
+      } catch {}
+    }
+    return { robotsTxt: { present: true, disallowCount, sitemaps }, sitemaps: sitemapSummaries };
+  } catch { return { robotsTxt: { present: false, disallowCount: 0, sitemaps: [] }, sitemaps: [] }; }
+}
+
+export function estimatePerf(html: string, $: cheerio.CheerioAPI) {
+  const weightKB = Math.round(Buffer.byteLength(html, 'utf8') / 1024);
+  const reqImages = $('img').length;
+  const reqScripts = $('script[src]').length + $('link[rel="stylesheet"]').length;
+  return { weightKB, reqImages, reqScripts, passed: undefined, LCP: undefined, INP: undefined, CLS: undefined };
+}
+
+
+Scoring
+
+lib/scoring.ts
+
+import { Scorecard } from '@/types/report';
+
+export function computeScore(parts: any): Scorecard {
+  const p: Record<string, number> = { Traffic: 0, Performance: 0, SEO: 0, Pixels: 0, Tech: 0, Sitemap: 0, Messaging: 0, Social: 0 };
+
+  // Traffic (Tranco present + relative rank buckets)
+  p.Traffic = !parts.traffic?.available ? 30 : clamp(100 - Math.log10((parts.traffic.trancoRank || 1)) * 20, 40, 95);
+
+  // Performance (weight & CWV — placeholders if no PSI)
+  const w = parts.performance?.weightKB || 0;
+  let perf = 70;
+  if (w > 1500) perf = 40; else if (w > 800) perf = 55; else if (w > 400) perf = 65; else perf = 80;
+  if (parts.performance?.passed === true) perf = 90;
+  p.Performance = clamp(perf, 0, 100);
+
+  // SEO basics
+  let seo = 0;
+  if (len(parts.seo?.titleLength, 45, 65)) seo += 20;
+  if (len(parts.seo?.metaDescriptionLength, 120, 170)) seo += 20;
+  if (parts.seo?.headings?.h1 === 1) seo += 15;
+  if (parts.seo?.jsonLdBlocks > 0) seo += 15;
+  if (parts.seo?.openGraphCount > 0) seo += 10;
+  if ((parts.seo?.images?.withoutAlt || 0) === 0) seo += 10;
+  if (parts.seo?.canonical) seo += 10;
+  p.SEO = clamp(seo, 0, 100);
+
+  // Pixels/Ads
+  const pxCount = [
+    ...(parts.tracking?.analytics || []),
+    ...(parts.tracking?.tagManagers || []),
+    ...(parts.tracking?.socialPixels || [])
+  ].length;
+  p.Pixels = clamp(pxCount * 12, 20, 100);
+
+  // Tech
+  const techScore = (parts.tech?.cms ? 20 : 0) + (parts.tech?.frameworks?.length ? 20 : 0) + (parts.tech?.thirdParties?.length ? 60 : 20);
+  p.Tech = clamp(techScore, 0, 100);
+
+  // Sitemap/Pages
+  const sm = parts.robots?.sitemaps?.length || 0;
+  const robots = parts.robots?.robotsTxt?.present ? 30 : 0;
+  p.Sitemap = clamp(robots + sm * 35, 0, 100);
+
+  // Messaging
+  let msg = 0;
+  if (parts.messaging?.hero?.headline) msg += 35;
+  if (parts.messaging?.hero?.primaryCTA) msg += 35;
+  if ((parts.messaging?.socialProof || []).length) msg += 30;
+  p.Messaging = clamp(msg, 0, 100);
+
+  // Social
+  const socialLinks = (parts.social?.links || []).length;
+  p.Social = clamp(socialLinks * 20, 0, 100);
+
+  // Weighted total
+  const total = Math.round(
+    p.Traffic * 0.15 + p.Performance * 0.15 + p.SEO * 0.25 + p.Pixels * 0.20 + p.Tech * 0.05 + p.Sitemap * 0.05 + p.Messaging * 0.10 + p.Social * 0.05
+  );
+
+  return { total, pillars: p as any };
+}
+
+function clamp(n: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, n)); }
+function len(n = 0, lo: number, hi: number) { return n >= lo && n <= hi; }
+
+
+Tech enrichment (Wappalyzer + BuiltWith)
+
+lib/tech-enrichment.ts
+
+export async function enrichWappalyzer(url: string): Promise<string[]> {
+  const base = process.env.WAPPALYZER_API_BASE;
+  const key = process.env.WAPPALYZER_API_KEY;
+  if (!base || !key) return [];
+  try {
+    const res = await fetch(`${base}/lookup/?urls=${encodeURIComponent(url)}`, {
+      headers: { 'x-api-key': key }, cache: 'no-store'
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    // shape varies; flatten names
+    const names = new Set<string>();
+    Object.values<any>(data).forEach((arr) => (arr || []).forEach((app: any) => names.add(app.name)));
+    return Array.from(names);
+  } catch { return []; }
+}
+
+export async function enrichBuiltWith(url: string): Promise<string[]> {
+  const base = process.env.BUILTWITH_API_BASE;
+  const key = process.env.BUILTWITH_API_KEY;
+  if (!base || !key) return [];
+  try {
+    const res = await fetch(`${base}/v20/api.json?KEY=${key}&LOOKUP=${encodeURIComponent(url)}`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const names = new Set<string>();
+    (data?.Results || []).forEach((r: any) => (r?.Result?.Paths || []).forEach((p: any) => (p?.Technologies || []).forEach((t: any) => names.add(t.Name))));
+    return Array.from(names);
+  } catch { return []; }
+}
+
+
+History snapshots (Redis)
+
+lib/history.ts
+
+import { Redis } from '@upstash/redis';
+import { Snapshot } from '@/types/report';
+
+const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! })
+  : null;
+
+const MAX = 60; // keep last 60 days
+
+export async function kvPushSnapshot(domain: string, snap: Snapshot) {
+  if (!redis) return;
+  const key = `intel:${domain}:snaps`;
+  try {
+    const arr = await redis.get<Snapshot[]>(key) || [];
+    arr.push(snap);
+    while (arr.length > MAX) arr.shift();
+    await redis.set(key, arr);
+  } catch {}
+}
+
+export async function kvGetSnapshots(domain: string): Promise<Snapshot[]> {
+  if (!redis) return [];
+  const key = `intel:${domain}:snaps`;
+  try { return (await redis.get<Snapshot[]>(key)) || []; } catch { return []; }
+}
+
+
+History API for sparklines
+
+app/api/history/route.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+import { kvGetSnapshots } from '@/lib/history';
+
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const domain = (url.searchParams.get('domain') || '').replace(/^www\./i, '');
+  if (!domain) return NextResponse.json({ error: 'domain required' }, { status: 400 });
+  const snaps = await kvGetSnapshots(domain);
+  return NextResponse.json({ domain, snapshots: snaps }, { status: 200 });
+}
+
+4) Cron — daily snapshots (rank + CWV)
+
+On Vercel, add a scheduled function hitting a cron route.
+
+app/api/cron/snapshot/route.ts
+
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  const list = (process.env.WATCHLIST || '').split(',').map(s => s.trim()).filter(Boolean);
+  const results: any[] = [];
+  for (const domain of list) {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/scan`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: `https://${domain}` }),
+        cache: 'no-store'
+      });
+      results.push({ domain, ok: res.ok });
+      // `scan` route pushes snapshot into Redis
+    } catch (e: any) {
+      results.push({ domain, ok: false, error: e?.message });
+    }
+  }
+  return NextResponse.json({ ran: new Date().toISOString(), results });
+}
+
+
+vercel.json
+
+{
+  "crons": [
+    { "path": "/api/cron/snapshot", "schedule": "0 11 * * *" }
+  ]
+}
+
+
+(Adjust schedule as you like. The route invokes the scan and stores a snapshot per watched domain.)
+
+5) UI — Executive strip + Cards + Sparklines
+
+app/competitor-intel-scanner/page.tsx (key parts)
+
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import type { Report } from '@/types/report';
+
+export default function CompetitorIntelScanner() {
+  const [url, setUrl] = useState('');
+  const [report, setReport] = useState<Report | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const domain = report?.input.domain;
+
+  async function runScan() {
+    setLoading(true);
+    setReport(null);
+    try {
+      const res = await fetch('/api/scan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Scan failed');
+      setReport(json);
+      // fetch history for sparklines
+      if (json.input?.domain) {
+        const h = await fetch(`/api/history?domain=${json.input.domain}`, { cache: 'no-store' });
+        const hist = await h.json();
+        setHistory(hist.snapshots || []);
+      } else setHistory([]);
+    } catch (e) { console.error(e); } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Input */}
+      <div className="flex gap-2">
+        <input className="flex-1 border rounded px-3 py-2" placeholder="https://competitor.com" value={url} onChange={e => setUrl(e.target.value)} />
+        <button onClick={runScan} disabled={loading} className="bg-black text-white rounded px-4 py-2">{loading ? 'Scanning…' : 'Scan'}</button>
+      </div>
+
+      {/* Executive strip */}
+      {report && (
+        <div className="border rounded-2xl p-4 grid sm:grid-cols-4 gap-4 items-center">
+          <div>
+            <div className="text-xs text-gray-500">Domain</div>
+            <div className="text-lg font-medium">{domain}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Tranco Rank</div>
+            <div className="text-lg">{report.traffic.available ? report.traffic.trancoRank : '—'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Score</div>
+            <div className="inline-flex items-center gap-2">
+              <span className={`inline-block rounded-full px-3 py-1 text-white ${scoreBadgeColor(report.score.total)}`}>{report.score.total}</span>
+              <span className="text-xs text-gray-500">/100</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <button onClick={() => downloadMarkdown(report)} className="border rounded px-3 py-2">Download Report</button>
+          </div>
+        </div>
+      )}
+
+      {/* Cards */}
+      {report && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card title="Traffic">
+            <KV label="Tranco Rank" value={report.traffic.available ? report.traffic.trancoRank : '—'} />
+            <Sparkline data={history} x="ts" y="trancoRank" invert /> {/* lower is better */}
+          </Card>
+
+          <Card title="Performance">
+            <KV label="Page weight (KB)" value={report.performance.weightKB ?? '—'} />
+            <KV label="Requests (img/script)" value={`${report.performance.reqImages ?? 0}/${report.performance.reqScripts ?? 0}`} />
+            <KV label="LCP / INP / CLS" value={`${fmt(report.performance.LCP, 's')} / ${fmt(report.performance.INP,'ms')} / ${fmt(report.performance.CLS,'')}`} />
+            <Sparkline data={history} x="ts" y="LCP" />
+          </Card>
+
+          <Card title="SEO">
+            <KV label="Title" value={`${report.seo.title || '—'} (${report.seo.titleLength})`} />
+            <KV label="Meta description" value={`${report.seo.metaDescription || '—'} (${report.seo.metaDescriptionLength})`} />
+            <KV label="H1/H2/H3" value={`H1:${report.seo.headings.h1} H2:${report.seo.headings.h2} H3:${report.seo.headings.h3}`} />
+            <KV label="OG/Twitter/JSON-LD" value={`${report.seo.openGraphCount}/${report.seo.twitterTagCount}/${report.seo.jsonLdBlocks}`} />
+          </Card>
+
+          <Card title="Pixels / Ads">
+            <List label="Analytics" items={report.tracking.analytics} />
+            <List label="Ads" items={report.tracking.ads} />
+            <List label="Tag Managers" items={report.tracking.tagManagers} />
+            <List label="Social Pixels" items={report.tracking.socialPixels} />
+          </Card>
+
+          <Card title="Tech">
+            <KV label="CMS" value={report.tech.cms || '—'} />
+            <KV label="Frameworks" value={report.tech.frameworks.join(', ') || '—'} />
+            <List label="3rd Parties" items={report.tech.thirdParties} />
+          </Card>
+
+          <Card title="Sitemap / Pages">
+            <KV label="robots.txt" value={report.robots.robotsTxt.present ? 'Present' : 'Missing'} />
+            <KV label="Disallow" value={report.robots.robotsTxt.disallowCount} />
+            <div className="text-sm text-gray-600">Sitemaps:</div>
+            <ul className="list-disc pl-6">
+              {report.robots.sitemaps.map(s => <li key={s.url}>{s.url} — {s.urlCount} URLs</li>)}
+            </ul>
+          </Card>
+
+          <Card title="Messaging">
+            <KV label="Headline" value={report.messaging.hero?.headline || '—'} />
+            <KV label="Primary CTA" value={report.messaging.hero?.primaryCTA || '—'} />
+            <List label="Social Proof" items={report.messaging.socialProof || []} />
+          </Card>
+
+          <Card title="Social">
+            <List label="Links" items={report.social.links} />
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Card({ title, children }: any) {
+  return <div className="border rounded-2xl p-4"><div className="font-medium mb-2">{title}</div>{children}</div>;
+}
+function KV({ label, value }: { label: string; value: any }) {
+  return <div className="flex gap-2 text-sm"><div className="w-40 text-gray-500">{label}</div><div className="flex-1">{String(value)}</div></div>;
+}
+function List({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div className="text-sm">
+      <div className="text-gray-500">{label}</div>
+      {items?.length ? <ul className="list-disc pl-6">{items.map((x, i) => <li key={i}>{x}</li>)}</ul> : '—'}
+    </div>
+  );
+}
+function Sparkline({ data, x, y, invert=false }: any) {
+  const rows = (data || []).filter((d: any) => d[y] != null).map((d: any) => ({ x: d[x], y: d[y] }));
+  if (!rows.length) return <div className="text-xs text-gray-400">No history yet</div>;
+  const minY = Math.min(...rows.map((r:any)=>r.y)); const maxY = Math.max(...rows.map((r:any)=>r.y));
+  return (
+    <div className="h-16 mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={rows}>
+          <XAxis dataKey="x" hide />
+          <YAxis domain={invert ? [maxY, minY] : [minY, maxY]} hide />
+          <Tooltip formatter={(v:any)=>String(v)} />
+          <Line type="monotone" dataKey="y" dot={false} strokeWidth={2} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+function downloadMarkdown(report: any) {
+  const md = buildMarkdown(report);
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `competitor-report-${report.input.domain}.md`; a.click();
+}
+function buildMarkdown(r: any) { return `# Competitor Report — ${r.input.domain}\nScore: ${r.score.total}\n...`; }
+function scoreBadgeColor(n: number) { if (n >= 85) return 'bg-green-600'; if (n >= 70) return 'bg-yellow-600'; return 'bg-red-600'; }
+function fmt(v: any, unit: 's'|'ms'|'' ){ if(v==null) return '—'; return `${v}${unit}`; }
+
+6) Optional: Ad library hooks (Meta/TikTok/Google)
+
+These are optional and should respect provider ToS. Wire them behind env flags and surface as links or summary counts. Real APIs often require business verification and have query restrictions:
+
+Meta Ad Library (Graph API): can query ads by Page and country.
+
+TikTok Commercial Content Library: no stable public API; best is a link-out builder.
+
+Google Ads Transparency Center: no official public API; build link-outs.
+
+You can add a small “Ad Library” block in the Traffic or Pixels/Ads card that shows link-outs given a detected Page URL.
+
+7) What this adds to your page (your 5 asks)
+
+Executive strip: Domain, Tranco rank, Score badge, Download button
+
+Cards: Traffic, Performance, SEO, Pixels/Ads, Tech, Sitemap/Pages, Messaging, Social
+
+Tech stack enrichment: Wappalyzer + BuiltWith (optional via env keys) merged into Tech → thirdParties
+
+Ads libraries: safe link-outs or stubbed integrations, behind env flags
+
+Historical snapshots: daily cron to /api/cron/snapshot, storing last N snapshots in Redis; sparklines for Tranco rank (inverted) and LCP
+
+Ship checklist
+
+Set .env.local keys you intend to use (Tranco/Wappalyzer/BuiltWith/Redis).
+
+On Vercel, add Cron per vercel.json.
+
+Deploy, then scan a domain. After 24h you’ll start seeing sparklines.

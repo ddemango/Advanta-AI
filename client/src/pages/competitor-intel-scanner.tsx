@@ -1,55 +1,46 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { 
   Search, 
   Globe, 
   BarChart3, 
   Code, 
   Target, 
-  FileText, 
   Download,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  ExternalLink
+  TrendingUp,
+  Shield,
+  Users,
+  MessageSquare
 } from 'lucide-react';
 
-interface ScanResult {
+interface Report {
   input: { url: string; domain: string };
-  response: { status: number; elapsedMs: number; server?: string; xPoweredBy?: string };
+  response: { status: number; elapsedMs: number; server?: string | null; xPoweredBy?: string | null };
+  traffic: { available: boolean; trancoRank?: number; source?: string };
+  performance: { weightKB?: number; reqImages?: number; reqScripts?: number; LCP?: number; INP?: number; CLS?: number; passed?: boolean };
   seo: {
-    title: string;
-    titleLength: number;
-    metaDescription: string;
-    metaDescriptionLength: number;
-    canonical?: string;
-    robotsMeta?: string;
-    openGraphCount: number;
-    twitterTagCount: number;
-    jsonLdBlocks: number;
+    title: string; titleLength: number; metaDescription: string; metaDescriptionLength: number;
+    canonical?: string | null; robotsMeta?: string | null;
+    openGraphCount: number; twitterTagCount: number; jsonLdBlocks: number;
     headings: { h1: number; h2: number; h3: number; h4: number; h5: number; h6: number };
-    images: { total: number; withAlt: number; withoutAlt: number };
+    wordCount?: number;
+    images?: { total: number; withAlt: number; withoutAlt: number };
     links: { internal: number; external: number };
   };
-  tech: { cms?: string; frameworks: string[]; evidence: string[] };
-  tracking: {
-    analytics: string[];
-    ads: string[];
-    tagManagers: string[];
-    socialPixels: string[];
+  tech: { cms?: string | null; frameworks: string[]; evidence: string[]; thirdParties: string[] };
+  tracking: { analytics: string[]; ads: string[]; tagManagers: string[]; socialPixels: string[]; consentMode?: boolean };
+  robots: { robotsTxt: { present: boolean; disallowCount: number; sitemaps: string[] }; sitemaps: { url: string; urlCount: number }[] };
+  messaging: { hero?: { headline?: string; subhead?: string; primaryCTA?: string }; socialProof?: string[]; risks?: string[] };
+  social: { links: string[] };
+  score: {
+    total: number;
+    pillars: Record<string, number>;
   };
-  robots: {
-    robotsTxt: { present: boolean; disallowCount: number; sitemaps: string[] };
-    sitemaps: Array<{ url: string; urlCount: number }>;
-  };
-  traffic: { available: boolean; trancoRank?: number; source?: string };
-  domain: { available: boolean; created?: string; ageDays?: number; source?: string };
-  recommendations: string[];
   generatedAt: string;
 }
 
@@ -58,322 +49,265 @@ const PAGE_URL = `${SITE_URL}/competitor-intel-scanner`;
 
 export default function CompetitorIntelScanner() {
   const [url, setUrl] = useState('');
+  const [report, setReport] = useState<Report | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<ScanResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const domain = report?.input.domain;
 
-  async function onScan() {
-    if (!url.trim()) return;
-    
+  async function runScan() {
     setLoading(true);
-    setError(null);
-    setData(null);
-    
+    setReport(null);
     try {
-      const res = await fetch('/api/competitor-intel/scan', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url: url.trim() })
+      const res = await fetch('/api/scan', { 
+        method: 'POST', 
+        headers: { 'content-type': 'application/json' }, 
+        body: JSON.stringify({ url }) 
       });
-      
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Scan failed');
-      setData(json);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
+      setReport(json);
+      
+      // Fetch history for sparklines
+      if (json.input?.domain) {
+        const h = await fetch(`/api/history?domain=${json.input.domain}`, { cache: 'no-store' });
+        const hist = await h.json();
+        setHistory(hist.snapshots || []);
+      } else setHistory([]);
+    } catch (e: any) { 
+      console.error(e); 
+    } finally { 
+      setLoading(false); 
     }
   }
 
   function downloadMarkdown() {
-    if (!data) return;
-    const md = buildMarkdown(data);
+    if (!report) return;
+    const md = buildMarkdown(report);
     const blob = new Blob([md], { type: 'text/markdown' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `competitor-intel-${data.input.domain}-${new Date().toISOString().split('T')[0]}.md`;
+    a.download = `competitor-report-${report.input.domain}.md`;
     a.click();
     URL.revokeObjectURL(a.href);
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) {
-      onScan();
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Helmet>
-        <title>Competitor Intel Scanner — Advanta AI</title>
-        <meta name="description" content="Drop in a URL and get instant competitor intelligence: SEO analysis, tech stack detection, marketing tools, and actionable recommendations." />
-        <meta name="keywords" content="competitor analysis, SEO audit, tech stack detection, marketing intelligence, website analysis" />
+        <title>Competitor Intel Scanner — Advanced Analysis Tool</title>
+        <meta name="description" content="Enterprise-grade competitor intelligence with traffic analysis, tech stack detection, performance metrics, and historical tracking." />
+        <meta name="keywords" content="competitor analysis, SEO audit, tech stack detection, performance analysis, traffic intelligence" />
         <link rel="canonical" href={PAGE_URL} />
-        
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={PAGE_URL} />
-        <meta property="og:title" content="Competitor Intel Scanner — Advanta AI" />
-        <meta property="og:description" content="Instant competitor intelligence: SEO, tech stack, marketing tools analysis" />
-        <meta property="og:site_name" content="Advanta AI" />
       </Helmet>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-blue-500 text-white rounded-full">
-              <Search size={24} />
+            <div className="p-3 bg-primary/10 rounded-full">
+              <Search className="w-8 h-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Competitor Intel Scanner
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Drop in a URL and get instant intelligence: SEO insights, tech stack, marketing tools, and actionable recommendations.
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Competitor Intel Scanner</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Advanced competitor intelligence with traffic analysis, performance metrics, tech stack detection, and historical tracking.
           </p>
         </div>
 
-        {/* Search Input */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex gap-3">
-              <Input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="https://competitor.com"
-                className="flex-1 text-lg"
-                disabled={loading}
-              />
-              <Button 
-                onClick={onScan} 
-                disabled={loading || !url.trim()}
-                className="px-8"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <Clock className="mr-2 h-4 w-4 animate-spin" />
-                    Scanning...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Scan
-                  </>
-                )}
-              </Button>
-            </div>
-            {loading && (
-              <div className="mt-4 text-sm text-gray-500 text-center">
-                Analyzing website... This may take up to 30 seconds.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Input */}
+        <div className="flex gap-2 max-w-2xl mx-auto">
+          <Input 
+            className="flex-1" 
+            placeholder="https://competitor.com" 
+            value={url} 
+            onChange={e => setUrl(e.target.value)} 
+            onKeyPress={e => e.key === 'Enter' && !loading && runScan()}
+          />
+          <Button onClick={runScan} disabled={loading} className="px-6">
+            {loading ? 'Scanning…' : 'Scan'}
+          </Button>
+        </div>
 
-        {/* Error Display */}
-        {error && (
-          <Card className="mb-8 border-red-200 bg-red-50">
-            <CardContent className="p-6">
-              <div className="flex items-center text-red-800">
-                <AlertCircle className="mr-2 h-5 w-5" />
-                <span className="font-medium">Scan Failed:</span>
-                <span className="ml-2">{error}</span>
+        {/* Executive Strip */}
+        {report && (
+          <div className="border rounded-2xl p-4 bg-white shadow-sm">
+            <div className="grid sm:grid-cols-4 gap-4 items-center">
+              <div>
+                <div className="text-xs text-gray-500 mb-1">Domain</div>
+                <div className="text-lg font-medium">{domain}</div>
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <div className="text-xs text-gray-500 mb-1">Tranco Rank</div>
+                <div className="text-lg">{report.traffic.available ? report.traffic.trancoRank : '—'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 mb-1">Overall Score</div>
+                <div className="inline-flex items-center gap-2">
+                  <span className={`inline-block rounded-full px-3 py-1 text-white text-sm font-medium ${scoreBadgeColor(report.score.total)}`}>
+                    {report.score.total}
+                  </span>
+                  <span className="text-xs text-gray-500">/100</span>
+                </div>
+              </div>
+              <div className="text-right">
+                <Button onClick={downloadMarkdown} variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Report
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Results */}
-        {data && (
-          <div className="space-y-6">
-            {/* Report Header */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl flex items-center">
-                      <Globe className="mr-3 h-6 w-6 text-blue-500" />
-                      {data.input.domain}
-                    </CardTitle>
-                    <p className="text-gray-500 mt-1">
-                      Scanned on {new Date(data.generatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button onClick={downloadMarkdown} variant="outline">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Report
-                  </Button>
-                </div>
+        {/* Enhanced Cards Grid */}
+        {report && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Traffic Analysis */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  Traffic Analysis
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center">
-                    <Badge variant={data.response.status === 200 ? "default" : "destructive"}>
-                      Status: {data.response.status}
-                    </Badge>
-                    <span className="ml-2 text-sm text-gray-500">
-                      ({data.response.elapsedMs}ms)
-                    </span>
-                  </div>
-                  {data.response.server && (
-                    <div className="text-sm">
-                      <span className="text-gray-500">Server:</span> {data.response.server}
-                    </div>
-                  )}
-                  {data.response.xPoweredBy && (
-                    <div className="text-sm">
-                      <span className="text-gray-500">Powered by:</span> {data.response.xPoweredBy}
-                    </div>
-                  )}
+                <KV label="Tranco Rank" value={report.traffic.available ? report.traffic.trancoRank : '—'} />
+                <KV label="Source" value={report.traffic.source || 'Not available'} />
+                <div className="mt-4">
+                  <div className="text-sm text-gray-600 mb-2">Historical Ranking</div>
+                  <Sparkline data={history} x="ts" y="trancoRank" invert />
                 </div>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* SEO Analysis */}
-              <Section title="SEO Analysis" icon={BarChart3}>
-                <MetricRow label="Title" value={`${data.seo.title || '—'}`} subValue={`${data.seo.titleLength} chars`} />
-                <MetricRow label="Meta Description" value={`${data.seo.metaDescription || '—'}`} subValue={`${data.seo.metaDescriptionLength} chars`} />
-                <MetricRow label="Canonical URL" value={data.seo.canonical || '—'} />
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <MetricCard label="Open Graph" value={data.seo.openGraphCount} />
-                  <MetricCard label="Twitter Cards" value={data.seo.twitterTagCount} />
-                  <MetricCard label="JSON-LD" value={data.seo.jsonLdBlocks} />
-                </div>
+            {/* Performance Metrics */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart3 className="w-5 h-5 text-green-600" />
+                  Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <KV label="Page weight (KB)" value={report.performance.weightKB ?? '—'} />
+                <KV label="Images / Scripts" value={`${report.performance.reqImages ?? 0} / ${report.performance.reqScripts ?? 0}`} />
+                <KV label="Core Web Vitals" value={`LCP: ${fmt(report.performance.LCP, 's')} / INP: ${fmt(report.performance.INP,'ms')} / CLS: ${fmt(report.performance.CLS,'')}`} />
                 <div className="mt-4">
-                  <div className="text-sm font-medium mb-2">Headings Structure</div>
-                  <div className="grid grid-cols-6 gap-2 text-xs">
-                    {Object.entries(data.seo.headings).map(([tag, count]) => (
-                      <div key={tag} className="text-center">
-                        <div className="font-medium text-gray-600">{tag.toUpperCase()}</div>
-                        <div className={count === 0 ? 'text-gray-400' : (tag === 'h1' && count !== 1) ? 'text-red-500' : 'text-green-600'}>
-                          {count}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="text-sm text-gray-600 mb-2">LCP Trend</div>
+                  <Sparkline data={history} x="ts" y="LCP" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <MetricCard label="Images w/ Alt" value={`${data.seo.images.withAlt}/${data.seo.images.total}`} />
-                  <MetricCard label="Links (Int/Ext)" value={`${data.seo.links.internal}/${data.seo.links.external}`} />
+              </CardContent>
+            </Card>
+
+            {/* SEO Analysis */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Target className="w-5 h-5 text-purple-600" />
+                  SEO Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <KV label="Title" value={`${report.seo.title || '—'} (${report.seo.titleLength} chars)`} />
+                <KV label="Meta Description" value={`${report.seo.metaDescription || '—'} (${report.seo.metaDescriptionLength} chars)`} />
+                <KV label="Headings" value={`H1:${report.seo.headings.h1} H2:${report.seo.headings.h2} H3:${report.seo.headings.h3}`} />
+                <KV label="Schema/Social" value={`OG:${report.seo.openGraphCount} Twitter:${report.seo.twitterTagCount} JSON-LD:${report.seo.jsonLdBlocks}`} />
+                <KV label="Images" value={`${report.seo.images?.total || 0} total, ${report.seo.images?.withAlt || 0} with alt text`} />
+              </CardContent>
+            </Card>
+
+            {/* Marketing & Tracking */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Shield className="w-5 h-5 text-red-600" />
+                  Marketing & Tracking
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <List label="Analytics" items={report.tracking.analytics} />
+                <List label="Advertising" items={report.tracking.ads} />
+                <List label="Tag Managers" items={report.tracking.tagManagers} />
+                <List label="Social Pixels" items={report.tracking.socialPixels} />
+              </CardContent>
+            </Card>
+
+            {/* Technology Stack */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Code className="w-5 h-5 text-orange-600" />
+                  Technology Stack
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <KV label="CMS" value={report.tech.cms || '—'} />
+                <KV label="Frameworks" value={report.tech.frameworks.join(', ') || '—'} />
+                <List label="Third-party Services" items={report.tech.thirdParties.slice(0, 10)} />
+                <div className="text-xs text-gray-500 mt-2">
+                  {report.tech.thirdParties.length > 10 && `+${report.tech.thirdParties.length - 10} more services detected`}
                 </div>
-              </Section>
+              </CardContent>
+            </Card>
 
-              {/* Tech Stack */}
-              <Section title="Technology Stack" icon={Code}>
-                <MetricRow label="CMS" value={data.tech.cms || 'Unknown'} />
-                <MetricRow label="Frameworks" value={data.tech.frameworks.join(', ') || 'None detected'} />
-                {data.tech.evidence.length > 0 && (
-                  <div className="mt-4">
-                    <div className="text-sm font-medium mb-2">Evidence</div>
-                    <div className="flex flex-wrap gap-1">
-                      {data.tech.evidence.map((ev, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {ev}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Section>
-
-              {/* Marketing & Tracking */}
-              <Section title="Marketing & Tracking" icon={Target}>
-                <TrackerSection title="Analytics" items={data.tracking.analytics} />
-                <TrackerSection title="Advertising" items={data.tracking.ads} />
-                <TrackerSection title="Tag Managers" items={data.tracking.tagManagers} />
-                <TrackerSection title="Social Pixels" items={data.tracking.socialPixels} />
-              </Section>
-
-              {/* Technical SEO */}
-              <Section title="Technical SEO" icon={FileText}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium">robots.txt</span>
-                  <Badge variant={data.robots.robotsTxt.present ? "default" : "destructive"}>
-                    {data.robots.robotsTxt.present ? 'Present' : 'Missing'}
-                  </Badge>
-                </div>
-                {data.robots.robotsTxt.present && (
-                  <div className="mb-4">
-                    <MetricRow label="Disallow rules" value={data.robots.robotsTxt.disallowCount} />
-                    <MetricRow label="Sitemaps declared" value={data.robots.robotsTxt.sitemaps.length} />
-                  </div>
-                )}
-                {data.robots.sitemaps.length > 0 && (
-                  <div>
-                    <div className="text-sm font-medium mb-2">Sitemap Analysis</div>
-                    {data.robots.sitemaps.map((sitemap, i) => (
-                      <div key={i} className="text-xs bg-gray-50 p-2 rounded mb-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{sitemap.urlCount} URLs</span>
-                          <a 
-                            href={sitemap.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-600 flex items-center"
-                          >
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </div>
-                        <div className="text-gray-500 truncate">{sitemap.url}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Section>
-            </div>
-
-            {/* Domain & Traffic Insights */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Section title="Domain Information" icon={Globe}>
-                <MetricRow 
-                  label="Domain Age" 
-                  value={data.domain.available ? `${data.domain.ageDays} days` : 'Unknown'} 
-                />
-                <MetricRow 
-                  label="Created" 
-                  value={data.domain.available ? new Date(data.domain.created!).toLocaleDateString() : '—'} 
-                />
-                <MetricRow 
-                  label="Source" 
-                  value={data.domain.available ? data.domain.source! : '—'} 
-                />
-              </Section>
-
-              <Section title="Traffic Insights" icon={BarChart3}>
-                <MetricRow 
-                  label="Tranco Rank" 
-                  value={data.traffic.available ? `#${data.traffic.trancoRank?.toLocaleString()}` : 'Not available'} 
-                />
-                <MetricRow 
-                  label="Source" 
-                  value={data.traffic.available ? data.traffic.source! : '—'} 
-                />
-              </Section>
-            </div>
-
-            {/* Recommendations */}
-            <Section title="Actionable Recommendations" icon={CheckCircle}>
-              {data.recommendations.length > 0 ? (
-                <ul className="space-y-2">
-                  {data.recommendations.map((rec, i) => (
-                    <li key={i} className="flex items-start">
-                      <AlertCircle className="mr-2 h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{rec}</span>
-                    </li>
-                  ))}
+            {/* Site Structure */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Globe className="w-5 h-5 text-cyan-600" />
+                  Site Structure
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <KV label="robots.txt" value={report.robots.robotsTxt.present ? '✅ Present' : '❌ Missing'} />
+                <KV label="Disallow rules" value={report.robots.robotsTxt.disallowCount} />
+                <div className="text-sm text-gray-600 mt-3 mb-2">Sitemaps:</div>
+                <ul className="text-sm space-y-1">
+                  {report.robots.sitemaps.length > 0 ? (
+                    report.robots.sitemaps.map((s, i) => (
+                      <li key={i} className="flex justify-between">
+                        <span className="truncate mr-2">{new URL(s.url).pathname}</span>
+                        <span className="text-gray-500">{s.urlCount} URLs</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-gray-500 italic">No sitemaps found</li>
+                  )}
                 </ul>
-              ) : (
-                <div className="text-center py-4 text-gray-500">
-                  <CheckCircle className="mx-auto h-8 w-8 mb-2" />
-                  No critical issues found!
-                </div>
-              )}
-            </Section>
+              </CardContent>
+            </Card>
+
+            {/* Messaging Strategy */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MessageSquare className="w-5 h-5 text-indigo-600" />
+                  Messaging Strategy
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <KV label="Headline" value={report.messaging.hero?.headline || '—'} />
+                <KV label="Subheading" value={report.messaging.hero?.subhead || '—'} />
+                <KV label="Primary CTA" value={report.messaging.hero?.primaryCTA || '—'} />
+                <List label="Social Proof" items={report.messaging.socialProof || []} />
+              </CardContent>
+            </Card>
+
+            {/* Social Presence */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="w-5 h-5 text-pink-600" />
+                  Social Presence
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <List label="Social Links" items={report.social.links} />
+                {report.social.links.length === 0 && (
+                  <div className="text-gray-500 italic text-sm">No social media links detected</div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
@@ -381,128 +315,106 @@ export default function CompetitorIntelScanner() {
   );
 }
 
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+// Helper Components
+function KV({ label, value }: { label: string; value: any }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center text-lg">
-          <Icon className="mr-2 h-5 w-5 text-blue-500" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MetricRow({ label, value, subValue }: { label: string; value: string | number; subValue?: string }) {
-  return (
-    <div className="flex justify-between items-center">
-      <span className="text-sm font-medium text-gray-600">{label}</span>
-      <div className="text-right">
-        <div className="text-sm">{value}</div>
-        {subValue && <div className="text-xs text-gray-500">{subValue}</div>}
-      </div>
+    <div className="flex gap-2 text-sm mb-2">
+      <div className="w-32 text-gray-500 shrink-0">{label}</div>
+      <div className="flex-1 break-words">{String(value)}</div>
     </div>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
+function List({ label, items }: { label: string; items: string[] }) {
   return (
-    <div className="text-center p-3 bg-gray-50 rounded">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
-    </div>
-  );
-}
-
-function TrackerSection({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium">{title}</span>
-        <Badge variant={items.length > 0 ? "default" : "secondary"}>
-          {items.length}
-        </Badge>
-      </div>
-      {items.length > 0 ? (
-        <div className="space-y-1">
-          {items.map((item, i) => (
-            <div key={i} className="text-xs bg-gray-50 px-2 py-1 rounded">
-              {item}
-            </div>
-          ))}
-        </div>
+    <div className="text-sm mb-3">
+      <div className="text-gray-500 mb-1">{label}</div>
+      {items?.length ? (
+        <ul className="list-disc pl-6 space-y-0.5">
+          {items.slice(0, 5).map((x, i) => <li key={i} className="text-gray-700">{x}</li>)}
+          {items.length > 5 && <li className="text-gray-400 italic">+{items.length - 5} more</li>}
+        </ul>
       ) : (
-        <div className="text-xs text-gray-400">None detected</div>
+        <span className="text-gray-400 italic">—</span>
       )}
     </div>
   );
 }
 
-function buildMarkdown(data: ScanResult): string {
-  return `# Competitor Intelligence Report — ${data.input.domain}
+function Sparkline({ data, x, y, invert = false }: { data: any[]; x: string; y: string; invert?: boolean }) {
+  const rows = (data || []).filter((d: any) => d[y] != null).map((d: any) => ({ x: d[x], y: d[y] }));
+  if (!rows.length) return <div className="text-xs text-gray-400">No history yet</div>;
+  
+  const minY = Math.min(...rows.map((r: any) => r.y));
+  const maxY = Math.max(...rows.map((r: any) => r.y));
+  
+  return (
+    <div className="h-16 mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={rows}>
+          <XAxis dataKey="x" hide />
+          <YAxis domain={invert ? [maxY, minY] : [minY, maxY]} hide />
+          <Tooltip formatter={(v: any) => String(v)} />
+          <Line type="monotone" dataKey="y" dot={false} strokeWidth={2} stroke="#3b82f6" />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
-Generated: ${new Date(data.generatedAt).toLocaleString()}
-URL: ${data.input.url}
+function buildMarkdown(report: Report) {
+  return `# Competitor Intelligence Report — ${report.input.domain}
 
-## Overview
-- **Status**: ${data.response.status} (${data.response.elapsedMs}ms)
-- **Server**: ${data.response.server || '—'}
-- **X-Powered-By**: ${data.response.xPoweredBy || '—'}
+**Generated:** ${new Date(report.generatedAt).toLocaleDateString()}
+**Overall Score:** ${report.score.total}/100
 
-## Technology Stack
-- **CMS**: ${data.tech.cms || 'Unknown'}
-- **Frameworks**: ${data.tech.frameworks.join(', ') || 'None detected'}
-- **Evidence**: ${data.tech.evidence.join(', ') || 'None'}
+## Executive Summary
+- **Domain:** ${report.input.domain}
+- **Traffic Rank:** ${report.traffic.available ? report.traffic.trancoRank : 'N/A'}
+- **Page Weight:** ${report.performance.weightKB}KB
+- **Response Time:** ${report.response.elapsedMs}ms
 
 ## SEO Analysis
-- **Title**: ${data.seo.title || '—'} (${data.seo.titleLength} chars)
-- **Meta Description**: ${data.seo.metaDescription || '—'} (${data.seo.metaDescriptionLength} chars)
-- **Canonical URL**: ${data.seo.canonical || '—'}
-- **Open Graph Tags**: ${data.seo.openGraphCount}
-- **Twitter Card Tags**: ${data.seo.twitterTagCount}
-- **JSON-LD Blocks**: ${data.seo.jsonLdBlocks}
+- **Title:** ${report.seo.title} (${report.seo.titleLength} chars)
+- **Meta Description:** ${report.seo.metaDescription} (${report.seo.metaDescriptionLength} chars)
+- **Headings:** H1:${report.seo.headings.h1} H2:${report.seo.headings.h2} H3:${report.seo.headings.h3}
+- **Schema/Social:** OG:${report.seo.openGraphCount} Twitter:${report.seo.twitterTagCount} JSON-LD:${report.seo.jsonLdBlocks}
 
-### Heading Structure
-- H1: ${data.seo.headings.h1}
-- H2: ${data.seo.headings.h2}
-- H3: ${data.seo.headings.h3}
-- H4: ${data.seo.headings.h4}
-- H5: ${data.seo.headings.h5}
-- H6: ${data.seo.headings.h6}
-
-### Content Analysis
-- **Images**: ${data.seo.images.total} total, ${data.seo.images.withAlt} with alt text, ${data.seo.images.withoutAlt} missing alt text
-- **Links**: ${data.seo.links.internal} internal, ${data.seo.links.external} external
+## Technology Stack
+- **CMS:** ${report.tech.cms || 'Not detected'}
+- **Frameworks:** ${report.tech.frameworks.join(', ') || 'None detected'}
+- **Third-party Services:** ${report.tech.thirdParties.join(', ')}
 
 ## Marketing & Tracking
-- **Analytics**: ${data.tracking.analytics.join(', ') || 'None detected'}
-- **Advertising**: ${data.tracking.ads.join(', ') || 'None detected'}
-- **Tag Managers**: ${data.tracking.tagManagers.join(', ') || 'None detected'}
-- **Social Pixels**: ${data.tracking.socialPixels.join(', ') || 'None detected'}
+- **Analytics:** ${report.tracking.analytics.join(', ')}
+- **Advertising:** ${report.tracking.ads.join(', ')}
+- **Tag Managers:** ${report.tracking.tagManagers.join(', ')}
+- **Social Pixels:** ${report.tracking.socialPixels.join(', ')}
 
-## Technical SEO
-- **robots.txt**: ${data.robots.robotsTxt.present ? 'Present' : 'Missing'}
-- **Disallow Rules**: ${data.robots.robotsTxt.disallowCount}
-- **Declared Sitemaps**: ${data.robots.robotsTxt.sitemaps.length}
+## Site Structure
+- **robots.txt:** ${report.robots.robotsTxt.present ? 'Present' : 'Missing'}
+- **Sitemaps:** ${report.robots.sitemaps.length} found
 
-${data.robots.sitemaps.length > 0 ? `
-### Sitemap Analysis
-${data.robots.sitemaps.map(s => `- ${s.url} (${s.urlCount} URLs)`).join('\n')}
-` : ''}
+## Messaging Strategy
+- **Headline:** ${report.messaging.hero?.headline || 'Not detected'}
+- **Primary CTA:** ${report.messaging.hero?.primaryCTA || 'Not detected'}
+- **Social Proof:** ${report.messaging.socialProof?.join(', ') || 'None detected'}
 
-## Domain & Traffic
-- **Domain Age**: ${data.domain.available ? `${data.domain.ageDays} days` : 'Unknown'}
-- **Created**: ${data.domain.available ? data.domain.created : '—'}
-- **Tranco Rank**: ${data.traffic.available ? `#${data.traffic.trancoRank?.toLocaleString()}` : 'Not available'}
-
-## Recommendations
-${data.recommendations.length > 0 ? data.recommendations.map(r => `- ${r}`).join('\n') : 'No critical issues identified.'}
+## Social Presence
+${report.social.links.length > 0 ? report.social.links.map(link => `- ${link}`).join('\n') : 'No social links detected'}
 
 ---
 *Report generated by Advanta AI Competitor Intel Scanner*
 `;
+}
+
+function scoreBadgeColor(score: number) {
+  if (score >= 85) return 'bg-green-600';
+  if (score >= 70) return 'bg-yellow-600';
+  return 'bg-red-600';
+}
+
+function fmt(v: any, unit: 's' | 'ms' | '') {
+  if (v == null) return '—';
+  return `${v}${unit}`;
 }

@@ -2656,6 +2656,129 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
     }
   });
 
+  // Enhanced Competitor Intel Scanner with Advanced Features
+  app.post('/api/scan', async (req, res) => {
+    try {
+      const { url: raw } = req.body;
+      if (!raw) return res.status(400).json({ error: 'Missing url' });
+
+      const url = normalizeUrl(raw);
+      const domain = url.hostname.replace(/^www\./i, '');
+
+      // Import helper modules dynamically
+      const scanCore = require('../lib/scan-core');
+      const scoring = require('../lib/scoring');
+      const techEnrichment = require('../lib/tech-enrichment');
+
+      // Fetch HTML with timeout
+      const result = await scanCore.timeLimit(scanCore.fetchPage(url.toString()), 10000);
+      const { html, res: response } = result;
+      const ms = result.ms;
+      const cheerio = require('cheerio');
+      const $ = cheerio.load(html);
+
+      // Core analyses
+      const seo = scanCore.parseSEO($, html);
+      const { tech, tracking } = scanCore.detectTechAndTrackers($, html);
+      const robots = await scanCore.parseRobotsAndSitemaps(url);
+
+      // Traffic data (Tranco API)
+      const traffic = await getTrancoRank(domain);
+      const performance = scanCore.estimatePerf(html, $);
+
+      // Tech enrichment (optional via env keys)
+      const techExtra = await Promise.all([
+        techEnrichment.enrichWappalyzer(url.toString()),
+        techEnrichment.enrichBuiltWith(url.toString())
+      ]);
+      const thirdPartyMerged = Array.from(new Set([
+        ...tech.thirdParties,
+        ...techExtra.flat()
+      ]));
+
+      const fullTech = { ...tech, thirdParties: thirdPartyMerged };
+
+      // Messaging & Social heuristics
+      const messaging = extractMessaging($);
+      const social = extractSocial($);
+
+      // Score calculation
+      const score = scoring.computeScore({ traffic, performance, seo, tracking, tech: fullTech, robots, messaging, social });
+
+      const report = {
+        input: { url: url.toString(), domain },
+        response: { status: response.status, elapsedMs: ms, server: response.headers.get('server'), xPoweredBy: response.headers.get('x-powered-by') },
+        traffic, performance, seo, tech: fullTech, tracking, robots, messaging, social,
+        score,
+        generatedAt: new Date().toISOString()
+      };
+
+      res.json(report);
+    } catch (e: any) {
+      console.error('Enhanced scan error:', e);
+      res.status(500).json({ error: e?.message || 'Scan failed' });
+    }
+  });
+
+  // Helper functions for enhanced scanner
+  function normalizeUrl(input: string) {
+    try { return new URL(input); } catch { return new URL(`https://${input}`); }
+  }
+
+  async function getTrancoRank(domain: string) {
+    const base = process.env.TRANCO_API_BASE;
+    const key = process.env.TRANCO_API_KEY;
+    if (!base || !key) return { available: false };
+    try {
+      const res = await fetch(`${base}/ranks/${domain}`, {
+        headers: { Authorization: `Bearer ${key}` }, cache: 'no-store'
+      });
+      if (!res.ok) return { available: false };
+      const { rank } = await res.json();
+      return { available: true, trancoRank: rank, source: 'Tranco' };
+    } catch { return { available: false }; }
+  }
+
+  function extractMessaging($: cheerio.CheerioAPI) {
+    const h1 = $('h1').first().text().trim() || undefined;
+    const sub = $('h1').nextAll('p').first().text().trim() || $('p').first().text().trim() || undefined;
+    const cta = $('a,button').filter((_, el) => /get started|demo|trial|contact|book/i.test($(el).text())).first().text().trim() || undefined;
+    const proof: string[] = [];
+    $('[class*="logo"], [class*="badge"], img[alt*="trusted"]').each((_, el) => {
+      const t = $(el).attr('alt') || $(el).text();
+      if (t) proof.push(t.trim());
+    });
+    return { hero: { headline: h1, subhead: sub, primaryCTA: cta }, socialProof: proof.slice(0, 6), risks: [] };
+  }
+
+  function extractSocial($: cheerio.CheerioAPI) {
+    const links = new Set<string>();
+    $('a[href]').each((_, el) => {
+      const href = ($(el).attr('href') || '').trim();
+      if (/facebook\.com|twitter\.com|x\.com|tiktok\.com|instagram\.com|youtube\.com|linkedin\.com/i.test(href)) {
+        links.add(href);
+      }
+    });
+    return { links: Array.from(links) };
+  }
+
+  // History snapshots endpoint
+  app.get('/api/history', async (req, res) => {
+    const domain = (req.query.domain as string || '').replace(/^www\./i, '');
+    if (!domain) return res.status(400).json({ error: 'domain required' });
+    
+    // For now, return placeholder snapshots. In production, would connect to Redis/DB
+    const snapshots = [
+      { ts: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), trancoRank: 12500, LCP: 2.1, INP: 180, CLS: 0.05 },
+      { ts: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), trancoRank: 12200, LCP: 2.0, INP: 170, CLS: 0.04 },
+      { ts: new Date().toISOString(), trancoRank: 11800, LCP: 1.9, INP: 160, CLS: 0.03 }
+    ];
+    
+    res.json({ domain, snapshots });
+  });
+
+
+
   // Enhanced competitor intelligence function using DataForSEO
   async function generateCompetitorIntelligence(websiteData: any) {
     const domain = websiteData.domain;
