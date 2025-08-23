@@ -282,8 +282,8 @@ export default function CompetitorIntelScanner() {
                 <KV label="Disallow rules" value={report.robots.robotsTxt.disallowCount} />
                 <div className="text-sm text-gray-600 mt-3 mb-2">Sitemaps:</div>
                 <ul className="text-sm space-y-1">
-                  {report.robots.sitemaps.length > 0 ? (
-                    report.robots.sitemaps.map((s, i) => (
+                  {(report.robots?.sitemaps ?? []).length > 0 ? (
+                    (report.robots!.sitemaps!).map((s, i) => (
                       <li key={i} className="flex justify-between">
                         <span className="truncate mr-2">{safePathname(s.url)}</span>
                         <span className="text-gray-500">{s.urlCount} URLs</span>
@@ -387,18 +387,23 @@ function List({ label, items }: { label: string; items: string[] }) {
 }
 
 function Sparkline({ data, x, y, invert = false }: { data: any[]; x: string; y: string; invert?: boolean }) {
-  const rows = (data || []).filter((d: any) => d[y] != null).map((d: any) => ({ x: d[x], y: d[y] }));
+  const rows = (data || [])
+    .filter((d: any) => d[y] != null)
+    .sort((a, b) => new Date(a[x]).getTime() - new Date(b[x]).getTime())
+    .map((d: any) => ({ x: d[x], y: d[y] }));
+    
   if (!rows.length) return <div className="text-xs text-gray-400">No history yet</div>;
   
   const minY = Math.min(...rows.map((r: any) => r.y));
   const maxY = Math.max(...rows.map((r: any) => r.y));
+  const pad = minY === maxY ? (minY === 0 ? 1 : Math.abs(minY) * 0.1) : 0;
   
   return (
     <div className="h-16 mt-2">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={rows}>
           <XAxis dataKey="x" hide />
-          <YAxis domain={invert ? [maxY, minY] : [minY, maxY]} hide />
+          <YAxis domain={invert ? [maxY + pad, minY - pad] : [minY - pad, maxY + pad]} hide />
           <Tooltip formatter={(v: any) => String(v)} />
           <Line type="monotone" dataKey="y" dot={false} strokeWidth={2} stroke="#3b82f6" />
         </LineChart>
@@ -416,7 +421,7 @@ function buildMarkdown(report: Report) {
 ## Executive Summary
 - **Domain:** ${report.input.domain}
 - **Traffic Rank:** ${report.traffic.available ? report.traffic.trancoRank : 'N/A'}
-- **Page Weight:** ${report.performance.weightKB}KB
+- **Page Weight:** ${report.performance.weightKB ?? '—'}KB
 - **Response Time:** ${report.response.elapsedMs}ms
 
 ## SEO Analysis
@@ -478,4 +483,18 @@ function getTechSources() {
   // Note: In production, you'd pass this as a prop from the server
   // For now, we'll indicate the sources generically
   return 'heuristics & API enrichment';
+}
+
+// Safe pathname renderer for absolute/relative/protocol-relative sitemap URLs
+function safePathname(u?: string) {
+  if (!u) return '—';
+  try {
+    // handle relative or protocol-relative URLs too
+    const base =
+      typeof window !== 'undefined' ? window.location.origin : 'https://dummy.local';
+    const url = new URL(u, base);
+    return url.pathname || u;
+  } catch {
+    return u; // if it's really malformed, just show the raw string
+  }
 }

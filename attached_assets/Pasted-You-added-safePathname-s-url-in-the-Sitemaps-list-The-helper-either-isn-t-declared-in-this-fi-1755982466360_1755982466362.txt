@@ -1,0 +1,72 @@
+You added {safePathname(s.url)} in the “Sitemaps” list.
+
+The helper either isn’t declared in this file, was removed in a merge, is inside a block comment, or was changed to a const below the component and never initialized due to a syntax error earlier in the module.
+
+Result: ReferenceError: safePathname is not defined.
+
+Quick fix (copy-paste)
+
+Put this helper in the same file, outside the component (top or bottom is fine), as a function declaration (hoisted), so it’s always available:
+
+// Safe pathname renderer for absolute/relative/protocol-relative sitemap URLs
+function safePathname(u?: string) {
+  if (!u) return '—';
+  try {
+    // handle relative or protocol-relative URLs too
+    const base =
+      typeof window !== 'undefined' ? window.location.origin : 'https://dummy.local';
+    const url = new URL(u, base);
+    return url.pathname || u;
+  } catch {
+    return u; // if it's really malformed, just show the raw string
+  }
+}
+
+
+And change the map guard so you never call it on undefined:
+
+<ul className="text-sm space-y-1">
+  {(report.robots?.sitemaps ?? []).length > 0 ? (
+    (report.robots!.sitemaps!).map((s, i) => (
+      <li key={i} className="flex justify-between">
+        <span className="truncate mr-2">{safePathname(s.url)}</span>
+        <span className="text-gray-500">{s.urlCount} URLs</span>
+      </li>
+    ))
+  ) : (
+    <li className="text-gray-500 italic">No sitemaps found</li>
+  )}
+</ul>
+
+If you previously had a const safePathname = (...) => {} below the component
+
+That can work, but only if the module finishes evaluating. A syntax error earlier would keep it from initializing, causing the same runtime error. Using a function declaration as above removes that edge case.
+
+While you’re here, two more small hardening fixes
+
+Pad sparkline Y-axis and avoid NaN domain when there’s one point
+(you already added padding—just ensure rows.length > 1 before computing min/max).
+
+Markdown numeric fields
+Guard optional numbers to avoid "undefinedKB":
+
+- **Page Weight:** ${report.performance.weightKB}KB
++ **Page Weight:** ${report.performance.weightKB ?? '—'}KB
+
+Making sure Ad Libraries + Tech Stack actually show up
+
+Your UI will only render those if the backend returns them. Double-check:
+
+/api/scan response should include:
+
+tech.thirdParties populated (enriched via Wappalyzer/BuiltWith if keys set).
+
+adLibraries: [{ platform, label, url, source }, ...].
+
+If you haven’t added that yet, wire in the backend helpers I gave earlier:
+
+Tech enrichment: enrichTech(url) → merge into tech.thirdParties.
+
+Ad libraries: buildAdLibraryLinks(domain, socialMap) → add report.adLibraries.
+
+And render the Ad Libraries card on the frontend (example provided earlier).
