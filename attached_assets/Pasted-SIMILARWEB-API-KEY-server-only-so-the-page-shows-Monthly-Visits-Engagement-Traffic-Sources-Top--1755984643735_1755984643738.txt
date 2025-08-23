@@ -1,0 +1,206 @@
+SIMILARWEB_API_KEY (server-only) so the page shows Monthly Visits, Engagement, Traffic Sources, Top Countries, and an Estimated Active Users (now) metric.
+
+I’ll give you clean, copy-paste diffs. Keep the key out of the client and repo.
+
+1) Add the secret (do NOT hardcode)
+
+Replit
+
+Open Tools → Secrets.
+
+Add:
+
+Key: SIMILARWEB_API_KEY
+
+Value: 3ac8785685c94b45b43f95617774e731
+
+Local / Vercel / Render
+
+.env (server only):
+
+SIMILARWEB_API_KEY=3ac8785685c94b45b43f95617774e731
+
+
+Make sure you don’t prefix with VITE_ (we don’t want it in the browser).
+
+If your server doesn’t already load environment files, add at the very top of your server entry (e.g. server.js or index.ts):
+
+import 'dotenv/config';
+
+2) Backend: plug the key into the Similarweb caller
+
+Create (or update) server/marketing.ts exactly like this (it already matches your earlier structure, I’m just tightening error handling and field names):
+
+// server/marketing.ts
+import fetch from 'node-fetch';
+
+export type Marketing = {
+  provider: 'similarweb'|'semrush'|'rank-proxy'|'none';
+  confidence: 'high'|'medium'|'low';
+  monthlyVisits?: number;
+  pagesPerVisit?: number;
+  avgVisitDurationSec?: number;
+  bounceRate?: number; // 0..1
+  sources?: { direct?: number; search?: number; social?: number; referrals?: number; mail?: number; display?: number; paid?: number };
+  topCountries?: Array<{ country: string; share: number }>;
+  estConcurrentNow?: number;
+};
+
+export async function getMarketing(domain: string): Promise<Marketing> {
+  const sw = await getSimilarweb(domain);
+  if (sw) {
+    return {
+      provider: 'similarweb',
+      confidence: 'medium',
+      ...sw,
+      estConcurrentNow: estimateConcurrent(sw.monthlyVisits, sw.avgVisitDurationSec),
+    };
+  }
+  return { provider: 'rank-proxy', confidence: 'low' };
+}
+
+/** Similarweb v1 Website API (uses last full month). Requires SIMILARWEB_API_KEY. */
+async function getSimilarweb(domain: string): Promise<Partial<Marketing> | null> {
+  const key = process.env.SIMILARWEB_API_KEY;
+  if (!key) return null;
+
+  const base = 'https://api.similarweb.com/v1/website';
+  const d = encodeURIComponent(domain);
+
+  try {
+    // Visits (monthly)
+    const v = await fetch(`${base}/${d}/traffic-and-engagement/visits?api_key=${key}&granularity=monthly&main_domain_only=true&start_date=last_1_month&country=world`);
+    if (!v.ok) return null;
+    const vj: any = await v.json();
+    const last = (vj?.visits || []).at(-1);
+    const monthlyVisits = Math.round(last?.visits || 0);
+
+    // Engagement (pages/visit, duration, bounce)
+    const e = await fetch(`${base}/${d}/traffic-and-engagement/visits-and-duration?api_key=${key}&start_date=last_1_month&country=world`);
+    const ej: any = await e.json();
+    const pagesPerVisit = Number(ej?.pages_per_visit || 0);
+    const avgVisitDurationSec = Math.round(ej?.avg_visit_duration || 0);
+    const bounceRate = Number(ej?.bounce_rate || 0);
+
+    // Source shares
+    const s = await fetch(`${base}/${d}/traffic-sources/overview-share?api_key=${key}&start_date=last_1_month&country=world`);
+    const sj: any = await s.json();
+    const shares = sj?.shares || {}; // keys: Direct, Search, Social, Referrals, Mail, Display, Paid
+    const sources = normalizeSources(shares);
+
+    // Top countries (optional)
+    let topCountries: { country: string; share: number }[] | undefined;
+    try {
+      const g = await fetch(`${base}/${d}/geo/traffic-by-country?api_key=${key}&start_date=last_1_month&country=world`);
+      const gj: any = await g.json();
+      topCountries = (gj?.traffic_by_country || [])
+        .slice(0, 5)
+        .map((r: any) => ({ country: r.country, share: Number(r.share || 0) }));
+    } catch { /* ignore */ }
+
+    return { monthlyVisits, pagesPerVisit, avgVisitDurationSec, bounceRate, sources, topCountries };
+  } catch {
+    return null;
+  }
+}
+
+function normalizeSources(src: any) {
+  // Similarweb returns PascalCase keys; map to our schema and clamp to [0,1]
+  const clamp = (n: any) => Math.max(0, Math.min(1, Number(n || 0)));
+  return {
+    direct: clamp(src?.Direct),
+    search: clamp(src?.Search),
+    social: clamp(src?.Social),
+    referrals: clamp(src?.Referrals),
+    mail: clamp(src?.Mail),
+    display: clamp(src?.Display),
+    paid: clamp(src?.Paid),
+  };
+}
+
+/** Estimated concurrent = (daily visits * avg session seconds) / 86400. */
+export function estimateConcurrent(monthlyVisits = 0, avgDurationSec = 0) {
+  if (!monthlyVisits || !avgDurationSec) return undefined;
+  const daily = monthlyVisits / 30;
+  return Math.max(1, Math.round((daily * avgDurationSec) / 86400));
+}
+
+3) Backend: include marketing in your /api/scan response
+
+In your existing POST /api/scan handler (after you compute seo/tech/tracking/messaging/social), add:
+
+import { getMarketing } from './server/marketing';      // adjust the path as needed
+import { enrichTech, buildAdLibraryLinks } from './server/ads-and-tech';
+
+// ...
+const domainOnly = new URL(url).hostname.replace(/^www\./i, '');
+
+// Marketing (Similarweb)
+const marketing = await getMarketing(domainOnly);
+
+// Tech enrichment (Wappalyzer/BuiltWith, optional)
+const thirdPartyEnrichment = await enrichTech(url);
+const mergedThird = Array.from(new Set([...(tech.thirdParties || []), ...thirdPartyEnrichment]));
+const fullTech = { ...tech, thirdParties: mergedThird };
+
+// Ad libraries
+const socialMap = {
+  facebook: social.links.find((l: string) => /facebook\.com/i.test(l)),
+  instagram: social.links.find((l: string) => /instagram\.com/i.test(l)),
+  tiktok: social.links.find((l: string) => /tiktok\.com/i.test(l)),
+  twitter: social.links.find((l: string) => /(twitter\.com|x\.com)/i.test(l)),
+  youtube: social.links.find((l: string) => /youtube\.com/i.test(l)),
+  linkedin: social.links.find((l: string) => /linkedin\.com/i.test(l)),
+};
+const adLibraries = await buildAdLibraryLinks(domainOnly, socialMap);
+
+// build your report object…
+const report = {
+  // ...all your existing fields
+  tech: fullTech,
+  marketing,       // <— NEW
+  adLibraries,     // <— already discussed
+};
+
+
+No other changes are required on the server. Your key is read from process.env.SIMILARWEB_API_KEY.
+
+4) Frontend: show the new data (you already have the card)
+
+Your Report type already has marketing (if not, add the type from my previous reply). The Marketing Intelligence card will now populate:
+
+Provider: similarweb
+
+Monthly Visits
+
+Avg Visit Duration
+
+Pages / Visit
+
+Traffic Sources (percentages)
+
+Est. Active Users (now) (computed)
+
+You already render Technology Stack. With Wappalyzer/BuiltWith keys (optional), those third-party services will explode in count; without keys, you still get heuristic detections.
+
+5) Quick test
+
+Confirm the server sees your key:
+
+Temporarily log process.env.SIMILARWEB_API_KEY ? 'SW key loaded' : 'missing' on server start.
+
+Hit your page, scan a domain (e.g., barstool.com).
+
+Check Network → /api/scan → response JSON should include:
+
+"marketing": { "provider": "similarweb", "monthlyVisits": ..., "sources": {...}, "estConcurrentNow": ... }
+
+Marketing card should show numbers. If it still says “—”, check your server logs for a 401/403 on Similarweb calls (plan/endpoint mismatch).
+
+Notes & guardrails
+
+Keep this key server-only. Never expose SIMILARWEB_API_KEY to the client (VITE_ prefix).
+
+Similarweb rate limits—my code makes 3–4 small calls; you can wrap them in a simple memory cache (use the map approach from ads-and-tech.ts) if needed.
+
+Some domains won’t have public data; you’ll get provider: 'rank-proxy'. The UI will still show Ad Libraries and Tech.
