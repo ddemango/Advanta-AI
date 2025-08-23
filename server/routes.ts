@@ -2656,63 +2656,57 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
     }
   });
 
-  // Enhanced Competitor Intel Scanner with Advanced Features
+  // Enhanced Competitor Intel Scanner with Smart Fetch and Headless Fallback
   app.post('/api/scan', async (req, res) => {
+    const raw = String(req.body?.url || '').trim();
+    if (!raw) return res.status(400).json({ error: 'Missing url' });
+
+    const url = normalizeUrl(raw);
+    const domain = new URL(url).hostname.replace(/^www\./i, '');
+
     try {
-      const raw = String(req.body?.url || '').trim();
-      if (!raw) return res.status(400).json({ error: 'Missing url' });
+      // 1) Try static server fetch first
+      let mode = 'static';
+      let fetchResult = await fetchStatic(url);
+      let { html, status, headers, elapsedMs } = fetchResult;
 
-      const url = normalizeUrl(raw);
-      const domain = new URL(url).hostname.replace(/^www\./i, '');
+      // 2) If page looks empty/challenged, escalate to headless
+      if (looksEmpty(html)) {
+        const headlessResult = await fetchHeadless(url);
+        if (headlessResult) {
+          html = headlessResult.html;
+          status = headlessResult.status ?? status;
+          headers = headlessResult.headers ?? headers;
+          elapsedMs = headlessResult.elapsedMs ?? elapsedMs;
+          mode = 'headless';
+        }
+      }
 
-      const start = Date.now();
-      const response = await fetch(url, {
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-          'Accept-Language': 'en-US,en;q=0.9',
-        },
-      });
-
-      const html = await response.text();
-      const elapsedMs = Date.now() - start;
+      // 3) Parse with enhanced detection
       const cheerio = await import('cheerio');
       const $ = cheerio.load(html);
-
-      // Core SEO analysis
-      const seo = parseSEO($, html);
       
-      // Technology detection
-      const tech = detectTech($, html);
+      const seo = parseEnhancedSEO($, html);
+      const { tech, tracking } = detectTechAndTrackersEnhanced($, html);
+      const robots = await parseRobotsAndSitemapsEnhanced(url);
+      const messaging = extractMessagingEnhanced($);
+      const social = extractSocialEnhanced($);
+      const performance = estimatePerformanceEnhanced(html, $);
       
-      // Tracking analysis
-      const tracking = detectTracking($, html);
-      
-      // Robots and sitemaps
-      const robots = await parseRobots(new URL(url));
-      
-      // Performance estimation
-      const performance = estimatePerformance(html, $);
-      
-      // Traffic analysis (placeholder)
+      // Traffic analysis (placeholder for now)
       const traffic = { available: false, trancoRank: null, source: 'Not available' };
       
-      // Messaging analysis
-      const messaging = analyzeMessaging($);
-      
-      // Social presence
-      const social = analyzeSocial($);
-      
-      // Calculate overall score
-      const score = calculateScore({ seo, tech, tracking, robots, performance });
+      // Calculate enhanced score
+      const score = calculateScoreEnhanced({ seo, tech, tracking, robots, performance, messaging, social });
 
       const report = {
         input: { url, domain },
         response: { 
-          status: response.status, 
+          status, 
           elapsedMs, 
-          server: response.headers.get('server'), 
-          xPoweredBy: response.headers.get('x-powered-by') 
+          server: headers['server'] || null, 
+          xPoweredBy: headers['x-powered-by'] || null,
+          mode 
         },
         traffic,
         performance,
@@ -2728,23 +2722,80 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
 
       res.json(report);
     } catch (e: any) {
-      console.error('Scan error:', e);
+      console.error('Enhanced scan error:', e);
       res.status(500).json({ error: e?.message || 'Scan failed' });
     }
   });
 
-  // Helper functions for enhanced scanner
+  // Enhanced helper functions for smart competitor scanner
+  const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
+
   function normalizeUrl(input: string): string {
-    try { 
-      return new URL(input).toString(); 
-    } catch { 
-      return new URL(`https://${input}`).toString(); 
+    try {
+      const u = new URL(input);
+      if (!/^https?:$/.test(u.protocol)) throw new Error('bad protocol');
+      return u.toString();
+    } catch {
+      return `https://${input.replace(/^https?:\/\//, '')}`;
     }
   }
 
-  function parseSEO($: any, html: string) {
+  async function fetchStatic(url: string) {
+    const t0 = Date.now();
+    const response = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'user-agent': UA,
+        'accept-language': 'en-US,en;q=0.9',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'upgrade-insecure-requests': '1'
+      },
+      cache: 'no-store'
+    });
+    const html = await response.text();
+    return {
+      html,
+      status: response.status,
+      headers: Object.fromEntries([...response.headers.entries()]),
+      elapsedMs: Date.now() - t0
+    };
+  }
+
+  function looksEmpty(html: string): boolean {
+    const lowBody = html.replace(/\s+/g, '').length < 2000;
+    const hasChallenge = /Just a moment|cf-browser-verification|cf-chl|Akamai|Access denied/i.test(html);
+    const noHead = !/<title>.*<\/title>/i.test(html);
+    const noContent = !/(<h1|<meta\s+name="description"|og:|twitter:)/i.test(html);
+    return hasChallenge || (lowBody && (noHead || noContent));
+  }
+
+  async function fetchHeadless(url: string) {
+    try {
+      const t0 = Date.now();
+      const puppeteer = await import('puppeteer');
+      const browser = await puppeteer.default.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        headless: 'new'
+      });
+      const page = await browser.newPage();
+      await page.setUserAgent(UA);
+      await page.setExtraHTTPHeaders({ 'accept-language': 'en-US,en;q=0.9' });
+      await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
+      // Let JS execute and hydrate DOM
+      await page.waitForTimeout(1200);
+      const html = await page.content();
+      const perf = Date.now() - t0;
+      await browser.close();
+      return { html, elapsedMs: perf, status: 200, headers: {} };
+    } catch (e: any) {
+      console.warn('Headless fetch failed:', e.message);
+      return null;
+    }
+  }
+
+  function parseEnhancedSEO($: any, html: string) {
     const title = $('title').first().text().trim() || '';
-    const metaDescription = $('meta[name="description"]').attr('content') || '';
+    const metaDescription = $('meta[name="description"]').attr('content')?.trim() || '';
     const canonical = $('link[rel="canonical"]').attr('href') || null;
     const robotsMeta = $('meta[name="robots"]').attr('content') || null;
     
@@ -2761,16 +2812,12 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
       h6: $('h6').length
     };
     
-    const images = {
-      total: $('img').length,
-      withAlt: $('img[alt]').length,
-      withoutAlt: $('img:not([alt])').length
-    };
+    const imgs = $('img').toArray();
+    const withAlt = imgs.filter(i => !!($(i).attr('alt') || '').trim()).length;
     
-    const links = {
-      internal: $('a[href^="/"]').length,
-      external: $('a[href^="http"]').length
-    };
+    const links = $('a[href]').toArray().map(e => ($(e).attr('href') || '').trim());
+    const internal = links.filter(h => h.startsWith('/') || h.startsWith('#') || (!/^https?:\/\//i.test(h))).length;
+    const external = links.filter(h => /^https?:\/\//i.test(h)).length;
     
     return {
       title,
@@ -2783,174 +2830,228 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
       twitterTagCount,
       jsonLdBlocks,
       headings,
-      images,
-      links
+      images: { total: imgs.length, withAlt, withoutAlt: imgs.length - withAlt },
+      links: { internal, external }
     };
   }
 
-  function detectTech($: any, html: string) {
-    const frameworks: string[] = [];
+  function detectTechAndTrackersEnhanced($: any, html: string) {
     const evidence: string[] = [];
-    const thirdParties: string[] = [];
+    const frameworks: string[] = [];
     let cms: string | null = null;
     
-    // CMS Detection
-    if (html.includes('wp-content') || html.includes('wordpress')) {
-      cms = 'WordPress';
-      evidence.push('wp-content');
-    } else if (html.includes('drupal')) {
+    // Enhanced CMS Detection
+    if (html.includes('wp-content') || html.includes('wp-json')) { 
+      cms = 'WordPress'; 
+      evidence.push('wp-content'); 
+    }
+    if (html.includes('cdn.shopify.com')) { 
+      cms = 'Shopify'; 
+      evidence.push('cdn.shopify.com'); 
+    }
+    if (html.includes('drupal')) {
       cms = 'Drupal';
       evidence.push('drupal');
     }
     
-    // Framework Detection
-    if (html.includes('react') || $('[data-reactroot]').length > 0) {
-      frameworks.push('React');
+    // Enhanced Framework Detection
+    if (html.includes('__NEXT_DATA__') || $('script#__NEXT_DATA__').length) { 
+      frameworks.push('Next.js'); 
+      evidence.push('__NEXT_DATA__'); 
+    }
+    if (html.includes('window.__NUXT__')) { 
+      frameworks.push('Nuxt'); 
+      evidence.push('__NUXT__'); 
+    }
+    if (html.includes('data-reactroot') || html.includes('React.createElement')) { 
+      frameworks.push('React'); 
+      evidence.push('React'); 
     }
     if (html.includes('vue.js') || html.includes('__vue__')) {
       frameworks.push('Vue.js');
-    }
-    if (html.includes('next.js') || html.includes('_next/')) {
-      frameworks.push('Next.js');
+      evidence.push('Vue.js');
     }
     
-    // Third-party services
-    const services = ['stripe.com', 'paypal.com', 'shopify', 'cloudflare', 'amazonaws.com'];
-    services.forEach(service => {
-      if (html.includes(service)) {
-        thirdParties.push(service);
-      }
+    // Collect script sources and inline content
+    const srcs: string[] = [];
+    const inlines: string[] = [];
+    $('script').each((_, el) => {
+      const s = $(el).attr('src');
+      if (s) srcs.push(s);
+      else inlines.push($(el).text() || '');
     });
+    const test = (re: RegExp) => srcs.some(s => re.test(s)) || inlines.some(c => re.test(c));
     
-    return { cms, frameworks, evidence, thirdParties };
-  }
-
-  function detectTracking($: any, html: string) {
     const analytics: string[] = [];
     const ads: string[] = [];
     const tagManagers: string[] = [];
     const socialPixels: string[] = [];
+    const thirdParties: string[] = [];
     
-    if (html.includes('google-analytics') || html.includes('gtag')) {
-      analytics.push('Google Analytics');
-    }
-    if (html.includes('googletagmanager')) {
-      tagManagers.push('Google Tag Manager');
-    }
-    if (html.includes('facebook.com/tr')) {
-      socialPixels.push('Facebook Pixel');
-    }
-    if (html.includes('googlesyndication')) {
-      ads.push('Google Ads');
-    }
+    // Enhanced Analytics Detection
+    if (test(/googletagmanager\.com\/gtag\/js/i)) analytics.push('GA4 (gtag.js)');
+    if (test(/google-analytics\.com\/analytics\.js/i)) analytics.push('Universal Analytics');
+    if (test(/static\.hotjar\.com|hotjar\.com\/c\//i)) analytics.push('Hotjar');
+    if (test(/cdn\.segment\.com\/analytics\.js/i)) analytics.push('Segment');
+    if (test(/mixpanel\.com/i)) analytics.push('Mixpanel');
     
-    return { analytics, ads, tagManagers, socialPixels };
+    // Enhanced Ads Detection
+    if (test(/doubleclick\.net|googlesyndication\.com|googletagservices\.com/i)) ads.push('Google Ads / DoubleClick');
+    if (test(/taboola\.com|outbrain\.com/i)) ads.push('Native Ads (Taboola/Outbrain)');
+    
+    // Enhanced Tag Management
+    if (test(/gtm\.js|googletagmanager\.com/i)) tagManagers.push('Google Tag Manager');
+    
+    // Enhanced Social Pixels
+    if (test(/connect\.facebook\.net\/.+\/fbevents\.js/i)) socialPixels.push('Meta Pixel');
+    if (test(/static\.ads-twitter\.com\/uwt\.js/i)) socialPixels.push('Twitter Pixel');
+    if (test(/tiktok\.com\/i18n\/pixel/i)) socialPixels.push('TikTok Pixel');
+    if (test(/snap\.sc\/static\/pixie/i)) socialPixels.push('Snap Pixel');
+    
+    // Enhanced Third-party Services
+    srcs.forEach(s => {
+      try { 
+        const hostname = new URL(s).hostname;
+        thirdParties.push(hostname); 
+      } catch {}
+    });
+    
+    const tech = { cms, frameworks, evidence, thirdParties: Array.from(new Set(thirdParties)) };
+    const tracking = { analytics, ads, tagManagers, socialPixels };
+    
+    return { tech, tracking };
   }
 
-  async function parseRobots(url: URL) {
-    const robotsUrl = `${url.origin}/robots.txt`;
-    const sitemaps: Array<{url: string, urlCount: number}> = [];
-    
-    let robotsTxt = {
-      present: false,
-      disallowCount: 0,
-      sitemaps: [] as string[]
-    };
+
+
+  async function parseRobotsAndSitemapsEnhanced(urlStr: string) {
+    const u = new URL(urlStr);
+    const robotsUrl = `${u.protocol}//${u.host}/robots.txt`;
     
     try {
-      const robotsRes = await fetch(robotsUrl);
-      if (robotsRes.ok) {
-        const robotsContent = await robotsRes.text();
-        robotsTxt.present = true;
-        robotsTxt.disallowCount = (robotsContent.match(/Disallow:/gi) || []).length;
-        
-        const sitemapMatches = robotsContent.match(/Sitemap:\s*(.*)/gi) || [];
-        robotsTxt.sitemaps = sitemapMatches.map(match => match.replace(/Sitemap:\s*/i, '').trim());
-        
-        // Try to get sitemap URL counts
-        for (const sitemapUrl of robotsTxt.sitemaps.slice(0, 2)) {
+      const r = await fetch(robotsUrl, { cache: 'no-store', headers: { 'user-agent': UA } });
+      if (!r.ok) return { robotsTxt: { present: false, disallowCount: 0, sitemaps: [] }, sitemaps: [] };
+      
+      const txt = await r.text();
+      const lines = txt.split('\n');
+      const disallowCount = lines.filter(l => /^disallow:/i.test(l.trim())).length;
+      const sitemaps = lines.filter(l => /^sitemap:/i.test(l.trim())).map(l => l.split(':').slice(1).join(':').trim()).filter(Boolean);
+      
+      const sitemapSummaries: Array<{url: string, urlCount: number}> = [];
+      for (const sm of sitemaps.slice(0, 3)) {
+        try {
+          const xml = await (await fetch(sm, { cache: 'no-store', headers: { 'user-agent': UA } })).text();
+          const count = (xml.match(/<loc>/g) || []).length;
+          sitemapSummaries.push({ url: sm, urlCount: count });
+        } catch {}
+      }
+      
+      // Fallback: probe common sitemap paths if none declared
+      if (!sitemaps.length) {
+        for (const guess of ['/sitemap.xml', '/sitemap_index.xml']) {
+          const gUrl = `${u.protocol}//${u.host}${guess}`;
           try {
-            const sitemapRes = await fetch(sitemapUrl);
-            if (sitemapRes.ok) {
-              const sitemapContent = await sitemapRes.text();
-              const urlCount = (sitemapContent.match(/<loc>/g) || []).length;
-              sitemaps.push({ url: sitemapUrl, urlCount });
+            const g = await fetch(gUrl, { cache: 'no-store', headers: { 'user-agent': UA } });
+            if (g.ok) {
+              const xml = await g.text();
+              const count = (xml.match(/<loc>/g) || []).length;
+              if (count > 0) sitemapSummaries.push({ url: gUrl, urlCount: count });
             }
-          } catch (e) {
-            // Skip failed sitemaps
-          }
+          } catch {}
         }
       }
-    } catch (e) {
-      // Robots.txt not accessible
+      
+      return { robotsTxt: { present: true, disallowCount, sitemaps }, sitemaps: sitemapSummaries };
+    } catch {
+      return { robotsTxt: { present: false, disallowCount: 0, sitemaps: [] }, sitemaps: [] };
     }
-    
-    return { robotsTxt, sitemaps };
   }
 
-  function estimatePerformance(html: string, $: any) {
+  function estimatePerformanceEnhanced(html: string, $: any) {
     const weightKB = Math.round(Buffer.byteLength(html, 'utf8') / 1024);
     const reqImages = $('img').length;
     const reqScripts = $('script[src]').length;
     
-    // Rough estimates for Core Web Vitals
+    // Enhanced Core Web Vitals estimation
     const LCP = Math.max(1.0, Math.min(4.0, weightKB / 100 + reqImages * 0.1));
     const INP = Math.max(100, Math.min(500, reqScripts * 20 + weightKB * 0.5));
     const CLS = Math.max(0.0, Math.min(0.25, reqImages * 0.01));
+    const passed = LCP <= 2.5 && INP <= 200 && CLS <= 0.1;
     
-    return { weightKB, reqImages, reqScripts, LCP, INP, CLS };
+    return { weightKB, reqImages, reqScripts, LCP, INP, CLS, passed };
   }
 
-  function analyzeMessaging($: any) {
+  function extractMessagingEnhanced($: any) {
     const headline = $('h1').first().text().trim() || undefined;
     const subhead = $('h1').nextAll('p').first().text().trim() || $('p').first().text().trim() || undefined;
-    const primaryCTA = $('a,button').filter((_, el) => /get started|demo|trial|contact|book/i.test($(el).text())).first().text().trim() || undefined;
+    const primaryCTA = $('a,button')
+      .filter((_, el) => /get started|demo|trial|contact|book|subscribe|sign up/i.test($(el).text()))
+      .first().text().trim() || undefined;
     
-    const socialProof: string[] = [];
-    $('[class*="logo"], [class*="badge"]').each((_, el) => {
-      const text = $(el).attr('alt') || $(el).text();
-      if (text) socialProof.push(text.trim());
+    const proof: string[] = [];
+    $('[class*="logo"], [class*="badge"], img[alt*=trusted], img[alt*=awarded]').each((_, el) => {
+      const t = $(el).attr('alt') || $(el).text();
+      if (t) proof.push(t.trim());
     });
     
     return { 
       hero: { headline, subhead, primaryCTA }, 
-      socialProof: socialProof.slice(0, 6) 
+      socialProof: proof.slice(0, 6),
+      risks: []
     };
   }
 
-  function analyzeSocial($: any) {
-    const links: string[] = [];
+  function extractSocialEnhanced($: any) {
+    const links = new Set<string>();
     $('a[href]').each((_, el) => {
-      const href = $(el).attr('href') || '';
-      if (/facebook\.com|twitter\.com|x\.com|instagram\.com|linkedin\.com|youtube\.com/i.test(href)) {
-        links.push(href);
+      const href = ($(el).attr('href') || '').trim();
+      if (/facebook\.com|instagram\.com|x\.com|twitter\.com|tiktok\.com|youtube\.com|linkedin\.com/i.test(href)) {
+        links.add(href);
       }
     });
-    return { links: [...new Set(links)] };
+    return { links: Array.from(links) };
   }
 
-  function calculateScore(data: any) {
-    let total = 50; // baseline
+  function calculateScoreEnhanced(data: any) {
+    let total = 40; // baseline
     
-    // SEO scoring
+    // Enhanced SEO scoring (0-35 points)
     if (data.seo.title && data.seo.titleLength >= 30 && data.seo.titleLength <= 60) total += 10;
-    if (data.seo.metaDescription && data.seo.metaDescriptionLength >= 120) total += 10;
+    if (data.seo.metaDescription && data.seo.metaDescriptionLength >= 120 && data.seo.metaDescriptionLength <= 160) total += 10;
     if (data.seo.headings.h1 === 1) total += 5;
     if (data.seo.openGraphCount >= 4) total += 5;
     if (data.seo.jsonLdBlocks > 0) total += 5;
     
-    // Tech scoring
+    // Enhanced Tech scoring (0-20 points)
     if (data.tech.frameworks.length > 0) total += 10;
     if (data.tech.cms) total += 5;
     if (data.tech.thirdParties.length >= 5) total += 5;
     
-    // Structure scoring
+    // Enhanced Structure scoring (0-15 points)
     if (data.robots.robotsTxt.present) total += 10;
     if (data.robots.sitemaps.length > 0) total += 5;
     
+    // Performance scoring (0-15 points)
+    if (data.performance.passed) total += 15;
+    else if (data.performance.LCP <= 4.0) total += 10;
+    else if (data.performance.LCP <= 6.0) total += 5;
+    
+    // Marketing sophistication (0-15 points)
+    if (data.tracking.analytics.length >= 2) total += 10;
+    else if (data.tracking.analytics.length >= 1) total += 5;
+    
+    if (data.tracking.tagManagers.length > 0) total += 3;
+    if (data.tracking.socialPixels.length > 0) total += 2;
+    
     return { 
       total: Math.min(100, total), 
-      pillars: { seo: 75, tech: 65, structure: 80, performance: 70 } 
+      pillars: { 
+        seo: Math.min(100, 40 + (data.seo.openGraphCount * 2) + (data.seo.jsonLdBlocks * 5)),
+        tech: Math.min(100, 30 + (data.tech.frameworks.length * 10) + (data.tech.cms ? 20 : 0)),
+        structure: data.robots.robotsTxt.present ? 85 : 40,
+        performance: data.performance.passed ? 95 : 60,
+        marketing: Math.min(100, 20 + (data.tracking.analytics.length * 15) + (data.tracking.tagManagers.length * 10))
+      } 
     };
   }
 

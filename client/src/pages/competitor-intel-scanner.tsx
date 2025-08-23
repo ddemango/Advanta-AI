@@ -135,6 +135,9 @@ export default function CompetitorIntelScanner() {
               <div>
                 <div className="text-xs text-gray-500 mb-1">Domain</div>
                 <div className="text-lg font-medium">{domain}</div>
+                {report.response.mode && (
+                  <div className="text-xs text-blue-600">Mode: {report.response.mode}</div>
+                )}
               </div>
               <div>
                 <div className="text-xs text-gray-500 mb-1">Tranco Rank</div>
