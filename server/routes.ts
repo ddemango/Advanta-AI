@@ -2691,11 +2691,33 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
       const social = extractSocial($);
       const performance = estimatePerformance(html, $);
       
+      // 4) Enhanced tech stack with API enrichment
+      const { enrichTech, buildAdLibraryLinks } = await import('./ads-and-tech');
+      const thirdPartyEnrichment = await enrichTech(url);
+      const mergedThird = Array.from(new Set([
+        ...(tech.thirdParties || []),
+        ...thirdPartyEnrichment,
+      ]));
+      const fullTech = { ...tech, thirdParties: mergedThird };
+
+      // 5) Social map from detected links
+      const socialMap = {
+        facebook: (social.links || []).find(l => /facebook\.com/i.test(l)),
+        instagram: (social.links || []).find(l => /instagram\.com/i.test(l)),
+        tiktok: (social.links || []).find(l => /tiktok\.com/i.test(l)),
+        twitter: (social.links || []).find(l => /(twitter\.com|x\.com)/i.test(l)),
+        youtube: (social.links || []).find(l => /youtube\.com/i.test(l)),
+        linkedin: (social.links || []).find(l => /linkedin\.com/i.test(l)),
+      };
+
+      // 6) Build ad library links
+      const adLibraries = await buildAdLibraryLinks(new URL(url).hostname, socialMap);
+      
       // Traffic analysis (placeholder for now)
       const traffic = { available: false, trancoRank: null, source: 'Not available' };
       
       // Calculate enhanced score
-      const score = calculateScore({ seo, tech, tracking, robots, performance, messaging, social });
+      const score = calculateScore({ seo, tech: fullTech, tracking, robots, performance, messaging, social });
 
       const report = {
         input: { url, domain: new URL(url).hostname.replace(/^www\./i, '') },
@@ -2709,11 +2731,12 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
         traffic,
         performance,
         seo,
-        tech,
+        tech: fullTech,
         tracking,
         robots,
         messaging,
         social,
+        adLibraries,
         score,
         generatedAt: new Date().toISOString()
       };

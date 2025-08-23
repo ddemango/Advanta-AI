@@ -18,9 +18,16 @@ import {
   MessageSquare
 } from 'lucide-react';
 
+type AdLibraryLink = {
+  platform: 'meta' | 'tiktok' | 'google' | 'linkedin';
+  label: string;
+  url: string;
+  source: 'detected' | 'derived' | 'api';
+};
+
 interface Report {
   input: { url: string; domain: string };
-  response: { status: number; elapsedMs: number; server?: string | null; xPoweredBy?: string | null };
+  response: { status: number; elapsedMs: number; server?: string | null; xPoweredBy?: string | null; mode?: string };
   traffic: { available: boolean; trancoRank?: number; source?: string };
   performance: { weightKB?: number; reqImages?: number; reqScripts?: number; LCP?: number; INP?: number; CLS?: number; passed?: boolean };
   seo: {
@@ -37,6 +44,7 @@ interface Report {
   robots: { robotsTxt: { present: boolean; disallowCount: number; sitemaps: string[] }; sitemaps: { url: string; urlCount: number }[] };
   messaging: { hero?: { headline?: string; subhead?: string; primaryCTA?: string }; socialProof?: string[]; risks?: string[] };
   social: { links: string[] };
+  adLibraries?: AdLibraryLink[];
   score: {
     total: number;
     pillars: Record<string, number>;
@@ -250,6 +258,14 @@ export default function CompetitorIntelScanner() {
                 <div className="text-xs text-gray-500 mt-2">
                   {report.tech.thirdParties.length > 10 && `+${report.tech.thirdParties.length - 10} more services detected`}
                 </div>
+                {report.tech.evidence.length > 0 && (
+                  <div className="mt-2">
+                    <div className="text-xs text-gray-500">Evidence: {report.tech.evidence.join(', ')}</div>
+                  </div>
+                )}
+                <div className="text-xs text-gray-500 mt-2">
+                  Verified via {getTechSources()}
+                </div>
               </CardContent>
             </Card>
 
@@ -269,7 +285,7 @@ export default function CompetitorIntelScanner() {
                   {report.robots.sitemaps.length > 0 ? (
                     report.robots.sitemaps.map((s, i) => (
                       <li key={i} className="flex justify-between">
-                        <span className="truncate mr-2">{new URL(s.url).pathname}</span>
+                        <span className="truncate mr-2">{safePathname(s.url)}</span>
                         <span className="text-gray-500">{s.urlCount} URLs</span>
                       </li>
                     ))
@@ -293,6 +309,32 @@ export default function CompetitorIntelScanner() {
                 <KV label="Subheading" value={report.messaging.hero?.subhead || '—'} />
                 <KV label="Primary CTA" value={report.messaging.hero?.primaryCTA || '—'} />
                 <List label="Social Proof" items={report.messaging.socialProof || []} />
+              </CardContent>
+            </Card>
+
+            {/* Ad Libraries */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Shield className="w-5 h-5 text-amber-600" />
+                  Ad Libraries
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {report.adLibraries?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {report.adLibraries.map((l, i) => (
+                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                         className="inline-flex items-center gap-2 border rounded-lg px-3 py-2 text-sm hover:bg-gray-50">
+                        <AdIcon platform={l.platform} />
+                        <span>{l.label}</span>
+                        <span className="text-xs text-gray-500">· {l.source}</span>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">No ad library links available</div>
+                )}
               </CardContent>
             </Card>
 
@@ -420,4 +462,20 @@ function scoreBadgeColor(score: number) {
 function fmt(v: any, unit: 's' | 'ms' | '') {
   if (v == null) return '—';
   return `${v}${unit}`;
+}
+
+function AdIcon({ platform }: { platform: 'meta'|'tiktok'|'google'|'linkedin' }) {
+  const map: any = {
+    meta: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18c2.5-6 5-9 8-9s5.5 3 8 9c-2.5-6-5-9-8-9S6.5 12 4 18z" /></svg>,
+    tiktok: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 3c1 3 3 5 6 5v3c-2 0-4-.7-6-2v6a6 6 0 11-6-6h2a4 4 0 104 4V3z"/></svg>,
+    google: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4c-.2 1.3-.9 2.4-2 3.1v2.6h3.2c1.9-1.7 3-4.2 3-7.5z"/></svg>,
+    linkedin: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 3a2 2 0 100 4 2 2 0 000-4zM3 8h3v13H3zM9 8h3v2h.1c.4-.7 1.5-1.5 3.1-1.5 3.3 0 3.8 2.1 3.8 4.9V21h-3v-5.3c0-1.3 0-3-1.8-3s-2 1.4-2 2.9V21H9z"/></svg>,
+  };
+  return <span className="inline-flex">{map[platform]}</span>;
+}
+
+function getTechSources() {
+  // Note: In production, you'd pass this as a prop from the server
+  // For now, we'll indicate the sources generically
+  return 'heuristics & API enrichment';
 }

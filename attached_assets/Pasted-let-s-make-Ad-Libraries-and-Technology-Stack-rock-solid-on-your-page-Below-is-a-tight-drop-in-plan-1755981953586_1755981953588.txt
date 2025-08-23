@@ -1,0 +1,333 @@
+let’s make Ad Libraries and Technology Stack rock-solid on your page. Below is a tight, drop-in plan with code you can paste. It assumes Express backend + React/Vite frontend (your current setup). If you’re on Next.js Routes instead, say so and I’ll translate.
+
+What we’re adding
+
+Ad Libraries (Meta, TikTok, Google, LinkedIn)
+
+Server builds official link-outs to each platform’s ad library (works without keys).
+
+Optional: Meta Ad Library Graph API (if you add a token) to resolve Page IDs for more precise links.
+
+Uses detected social links or brand inferred from domain when links aren’t present.
+
+Technology Stack (Wappalyzer + BuiltWith)
+
+Server enriches your existing detection with Wappalyzer and BuiltWith (behind API keys).
+
+Dedupes and merges into tech.thirdParties + fills tech.cms/frameworks when possible.
+
+Lightweight in-memory cache to avoid rate limits.
+
+Frontend UI
+
+New Ad Libraries card with platform buttons.
+
+Technology card shows verified sources (badges).
+
+0) Environment
+
+Add these to .env (or your host’s env UI):
+
+# API base for client (leave empty for same-origin)
+VITE_API_BASE=
+
+# Optional tech enrichment
+WAPPALYZER_API_BASE=https://api.wappalyzer.com/v2
+WAPPALYZER_API_KEY=
+
+BUILTWITH_API_BASE=https://api.builtwith.com
+BUILTWITH_API_KEY=
+
+# Optional Meta Graph token (App with ads library access)
+META_GRAPH_API=https://graph.facebook.com/v19.0
+META_GRAPH_TOKEN=
+
+1) Backend — helpers (put in server/ads-and-tech.ts)
+// server/ads-and-tech.ts
+import fetch from 'node-fetch';
+
+const TTL_MS = 12 * 60 * 60 * 1000;
+const cache = new Map<string, { at: number; data: string[] }>();
+
+export async function enrichTech(url: string): Promise<string[]> {
+  const key = `tech:${url}`;
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.data;
+
+  const arr: string[] = [];
+  const wapps = await callWappalyzer(url);
+  const bwith = await callBuiltWith(url);
+  const merged = Array.from(new Set([...wapps, ...bwith])).filter(Boolean);
+
+  cache.set(key, { at: Date.now(), data: merged });
+  return merged;
+}
+
+async function callWappalyzer(url: string): Promise<string[]> {
+  const base = process.env.WAPPALYZER_API_BASE;
+  const key = process.env.WAPPALYZER_API_KEY;
+  if (!base || !key) return [];
+  try {
+    const r = await fetch(`${base}/lookup/?urls=${encodeURIComponent(url)}`, {
+      headers: { 'x-api-key': key as string },
+    });
+    if (!r.ok) return [];
+    const json: any = await r.json();
+    const names = new Set<string>();
+    Object.values<any>(json).forEach((apps) => (apps || []).forEach((a: any) => names.add(a.name)));
+    return Array.from(names);
+  } catch { return []; }
+}
+
+async function callBuiltWith(url: string): Promise<string[]> {
+  const base = process.env.BUILTWITH_API_BASE;
+  const key = process.env.BUILTWITH_API_KEY;
+  if (!base || !key) return [];
+  try {
+    const r = await fetch(`${base}/v20/api.json?KEY=${key}&LOOKUP=${encodeURIComponent(url)}`);
+    if (!r.ok) return [];
+    const json: any = await r.json();
+    const names = new Set<string>();
+    (json?.Results || []).forEach((res: any) =>
+      (res?.Result?.Paths || []).forEach((p: any) =>
+        (p?.Technologies || []).forEach((t: any) => names.add(t.Name))
+      )
+    );
+    return Array.from(names);
+  } catch { return []; }
+}
+
+// ---------- Ad Libraries ----------
+
+type SocialMap = { facebook?: string; instagram?: string; tiktok?: string; twitter?: string; youtube?: string; linkedin?: string; };
+
+export type AdLibraryLink = {
+  platform: 'meta' | 'tiktok' | 'google' | 'linkedin';
+  label: string;
+  url: string;
+  source: 'detected' | 'derived' | 'api';
+};
+
+export async function buildAdLibraryLinks(domain: string, socials: SocialMap = {}): Promise<AdLibraryLink[]> {
+  const brand = deriveBrandFromDomain(domain);
+  const links: AdLibraryLink[] = [];
+
+  // META: Facebook/Instagram
+  const pageId = await resolveMetaPageId(socials.facebook || socials.instagram, brand);
+  if (pageId) {
+    links.push({
+      platform: 'meta',
+      label: 'Meta Ad Library',
+      url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&view_all_page_id=${encodeURIComponent(pageId)}`,
+      source: 'api',
+    });
+  } else {
+    const q = encodeURIComponent(socials.facebook || socials.instagram || brand);
+    links.push({
+      platform: 'meta',
+      label: 'Meta Ad Library (search)',
+      url: `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&search_type=page&media_type=all&q=${q}`,
+      source: socials.facebook || socials.instagram ? 'detected' : 'derived',
+    });
+  }
+
+  // TIKTOK: Creative Center ads search
+  const tk = handleFromUrl(socials.tiktok);
+  links.push({
+    platform: 'tiktok',
+    label: 'TikTok Creative Center (ads)',
+    url: `https://ads.tiktok.com/business/creativecenter/pc/en/ads/analysis?keyword=${encodeURIComponent(tk || brand)}`,
+    source: tk ? 'detected' : 'derived',
+  });
+
+  // GOOGLE Ads Transparency Center
+  links.push({
+    platform: 'google',
+    label: 'Google Ads Transparency Center',
+    url: `https://adstransparency.google.com/?search=${encodeURIComponent(brand)}`,
+    source: 'derived',
+  });
+
+  // LINKEDIN (ad library exists but is limited; provide search)
+  const li = handleFromUrl(socials.linkedin);
+  links.push({
+    platform: 'linkedin',
+    label: 'LinkedIn Ad Library (search)',
+    url: `https://www.linkedin.com/ad-library/search?keywords=${encodeURIComponent(li || brand)}`,
+    source: li ? 'detected' : 'derived',
+  });
+
+  return links;
+}
+
+function deriveBrandFromDomain(domain: string) {
+  return domain.replace(/^www\./i, '').split('.')[0];
+}
+
+function handleFromUrl(url?: string) {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    // tiktok.com/@handle or linkedin.com/company/handle
+    const parts = u.pathname.split('/').filter(Boolean);
+    if (u.hostname.includes('tiktok.com') && parts[0] === '@') return parts[1] || '';
+    return parts[parts.length - 1] || '';
+  } catch { return ''; }
+}
+
+async function resolveMetaPageId(socialUrl?: string, fallbackBrand?: string): Promise<string | null> {
+  const token = process.env.META_GRAPH_TOKEN;
+  const base = process.env.META_GRAPH_API || 'https://graph.facebook.com/v19.0';
+  if (!token) return null;
+
+  try {
+    // If a facebook page link is provided, try to resolve id via Graph
+    if (socialUrl?.includes('facebook.com')) {
+      const q = new URLSearchParams({ id: socialUrl, access_token: token });
+      const r = await fetch(`${base}/?${q.toString()}`);
+      const j: any = await r.json();
+      return j?.id || null;
+    }
+
+    // Otherwise search pages by name (approx)
+    if (fallbackBrand) {
+      const q = new URLSearchParams({ access_token: token, type: 'page', q: fallbackBrand });
+      const r = await fetch(`${base}/search?${q.toString()}`);
+      const j: any = await r.json();
+      const first = j?.data?.[0];
+      return first?.id || null;
+    }
+  } catch {}
+  return null;
+}
+
+2) Backend — integrate into your /api/scan
+
+In your Express route where you currently build the report, merge tech enrichment and ad library links before responding.
+
+// server/routes.ts (inside POST /api/scan after you have `seo`, `tech`, `tracking`, `messaging`, `social`)
+
+import { enrichTech, buildAdLibraryLinks } from './ads-and-tech';
+
+// 1) Tech enrichment (Wappalyzer/BuiltWith)
+const thirdPartyEnrichment = await enrichTech(url);  // uses full URL
+const mergedThird = Array.from(new Set([
+  ...(tech.thirdParties || []),
+  ...thirdPartyEnrichment,
+]));
+const fullTech = { ...tech, thirdParties: mergedThird };
+
+// 2) Social map from your detected links
+const socialMap = {
+  facebook: (social.links || []).find(l => /facebook\.com/i.test(l)),
+  instagram: (social.links || []).find(l => /instagram\.com/i.test(l)),
+  tiktok: (social.links || []).find(l => /tiktok\.com/i.test(l)),
+  twitter: (social.links || []).find(l => /(twitter\.com|x\.com)/i.test(l)),
+  youtube: (social.links || []).find(l => /youtube\.com/i.test(l)),
+  linkedin: (social.links || []).find(l => /linkedin\.com/i.test(l)),
+};
+
+// 3) Build ad library links
+const adLibraries = await buildAdLibraryLinks(new URL(url).hostname, socialMap);
+
+// 4) Include in final payload
+const report = {
+  ...existingReportParts,
+  tech: fullTech,
+  adLibraries,         // <— NEW
+};
+
+
+Update your TypeScript type server-side (if any) to include adLibraries: AdLibraryLink[].
+
+3) Frontend — add Ad Libraries card + Tech badges
+A) Extend the Report interface
+type AdLibraryLink = {
+  platform: 'meta' | 'tiktok' | 'google' | 'linkedin';
+  label: string;
+  url: string;
+  source: 'detected' | 'derived' | 'api';
+};
+
+interface Report {
+  // ...existing fields
+  adLibraries?: AdLibraryLink[]; // <-- add this
+}
+
+B) Render the Ad Libraries card
+
+Add this card to your grid (e.g., after “Marketing & Tracking”):
+
+{/* Ad Libraries */}
+<Card className="bg-white shadow-sm">
+  <CardHeader className="pb-3">
+    <CardTitle className="flex items-center gap-2 text-lg">
+      <Shield className="w-5 h-5 text-amber-600" />
+      Ad Libraries
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    {report.adLibraries?.length ? (
+      <div className="flex flex-wrap gap-2">
+        {report.adLibraries.map((l, i) => (
+          <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+             className="inline-flex items-center gap-2 border rounded-lg px-3 py-2 text-sm hover:bg-gray-50">
+            <AdIcon platform={l.platform} />
+            <span>{l.label}</span>
+            <span className="text-xs text-gray-500">· {l.source}</span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div className="text-sm text-gray-500">No ad library links available</div>
+    )}
+  </CardContent>
+</Card>
+
+
+Add the icon helper:
+
+function AdIcon({ platform }: { platform: 'meta'|'tiktok'|'google'|'linkedin' }) {
+  const map: any = {
+    meta: <svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 18c2.5-6 5-9 8-9s5.5 3 8 9c-2.5-6-5-9-8-9S6.5 12 4 18z" /></svg>,
+    tiktok: <svg width="16" height="16" viewBox="0 0 24 24"><path d="M14 3c1 3 3 5 6 5v3c-2 0-4-.7-6-2v6a6 6 0 11-6-6h2a4 4 0 104 4V3z"/></svg>,
+    google: <svg width="16" height="16" viewBox="0 0 24 24"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4c-.2 1.3-.9 2.4-2 3.1v2.6h3.2c1.9-1.7 3-4.2 3-7.5z"/></svg>,
+    linkedin: <svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 3a2 2 0 100 4 2 2 0 000-4zM3 8h3v13H3zM9 8h3v2h.1c.4-.7 1.5-1.5 3.1-1.5 3.3 0 3.8 2.1 3.8 4.9V21h-3v-5.3c0-1.3 0-3-1.8-3s-2 1.4-2 2.9V21H9z"/></svg>,
+  };
+  return <span className="inline-flex">{map[platform]}</span>;
+}
+
+C) Tech card — show enrichment provenance
+
+At the bottom of your Technology Stack card, add:
+
+<div className="text-xs text-gray-500 mt-2">
+  Verified via {process.env.WAPPALYZER_API_KEY ? 'Wappalyzer' : ''}{process.env.WAPPALYZER_API_KEY && process.env.BUILTWITH_API_KEY ? ' & ' : ''}{process.env.BUILTWITH_API_KEY ? 'BuiltWith' : 'heuristics'}
+</div>
+
+
+(If you don’t have runtime env on client, you can pass a flag from the server, e.g., report.techSources: string[].)
+
+4) Why this works even without API keys
+
+Ad Libraries: we generate platform search URLs that open first-party ad libraries directly. When you add a Meta Graph token, we resolve the Page ID and link to the precise page (more reliable).
+
+Tech Stack: if you don’t set Wappalyzer/BuiltWith keys, the code falls back to your existing script/CMS heuristics. With keys, we enrich and dedupe.
+
+5) Quick tests
+
+Scan a brand with known Facebook/TikTok links on their homepage.
+
+Ad Libraries card should show Meta/TikTok/Google/LinkedIn buttons.
+
+Clicking opens the platform’s library with the brand pre-filled.
+
+Temporarily set WAPPALYZER_API_KEY and BUILTWITH_API_KEY.
+
+Tech card’s “Third-party Services” should expand meaningfully within 1–2 seconds.
+
+You’ll see “Verified via Wappalyzer & BuiltWith”.
+
+Remove keys.
+
+Tech still works via heuristics; the verification footer says “heuristics”.
