@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.STACK_FROM_EMAIL || "noreply@advantaai.com";
+const FROM_EMAIL = process.env.STACK_FROM_EMAIL || "onboarding@resend.dev";
 
 interface StackPlan {
   summary: string;
