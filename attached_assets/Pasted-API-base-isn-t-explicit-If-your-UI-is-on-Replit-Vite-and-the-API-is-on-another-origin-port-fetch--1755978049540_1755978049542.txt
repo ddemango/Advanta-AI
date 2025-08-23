@@ -1,0 +1,101 @@
+API base isn’t explicit
+
+If your UI is on Replit/Vite and the API is on another origin/port, fetch('/api/scan') 404s.
+
+Fix: use a base URL env and reuse it for both endpoints.
+
+// top of file
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+// ...
+const res = await fetch(`${API_BASE}/api/scan`, { /* ... */ });
+// ...
+const h = await fetch(`${API_BASE}/api/history?domain=${json.input.domain}`, { cache: 'no-store' });
+
+
+Server must handle JS-rendered sites
+
+If your /api/scan only does fetch(url) + Cheerio, many sites will look empty.
+
+Ensure your server escalates to Puppeteer/Playwright when the static HTML is “empty/challenged” (I gave you a full Express route with that fallback earlier—use it).
+
+Frontend bugs & foot-guns
+A) onKeyPress is deprecated
+
+It can be flaky in React 18. Use onKeyDown.
+
+<Input
+  // ...
+  onKeyDown={e => {
+    if (e.key === 'Enter' && !loading) runScan();
+  }}
+/>
+
+B) new URL(s.url) can throw and break render
+
+If a sitemap entry is relative or malformed, new URL(...) will throw and React will stop rendering that card.
+
+// replace inside the map()
+<li key={i} className="flex justify-between">
+  <span className="truncate mr-2">
+    {safePathname(s.url)}
+  </span>
+  <span className="text-gray-500">{s.urlCount} URLs</span>
+</li>
+
+// add helper
+function safePathname(u: string) {
+  try { return new URL(u).pathname; } catch { return u; }
+}
+
+C) Sparkline domain when min===max
+
+Recharts can render oddly when all Y values are equal.
+
+const minY = Math.min(...rows.map(r => r.y));
+const maxY = Math.max(...rows.map(r => r.y));
+const pad = minY === maxY ? (minY === 0 ? 1 : Math.abs(minY) * 0.1) : 0;
+// ...
+<YAxis domain={invert ? [maxY + pad, minY - pad] : [minY - pad, maxY + pad]} hide />
+
+
+Also sort data (your history might be unordered):
+
+const rows = (data || [])
+  .filter(d => d[y] != null)
+  .sort((a,b) => new Date(a[x]).getTime() - new Date(b[x]).getTime())
+  .map(d => ({ x: d[x], y: d[y] }));
+
+D) Canonical URL is hard-coded to advanta-ai.com
+
+On Replit that produces a wrong canonical. Make it dynamic:
+
+const ORIGIN = (typeof window !== 'undefined' && window.location.origin) || SITE_URL;
+const PAGE_URL = `${ORIGIN}/competitor-intel-scanner`;
+
+E) Minor: unused imports & safe stringifying
+
+Badge is imported but unused—remove it.
+
+KV does String(value), which prints "undefined" if you forget a fallback. You’ve added fallbacks in most places; keep doing that (e.g., value ?? '—' before passing to KV).
+
+Quick backend self-check (do this right now)
+
+Open your app’s Network tab → click Scan → inspect /api/scan.
+
+404 ⇒ wrong base URL or backend not running (use API_BASE).
+
+500 ⇒ server parse/timeout/bot-challenge (enable headless fallback).
+
+Hit /api/health in your browser. If you don’t see { ok: true }, the server isn’t wired.
+
+What you absolutely need server-side
+
+Make sure your /api/scan:
+
+Normalizes the input to https://…
+
+Tries static fetch with a real Chrome UA
+
+If HTML looks empty/challenged → Puppeteer page.content() fallback
+
+Parses with Cheerio and returns the JSON shape your UI expects (including response.mode: 'static' | 'headless')
