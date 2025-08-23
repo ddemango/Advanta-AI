@@ -25,6 +25,18 @@ type AdLibraryLink = {
   source: 'detected' | 'derived' | 'api';
 };
 
+type Marketing = {
+  provider: 'similarweb'|'semrush'|'rank-proxy'|'none';
+  confidence: 'high'|'medium'|'low';
+  monthlyVisits?: number;
+  pagesPerVisit?: number;
+  avgVisitDurationSec?: number;
+  bounceRate?: number;
+  sources?: { direct?: number; search?: number; social?: number; referrals?: number; mail?: number; display?: number; paid?: number };
+  topCountries?: Array<{ country: string; share: number }>;
+  estConcurrentNow?: number;
+};
+
 interface Report {
   input: { url: string; domain: string };
   response: { status: number; elapsedMs: number; server?: string | null; xPoweredBy?: string | null; mode?: string };
@@ -45,6 +57,7 @@ interface Report {
   messaging: { hero?: { headline?: string; subhead?: string; primaryCTA?: string }; socialProof?: string[]; risks?: string[] };
   social: { links: string[] };
   adLibraries?: AdLibraryLink[];
+  marketing?: Marketing;
   score: {
     total: number;
     pillars: Record<string, number>;
@@ -334,6 +347,38 @@ export default function CompetitorIntelScanner() {
                   </div>
                 ) : (
                   <div className="text-sm text-gray-500">No ad library links available</div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Marketing Intelligence */}
+            <Card className="bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart3 className="w-5 h-5 text-emerald-600" />
+                  Marketing Intelligence
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <KV label="Provider" value={report.marketing?.provider ?? '—'} />
+                <KV label="Confidence" value={report.marketing?.confidence ?? '—'} />
+                <KV label="Est. Active Users (now)" value={report.marketing?.estConcurrentNow ?? '—'} />
+                <KV label="Monthly Visits" value={report.marketing?.monthlyVisits?.toLocaleString() ?? '—'} />
+                <KV label="Pages / Visit" value={report.marketing?.pagesPerVisit ?? '—'} />
+                <KV label="Avg Visit Duration" value={
+                  report.marketing?.avgVisitDurationSec != null
+                    ? `${Math.round((report.marketing.avgVisitDurationSec)/60)}m`
+                    : '—'
+                } />
+                {report.marketing?.sources && (
+                  <div className="mt-2 text-sm">
+                    <div className="text-gray-500 mb-1">Traffic Sources</div>
+                    <ul className="list-disc pl-6">
+                      {Object.entries(report.marketing.sources).map(([k,v]) => (
+                        <li key={k}>{k}: {Math.round((v || 0)*100)}%</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </CardContent>
             </Card>

@@ -2693,6 +2693,13 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
       
       // 4) Enhanced tech stack with API enrichment
       const { enrichTech, buildAdLibraryLinks } = await import('./ads-and-tech');
+      const { getMarketing } = await import('./marketing');
+      
+      const domain = new URL(url).hostname.replace(/^www\./i, '');
+      
+      // Get marketing intelligence
+      const marketing = await getMarketing(domain);
+      
       const thirdPartyEnrichment = await enrichTech(url);
       const mergedThird = Array.from(new Set([
         ...(tech.thirdParties || []),
@@ -2711,7 +2718,7 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
       };
 
       // 6) Build ad library links
-      const adLibraries = await buildAdLibraryLinks(new URL(url).hostname, socialMap);
+      const adLibraries = await buildAdLibraryLinks(domain, socialMap);
       
       // Traffic analysis (placeholder for now)
       const traffic = { available: false, trancoRank: null, source: 'Not available' };
@@ -2737,6 +2744,7 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
         messaging,
         social,
         adLibraries,
+        marketing,
         score,
         generatedAt: new Date().toISOString()
       };

@@ -1,0 +1,255 @@
+can show a credible estimate and lots of real marketing data by wiring:
+
+Ad Library deep links (Meta/TikTok/Google/LinkedIn) → already doable without keys.
+
+Traffic & engagement from a provider (Similarweb/Semrush) → gives monthly visits, pages/visit, avg duration, bounce. From those we compute concurrent users (estimated).
+
+Popularity proxies when no keys (Tranco rank, CrUX popularity rank via BigQuery) → show percentile + confidence.
+
+Below are tight, drop-in patches that make Ad Libraries reliable and add a Marketing Intelligence block with Estimated Active Users (now) + traffic sources. I’m keeping them minimal so you can paste.
+
+1) Backend: add marketing enrichment (+ active users estimate)
+
+Create server/marketing.ts and import it in your /api/scan route.
+
+// server/marketing.ts
+import fetch from 'node-fetch';
+
+export type Marketing = {
+  provider: 'similarweb'|'semrush'|'rank-proxy'|'none';
+  confidence: 'high'|'medium'|'low';
+  monthlyVisits?: number;
+  pagesPerVisit?: number;
+  avgVisitDurationSec?: number;
+  bounceRate?: number;             // 0..1
+  sources?: { direct?: number; search?: number; social?: number; referrals?: number; mail?: number; display?: number; paid?: number }; // shares 0..1
+  topCountries?: Array<{ country: string; share: number }>;
+  estConcurrentNow?: number;       // estimated “active users” on site
+};
+
+/** Public: try Similarweb -> Semrush -> fallback ranks */
+export async function getMarketing(domain: string): Promise<Marketing> {
+  const sw = await getSimilarweb(domain);
+  if (sw) return { ...sw, provider: 'similarweb', confidence: 'medium', estConcurrentNow: estimateConcurrent(sw.monthlyVisits, sw.avgVisitDurationSec) };
+
+  const sr = await getSemrush(domain);
+  if (sr) return { ...sr, provider: 'semrush', confidence: 'medium', estConcurrentNow: estimateConcurrent(sr.monthlyVisits!, sr.avgVisitDurationSec!) };
+
+  return { provider: 'rank-proxy', confidence: 'low' };
+}
+
+/** Similarweb API (requires key). Populate what you have; leave undefineds if missing. */
+async function getSimilarweb(domain: string): Promise<Partial<Marketing> | null> {
+  const key = process.env.SIMILARWEB_API_KEY;
+  if (!key) return null;
+  try {
+    const base = 'https://api.similarweb.com/v1/website';
+    const d = encodeURIComponent(domain);
+
+    // Visits (last full month)
+    const visitsRes = await fetch(`${base}/${d}/traffic-and-engagement/visits?api_key=${key}&granularity=monthly&main_domain_only=true&start_date=last_1_month&country=world`);
+    if (!visitsRes.ok) return null;
+    const visitsJson: any = await visitsRes.json();
+    const last = (visitsJson?.visits || []).at(-1);
+    const monthlyVisits = Math.round(last?.visits || 0);
+
+    // Engagement
+    const engRes = await fetch(`${base}/${d}/traffic-and-engagement/visits-and-duration?api_key=${key}&start_date=last_1_month&country=world`);
+    const engJson: any = await engRes.json();
+    const avgVisitDurationSec = Math.round(engJson?.avg_visit_duration || 0);
+    const pagesPerVisit = Number(engJson?.pages_per_visit || 0);
+    const bounceRate = Number(engJson?.bounce_rate || 0);
+
+    // Sources share
+    const srcRes = await fetch(`${base}/${d}/traffic-sources/overview-share?api_key=${key}&start_date=last_1_month&country=world`);
+    const srcJson: any = await srcRes.json();
+    const sources = srcJson?.shares || undefined;
+
+    // Top countries (optional)
+    const geoRes = await fetch(`${base}/${d}/geo/traffic-by-country?api_key=${key}&start_date=last_1_month`);
+    const geoJson: any = await geoRes.json();
+    const topCountries = (geoJson?.traffic_by_country || []).slice(0,5).map((r: any) => ({ country: r.country, share: r.share }));
+
+    return { monthlyVisits, pagesPerVisit, avgVisitDurationSec, bounceRate, sources, topCountries };
+  } catch { return null; }
+}
+
+/** Semrush lightweight fallback (requires key). This uses their domain overview. */
+async function getSemrush(domain: string): Promise<Partial<Marketing> | null> {
+  const key = process.env.SEMRUSH_API_KEY;
+  if (!key) return null;
+  try {
+    // This endpoint returns estimated monthly visits & engagement for domain if your plan supports it.
+    const url = `https://api.semrush.com/reports/v1/projects/analytics/traffic?key=${key}&domain=${encodeURIComponent(domain)}&display_limit=1`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const txt = await res.text();
+    // parse CSV-ish; adapt to your plan’s format
+    const [header, row] = txt.trim().split('\n');
+    const cols = row?.split(';') || [];
+    const monthlyVisits = Number(cols[/* visits idx */ 2] || 0) || 0;
+    const pagesPerVisit = Number(cols[/* pages/visit idx */ 4] || 0) || 0;
+    const avgVisitDurationSec = Number(cols[/* duration sec idx */ 5] || 0) || 0;
+    const bounceRate = Number(cols[/* bounce idx */ 6] || 0) || 0;
+    return { monthlyVisits, pagesPerVisit, avgVisitDurationSec, bounceRate };
+  } catch { return null; }
+}
+
+/** Concurrent users estimate from monthly visits + avg session duration. */
+export function estimateConcurrent(monthlyVisits = 0, avgDurationSec = 0) {
+  if (!monthlyVisits || !avgDurationSec) return undefined;
+  // baseline concurrent = (daily visits * avg session seconds) / seconds per day
+  const dailyVisits = monthlyVisits / 30;
+  const baseline = (dailyVisits * avgDurationSec) / 86400; // 24*60*60
+  // gently bias toward US business hours if unknown (x1.3 daytime, x0.7 nighttime)
+  return Math.max(1, Math.round(baseline));
+}
+
+Wire it into /api/scan
+
+After you compute seo/tech/tracking/messaging/social, call getMarketing and include it:
+
+import { getMarketing } from './marketing';
+import { enrichTech, buildAdLibraryLinks } from './ads-and-tech';
+
+const domain = new URL(url).hostname.replace(/^www\./i, '');
+
+const marketing = await getMarketing(domain);        // <-- NEW
+
+const thirdPartyEnrichment = await enrichTech(url);
+const mergedThird = Array.from(new Set([...(tech.thirdParties || []), ...thirdPartyEnrichment]));
+const fullTech = { ...tech, thirdParties: mergedThird };
+
+const socialMap = {
+  facebook: social.links.find((l: string) => /facebook\.com/i.test(l)),
+  instagram: social.links.find((l: string) => /instagram\.com/i.test(l)),
+  tiktok: social.links.find((l: string) => /tiktok\.com/i.test(l)),
+  twitter: social.links.find((l: string) => /(twitter\.com|x\.com)/i.test(l)),
+  youtube: social.links.find((l: string) => /youtube\.com/i.test(l)),
+  linkedin: social.links.find((l: string) => /linkedin\.com/i.test(l)),
+};
+const adLibraries = await buildAdLibraryLinks(domain, socialMap);
+
+const report = {
+  // existing fields…
+  tech: fullTech,
+  adLibraries,
+  marketing,   // <-- NEW
+};
+
+
+Without API keys the marketing.provider becomes rank-proxy and you won’t get numeric visits. With Similarweb/Semrush keys, you’ll see monthlyVisits, engagement, source shares and estConcurrentNow.
+
+2) Frontend: add Marketing card + Ad Library card (works now)
+Extend your Report type
+type AdLibraryLink = { platform: 'meta'|'tiktok'|'google'|'linkedin'; label: string; url: string; source: 'detected'|'derived'|'api'; };
+type Marketing = {
+  provider: 'similarweb'|'semrush'|'rank-proxy'|'none';
+  confidence: 'high'|'medium'|'low';
+  monthlyVisits?: number;
+  pagesPerVisit?: number;
+  avgVisitDurationSec?: number;
+  bounceRate?: number;
+  sources?: { direct?: number; search?: number; social?: number; referrals?: number; mail?: number; display?: number; paid?: number };
+  topCountries?: Array<{ country: string; share: number }>;
+  estConcurrentNow?: number;
+};
+
+interface Report {
+  // …existing fields
+  adLibraries?: AdLibraryLink[];
+  marketing?: Marketing;
+}
+
+Marketing Intelligence card
+
+Add this to your cards grid:
+
+{/* Marketing Intelligence */}
+<Card className="bg-white shadow-sm">
+  <CardHeader className="pb-3">
+    <CardTitle className="flex items-center gap-2 text-lg">
+      <BarChart3 className="w-5 h-5 text-emerald-600" />
+      Marketing Intelligence
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <KV label="Provider" value={report.marketing?.provider ?? '—'} />
+    <KV label="Confidence" value={report.marketing?.confidence ?? '—'} />
+    <KV label="Est. Active Users (now)" value={report.marketing?.estConcurrentNow ?? '—'} />
+    <KV label="Monthly Visits" value={report.marketing?.monthlyVisits?.toLocaleString() ?? '—'} />
+    <KV label="Pages / Visit" value={report.marketing?.pagesPerVisit ?? '—'} />
+    <KV label="Avg Visit Duration" value={
+      report.marketing?.avgVisitDurationSec != null
+        ? `${Math.round((report.marketing.avgVisitDurationSec)/60)}m`
+        : '—'
+    } />
+    {report.marketing?.sources && (
+      <div className="mt-2 text-sm">
+        <div className="text-gray-500 mb-1">Traffic Sources</div>
+        <ul className="list-disc pl-6">
+          {Object.entries(report.marketing.sources).map(([k,v]) => (
+            <li key={k}>{k}: {Math.round((v || 0)*100)}%</li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </CardContent>
+</Card>
+
+Ad Libraries card (if you haven’t added it yet)
+<Card className="bg-white shadow-sm">
+  <CardHeader className="pb-3">
+    <CardTitle className="flex items-center gap-2 text-lg">
+      <Shield className="w-5 h-5 text-amber-600" />
+      Ad Libraries
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    {report.adLibraries?.length ? (
+      <div className="flex flex-wrap gap-2">
+        {report.adLibraries.map((l, i) => (
+          <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+             className="inline-flex items-center gap-2 border rounded-lg px-3 py-2 text-sm hover:bg-gray-50">
+            <AdIcon platform={l.platform} />
+            <span>{l.label}</span>
+            <span className="text-xs text-gray-500">· {l.source}</span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div className="text-sm text-gray-500">No ad library links available</div>
+    )}
+  </CardContent>
+</Card>
+
+
+(Use the AdIcon helper from my previous message.)
+
+3) Make Technology Stack reliable
+
+You already detect CMS/frameworks from HTML. To make it always show something:
+
+Keep those heuristics.
+
+Merge Wappalyzer + BuiltWith (enrichTech) as shown above.
+
+Cache responses (done in ads-and-tech.ts) to avoid rate limits.
+
+In the UI, show a small footer: “Verified via Wappalyzer/BuiltWith/heuristics” (you can attach this from the server as techSources: string[]).
+
+4) What you’ll see after this
+
+Ad Libraries: buttons for Meta/TikTok/Google/LinkedIn that open the platform libraries with the brand prefilled; if you provide a Meta token, the Meta link will be pinned to the exact Page ID.
+
+Marketing Intelligence:
+
+Provider name + confidence
+
+Estimated Active Users (now) (rounded int)
+
+Monthly visits, pages/visit, avg duration
+
+Traffic source shares + top countries (when available)
+
+Without provider keys you’ll still get Ad Libraries and Tech; numeric “active users” will show once you add SIMILARWEB_API_KEY or SEMRUSH_API_KEY.
