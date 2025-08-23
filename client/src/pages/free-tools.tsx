@@ -69,6 +69,15 @@ export default function FreeTools() {
       featured: true
     },
     {
+      id: 'ai-stack-builder',
+      name: 'AI Stack Builder Wizard',
+      description: 'Advanced multi-step wizard for building comprehensive AI infrastructure recommendations with industry-specific adjustments.',
+      icon: Settings,
+      category: 'Business Strategy',
+      route: '/ai-stack-builder',
+      featured: true
+    },
+    {
       id: 'ai-tool-quiz',
       name: 'AI Tool Quiz',
       description: 'Discover which AI tools are perfect for your specific use case and workflow.',
