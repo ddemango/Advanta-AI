@@ -6951,6 +6951,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Stack Builder API
   app.all('/api/send-stack', sendStack);
   
+  // Lead Magnet Builder API
+  const leadMagnetModule = await import('./api/leadmagnet');
+  app.post('/api/leadmagnets', leadMagnetModule.createLeadMagnet);
+  app.put('/api/leadmagnets/:id', leadMagnetModule.updateLeadMagnet);
+  app.post('/api/leadmagnets/:id/publish', leadMagnetModule.publishLeadMagnet);
+  app.get('/api/leadmagnets/:slug', leadMagnetModule.getLeadMagnet);
+  app.post('/api/lead/:slug/submit', leadMagnetModule.submitLead);
+  app.post('/api/lead/:slug/view', leadMagnetModule.trackView);
+  app.get('/api/lead/:slug/analytics', leadMagnetModule.getAnalytics);
+  
   // Trending content generator routes
   app.use('/api', trendingContentRoutes);
 

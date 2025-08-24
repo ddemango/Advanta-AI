@@ -1,0 +1,1069 @@
+# Lead Magnet Builder — Backend (Node + Express + Prisma)
+
+Below is a **copy‑paste ready** backend you can run locally or deploy (Vercel Functions / Render / Railway / Fly / EC2). It includes:
+
+- TypeScript + Express + Prisma (Postgres)
+- Lead Magnet CRUD + publish/fetch
+- Deterministic **A/B variant bucketing**
+- **Lead submit** with scoring + consent ledger
+- **Integrations**: Mailchimp, Klaviyo, HubSpot, Salesforce (Web‑to‑Lead), Google Sheets, Generic Webhook
+- **Email delivery** via Postmark (fallback to SMTP/Nodemailer)
+- **Analytics** (views/conversions, CR, sparkline)
+- hCaptcha/Turnstile verification (optional)
+- CORS, rate limiting, cookie assignment, webhook signing
+
+> Tip: Start with Neon or Supabase for Postgres.
+
+---
+
+## Folder Tree
+
+```
+leadmagnet-backend/
+├─ .env.example
+├─ package.json
+├─ tsconfig.json
+├─ prisma/
+│  └─ schema.prisma
+├─ src/
+│  ├─ index.ts
+│  ├─ config.ts
+│  ├─ db.ts
+│  ├─ middleware/
+│  │  ├─ cors.ts
+│  │  ├─ errors.ts
+│  │  ├─ limiter.ts
+│  │  └─ verifyCaptcha.ts
+│  ├─ utils/
+│  │  ├─ ab.ts
+│  │  ├─ hash.ts
+│  │  ├─ scoring.ts
+│  │  ├─ signing.ts
+│  │  └─ time.ts
+│  ├─ services/
+│  │  ├─ email.ts
+│  │  ├─ googleSheets.ts
+│  │  └─ integrations.ts
+│  ├─ routes/
+│  │  ├─ leadMagnets.ts
+│  │  ├─ leads.ts
+│  │  └─ analytics.ts
+│  └─ seed.ts
+└─ README.md
+```
+
+---
+
+## .env.example
+
+```
+# Core
+NODE_ENV=development
+PORT=4000
+APP_URL=http://localhost:4000
+CORS_ORIGIN=http://localhost:5173,http://localhost:3000
+API_KEY=dev_admin_key_please_change
+
+# Database (Neon/Supabase/Local Postgres)
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB?schema=public"
+
+# Email (Postmark preferred)
+POSTMARK_SERVER_TOKEN=
+POSTMARK_FROM="Your Brand <no-reply@yourdomain.com>"
+# SMTP fallback (if Postmark not set)
+SMTP_URL=smtp://user:pass@smtp.yourhost.com:587
+SMTP_FROM="Your Brand <no-reply@yourdomain.com>"
+
+# Captcha (optional)
+HCAPTCHA_SECRET=
+TURNSTILE_SECRET=
+
+# Webhook signing (use to sign outbound webhooks)
+WEBHOOK_SIGNING_SECRET=change_me
+
+# Integrations (optional)
+MAILCHIMP_API_KEY=
+MAILCHIMP_SERVER_PREFIX=us21
+MAILCHIMP_LIST_ID=
+
+KLAVIYO_PRIVATE_TOKEN=
+KLAVIYO_LIST_ID=
+
+HUBSPOT_PRIVATE_APP_TOKEN=
+
+# Salesforce Web-to-Lead
+SALESFORCE_ORG_ID=
+SALESFORCE_WEBTOLEAD_DEBUG=false
+SALESFORCE_DEBUG_EMAIL=
+
+# Google Sheets (Service Account)
+GOOGLE_SERVICE_ACCOUNT_EMAIL=
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SHEETS_ID=
+```
+
+---
+
+## package.json
+
+```json
+{
+  "name": "leadmagnet-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "seed": "ts-node src/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.18.0",
+    "axios": "^1.7.4",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.14",
+    "postmark": "^4.0.5",
+    "rate-limiter-flexible": "^5.0.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.23.8",
+    "googleapis": "^144.0.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.14.12",
+    "prisma": "^5.18.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.4"
+  }
+}
+```
+
+---
+
+## tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src"]
+}
+```
+
+---
+
+## prisma/schema.prisma
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventKind { VIEW CONVERT }
+
+enum Status { DRAFT PUBLISHED ARCHIVED }
+
+model LeadMagnet {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  type      String
+  status    Status   @default(DRAFT)
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  variants  ExperimentVariant[]
+  leads     Lead[]
+  events    Event[]
+  integrations Integration[]
+}
+
+model ExperimentVariant {
+  id           String   @id @default(cuid())
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  leadMagnetId String
+  key          String
+  weight       Int      @default(50) // percentage weight, sum can be 100
+  changes      Json
+  createdAt    DateTime @default(now())
+
+  @@unique([leadMagnetId, key])
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  leadMagnetId String
+  slug         String
+  data         Json
+  score        Int       @default(0)
+  utm          Json?
+  ip           String?
+  ua           String?
+  consent      Boolean   @default(false)
+  consentVersion String?
+  createdAt    DateTime  @default(now())
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  leadMagnetId String
+  slug         String
+  kind         EventKind
+  meta         Json?
+  ip           String?
+  ua           String?
+  ts           DateTime  @default(now())
+  variantKey   String?
+}
+
+model Integration {
+  id           String   @id @default(cuid())
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  leadMagnetId String
+  provider     String   // mailchimp, klaviyo, hubspot, salesforce, sheets, webhook
+  config       Json     // field mappings, keys (stored server-side envs), list IDs, etc.
+  createdAt    DateTime @default(now())
+}
+```
+
+---
+
+## src/config.ts
+
+```ts
+import 'dotenv/config';
+
+function req(name: string, fallback?: string) {
+  const v = process.env[name] ?? fallback;
+  if (v === undefined) throw new Error(`Missing env: ${name}`);
+  return v;
+}
+
+export const config = {
+  env: process.env.NODE_ENV || 'development',
+  port: Number(process.env.PORT || 4000),
+  appUrl: process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`,
+  corsOrigin: (process.env.CORS_ORIGIN || '').split(',').filter(Boolean),
+  apiKey: req('API_KEY', 'dev_key'),
+
+  // email
+  postmarkToken: process.env.POSTMARK_SERVER_TOKEN,
+  postmarkFrom: process.env.POSTMARK_FROM,
+  smtpUrl: process.env.SMTP_URL,
+  smtpFrom: process.env.SMTP_FROM,
+
+  // captcha
+  hcaptchaSecret: process.env.HCAPTCHA_SECRET,
+  turnstileSecret: process.env.TURNSTILE_SECRET,
+
+  // webhooks
+  webhookSigningSecret: process.env.WEBHOOK_SIGNING_SECRET || 'change_me',
+
+  // integrations
+  mailchimp: {
+    apiKey: process.env.MAILCHIMP_API_KEY,
+    prefix: process.env.MAILCHIMP_SERVER_PREFIX || 'us21',
+    listId: process.env.MAILCHIMP_LIST_ID,
+  },
+  klaviyo: {
+    token: process.env.KLAVIYO_PRIVATE_TOKEN,
+    listId: process.env.KLAVIYO_LIST_ID,
+  },
+  hubspot: {
+    token: process.env.HUBSPOT_PRIVATE_APP_TOKEN,
+  },
+  salesforce: {
+    orgId: process.env.SALESFORCE_ORG_ID,
+    debug: (process.env.SALESFORCE_WEBTOLEAD_DEBUG || 'false') === 'true',
+    debugEmail: process.env.SALESFORCE_DEBUG_EMAIL,
+  },
+  sheets: {
+    saEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    saKey: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    sheetId: process.env.GOOGLE_SHEETS_ID,
+  },
+};
+```
+
+---
+
+## src/db.ts
+
+```ts
+import { PrismaClient } from '@prisma/client';
+export const prisma = new PrismaClient();
+```
+
+---
+
+## src/middleware/cors.ts
+
+```ts
+import cors from 'cors';
+import { config } from '../config.js';
+
+export const corsMiddleware = cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (config.corsOrigin.length === 0) return cb(null, true);
+    if (config.corsOrigin.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+});
+```
+
+---
+
+## src/middleware/errors.ts
+
+```ts
+import { Request, Response, NextFunction } from 'express';
+
+export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
+  console.error(err);
+  const status = err.status || 500;
+  res.status(status).json({ error: err.message || 'Internal Server Error' });
+}
+```
+
+---
+
+## src/middleware/limiter.ts
+
+```ts
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { Request, Response, NextFunction } from 'express';
+
+const limiter = new RateLimiterMemory({ points: 200, duration: 60 });
+
+export async function rateLimit(req: Request, res: Response, next: NextFunction) {
+  try {
+    await limiter.consume(req.ip);
+    next();
+  } catch {
+    res.status(429).json({ error: 'Too Many Requests' });
+  }
+}
+```
+
+---
+
+## src/middleware/verifyCaptcha.ts
+
+```ts
+import axios from 'axios';
+import { Request, Response, NextFunction } from 'express';
+import { config } from '../config.js';
+
+export async function verifyCaptcha(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = (req.body?.captchaToken ?? req.headers['x-captcha-token']) as string | undefined;
+    if (!config.hcaptchaSecret && !config.turnstileSecret) return next(); // disabled
+    if (!token) return res.status(400).json({ error: 'Missing captcha token' });
+
+    if (config.hcaptchaSecret) {
+      const r = await axios.post('https://hcaptcha.com/siteverify', new URLSearchParams({
+        secret: config.hcaptchaSecret,
+        response: token,
+        remoteip: req.ip,
+      }));
+      if (!r.data.success) return res.status(400).json({ error: 'Failed hCaptcha' });
+    } else if (config.turnstileSecret) {
+      const r = await axios.post('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        secret: config.turnstileSecret,
+        response: token,
+        remoteip: req.ip,
+      });
+      if (!r.data.success) return res.status(400).json({ error: 'Failed Turnstile' });
+    }
+
+    next();
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: 'Captcha verification error' });
+  }
+}
+```
+
+---
+
+## src/utils/hash.ts
+
+```ts
+// Simple deterministic hash → float in [0,1)
+export function hashToUnitInterval(input: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  // map to 0..1
+  return (h >>> 0) / 4294967296; // 2^32
+}
+```
+
+---
+
+## src/utils/ab.ts
+
+```ts
+import { ExperimentVariant } from '@prisma/client';
+import { hashToUnitInterval } from './hash.js';
+
+export function pickVariant(visitorId: string, slug: string, variants: ExperimentVariant[]): string | null {
+  if (!variants || variants.length === 0) return null;
+  const u = hashToUnitInterval(`${visitorId}::${slug}`);
+  const total = variants.reduce((s, v) => s + v.weight, 0) || 1;
+  let acc = 0;
+  for (const v of variants) {
+    acc += v.weight / total;
+    if (u <= acc) return v.key;
+  }
+  return variants[variants.length - 1].key; // safeguard
+}
+```
+
+---
+
+## src/utils/scoring.ts
+
+```ts
+export type LeadInput = Record<string, any>;
+
+// Very simple scoring. Customize as needed.
+export function scoreLead(input: LeadInput): number {
+  let score = 0;
+  const email = String(input.email || '').toLowerCase();
+  const title = String(input.title || input.job_title || '').toLowerCase();
+  const company = String(input.company || '').toLowerCase();
+
+  if (email.endsWith('@gmail.com') || email.endsWith('@yahoo.com')) score += 2; // okay
+  if (email.endsWith('@outlook.com')) score += 2;
+  if (email.match(/@(.+\.)?(edu|ac)\./)) score += 1;
+  if (company && !company.includes('gmail') && !company.includes('yahoo')) score += 5;
+  if (/[\b](vp|director|head|cmo|cto|founder|owner)[\b]/.test(title)) score += 5;
+  if ((input.team_size ?? 0) > 50) score += 3;
+  if ((input.budget ?? 0) >= 10000) score += 4;
+  return score;
+}
+```
+
+---
+
+## src/utils/signing.ts
+
+```ts
+import crypto from 'crypto';
+
+export function signPayload(payload: any, secret: string) {
+  const body = JSON.stringify(payload);
+  const sig = crypto.createHmac('sha256', secret).update(body).digest('hex');
+  return { body, signature: sig };
+}
+```
+
+---
+
+## src/utils/time.ts
+
+```ts
+import dayjs from 'dayjs';
+
+export function rangeToBuckets(range: string) {
+  // supports: 24h, 7d, 30d
+  const now = dayjs();
+  if (range === '24h') {
+    const points: string[] = [];
+    for (let i = 23; i >= 0; i--) points.push(now.subtract(i, 'hour').format('YYYY-MM-DD HH:00'));
+    return { unit: 'hour', stamps: points };
+  }
+  const days = range === '7d' ? 7 : 30;
+  const points: string[] = [];
+  for (let i = days - 1; i >= 0; i--) points.push(now.subtract(i, 'day').format('YYYY-MM-DD'));
+  return { unit: 'day', stamps: points };
+}
+```
+
+---
+
+## src/services/email.ts
+
+```ts
+import { config } from '../config.js';
+import { ServerClient } from 'postmark';
+import nodemailer from 'nodemailer';
+
+export type SendEmailParams = {
+  to: string;
+  subject: string;
+  html?: string;
+  text?: string;
+};
+
+let postmark: ServerClient | null = null;
+if (config.postmarkToken) postmark = new ServerClient(config.postmarkToken);
+
+export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
+  if (postmark && config.postmarkFrom) {
+    await postmark.sendEmail({
+      From: config.postmarkFrom,
+      To: to,
+      Subject: subject,
+      HtmlBody: html,
+      TextBody: text,
+      MessageStream: 'outbound',
+    });
+    return;
+  }
+
+  if (!config.smtpUrl || !config.smtpFrom) throw new Error('No email provider configured');
+  const transport = nodemailer.createTransport(config.smtpUrl);
+  await transport.sendMail({ from: config.smtpFrom, to, subject, html, text });
+}
+```
+
+---
+
+## src/services/googleSheets.ts
+
+```ts
+import { google } from 'googleapis';
+import { config } from '../config.js';
+
+export async function appendToSheet(values: any[]) {
+  const { saEmail, saKey, sheetId } = config.sheets;
+  if (!saEmail || !saKey || !sheetId) return; // optional
+
+  const jwt = new google.auth.JWT({
+    email: saEmail,
+    key: saKey,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  const sheets = google.sheets({ version: 'v4', auth: jwt });
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId,
+    range: 'Leads!A1',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [values] },
+  });
+}
+```
+
+---
+
+## src/services/integrations.ts
+
+```ts
+import axios from 'axios';
+import { config } from '../config.js';
+import { appendToSheet } from './googleSheets.js';
+import { signPayload } from '../utils/signing.js';
+
+export type CRMInput = { email: string; first_name?: string; last_name?: string; [k: string]: any };
+
+export async function pushToMailchimp(data: CRMInput) {
+  const { apiKey, prefix, listId } = config.mailchimp;
+  if (!apiKey || !listId) return;
+  const [_, dc] = apiKey.split('-');
+  const server = prefix || dc; // prefer env prefix
+  const url = `https://${server}.api.mailchimp.com/3.0/lists/${listId}/members`;
+  await axios.post(url, { email_address: data.email, status: 'subscribed', merge_fields: {
+    FNAME: data.first_name || data.firstName || '',
+    LNAME: data.last_name || data.lastName || '',
+  } }, { auth: { username: 'anystring', password: apiKey } });
+}
+
+export async function pushToKlaviyo(data: CRMInput) {
+  const { token, listId } = config.klaviyo;
+  if (!token || !listId) return;
+  const url = `https://a.klaviyo.com/api/v2/list/${listId}/subscribe`;
+  await axios.post(url, { profiles: [{ email: data.email, first_name: data.first_name, last_name: data.last_name }] }, {
+    params: { api_key: token },
+  });
+}
+
+export async function pushToHubSpot(data: CRMInput) {
+  const token = config.hubspot.token;
+  if (!token) return;
+  const url = 'https://api.hubapi.com/crm/v3/objects/contacts';
+  const properties: Record<string, any> = { email: data.email };
+  if (data.first_name) properties.firstname = data.first_name;
+  if (data.last_name) properties.lastname = data.last_name;
+  if (data.company) properties.company = data.company;
+  await axios.post(url, { properties }, { headers: { Authorization: `Bearer ${token}` } });
+}
+
+export async function pushToSalesforceWebToLead(data: CRMInput) {
+  const { orgId, debug, debugEmail } = config.salesforce;
+  if (!orgId) return;
+  const url = 'https://webto.salesforce.com/servlet/servlet.WebToLead';
+  const form = new URLSearchParams();
+  form.set('encoding', 'UTF-8');
+  form.set('oid', orgId);
+  form.set('email', data.email);
+  if (data.first_name) form.set('first_name', String(data.first_name));
+  if (data.last_name) form.set('last_name', String(data.last_name));
+  if (data.company) form.set('company', String(data.company));
+  if (debug && debugEmail) { form.set('debug', '1'); form.set('debugEmail', debugEmail); }
+  await axios.post(url, form);
+}
+
+export async function pushToWebhook(endpoint: string, payload: any) {
+  const { body, signature } = signPayload(payload, config.webhookSigningSecret);
+  await axios.post(endpoint, body, { headers: { 'Content-Type': 'application/json', 'X-Signature': signature } });
+}
+
+export async function pushToGoogleSheets(rowValues: any[]) {
+  await appendToSheet(rowValues);
+}
+```
+
+---
+
+## src/routes/leadMagnets.ts
+
+```ts
+import { Router } from 'express';
+import { prisma } from '../db.js';
+import { z } from 'zod';
+import { pickVariant } from '../utils/ab.js';
+import { v4 as uuidv4 } from 'uuid';
+
+const router = Router();
+
+const upsertSchema = z.object({
+  slug: z.string().min(2),
+  name: z.string().min(2),
+  type: z.string().default('generic'),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('DRAFT'),
+  config: z.record(z.any()),
+  variants: z.array(z.object({ key: z.string(), weight: z.number().int().nonnegative(), changes: z.record(z.any()).default({}) })).optional(),
+});
+
+// Simple API key auth middleware for admin endpoints
+function requireApiKey(req: any, res: any, next: any) {
+  const key = req.headers['x-api-key'];
+  if (!key || key !== process.env.API_KEY) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}
+
+router.post('/', requireApiKey, async (req, res) => {
+  const input = upsertSchema.parse(req.body);
+
+  const lm = await prisma.leadMagnet.upsert({
+    where: { slug: input.slug },
+    update: {
+      name: input.name,
+      type: input.type,
+      status: input.status as any,
+      config: input.config,
+    },
+    create: {
+      slug: input.slug,
+      name: input.name,
+      type: input.type,
+      status: input.status as any,
+      config: input.config,
+    },
+    include: { variants: true },
+  });
+
+  if (input.variants) {
+    // Replace variants transactionally
+    await prisma.$transaction(async (tx) => {
+      await tx.experimentVariant.deleteMany({ where: { leadMagnetId: lm.id } });
+      await tx.experimentVariant.createMany({
+        data: input.variants!.map(v => ({ leadMagnetId: lm.id, key: v.key, weight: v.weight, changes: v.changes })),
+      });
+    });
+  }
+
+  const out = await prisma.leadMagnet.findUnique({ where: { slug: input.slug }, include: { variants: true } });
+  res.json(out);
+});
+
+router.get('/:slug', async (req, res) => {
+  const { slug } = req.params;
+  const lm = await prisma.leadMagnet.findUnique({ where: { slug }, include: { variants: true } });
+  if (!lm || lm.status !== 'PUBLISHED') return res.status(404).json({ error: 'Not found' });
+
+  // Assign visitor ID cookie
+  const cookieName = 'lmbid';
+  let visitorId = req.cookies?.[cookieName];
+  if (!visitorId) {
+    visitorId = uuidv4();
+    res.cookie(cookieName, visitorId, { httpOnly: false, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 24 * 365 });
+  }
+
+  const variantKey = pickVariant(visitorId, slug, lm.variants);
+
+  // Merge config with variant changes
+  let resolved = lm.config as any;
+  if (variantKey) {
+    const v = lm.variants.find(v => v.key === variantKey)!;
+    resolved = { ...resolved, ...v.changes };
+  }
+
+  res.json({ slug, variantKey, config: resolved });
+});
+
+export default router;
+```
+
+---
+
+## src/routes/leads.ts
+
+```ts
+import { Router } from 'express';
+import { prisma } from '../db.js';
+import { z } from 'zod';
+import { scoreLead } from '../utils/scoring.js';
+import { sendEmail } from '../services/email.js';
+import { pushToHubSpot, pushToKlaviyo, pushToMailchimp, pushToSalesforceWebToLead, pushToWebhook, pushToGoogleSheets } from '../services/integrations.js';
+import { verifyCaptcha } from '../middleware/verifyCaptcha.js';
+
+const router = Router();
+
+const leadSchema = z.object({
+  slug: z.string(),
+  data: z.record(z.any()),
+  utm: z.record(z.any()).optional(),
+  consent: z.boolean().default(false),
+  consentVersion: z.string().optional(),
+  variantKey: z.string().nullable().optional(),
+  captchaToken: z.string().optional(),
+});
+
+router.post('/submit', verifyCaptcha, async (req, res) => {
+  const input = leadSchema.parse(req.body);
+  const lm = await prisma.leadMagnet.findUnique({ where: { slug: input.slug }, include: { integrations: true } });
+  if (!lm || lm.status !== 'PUBLISHED') return res.status(404).json({ error: 'Lead magnet not found' });
+
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
+  const ua = req.headers['user-agent'] as string | undefined;
+
+  const score = scoreLead(input.data);
+  const lead = await prisma.lead.create({ data: {
+    leadMagnetId: lm.id,
+    slug: lm.slug,
+    data: input.data,
+    score,
+    utm: input.utm || {},
+    ip,
+    ua,
+    consent: !!input.consent,
+    consentVersion: input.consentVersion || 'v1',
+  }});
+
+  // Record conversion event
+  await prisma.event.create({ data: {
+    leadMagnetId: lm.id,
+    slug: lm.slug,
+    kind: 'CONVERT',
+    meta: input.utm || {},
+    ip, ua,
+    variantKey: input.variantKey || null,
+  }} as any);
+
+  // Fan-out integrations (best-effort, non-blocking in prod → queue)
+  const email = String(input.data.email || input.data.Email || input.data.EMAIL || '');
+  if (!email) console.warn('Submitted lead without email');
+
+  const tasks: Promise<any>[] = [];
+  tasks.push((async () => {
+    // Send confirmation/download link if provided in config
+    const subject = `Here’s your ${lm.name}`;
+    const resourceUrl = (lm.config as any)?.delivery?.resourceUrl;
+    const html = `<p>Thanks for signing up!</p>${resourceUrl ? `<p><a href="${resourceUrl}">Download your resource</a></p>` : ''}`;
+    try { if (email) await sendEmail({ to: email, subject, html, text: html.replace(/<[^>]+>/g, '') }); } catch(e) { console.error('Email error', e); }
+  })());
+
+  tasks.push((async () => { try { await pushToMailchimp({ email, ...input.data }); } catch(e) { console.error('Mailchimp error', e); } })());
+  tasks.push((async () => { try { await pushToKlaviyo({ email, ...input.data }); } catch(e) { console.error('Klaviyo error', e); } })());
+  tasks.push((async () => { try { await pushToHubSpot({ email, ...input.data }); } catch(e) { console.error('HubSpot error', e); } })());
+  tasks.push((async () => { try { await pushToSalesforceWebToLead({ email, ...input.data }); } catch(e) { console.error('Salesforce error', e); } })());
+
+  const webhook = (lm.config as any)?.integrations?.webhookUrl as string | undefined;
+  if (webhook) tasks.push((async () => { try { await pushToWebhook(webhook, { lead, leadMagnet: { slug: lm.slug, id: lm.id } }); } catch(e) { console.error('Webhook error', e); } })());
+
+  // Google Sheets row
+  tasks.push((async () => {
+    try {
+      const row = [new Date().toISOString(), lm.slug, email, input.data.first_name || '', input.data.last_name || '', input.data.company || '', score, JSON.stringify(input.utm || {})];
+      await pushToGoogleSheets(row);
+    } catch (e) { console.error('Sheets error', e); }
+  })());
+
+  await Promise.all(tasks);
+
+  res.json({ ok: true, leadId: lead.id, score });
+});
+
+router.post('/view', async (req, res) => {
+  const { slug, variantKey } = req.body || {};
+  const lm = await prisma.leadMagnet.findUnique({ where: { slug } });
+  if (!lm) return res.status(404).json({ error: 'Not found' });
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
+  const ua = req.headers['user-agent'] as string | undefined;
+  await prisma.event.create({ data: { leadMagnetId: lm.id, slug, kind: 'VIEW', ip, ua, variantKey } as any });
+  res.json({ ok: true });
+});
+
+export default router;
+```
+
+---
+
+## src/routes/analytics.ts
+
+```ts
+import { Router } from 'express';
+import { prisma } from '../db.js';
+import { rangeToBuckets } from '../utils/time.js';
+
+const router = Router();
+
+router.get('/:slug', async (req, res) => {
+  const { slug } = req.params;
+  const range = (req.query.range as string) || '7d';
+  const lm = await prisma.leadMagnet.findUnique({ where: { slug } });
+  if (!lm) return res.status(404).json({ error: 'Not found' });
+
+  const { unit, stamps } = rangeToBuckets(range);
+
+  const events = await prisma.event.findMany({ where: { leadMagnetId: lm.id, slug }, select: { kind: true, ts: true } });
+  const buckets: Record<string, { views: number; converts: number }> = {};
+  for (const s of stamps) buckets[s] = { views: 0, converts: 0 };
+
+  for (const e of events) {
+    const key = unit === 'hour'
+      ? e.ts.toISOString().slice(0,13) + ':00' // YYYY-MM-DDTHH:00
+      : e.ts.toISOString().slice(0,10);       // YYYY-MM-DD
+    if (!buckets[key]) continue;
+    if (e.kind === 'VIEW') buckets[key].views++;
+    else buckets[key].converts++;
+  }
+
+  const series = stamps.map(s => ({ stamp: s, views: buckets[s]?.views || 0, converts: buckets[s]?.converts || 0 }));
+  const totals = series.reduce((acc, p) => ({ views: acc.views + p.views, converts: acc.converts + p.converts }), { views: 0, converts: 0 });
+  const rate = totals.views ? +(totals.converts / totals.views * 100).toFixed(2) : 0;
+
+  res.json({ range, totals, rate, series });
+});
+
+export default router;
+```
+
+---
+
+## src/index.ts
+
+```ts
+import express from 'express';
+import morgan from 'morgan';
+import helmet from 'helmet';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import { config as cfg } from './config.js';
+import { corsMiddleware } from './middleware/cors.js';
+import { rateLimit } from './middleware/limiter.js';
+import leadMagnets from './routes/leadMagnets.js';
+import leads from './routes/leads.js';
+import analytics from './routes/analytics.js';
+
+const app = express();
+app.use(helmet());
+app.use(compression());
+app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
+app.use(morgan('tiny'));
+app.use(corsMiddleware);
+app.use(rateLimit);
+
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+app.use('/api/leadmagnets', leadMagnets);
+app.use('/api/lead', leads);
+app.use('/api/analytics', analytics);
+
+app.use((req, res) => res.status(404).json({ error: 'Not found' }));
+
+import { errorHandler } from './middleware/errors.js';
+app.use(errorHandler);
+
+app.listen(cfg.port, () => {
+  console.log(`API on :${cfg.port}`);
+});
+```
+
+---
+
+## src/seed.ts
+
+```ts
+import { prisma } from './db.js';
+
+async function main() {
+  const slug = 'starter-checklist';
+  const exists = await prisma.leadMagnet.findUnique({ where: { slug } });
+  if (exists) { console.log('Seed already exists'); return; }
+
+  const lm = await prisma.leadMagnet.create({ data: {
+    slug,
+    name: 'Marketing Checklist',
+    type: 'checklist',
+    status: 'PUBLISHED',
+    config: {
+      theme: { brand: '#7c3aed' },
+      fields: [
+        { key: 'first_name', label: 'First name', type: 'text', required: true },
+        { key: 'last_name', label: 'Last name', type: 'text', required: true },
+        { key: 'email', label: 'Email', type: 'email', required: true },
+        { key: 'company', label: 'Company', type: 'text', required: false },
+      ],
+      delivery: { resourceUrl: 'https://example.com/downloads/checklist.pdf' },
+      integrations: { webhookUrl: '' },
+    },
+  }});
+
+  await prisma.experimentVariant.createMany({ data: [
+    { leadMagnetId: lm.id, key: 'A', weight: 50, changes: { headline: 'Get the Checklist' } },
+    { leadMagnetId: lm.id, key: 'B', weight: 50, changes: { headline: 'Steal the 2025 Checklist' } },
+  ]});
+
+  console.log('Seeded lead magnet → /api/leadmagnets/' + slug);
+}
+
+main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); });
+```
+
+---
+
+## README.md (quick start)
+
+```md
+# Lead Magnet Backend
+
+### 1) Install
+
+```bash
+pnpm i || npm i
+```
+
+### 2) Configure
+
+Copy `.env.example` to `.env` and fill required values (`DATABASE_URL`, `API_KEY`). Optionally set email + integrations.
+
+### 3) DB
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+```
+
+### 4) Seed (optional)
+
+```bash
+npm run seed
+```
+
+### 5) Run
+
+```bash
+npm run dev
+```
+
+### 6) Endpoints
+
+- **Create/Update Lead Magnet (admin)**
+  ```http
+  POST /api/leadmagnets
+  x-api-key: {API_KEY}
+  {
+    "slug":"my-ebook",
+    "name":"AI Ebook",
+    "type":"ebook",
+    "status":"PUBLISHED",
+    "config":{ "delivery": {"resourceUrl":"https://..."}},
+    "variants":[ {"key":"A","weight":70,"changes":{}}, {"key":"B","weight":30,"changes":{"cta":"Start Now"}} ]
+  }
+  ```
+
+- **Fetch Published + Assign Variant**
+  ```http
+  GET /api/leadmagnets/:slug
+  → { slug, variantKey, config }
+  ```
+
+- **Record View**
+  ```http
+  POST /api/lead/view { slug, variantKey }
+  ```
+
+- **Submit Lead**
+  ```http
+  POST /api/lead/submit
+  {
+    "slug":"my-ebook",
+    "data":{ "email":"a@b.com", "first_name":"A" },
+    "utm":{ "source":"google" },
+    "consent": true,
+    "consentVersion": "v1",
+    "variantKey": "A",
+    "captchaToken": "...optional..."
+  }
+  ```
+
+- **Analytics**
+  ```http
+  GET /api/analytics/:slug?range=7d | 24h | 30d
+  → { totals:{views,converts}, rate, series:[{stamp,views,converts}] }
+  ```
+
+### Frontend Wiring (expected flow)
+1. On embed load, call **GET /api/leadmagnets/:slug** → render using returned `config`.
+2. Immediately call **POST /api/lead/view** (with `slug` + `variantKey`).
+3. On form submit → **POST /api/lead/submit** (include `variantKey`, UTM, consent).
+
+### Security Notes
+- Protect admin CRUD with `x-api-key` header.
+- In production, queue the integration fan‑out (BullMQ/Cloud Tasks) and retry.
+- Keep **secrets only in env**, never in `config` JSON.
+
+### Deploy Hints
+- Vercel: move each route file to `/api/*` or use a single `index.ts` via `vercel.json` + `@vercel/node` builder.
+- Render/Railway/Fly: run `npm run start` with `PORT` set.
