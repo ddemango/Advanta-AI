@@ -1,0 +1,129 @@
+What’s included (high-level)
+
+Templates (one click start)
+
+eBook/Guide, Checklist, ROI Calculator, Webinar RSVP, Coupon/Offer, Quiz/Assessment
+
+Each preloads headline, subhead, benefits, CTA, and accent color.
+
+Design & Content
+
+Brand text, colors, font stack, bullets, CTA label.
+
+Live preview in a right-side panel.
+
+Form Builder
+
+Add/remove/reorder fields (text, email, tel, company, job title, select, checkbox, textarea).
+
+Required flags, GDPR/CCPA consent, hidden fields (UTMs/referrer), lead scoring rules.
+
+Delivery
+
+Email delivery (transactional template with placeholders), Redirect, or Instant Download.
+
+Optional booking URL (Cal/Calendly) for post-opt-in upsell.
+
+Integrations
+
+Webhook (generic), Google Sheets (via backend), Mailchimp/Klaviyo, HubSpot, Salesforce (fields ready).
+
+(In production: flip the toggles to your real creds in the backend vault.)
+
+A/B Testing
+
+Enable/disable, traffic weights, per-variant headline overrides (extend to CTA/color easily).
+
+Launch
+
+One-click Publish, auto slug, and generated embed (iframe + script tags).
+
+Export JSON (portable config for CI, versioning, and dev/stage/prod promotion).
+
+Analytics (starter)
+
+Views, conversions, rate + 24h spark bars (simulated). Backend should log and serve real data.
+
+Production architecture (concise)
+
+Frontend: Next.js (or your stack) + this Builder UI.
+API:
+
+POST /api/leadmagnets – create/update config
+
+GET /api/leadmagnets/:slug – fetch published config
+
+POST /api/lead/submit – receive lead
+Actions: persist → transactional email (Postmark/SendGrid) → ESP/CRM push → webhook → analytics event → optional drip start
+
+GET /api/analytics/:slug?range=... – stats
+
+DB (Postgres)
+
+lead_magnets(id, slug, name, type, config_jsonb, status, created_at, updated_at)
+
+leads(id, slug, data_jsonb, score int, utm_jsonb, ip, ua, consent bool, created_at)
+
+events(id, slug, kind enum[view,convert], meta_jsonb, ts)
+
+integrations(lead_magnet_id, provider, credentials_encrypted)
+
+ab_variants(lead_magnet_id, key, weight, changes_jsonb)
+
+Infra
+
+File storage (S3/GCS) for PDFs/assets
+
+Background jobs (BullMQ/Cloud Tasks) for drip sends and retries
+
+CAPTCHA + rate limiting + audit log
+
+Consent ledger (timestamp + policy version)
+
+Security & Compliance
+
+Double opt-in toggle; consent text by locale
+
+DPA links + subject rights endpoints (export/delete lead data)
+
+Cookie banner only if tracking beyond strictly necessary
+
+Feature checklist by company size
+
+Enterprise
+
+SSO/SAML, role-based permissions (Org → Workspace → Project)
+
+Granular audit trail & immutable consent ledger
+
+Multi-brand theming + design tokens
+
+Webhook signing + IP allowlist, SCIM user provisioning
+
+Data residency options; SOC2/ISO27001 posture
+
+SLA & sandbox environments (dev/stage/prod) with promotion gates
+
+Mid-Market
+
+Visual funnel analytics (per-step drop-off) + cohorting
+
+Native CRM/ESP mappers (field mapping UI)
+
+Lead routing rules (round-robin, weighted, by territory/score)
+
+Built-in drip sequences (welcome → resource → case study → CTA)
+
+Smart recommendations (auto-test headline/CTA from library)
+
+SMB
+
+1-click templates with copy suggestions
+
+Simple form builder + calendar handoff
+
+Email-only delivery & Google Sheets
+
+QR code generator for print/IRL
+
+“Fast launch” wizard under 5 minutes

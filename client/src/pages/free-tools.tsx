@@ -78,6 +78,15 @@ export default function FreeTools() {
       featured: true
     },
     {
+      id: 'lead-magnet-builder',
+      name: 'Lead Magnet Builder',
+      description: 'Create high-converting lead magnets with templates, form builder, A/B testing, and email delivery.',
+      icon: Target,
+      category: 'Lead Generation',
+      route: '/lead-magnet-builder',
+      featured: true
+    },
+    {
       id: 'ai-tool-quiz',
       name: 'AI Tool Quiz',
       description: 'Discover which AI tools are perfect for your specific use case and workflow.',

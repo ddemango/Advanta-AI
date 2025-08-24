@@ -1,0 +1,775 @@
+import React, { useMemo, useState } from "react";
+
+// Lead Magnet Builder — single‑file React component
+// - TailwindCSS for styling
+// - No external UI deps (works in sandbox without imports)
+// - Live preview, form builder, A/B variants, consent, integrations, embed/export
+// - Production ideas are noted in comments for your backend wiring
+
+// ---------- Types ----------
+const TEMPLATES = [
+  {
+    id: "ebook",
+    name: "eBook / Guide",
+    desc: "Downloadable PDF with chapters, checklists, and templates.",
+    preset: {
+      headline: "The Ultimate Playbook to 10× Your Pipeline",
+      subheadline: "Steal our proven frameworks for landing page, ads, and nurture.",
+      bullets: [
+        "High‑converting page checklist",
+        "7 email drips you can copy",
+        "ROI calculator + dashboard"
+      ],
+      cta: "Get the free eBook",
+      accent: "#3b82f6"
+    }
+  },
+  {
+    id: "checklist",
+    name: "Checklist / Cheatsheet",
+    desc: "One‑pager with critical steps and quick wins.",
+    preset: {
+      headline: "Launch Checklist: From Idea → Impact in 7 Days",
+      subheadline: "The exact steps our team runs with new clients.",
+      bullets: [
+        "Research & ICP fit",
+        "Offer & pricing grid",
+        "Ads → Landing → Nurture map"
+      ],
+      cta: "Send me the checklist",
+      accent: "#10b981"
+    }
+  },
+  {
+    id: "calculator",
+    name: "ROI Calculator",
+    desc: "Interactive numbers → instant value + email capture.",
+    preset: {
+      headline: "What’s Your Growth ROI?",
+      subheadline: "Plug in your numbers to reveal the upside.",
+      bullets: ["CAC, LTV, payback period","Benchmarks by industry"],
+      cta: "Reveal my results",
+      accent: "#a855f7"
+    }
+  },
+  {
+    id: "webinar",
+    name: "Webinar / RSVP",
+    desc: "Collect registrations + calendar holds + reminders.",
+    preset: {
+      headline: "Live Workshop: AI That Actually Drives Revenue",
+      subheadline: "See real stacks, live builds, and copy‑paste recipes.",
+      bullets: ["Real demos","Q&A with builders","Take‑home templates"],
+      cta: "Save my seat",
+      accent: "#f59e0b"
+    }
+  },
+  {
+    id: "coupon",
+    name: "Coupon / Limited Offer",
+    desc: "Time‑boxed incentive for trials or ecommerce.",
+    preset: {
+      headline: "New Customer Offer",
+      subheadline: "Save 20% on your first order this week only.",
+      bullets: ["Instant code via email","Expires in 7 days"],
+      cta: "Unlock my code",
+      accent: "#ef4444"
+    }
+  },
+  {
+    id: "quiz",
+    name: "Quiz / Assessment",
+    desc: "Personalized result with segments for nurture.",
+    preset: {
+      headline: "What’s Your AI Readiness Score?",
+      subheadline: "5‑minute diagnostic → tailored roadmap.",
+      bullets: ["Scorecard","Next steps","Tools to adopt"],
+      cta: "Get my score",
+      accent: "#06b6d4"
+    }
+  }
+];
+
+const DEFAULT_FIELDS = [
+  { id: "firstName", label: "First name", type: "text", required: true },
+  { id: "email", label: "Work email", type: "email", required: true },
+];
+
+const NEW_FIELD = () => ({ id: `f_${Math.random().toString(36).slice(2, 7)}`, label: "New field", type: "text", required: false });
+
+const EMPTY_CONFIG = {
+  name: "Untitled Lead Magnet",
+  type: "ebook",
+  theme: {
+    accent: "#3b82f6",
+    bg: "#0b1020",
+    fg: "#ffffff",
+    font: "ui-sans-serif",
+    logoText: "Your Brand"
+  },
+  content: {
+    headline: "The Ultimate Playbook to 10× Your Pipeline",
+    subheadline: "Steal our proven frameworks for landing page, ads, and nurture.",
+    bullets: ["High‑converting page checklist","7 email drips you can copy","ROI calculator + dashboard"],
+    cta: "Get the free eBook"
+  },
+  form: {
+    fields: DEFAULT_FIELDS,
+    consent: {
+      enabled: true,
+      text: "I agree to receive communications and accept the Privacy Policy.",
+      required: true,
+    },
+    hidden: {
+      utm_source: true,
+      utm_medium: true,
+      utm_campaign: true,
+      referrer: true
+    },
+    scoring: [
+      { fieldId: "email", points: 5 },
+      { fieldId: "company", points: 3 }
+    ]
+  },
+  delivery: {
+    method: "email", // "email" | "redirect" | "download"
+    emailSubject: "Here’s your download + a quick gift",
+    emailBody: "Hi {{firstName}},\n\nHere’s your resource: {{assetUrl}}.\nI added a bonus template we use with new clients. If helpful, grab a free consult here: {{bookingUrl}}.\n\nCheers,\n{{sender}}",
+    assetUrl: "https://example.com/ebook.pdf",
+    redirectUrl: "",
+    bookingUrl: "https://cal.com/yourteam/intro"
+  },
+  integrations: {
+    mailchimp: { enabled: false, apiKey: "", listId: "" },
+    hubspot: { enabled: false, portalId: "", formId: "" },
+    klaviyo: { enabled: false, apiKey: "", listId: "" },
+    salesforce: { enabled: false, instance: "", token: "" },
+    webhook: { enabled: true, url: "" },
+    sheets: { enabled: false }
+  },
+  abtest: {
+    enabled: false,
+    variants: [
+      { key: "A", weight: 50, changes: {} },
+      { key: "B", weight: 50, changes: { content: { headline: "Get 30% More Demo Requests in 30 Days" } } }
+    ]
+  },
+  launch: {
+    slug: "untitled",
+    publishedUrl: "",
+  },
+  analytics: {
+    views: 0,
+    conversions: 0,
+    last24h: [] as Array<{ ts: number; views: number; conv: number }>
+  }
+};
+
+// ---------- Helpers ----------
+function classNames(...arr: (string | false | undefined)[]) {
+  return arr.filter(Boolean).join(" ");
+}
+
+function copyToClipboard(text: string) {
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const el = document.createElement("textarea");
+    el.value = text; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el);
+  }
+}
+
+function slugify(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+}
+
+// Inject hidden UTM fields from URL
+function collectHidden() {
+  const url = new URL(window.location.href);
+  const params: Record<string, string> = {};
+  ["utm_source","utm_medium","utm_campaign","utm_term","utm_content"].forEach(k => {
+    const v = url.searchParams.get(k);
+    if (v) params[k] = v;
+  });
+  params["referrer"] = document.referrer || "";
+  return params;
+}
+
+// ---------- Main Component ----------
+export default function LeadMagnetBuilder() {
+  const [config, setConfig] = useState<any>(EMPTY_CONFIG);
+  const [active, setActive] = useState<string>("templates");
+  const [previewSubmitted, setPreviewSubmitted] = useState<any | null>(null);
+
+  const embedCode = useMemo(() => {
+    // Use iframe embed for ease; script embed also shown
+    const payload = { slug: config.launch.slug || slugify(config.name), version: 1 };
+    const url = `https://yourdomain.com/lead/${payload.slug}`; // Replace with your host
+    return {
+      iframe: `<iframe src="${url}" style="width:100%;height:680px;border:0" title="Lead magnet: ${config.name}"></iframe>`,
+      script: `<script src="https://cdn.yourdomain.com/leadmagnet.js" data-config='${JSON.stringify(payload)}'></script>`
+    };
+  }, [config.name, config.launch.slug]);
+
+  const onChooseTemplate = (t: any) => {
+    setConfig((c: any) => ({
+      ...c,
+      type: t.id,
+      theme: { ...c.theme, accent: t.preset.accent },
+      content: { ...c.content, ...t.preset }
+    }));
+  };
+
+  const addField = () => setConfig((c: any) => ({
+    ...c,
+    form: { ...c.form, fields: [...c.form.fields, NEW_FIELD()] }
+  }));
+
+  const removeField = (id: string) => setConfig((c: any) => ({
+    ...c,
+    form: { ...c.form, fields: c.form.fields.filter((f: any) => f.id !== id) }
+  }));
+
+  const handlePublish = () => {
+    const slug = config.launch.slug || slugify(config.name);
+    setConfig((c: any) => ({ ...c, launch: { ...c.launch, slug, publishedUrl: `https://yourdomain.com/lead/${slug}` }}));
+    // Backend idea: POST /api/leadmagnet { config } → returns { slug, urls, embed }
+  };
+
+  const exportJSON = () => {
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${slugify(config.name)}.leadmagnet.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const simulateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const data: Record<string, any> = {};
+    config.form.fields.forEach((f: any) => data[f.id] = fd.get(f.id));
+    const hidden = collectHidden();
+
+    // simple scoring
+    let score = 0;
+    (config.form.scoring || []).forEach((s: any) => { if (data[s.fieldId]) score += s.points; });
+
+    const payload = { type: config.type, data, hidden, score, ts: Date.now() };
+    setPreviewSubmitted(payload);
+
+    // Optional: if webhook enabled, POST to webhook URL
+    if (config.integrations.webhook?.enabled && config.integrations.webhook.url) {
+      try { fetch(config.integrations.webhook.url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch {}
+    }
+  };
+
+  // ---------- Sub‑UIs ----------
+  const Sidebar = () => (
+    <aside className="w-full lg:w-64 shrink-0 border-r border-white/10 bg-slate-900/50">
+      <div className="p-4 border-b border-white/10">
+        <input
+          value={config.name}
+          onChange={(e)=>setConfig({ ...config, name: e.target.value })}
+          className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          placeholder="Project name"/>
+        <div className="text-xs text-slate-400 mt-1">Slug</div>
+        <input
+          value={config.launch.slug}
+          onChange={(e)=>setConfig({ ...config, launch: { ...config.launch, slug: slugify(e.target.value) } })}
+          className="w-full px-3 py-1 rounded-lg bg-slate-800 text-slate-200 text-sm"
+          placeholder="my-awesome-offer"/>
+      </div>
+      <nav className="p-2 flex flex-col gap-1">
+        {[
+          ["templates","Templates"],
+          ["design","Design"],
+          ["content","Content"],
+          ["form","Form"],
+          ["delivery","Delivery"],
+          ["integrations","Integrations"],
+          ["abtest","A/B Test"],
+          ["launch","Launch"],
+          ["analytics","Analytics"],
+        ].map(([key,label]) => (
+          <button key={key} onClick={()=>setActive(key)}
+            className={classNames("text-left px-3 py-2 rounded-lg transition", active===key?"bg-indigo-600 text-white":"hover:bg-slate-800 text-slate-200")}>{label}</button>
+        ))}
+        <div className="pt-2 mt-2 border-t border-white/10">
+          <button onClick={exportJSON} className="w-full px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200">Export JSON</button>
+        </div>
+      </nav>
+    </aside>
+  );
+
+  const Templates = () => (
+    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {TEMPLATES.map(t => (
+        <div key={t.id} className="p-4 rounded-2xl bg-slate-800/60 border border-white/10 hover:border-indigo-500 transition group">
+          <div className="text-lg font-semibold text-white">{t.name}</div>
+          <div className="text-sm text-slate-300 mt-1">{t.desc}</div>
+          <div className="mt-3 p-3 rounded-xl" style={{ background: t.preset.accent+"20", color: t.preset.accent }}>
+            <div className="font-semibold">Preview:</div>
+            <div className="text-white" style={{color:"inherit"}}>{t.preset.headline}</div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button onClick={()=>onChooseTemplate(t)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:opacity-90">Use template</button>
+            <button onClick={()=>{
+              setConfig((c:any)=>({...c, type:t.id})); setActive("content");
+            }} className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">Customize</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const Design = () => (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Brand / Logo text</label>
+          <input value={config.theme.logoText} onChange={(e)=>setConfig({...config, theme:{...config.theme, logoText:e.target.value}})}
+            className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Accent</label>
+            <input type="color" value={config.theme.accent} onChange={(e)=>setConfig({...config, theme:{...config.theme, accent:e.target.value}})} className="h-10 w-full rounded"/>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Background</label>
+            <input type="color" value={config.theme.bg} onChange={(e)=>setConfig({...config, theme:{...config.theme, bg:e.target.value}})} className="h-10 w-full rounded"/>
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Text</label>
+            <input type="color" value={config.theme.fg} onChange={(e)=>setConfig({...config, theme:{...config.theme, fg:e.target.value}})} className="h-10 w-full rounded"/>
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Font stack</label>
+          <select value={config.theme.font} onChange={(e)=>setConfig({...config, theme:{...config.theme, font:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white">
+            <option value="ui-sans-serif">Sans (system)</option>
+            <option value="ui-serif">Serif (system)</option>
+            <option value="ui-monospace">Mono (system)</option>
+          </select>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">CTA Label</label>
+          <input value={config.content.cta} onChange={(e)=>setConfig({...config, content:{...config.content, cta:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Preview size</label>
+          <p className="text-xs text-slate-400">Use the live preview to the right to validate readability.</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const Content = () => (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Headline</label>
+          <input value={config.content.headline} onChange={(e)=>setConfig({...config, content:{...config.content, headline:e.target.value}})}
+                 className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Subheadline</label>
+          <textarea value={config.content.subheadline} onChange={(e)=>setConfig({...config, content:{...config.content, subheadline:e.target.value}})}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white min-h-[72px]"/>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Bullets</label>
+          {(config.content.bullets||[]).map((b:string, i:number)=> (
+            <div key={i} className="flex items-center gap-2 mb-2">
+              <input value={b} onChange={(e)=>{
+                const arr = [...config.content.bullets]; arr[i]=e.target.value; setConfig({...config, content:{...config.content, bullets:arr}});
+              }} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+              <button onClick={()=>{
+                const arr = config.content.bullets.filter((_:any,idx:number)=>idx!==i);
+                setConfig({...config, content:{...config.content, bullets:arr}});
+              }} className="px-2 py-2 rounded-lg bg-slate-700 text-slate-100">✕</button>
+            </div>
+          ))}
+          <button onClick={()=>setConfig({...config, content:{...config.content, bullets:[...(config.content.bullets||[]), "New benefit"]}})} className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">+ Add bullet</button>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Lead magnet type</label>
+          <select value={config.type} onChange={(e)=>setConfig({...config, type:e.target.value})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white">
+            {TEMPLATES.map(t=> <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+        {config.type==="webinar" && (
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Webinar date/time</label>
+            <input type="datetime-local" className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+          </div>
+        )}
+        {config.type==="coupon" && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">Discount (%)</label>
+              <input type="number" min={1} max={90} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white" placeholder="20"/>
+            </div>
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">Expires (days)</label>
+              <input type="number" min={1} max={90} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white" placeholder="7"/>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const FormTab = () => (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm text-slate-300">Fields</div>
+          <button onClick={addField} className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">+ Add field</button>
+        </div>
+        <div className="space-y-2">
+          {config.form.fields.map((f:any)=> (
+            <div key={f.id} className="grid grid-cols-6 gap-2 items-center bg-slate-800/60 border border-white/10 rounded-xl p-2">
+              <input value={f.label} onChange={(e)=>{
+                setConfig((c:any)=> ({...c, form:{...c.form, fields: c.form.fields.map((x:any)=> x.id===f.id?{...x, label:e.target.value}:x)}}));
+              }} className="col-span-3 px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm"/>
+              <select value={f.type} onChange={(e)=>{
+                setConfig((c:any)=> ({...c, form:{...c.form, fields: c.form.fields.map((x:any)=> x.id===f.id?{...x, type:e.target.value}:x)}}));
+              }} className="col-span-2 px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm">
+                {"text,email,tel,company,jobtitle,select,checkbox,textarea".split(",").map(t=> <option key={t} value={t}>{t}</option>)}
+              </select>
+              <label className="flex items-center gap-1 text-xs text-slate-300">
+                <input type="checkbox" checked={!!f.required} onChange={(e)=>{
+                  setConfig((c:any)=> ({...c, form:{...c.form, fields: c.form.fields.map((x:any)=> x.id===f.id?{...x, required:e.target.checked}:x)}}));
+                }}/>
+                required
+              </label>
+              <button onClick={()=>removeField(f.id)} className="col-span-6 md:col-span-1 px-2 py-1 rounded-lg bg-slate-700 text-slate-100">Remove</button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Consent</label>
+          <label className="flex items-center gap-2 text-slate-200 text-sm">
+            <input type="checkbox" checked={config.form.consent.enabled} onChange={(e)=>setConfig({...config, form:{...config.form, consent:{...config.form.consent, enabled:e.target.checked}}})}/>
+            Enable consent checkbox (GDPR/CCPA)
+          </label>
+          <textarea value={config.form.consent.text} onChange={(e)=>setConfig({...config, form:{...config.form, consent:{...config.form.consent, text:e.target.value}}})}
+                    className="w-full mt-2 px-3 py-2 rounded-xl bg-slate-900 text-slate-100 text-sm"/>
+        </div>
+
+        <div className="mt-4 p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Hidden fields</label>
+          {Object.entries(config.form.hidden).map(([k,v]:any)=> (
+            <label key={k} className="flex items-center gap-2 text-slate-200 text-sm">
+              <input type="checkbox" checked={!!v} onChange={(e)=>setConfig((c:any)=> ({...c, form:{...c.form, hidden:{...c.form.hidden, [k]: e.target.checked}}}))}/>
+              {k}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Scoring (optional)</label>
+          <p className="text-xs text-slate-400">Assign points for fields present to prioritize leads.</p>
+          {(config.form.scoring||[]).map((s:any, i:number)=> (
+            <div key={i} className="grid grid-cols-6 gap-2 items-center mt-2">
+              <input value={s.fieldId} onChange={(e)=>{
+                const arr=[...config.form.scoring]; arr[i]={...arr[i], fieldId:e.target.value}; setConfig({...config, form:{...config.form, scoring:arr}});
+              }} className="col-span-4 px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm"/>
+              <input type="number" value={s.points} onChange={(e)=>{
+                const arr=[...config.form.scoring]; arr[i]={...arr[i], points: Number(e.target.value||0)}; setConfig({...config, form:{...config.form, scoring:arr}});
+              }} className="col-span-2 px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm"/>
+            </div>
+          ))}
+          <button onClick={()=>setConfig({...config, form:{...config.form, scoring:[...(config.form.scoring||[]), { fieldId: "company", points: 2 }]}})} className="mt-2 px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">+ Add rule</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const Delivery = () => (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Delivery method</label>
+          <select value={config.delivery.method} onChange={(e)=>setConfig({...config, delivery:{...config.delivery, method:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white">
+            <option value="email">Email the asset</option>
+            <option value="redirect">Redirect to URL</option>
+            <option value="download">Instant download</option>
+          </select>
+        </div>
+        {config.delivery.method!=="redirect" && (
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Asset URL</label>
+            <input value={config.delivery.assetUrl} onChange={(e)=>setConfig({...config, delivery:{...config.delivery, assetUrl:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+          </div>
+        )}
+        {config.delivery.method==="redirect" && (
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Redirect URL</label>
+            <input value={config.delivery.redirectUrl} onChange={(e)=>setConfig({...config, delivery:{...config.delivery, redirectUrl:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+          </div>
+        )}
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Optional booking URL</label>
+          <input value={config.delivery.bookingUrl} onChange={(e)=>setConfig({...config, delivery:{...config.delivery, bookingUrl:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Email subject</label>
+          <input value={config.delivery.emailSubject} onChange={(e)=>setConfig({...config, delivery:{...config.delivery, emailSubject:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white"/>
+        </div>
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">Email body</label>
+          <textarea value={config.delivery.emailBody} onChange={(e)=>setConfig({...config, delivery:{...config.delivery, emailBody:e.target.value}})} className="w-full px-3 py-2 rounded-xl bg-slate-800 text-white min-h-[120px]"/>
+          <p className="text-xs text-slate-400 mt-1">Supports placeholders: {`{{firstName}} {{assetUrl}} {{bookingUrl}} {{sender}}`}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const Integrations = () => (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <div className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Webhook</label>
+          <label className="flex items-center gap-2 text-slate-200 text-sm">
+            <input type="checkbox" checked={config.integrations.webhook.enabled} onChange={(e)=>setConfig({...config, integrations:{...config.integrations, webhook:{...config.integrations.webhook, enabled:e.target.checked}}})}/>
+            Enable
+          </label>
+          <input placeholder="https://hooks.example.com/lead" value={config.integrations.webhook.url}
+                 onChange={(e)=>setConfig({...config, integrations:{...config.integrations, webhook:{...config.integrations.webhook, url:e.target.value}}})}
+                 className="mt-2 w-full px-3 py-2 rounded-lg bg-slate-900 text-slate-100 text-sm"/>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Google Sheets</label>
+          <label className="flex items-center gap-2 text-slate-200 text-sm">
+            <input type="checkbox" checked={config.integrations.sheets.enabled} onChange={(e)=>setConfig({...config, integrations:{...config.integrations, sheets:{ enabled:e.target.checked }}})}/>
+            Append new leads to a sheet via your backend
+          </label>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">ESP / CRM</label>
+          {["mailchimp","hubspot","klaviyo","salesforce"].map((k:any)=> (
+            <div key={k} className="mb-2 p-2 rounded-lg bg-slate-900">
+              <label className="flex items-center gap-2 text-slate-200 text-sm mb-2">
+                <input type="checkbox" checked={!!config.integrations[k]?.enabled}
+                  onChange={(e)=>setConfig({...config, integrations:{...config.integrations, [k]:{...config.integrations[k], enabled:e.target.checked}}})}/>
+                {k}
+              </label>
+              {config.integrations[k]?.enabled && (
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.keys(config.integrations[k]).filter(x=>x!=="enabled").map((field)=> (
+                    <input key={field} placeholder={field} value={config.integrations[k][field]||""}
+                           onChange={(e)=>setConfig({...config, integrations:{...config.integrations, [k]:{...config.integrations[k], [field]: e.target.value}}})}
+                           className="px-2 py-1.5 rounded-lg bg-slate-800 text-slate-100 text-sm"/>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const ABTest = () => (
+    <div className="space-y-3">
+      <label className="flex items-center gap-2 text-slate-200 text-sm">
+        <input type="checkbox" checked={config.abtest.enabled} onChange={(e)=>setConfig({...config, abtest:{...config.abtest, enabled:e.target.checked}})}/>
+        Enable A/B testing
+      </label>
+      {config.abtest.enabled && (
+        <div className="grid md:grid-cols-2 gap-6">
+          {config.abtest.variants.map((v:any, i:number)=> (
+            <div key={i} className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+              <div className="flex items-center gap-2">
+                <input value={v.key} onChange={(e)=>{
+                  const arr=[...config.abtest.variants]; arr[i]={...arr[i], key:e.target.value}; setConfig({...config, abtest:{...config.abtest, variants:arr}});
+                }} className="px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm w-24"/>
+                <input type="number" value={v.weight} onChange={(e)=>{
+                  const arr=[...config.abtest.variants]; arr[i]={...arr[i], weight:Number(e.target.value||0)}; setConfig({...config, abtest:{...config.abtest, variants:arr}});
+                }} className="px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm w-24"/>
+                <span className="text-xs text-slate-400">% traffic</span>
+              </div>
+              <div className="mt-2">
+                <label className="block text-xs text-slate-400">Override headline</label>
+                <input value={v?.changes?.content?.headline || ""} onChange={(e)=>{
+                  const arr=[...config.abtest.variants];
+                  arr[i] = { ...arr[i], changes: { ...(arr[i].changes||{}), content: { ...(arr[i].changes?.content||{}), headline: e.target.value } } };
+                  setConfig({...config, abtest:{...config.abtest, variants:arr}});
+                }} className="w-full px-2 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-sm"/>
+              </div>
+            </div>
+          ))}
+          <button onClick={()=>setConfig({...config, abtest:{...config.abtest, variants:[...config.abtest.variants, { key: String.fromCharCode(65+config.abtest.variants.length), weight: 0, changes:{} }]}})} className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">+ Add variant</button>
+        </div>
+      )}
+    </div>
+  );
+
+  const Launch = () => (
+    <div className="space-y-3">
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Embed (iframe)</label>
+          <textarea readOnly value={embedCode.iframe} className="w-full px-3 py-2 rounded-xl bg-slate-900 text-slate-100 min-h-[120px]"/>
+          <div className="mt-2 flex gap-2">
+            <button onClick={()=>copyToClipboard(embedCode.iframe)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">Copy</button>
+            <button onClick={handlePublish} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white">Publish</button>
+          </div>
+        </div>
+        <div className="p-3 rounded-xl bg-slate-800/60 border border-white/10">
+          <label className="block text-sm text-slate-300 mb-1">Embed (script)</label>
+          <textarea readOnly value={embedCode.script} className="w-full px-3 py-2 rounded-xl bg-slate-900 text-slate-100 min-h-[120px]"/>
+          <div className="mt-2 flex gap-2">
+            <button onClick={()=>copyToClipboard(embedCode.script)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100">Copy</button>
+            <a className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-100" href={config.launch.publishedUrl||"#"} target="_blank" rel="noreferrer">Open</a>
+          </div>
+        </div>
+      </div>
+      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm">
+        <b>Heads‑up:</b> In production, host the published page on a CDN path like <code>/lead/[slug]</code>, serve a static build from this config, and wire submissions to your backend for email, ESP/CRM, and audit logging.
+      </div>
+    </div>
+  );
+
+  const AnalyticsTab = () => (
+    <div className="grid md:grid-cols-3 gap-6">
+      <div className="p-4 rounded-2xl bg-slate-800/60 border border-white/10">
+        <div className="text-sm text-slate-400">Views</div>
+        <div className="text-3xl font-semibold text-white">{config.analytics.views}</div>
+      </div>
+      <div className="p-4 rounded-2xl bg-slate-800/60 border border-white/10">
+        <div className="text-sm text-slate-400">Conversions</div>
+        <div className="text-3xl font-semibold text-white">{config.analytics.conversions}</div>
+      </div>
+      <div className="p-4 rounded-2xl bg-slate-800/60 border border-white/10">
+        <div className="text-sm text-slate-400">Rate</div>
+        <div className="text-3xl font-semibold text-white">{(config.analytics.views?Math.round((config.analytics.conversions/config.analytics.views)*100):0)}%</div>
+      </div>
+      <div className="md:col-span-3 p-4 rounded-2xl bg-slate-800/60 border border-white/10">
+        <div className="text-sm text-slate-400 mb-2">Last 24h (simulated)</div>
+        <div className="grid grid-cols-12 gap-1 items-end h-24">
+          {[...Array(24)].map((_,i)=>{
+            const v = Math.floor(Math.random()*20);
+            const h = v*4; // fake spark bars
+            return <div key={i} className="bg-indigo-500/70 rounded" style={{height: h}} title={`${v} hits`}/>;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const Preview = () => {
+    const theme = config.theme;
+    const appliedHeadline = config.content.headline;
+
+    return (
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl" style={{ background: theme.bg, color: theme.fg, fontFamily: theme.font }}>
+        <div className="p-5 md:p-8" style={{ background: theme.bg }}>
+          <div className="text-sm opacity-80">{theme.logoText}</div>
+          <div className="mt-3 text-2xl md:text-4xl font-bold leading-tight" style={{ color: theme.fg }}>{appliedHeadline}</div>
+          <div className="mt-2 text-slate-300 max-w-2xl">{config.content.subheadline}</div>
+          <ul className="mt-4 grid sm:grid-cols-2 gap-2 max-w-2xl">
+            {(config.content.bullets||[]).map((b:string, i:number)=> (
+              <li key={i} className="flex items-start gap-2"><span className="mt-1">✅</span> <span className="text-slate-200">{b}</span></li>
+            ))}
+          </ul>
+          <form onSubmit={simulateSubmit} className="mt-6 p-4 rounded-xl bg-white/5 max-w-lg">
+            {config.form.fields.map((f:any)=> (
+              <div key={f.id} className="mb-3">
+                <label className="block text-sm text-slate-300 mb-1">{f.label}{f.required && <span className="text-rose-400"> *</span>}</label>
+                {f.type === "textarea" ? (
+                  <textarea name={f.id} required={f.required} className="w-full px-3 py-2 rounded-lg bg-white/10 text-white"/>
+                ) : f.type === "select" ? (
+                  <select name={f.id} required={f.required} className="w-full px-3 py-2 rounded-lg bg-white/10 text-white">
+                    <option value="">Select...</option>
+                    <option>Option A</option>
+                    <option>Option B</option>
+                  </select>
+                ) : f.type === "checkbox" ? (
+                  <label className="flex items-center gap-2 text-slate-200 text-sm">
+                    <input type="checkbox" name={f.id} /> {f.label}
+                  </label>
+                ) : (
+                  <input name={f.id} type={f.type==="company"||f.type==="jobtitle"?"text":f.type} required={f.required} className="w-full px-3 py-2 rounded-lg bg-white/10 text-white"/>
+                )}
+              </div>
+            ))}
+            {config.form.consent.enabled && (
+              <label className="flex items-start gap-2 text-slate-300 text-xs mb-3">
+                <input type="checkbox" required={config.form.consent.required} />
+                <span>{config.form.consent.text}</span>
+              </label>
+            )}
+            <button className="px-4 py-2 rounded-lg text-white font-semibold shadow" style={{ background: theme.accent }}>{config.content.cta}</button>
+          </form>
+          {previewSubmitted && (
+            <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-sm">
+              <div className="font-semibold">Submitted!</div>
+              <div className="mt-1">Score: {previewSubmitted.score}</div>
+              {config.delivery.method==="redirect" && config.delivery.redirectUrl && (
+                <div className="mt-1">Would redirect to <span className="underline">{config.delivery.redirectUrl}</span></div>
+              )}
+              {config.delivery.method!=="redirect" && (
+                <div className="mt-1">Would deliver asset via {config.delivery.method} → <span className="underline">{config.delivery.assetUrl}</span></div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ---------- Shell ----------
+  return (
+    <div className="min-h-[80vh] w-full bg-gradient-to-br from-slate-950 to-slate-900 text-white">
+      <div className="max-w-7xl mx-auto py-6 px-4 md:px-6">
+        <header className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Lead Magnet Builder</h1>
+            <p className="text-slate-400 text-sm">Templates → Design → Form → Delivery → Integrations → A/B → Launch</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handlePublish} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500">Publish</button>
+            <button onClick={exportJSON} className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700">Export</button>
+          </div>
+        </header>
+
+        <div className="grid lg:grid-cols-[16rem,1fr,28rem] gap-4">
+          <Sidebar />
+          <main className="space-y-4">
+            {active==="templates" && <Templates />}
+            {active==="design" && <Design />}
+            {active==="content" && <Content />}
+            {active==="form" && <FormTab />}
+            {active==="delivery" && <Delivery />}
+            {active==="integrations" && <Integrations />}
+            {active==="abtest" && <ABTest />}
+            {active==="launch" && <Launch />}
+            {active==="analytics" && <AnalyticsTab />}
+          </main>
+          <section className="sticky top-4 self-start">
+            <div className="mb-2 text-sm text-slate-400">Live preview</div>
+            <Preview />
+          </section>
+        </div>
+
+        <footer className="mt-6 text-xs text-slate-500">
+          <p><b>Backend wiring checklist</b>: POST <code>/api/leadmagnet</code> to save config. Serve published page at <code>/lead/[slug]</code> from stored config. POST <code>/api/lead/submit</code> to: (1) persist lead, (2) send transactional email (Postmark/Sendgrid), (3) push to ESP/CRM (Mailchimp/HubSpot/etc), (4) fire webhook, (5) log analytics (views, conversions), (6) schedule drip (campaign + workflow + listId), (7) optional: file generation (Puppeteer → PDF). Add reCAPTCHA, rate limiting, and audit trail.</p>
+        </footer>
+      </div>
+    </div>
+  );
+}
