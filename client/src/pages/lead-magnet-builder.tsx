@@ -326,30 +326,30 @@ export default function LeadMagnetBuilder() {
   };
 
   const Sidebar = () => (
-    <aside className="w-full lg:w-72 shrink-0 border-r border-slate-800 bg-slate-950/50 backdrop-blur">
-      <div className="p-6 border-b border-slate-800">
+    <aside className="w-full lg:w-72 shrink-0 border-r border-blue-200 bg-white/80 backdrop-blur shadow-lg">
+      <div className="p-6 border-b border-blue-100">
         <div className="space-y-4">
           <div>
-            <Label className="text-sm text-slate-300">Project Name</Label>
+            <Label className="text-sm text-gray-700 font-medium">Project Name</Label>
             <Input
               value={config.name}
               onChange={(e) => setConfig({ ...config, name: e.target.value })}
-              className="mt-1 bg-slate-900 border-slate-700 text-white"
+              className="mt-1 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
               placeholder="My Lead Magnet"
             />
           </div>
           <div>
-            <Label className="text-sm text-slate-400">URL Slug</Label>
+            <Label className="text-sm text-gray-600 font-medium">URL Slug</Label>
             <Input
               value={config.launch.slug}
               onChange={(e) => setConfig({ 
                 ...config, 
                 launch: { ...config.launch, slug: slugify(e.target.value) } 
               })}
-              className="mt-1 bg-slate-900 border-slate-700 text-slate-300 text-sm"
+              className="mt-1 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm"
               placeholder="my-awesome-offer"
             />
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-gray-500 mt-1">
               advantaai.com/lead/{config.launch.slug}
             </div>
           </div>
@@ -376,7 +376,7 @@ export default function LeadMagnetBuilder() {
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left",
                 active === key 
                   ? "bg-blue-600 text-white shadow-lg" 
-                  : "hover:bg-slate-800 text-slate-300 hover:text-white"
+                  : "hover:bg-blue-50 text-gray-700 hover:text-blue-600"
               )}
             >
               <IconComponent className="w-4 h-4" />
@@ -385,14 +385,14 @@ export default function LeadMagnetBuilder() {
           ))}
         </div>
         
-        <Separator className="my-4 bg-slate-800" />
+        <Separator className="my-4 bg-blue-100" />
         
         <div className="space-y-2">
           <Button 
             onClick={exportJSON} 
             variant="outline" 
             size="sm" 
-            className="w-full justify-start bg-slate-900 border-slate-700 text-slate-300"
+            className="w-full justify-start bg-white border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300"
           >
             <Download className="w-4 h-4 mr-2" />
             Export JSON
@@ -401,7 +401,7 @@ export default function LeadMagnetBuilder() {
             onClick={() => copyToClipboard(JSON.stringify(config, null, 2))} 
             variant="outline" 
             size="sm" 
-            className="w-full justify-start bg-slate-900 border-slate-700 text-slate-300"
+            className="w-full justify-start bg-white border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300"
           >
             <Copy className="w-4 h-4 mr-2" />
             Copy Config
@@ -414,33 +414,27 @@ export default function LeadMagnetBuilder() {
   const Templates = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Choose a Template</h2>
-        <p className="text-slate-400">Start with a proven template and customize to match your brand.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose a Template</h2>
+        <p className="text-gray-600">Start with a proven template and customize to match your brand.</p>
       </div>
       
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
         {TEMPLATES.map(t => (
-          <Card key={t.id} className="bg-slate-900/60 border-slate-700 hover:border-blue-500 transition-all group">
+          <Card key={t.id} className="bg-white border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all group">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-white">{t.name}</CardTitle>
+                <CardTitle className="text-lg text-gray-900">{t.name}</CardTitle>
                 <div 
                   className="w-4 h-4 rounded-full" 
                   style={{ backgroundColor: t.preset.accent }}
                 />
               </div>
-              <p className="text-sm text-slate-400">{t.desc}</p>
+              <p className="text-sm text-gray-600">{t.desc}</p>
             </CardHeader>
             
             <CardContent className="space-y-4">
-              <div 
-                className="p-4 rounded-xl border"
-                style={{ 
-                  backgroundColor: t.preset.accent + "15", 
-                  borderColor: t.preset.accent + "30" 
-                }}
-              >
-                <div className="text-xs text-slate-400 mb-1">Preview:</div>
+              <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                <div className="text-xs text-gray-500 mb-1">Preview:</div>
                 <div 
                   className="font-semibold text-sm leading-tight"
                   style={{ color: t.preset.accent }}
@@ -452,8 +446,7 @@ export default function LeadMagnetBuilder() {
               <div className="flex gap-2">
                 <Button 
                   onClick={() => onChooseTemplate(t)} 
-                  className="flex-1" 
-                  style={{ backgroundColor: t.preset.accent }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Use Template
                 </Button>
@@ -463,7 +456,7 @@ export default function LeadMagnetBuilder() {
                     setActive("content");
                   }} 
                   variant="outline"
-                  className="border-slate-700 text-slate-300"
+                  className="border-gray-200 text-gray-600 hover:bg-gray-50"
                 >
                   <Settings className="w-4 h-4" />
                 </Button>
@@ -478,31 +471,31 @@ export default function LeadMagnetBuilder() {
   const Design = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Design & Branding</h2>
-        <p className="text-slate-400">Customize the look and feel to match your brand.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Design & Branding</h2>
+        <p className="text-gray-600">Customize the look and feel to match your brand.</p>
       </div>
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <Card className="bg-slate-900/60 border-slate-700">
+          <Card className="bg-white border-gray-200">
             <CardHeader>
-              <CardTitle className="text-white">Brand Settings</CardTitle>
+              <CardTitle className="text-gray-900">Brand Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-slate-300">Brand / Logo Text</Label>
+                <Label className="text-gray-700">Brand / Logo Text</Label>
                 <Input
                   value={config.theme.logoText}
                   onChange={(e) => setConfig({
                     ...config,
                     theme: { ...config.theme, logoText: e.target.value }
                   })}
-                  className="mt-1 bg-slate-800 border-slate-600 text-white"
+                  className="mt-1 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
               <div>
-                <Label className="text-slate-300">Accent Color</Label>
+                <Label className="text-gray-700">Accent Color</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="color"
@@ -1404,7 +1397,7 @@ export default function LeadMagnetBuilder() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="flex h-screen">
         <Sidebar />
         
