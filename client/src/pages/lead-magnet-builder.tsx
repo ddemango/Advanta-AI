@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet";
+import { NewHeader } from "@/components/redesign/NewHeader";
+import Footer from "@/components/layout/Footer";
 import { 
   Download, 
   Eye, 
@@ -1397,26 +1400,37 @@ export default function LeadMagnetBuilder() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="flex h-screen">
-        <Sidebar />
-        
-        <main className="flex-1 overflow-auto">
-          <div className="p-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderActiveSection()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </main>
+    <>
+      <Helmet>
+        <title>Lead Magnet Builder | Free AI Tools | Advanta AI</title>
+        <meta name="description" content="Create high-converting lead magnets with our advanced builder. Professional templates, A/B testing, CRM integrations, and detailed analytics." />
+      </Helmet>
+      
+      <NewHeader />
+      
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="flex h-screen">
+          <Sidebar />
+          
+          <main className="flex-1 overflow-auto">
+            <div className="p-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={active}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {renderActiveSection()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+      
+      <Footer />
+    </>
   );
 }
