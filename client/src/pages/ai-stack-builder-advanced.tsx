@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight, Mail, Wand2, Sparkles, ClipboardList, Download, Send, Building2, Server, ShieldCheck, DollarSign, Database, Cloud, FileText, Bot, PhoneCall, Images, MicVocal, Cpu, Gauge, GitBranch, Eye, Lock } from "lucide-react";
-import { Helmet } from "react-helmet";
-import { NewHeader } from "@/components/redesign/NewHeader";
-import Footer from "@/components/layout/Footer";
 
 // UI components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -249,11 +246,6 @@ function applyIndustryAdjustments(a: Answers, plan: StackPlan) {
       add("Auth & Security", { name: "Organization RBAC (Clerk/Auth0)", tier: "$$", why: "B2B multi‑tenant roles & SSO." });
       break;
     }
-    case "E-commerce / Retail": {
-      add("Application Layer", { name: "AI Concierge (Catalog + Policies)", tier: "$", why: "Product Q&A, sizing, and returns with RAG." });
-      add("Analytics / Product", { name: "Klaviyo / Lifecycle", tier: "$$", why: "Flows powered by AI segments + product affinity." });
-      break;
-    }
     default:
       break;
   }
@@ -261,15 +253,14 @@ function applyIndustryAdjustments(a: Answers, plan: StackPlan) {
 
 function generateStackPlan(a: Answers): StackPlan {
   const plan: StackPlan = {
-    summary: `Tailored AI stack for ${a.companyName || "your company"} in ${a.industry}. Budget-optimized recommendations for ${a.teamSkill} team of ${a.teamSize} members.`,
+    summary: `Tailored AI stack for ${a.companyName || "your company"} in ${a.industry}`,
     categories: [],
     estimatedMonthly: estimateMonthlyRange(a),
     nextSteps: [
-      "Set up development environment and version control",
-      "Configure authentication and security policies", 
-      "Implement core AI features with monitoring",
-      "Test extensively and iterate based on feedback",
-      "Scale infrastructure as usage grows"
+      "Set up development environment",
+      "Configure authentication and security",
+      "Implement MVP features",
+      "Test and iterate"
     ],
   };
 
@@ -280,95 +271,45 @@ function generateStackPlan(a: Answers): StackPlan {
   };
 
   // Model Provider recommendations
-  if (a.compliance.includes("HIPAA")) {
-    add("Model Provider(s)", { name: "Azure OpenAI", tier: "$$$", why: "HIPAA-compliant with Business Associate Agreement" });
-  } else if (a.monthlyBudget < 500) {
-    add("Model Provider(s)", { name: "OpenAI GPT-4o-mini", tier: "$", why: "Cost-effective for most use cases with strong performance" });
+  if (a.monthlyBudget < 500) {
+    add("Model Provider(s)", { name: "OpenAI GPT-4o-mini", tier: "$", why: "Cost-effective for most use cases" });
+  } else if (a.compliance.includes("HIPAA")) {
+    add("Model Provider(s)", { name: "Azure OpenAI", tier: "$$$", why: "HIPAA-compliant with BAA" });
   } else {
-    add("Model Provider(s)", { name: "OpenAI GPT-4o", tier: "$$", why: "Best-in-class performance for complex reasoning tasks" });
-    add("Model Provider(s)", { name: "Anthropic Claude", tier: "$$", why: "Excellent for analysis and safer enterprise content" });
+    add("Model Provider(s)", { name: "OpenAI GPT-4o", tier: "$$", why: "Best performance for complex tasks" });
   }
 
   // Vector Database
   if (a.teamSkill === "No-code") {
-    add("Vector DB / Search", { name: "Pinecone", tier: "$", why: "Fully managed with simple API and excellent documentation" });
-  } else if (a.monthlyBudget > 5000) {
-    add("Vector DB / Search", { name: "Weaviate Cloud", tier: "$$", why: "Advanced features with hybrid search capabilities" });
+    add("Vector DB", { name: "Pinecone", tier: "$", why: "Managed service with simple API" });
   } else {
-    add("Vector DB / Search", { name: "Qdrant", tier: "Free", why: "Self-hosted option with excellent performance and filtering" });
+    add("Vector DB", { name: "Qdrant", tier: "Free", why: "Self-hosted option with great performance" });
   }
-
-  // Orchestration Framework
-  add("Orchestration & RAG", { name: "LangChain", tier: "Free", why: "Comprehensive framework with extensive integrations" });
-  add("Orchestration & RAG", { name: "LlamaIndex", tier: "Free", why: "Specialized for document processing and RAG workflows" });
 
   // Application Layer based on goals
   if (a.goals.includes("Customer Support Chatbot")) {
-    add("Application Layer", { name: "Next.js Chat Interface + RAG", tier: "Free", why: "Custom chatbot with full control and brand alignment" });
+    add("Application Layer", { name: "Chatbot Framework", tier: "Free", why: "Handle customer inquiries with context" });
   }
   
   if (a.goals.includes("Internal Q&A (Docs/RAG)")) {
-    add("Application Layer", { name: "Document Q&A System", tier: "Free", why: "Query internal knowledge base with cited responses" });
-  }
-
-  if (a.goals.includes("Agent Automation/Workflows")) {
-    add("Application Layer", { name: "LangGraph Workflows", tier: "Free", why: "Multi-step agent workflows with error handling" });
+    add("Application Layer", { name: "RAG System", tier: "Free", why: "Query internal documentation" });
   }
 
   // ETL/Ingestion based on data sources
-  if (a.dataSources.length > 5) {
-    add("ETL / Ingestion", { name: "Airbyte", tier: "$", why: "Connect 300+ data sources with managed connectors" });
-  } else if (a.dataSources.includes("Notion") || a.dataSources.includes("Google Drive")) {
-    add("ETL / Ingestion", { name: "Unstructured.io", tier: "$", why: "Extract and process documents from multiple formats" });
-  }
-
-  // Storage recommendations
-  add("Storage / Warehouse", { name: "PostgreSQL with pgvector", tier: "Free", why: "Unified database for application data and vectors" });
   if (a.dataSources.length > 3) {
-    add("Storage / Warehouse", { name: "S3 / GCS Object Storage", tier: "$", why: "Scalable storage for documents, images, and backups" });
+    add("ETL / Ingestion", { name: "Airbyte", tier: "$", why: "Connect multiple data sources" });
   }
 
-  // Hosting based on cloud preference and team skill
+  // Hosting based on cloud preference
   switch (a.cloud) {
     case "Vercel":
-      add("Hosting & CI/CD", { name: "Vercel", tier: "$", why: "Serverless deployment with automatic scaling and edge optimization" });
+      add("Hosting & CI/CD", { name: "Vercel", tier: "$", why: "Serverless deployment with edge functions" });
       break;
     case "AWS":
-      add("Hosting & CI/CD", { name: "AWS ECS + Lambda", tier: "$$", why: "Containerized apps with serverless functions for AI workloads" });
-      break;
-    case "GCP":
-      add("Hosting & CI/CD", { name: "Cloud Run + Cloud Functions", tier: "$$", why: "Serverless containers with integrated AI/ML services" });
+      add("Hosting & CI/CD", { name: "AWS ECS + Lambda", tier: "$$", why: "Scalable containerized deployment" });
       break;
     default:
-      if (a.teamSkill === "No-code") {
-        add("Hosting & CI/CD", { name: "Vercel", tier: "$", why: "Simple deployment with automatic scaling" });
-      } else {
-        add("Hosting & CI/CD", { name: "Railway + Docker", tier: "$", why: "Simple containerized deployment with databases included" });
-      }
-  }
-
-  // Authentication and Security
-  if (a.teamSkill === "No-code") {
-    add("Auth & Security", { name: "Clerk", tier: "$", why: "Beautiful pre-built authentication with organizations support" });
-  } else {
-    add("Auth & Security", { name: "NextAuth.js", tier: "Free", why: "Flexible authentication with multiple providers" });
-  }
-
-  // Monitoring and Analytics
-  add("LLMOps / Observability", { name: "LangSmith", tier: "$$", why: "Track AI performance, costs, and user interactions" });
-  if (a.monthlyBudget > 2000) {
-    add("LLMOps / Observability", { name: "Weights & Biases", tier: "$$$", why: "Advanced ML experiment tracking and model monitoring" });
-  }
-
-  // Voice/Speech/Vision based on goals
-  if (a.goals.includes("Speech-to-Text / Transcription")) {
-    add("Voice / Speech / Vision", { name: "OpenAI Whisper API", tier: "$", why: "High-quality speech transcription with multiple languages" });
-  }
-  if (a.goals.includes("Vision/OCR")) {
-    add("Voice / Speech / Vision", { name: "GPT-4 Vision + Tesseract", tier: "$$", why: "Advanced image understanding with fallback OCR" });
-  }
-  if (a.goals.includes("Voice/IVR Assistant")) {
-    add("Voice / Speech / Vision", { name: "Twilio + ElevenLabs", tier: "$$", why: "Phone system integration with natural voice synthesis" });
+      add("Hosting & CI/CD", { name: "Docker + Cloud Run", tier: "$", why: "Flexible containerized deployment" });
   }
 
   // Apply industry-specific adjustments
@@ -379,7 +320,7 @@ function generateStackPlan(a: Answers): StackPlan {
 
 // ---------------------------- Main Component ----------------------------
 
-export default function AIStackBuilder() {
+export default function AIStackBuilderAdvanced() {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(DEFAULT_ANSWERS);
@@ -452,42 +393,31 @@ export default function AIStackBuilder() {
   const downloadMarkdown = () => {
     const markdown = `# AI Stack Recommendations for ${answers.companyName}
 
-## Company Profile
-- **Industry:** ${answers.industry}
-- **Team Size:** ${answers.teamSize} members
-- **Technical Skill:** ${answers.teamSkill}
-- **Budget:** $${answers.monthlyBudget.toLocaleString()}/month
-- **Compliance:** ${answers.compliance.join(', ')}
-
 ## Summary
 ${stackPlan.summary}
 
 ## Estimated Monthly Cost
 ${stackPlan.estimatedMonthly}
 
-## Recommended Technology Stack
+## Recommended Stack
 
 ${stackPlan.categories.map(cat => `
 ### ${cat.category}
 ${cat.picks.map(pick => `- **${pick.name}** (${pick.tier}) - ${pick.why}`).join('\n')}
 `).join('')}
 
-## Implementation Roadmap
+## Next Steps
 ${stackPlan.nextSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
 
-## Additional Notes
-${answers.notes || 'No additional requirements specified.'}
-
 ---
-*Generated by Advanta AI Stack Builder on ${new Date().toLocaleDateString()}*
-*This recommendation is based on current market conditions and your specific requirements.*
+*Generated by Advanta AI Stack Builder*
 `;
 
     const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${answers.companyName.replace(/\s+/g, '_')}_AI_Stack_Plan.md`;
+    a.download = `${answers.companyName.replace(/\s+/g, '_')}_AI_Stack.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -554,7 +484,6 @@ ${answers.notes || 'No additional requirements specified.'}
                     <SelectItem value="Healthcare / Medical">Healthcare / Medical</SelectItem>
                     <SelectItem value="E-commerce / Retail">E-commerce / Retail</SelectItem>
                     <SelectItem value="Marketing / Creative Agency">Marketing / Creative Agency</SelectItem>
-                    <SelectItem value="Manufacturing / Logistics">Manufacturing / Logistics</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -579,10 +508,10 @@ ${answers.notes || 'No additional requirements specified.'}
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="No-code">No-code (Drag & drop tools)</SelectItem>
-                    <SelectItem value="Low-code">Low-code (Basic scripting)</SelectItem>
-                    <SelectItem value="Full-stack">Full-stack (Custom development)</SelectItem>
-                    <SelectItem value="ML/DS Team">ML/DS Team (Advanced AI/ML)</SelectItem>
+                    <SelectItem value="No-code">No-code</SelectItem>
+                    <SelectItem value="Low-code">Low-code</SelectItem>
+                    <SelectItem value="Full-stack">Full-stack</SelectItem>
+                    <SelectItem value="ML/DS Team">ML/DS Team</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -670,7 +599,7 @@ ${answers.notes || 'No additional requirements specified.'}
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Latency Critical Applications</Label>
+                  <Label>Latency Critical</Label>
                   <Switch
                     checked={answers.latencyCritical}
                     onCheckedChange={(value) => updateAnswer('latencyCritical', value)}
@@ -705,10 +634,10 @@ ${answers.notes || 'No additional requirements specified.'}
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="AWS">Amazon Web Services (AWS)</SelectItem>
-                    <SelectItem value="GCP">Google Cloud Platform (GCP)</SelectItem>
+                    <SelectItem value="AWS">AWS</SelectItem>
+                    <SelectItem value="GCP">Google Cloud</SelectItem>
                     <SelectItem value="Azure">Microsoft Azure</SelectItem>
-                    <SelectItem value="Vercel">Vercel (Serverless)</SelectItem>
+                    <SelectItem value="Vercel">Vercel</SelectItem>
                     <SelectItem value="Self-Hosted">Self-Hosted</SelectItem>
                     <SelectItem value="No Preference">No Preference</SelectItem>
                   </SelectContent>
@@ -725,14 +654,10 @@ ${answers.notes || 'No additional requirements specified.'}
                   step={100}
                   className="mt-2"
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>$100</span>
-                  <span>$50,000+</span>
-                </div>
               </div>
 
               <div>
-                <Label>Primary Region</Label>
+                <Label>Region</Label>
                 <Input
                   value={answers.region}
                   onChange={(e) => updateAnswer('region', e.target.value)}
@@ -749,7 +674,7 @@ ${answers.notes || 'No additional requirements specified.'}
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GitBranch className="w-6 h-6 text-orange-600" />
-                Integrations & Tools
+                Integrations
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -775,7 +700,7 @@ ${answers.notes || 'No additional requirements specified.'}
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-6 h-6 text-gray-600" />
-                Additional Requirements
+                Additional Notes
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -785,7 +710,7 @@ ${answers.notes || 'No additional requirements specified.'}
                   id="notes"
                   value={answers.notes}
                   onChange={(e) => updateAnswer('notes', e.target.value)}
-                  placeholder="Special requirements, existing infrastructure, constraints, or specific goals..."
+                  placeholder="Special requirements, constraints, or goals..."
                   rows={6}
                 />
               </div>
@@ -807,45 +732,29 @@ ${answers.notes || 'No additional requirements specified.'}
                 {isGenerating ? (
                   <div className="text-center py-12">
                     <Wand2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-                    <p className="text-lg">Generating your personalized stack recommendations...</p>
-                    <p className="text-sm text-gray-500 mt-2">Analyzing your requirements and industry best practices</p>
+                    <p className="text-lg">Generating your personalized stack...</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border">
-                      <h3 className="font-semibold text-blue-900 mb-2">Executive Summary</h3>
-                      <p className="text-blue-800 mb-3">{stackPlan.summary}</p>
-                      <div className="flex items-center gap-4">
-                        <Badge className="bg-green-100 text-green-800">
-                          Estimated: {stackPlan.estimatedMonthly}/month
-                        </Badge>
-                        <Badge variant="outline">
-                          {stackPlan.categories.length} categories
-                        </Badge>
-                      </div>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-semibold text-blue-900">Summary</h3>
+                      <p className="text-blue-800">{stackPlan.summary}</p>
+                      <p className="text-blue-600 font-medium mt-2">Estimated Monthly: {stackPlan.estimatedMonthly}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       {stackPlan.categories.map((category, idx) => (
-                        <Card key={idx} className="border-l-4 border-l-blue-500">
+                        <Card key={idx}>
                           <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              {category.category === "Model Provider(s)" && <Bot className="w-5 h-5" />}
-                              {category.category === "Vector DB / Search" && <Database className="w-5 h-5" />}
-                              {category.category === "Hosting & CI/CD" && <Server className="w-5 h-5" />}
-                              {category.category === "Auth & Security" && <Lock className="w-5 h-5" />}
-                              <span>{category.category}</span>
-                            </CardTitle>
+                            <CardTitle className="text-lg">{category.category}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="space-y-3">
                               {category.picks.map((pick, pickIdx) => (
-                                <div key={pickIdx} className="border rounded-lg p-3 bg-gray-50">
-                                  <div className="flex items-center justify-between mb-2">
+                                <div key={pickIdx} className="border-l-4 border-blue-200 pl-4">
+                                  <div className="flex items-center justify-between">
                                     <h4 className="font-medium">{pick.name}</h4>
-                                    <Badge 
-                                      variant={pick.tier === "Free" ? "secondary" : pick.tier === "$$$" || pick.tier === "Enterprise" ? "destructive" : "default"}
-                                    >
+                                    <Badge variant={pick.tier === "Free" ? "secondary" : "default"}>
                                       {pick.tier}
                                     </Badge>
                                   </div>
@@ -858,27 +767,27 @@ ${answers.notes || 'No additional requirements specified.'}
                       ))}
                     </div>
 
-                    <Card className="bg-green-50 border-green-200">
+                    <Card>
                       <CardHeader>
-                        <CardTitle className="text-green-800">Implementation Roadmap</CardTitle>
+                        <CardTitle>Next Steps</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ol className="list-decimal list-inside space-y-2">
                           {stackPlan.nextSteps.map((step, idx) => (
-                            <li key={idx} className="text-sm text-green-700">{step}</li>
+                            <li key={idx} className="text-sm">{step}</li>
                           ))}
                         </ol>
                       </CardContent>
                     </Card>
 
                     <div className="flex gap-4 justify-center pt-6">
-                      <Button onClick={sendByEmail} disabled={isSending} className="bg-blue-600 hover:bg-blue-700">
+                      <Button onClick={sendByEmail} disabled={isSending}>
                         <Mail className="w-4 h-4 mr-2" />
-                        {isSending ? 'Sending...' : 'Email Full Report'}
+                        {isSending ? 'Sending...' : 'Email Plan'}
                       </Button>
                       <Button onClick={downloadMarkdown} variant="outline">
                         <Download className="w-4 h-4 mr-2" />
-                        Download Report
+                        Download
                       </Button>
                     </div>
                   </div>
@@ -894,99 +803,67 @@ ${answers.notes || 'No additional requirements specified.'}
   };
 
   return (
-    <>
-      <Helmet>
-        <title>AI Stack Builder Wizard | Advanta AI</title>
-        <meta name="description" content="Get personalized AI technology stack recommendations tailored to your industry, budget, and technical requirements. Free expert guidance in 8 simple steps." />
-      </Helmet>
-      
-      <NewHeader />
-      
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              AI Stack Builder Wizard
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Get personalized AI technology recommendations tailored to your business. 
-              Our expert system analyzes your requirements and suggests the optimal tools and architecture.
-            </p>
-            <div className="flex justify-center gap-4 mt-4">
-              <Badge className="bg-green-500">Free Expert Guidance</Badge>
-              <Badge variant="outline">8 Simple Steps</Badge>
-              <Badge variant="outline">Download Full Report</Badge>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            AI Stack Builder Wizard
+          </h1>
+          <p className="text-xl text-gray-600">
+            Get personalized AI tool recommendations in 8 simple steps
+          </p>
+        </div>
 
-          {/* Progress Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-gray-500">Step {step + 1} of {totalSteps}</span>
-              <span className="text-sm text-gray-500">{Math.round(((step + 1) / totalSteps) * 100)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <motion.div
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 h-3 rounded-full flex items-center justify-end pr-2"
-                initial={{ width: 0 }}
-                animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
-                transition={{ duration: 0.3 }}
-              >
-                {step + 1 === totalSteps && (
-                  <Check className="w-4 h-4 text-white" />
-                )}
-              </motion.div>
-            </div>
+        {/* Progress Bar */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm text-gray-500">Step {step + 1} of {totalSteps}</span>
+            <span className="text-sm text-gray-500">{Math.round(((step + 1) / totalSteps) * 100)}%</span>
           </div>
-
-          {/* Step Content */}
-          <AnimatePresence mode="wait">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              className="bg-blue-600 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
               transition={{ duration: 0.3 }}
-            >
-              {renderStep()}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex justify-between max-w-2xl mx-auto mt-8">
-            <Button
-              onClick={prevStep}
-              disabled={step === 0}
-              variant="outline"
-              className="min-w-[100px]"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
-            </Button>
-            
-            <Button
-              onClick={nextStep}
-              disabled={step === totalSteps - 1}
-              className="min-w-[100px] bg-blue-600 hover:bg-blue-700"
-            >
-              {step === totalSteps - 2 ? (
-                <>
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Generate Stack
-                </>
-              ) : (
-                <>
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
+            />
           </div>
         </div>
+
+        {/* Step Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderStep()}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation */}
+        <div className="flex justify-between max-w-2xl mx-auto mt-8">
+          <Button
+            onClick={prevStep}
+            disabled={step === 0}
+            variant="outline"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Previous
+          </Button>
+          
+          <Button
+            onClick={nextStep}
+            disabled={step === totalSteps - 1}
+          >
+            {step === totalSteps - 2 ? 'Generate Stack' : 'Next'}
+            <ChevronRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
       </div>
-      
-      <Footer />
-    </>
+    </div>
   );
 }
