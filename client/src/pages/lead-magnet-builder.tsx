@@ -477,13 +477,13 @@ export default function LeadMagnetBuilder() {
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <Card className="bg-white border-gray-200">
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
               <CardTitle className="text-gray-900">Brand Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-gray-700">Brand / Logo Text</Label>
+                <Label className="text-gray-700 font-medium">Brand / Logo Text</Label>
                 <Input
                   value={config.theme.logoText}
                   onChange={(e) => setConfig({
@@ -495,7 +495,7 @@ export default function LeadMagnetBuilder() {
               </div>
               
               <div>
-                <Label className="text-gray-700">Accent Color</Label>
+                <Label className="text-gray-700 font-medium">Accent Color</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     type="color"
@@ -504,7 +504,7 @@ export default function LeadMagnetBuilder() {
                       ...config,
                       theme: { ...config.theme, accent: e.target.value }
                     })}
-                    className="w-12 h-10 p-1 bg-slate-800 border-slate-600"
+                    className="w-12 h-10 p-1 bg-white border-gray-200"
                   />
                   <Input
                     value={config.theme.accent}
@@ -512,14 +512,14 @@ export default function LeadMagnetBuilder() {
                       ...config,
                       theme: { ...config.theme, accent: e.target.value }
                     })}
-                    className="flex-1 bg-slate-800 border-slate-600 text-white"
+                    className="flex-1 bg-white border-gray-200 text-gray-900"
                     placeholder="#3b82f6"
                   />
                 </div>
               </div>
               
               <div>
-                <Label className="text-slate-300">Font Family</Label>
+                <Label className="text-gray-700 font-medium">Font Family</Label>
                 <Select
                   value={config.theme.font}
                   onValueChange={(value) => setConfig({
@@ -527,7 +527,7 @@ export default function LeadMagnetBuilder() {
                     theme: { ...config.theme, font: value }
                   })}
                 >
-                  <SelectTrigger className="mt-1 bg-slate-800 border-slate-600 text-white">
+                  <SelectTrigger className="mt-1 bg-white border-gray-200 text-gray-900">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -544,7 +544,7 @@ export default function LeadMagnetBuilder() {
         </div>
         
         <div className="space-y-4">
-          <div className="text-sm text-slate-400">Live Preview</div>
+          <div className="text-sm text-gray-500 font-medium">Live Preview</div>
           <div 
             className="p-6 rounded-2xl border"
             style={{ 
@@ -585,45 +585,45 @@ export default function LeadMagnetBuilder() {
   const Content = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Content & Copy</h2>
-        <p className="text-slate-400">Write compelling copy that converts visitors into leads.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Content & Copy</h2>
+        <p className="text-gray-600">Write compelling copy that converts visitors into leads.</p>
       </div>
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <Card className="bg-slate-900/60 border-slate-700">
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-white">Headlines & Copy</CardTitle>
+              <CardTitle className="text-gray-900">Headlines & Copy</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-slate-300">Main Headline</Label>
+                <Label className="text-gray-700 font-medium">Main Headline</Label>
                 <Textarea
                   value={config.content.headline}
                   onChange={(e) => setConfig({
                     ...config,
                     content: { ...config.content, headline: e.target.value }
                   })}
-                  className="mt-1 bg-slate-800 border-slate-600 text-white"
+                  className="mt-1 bg-white border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
               
               <div>
-                <Label className="text-slate-300">Subheadline</Label>
+                <Label className="text-gray-700 font-medium">Subheadline</Label>
                 <Textarea
                   value={config.content.subheadline}
                   onChange={(e) => setConfig({
                     ...config,
                     content: { ...config.content, subheadline: e.target.value }
                   })}
-                  className="mt-1 bg-slate-800 border-slate-600 text-white"
+                  className="mt-1 bg-white border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
               
               <div>
-                <Label className="text-slate-300">Benefits (one per line)</Label>
+                <Label className="text-gray-700 font-medium">Benefits (one per line)</Label>
                 <Textarea
                   value={config.content.bullets.join("\n")}
                   onChange={(e) => setConfig({
@@ -633,21 +633,21 @@ export default function LeadMagnetBuilder() {
                       bullets: e.target.value.split("\n").filter(b => b.trim()) 
                     }
                   })}
-                  className="mt-1 bg-slate-800 border-slate-600 text-white"
+                  className="mt-1 bg-white border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-blue-500"
                   rows={4}
                   placeholder="Benefit 1&#10;Benefit 2&#10;Benefit 3"
                 />
               </div>
               
               <div>
-                <Label className="text-slate-300">Call-to-Action Button</Label>
+                <Label className="text-gray-700 font-medium">Call-to-Action Button</Label>
                 <Input
                   value={config.content.cta}
                   onChange={(e) => setConfig({
                     ...config,
                     content: { ...config.content, cta: e.target.value }
                   })}
-                  className="mt-1 bg-slate-800 border-slate-600 text-white"
+                  className="mt-1 bg-white border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </CardContent>
@@ -655,7 +655,7 @@ export default function LeadMagnetBuilder() {
         </div>
         
         <div className="space-y-4">
-          <div className="text-sm text-slate-400">Live Preview</div>
+          <div className="text-sm text-gray-500 font-medium">Live Preview</div>
           <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
             <CardContent className="p-8">
               <div className="text-center space-y-6">
@@ -705,31 +705,31 @@ export default function LeadMagnetBuilder() {
   const FormBuilder = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Form Builder</h2>
-        <p className="text-slate-400">Configure the lead capture form and data collection.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Form Builder</h2>
+        <p className="text-gray-600">Configure the lead capture form and data collection.</p>
       </div>
       
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <Card className="bg-slate-900/60 border-slate-700">
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Form Fields</CardTitle>
-              <Button onClick={addField} size="sm" variant="outline" className="border-slate-600">
+              <CardTitle className="text-gray-900">Form Fields</CardTitle>
+              <Button onClick={addField} size="sm" variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-50">
                 <Plus className="w-4 h-4 mr-1" />
                 Add Field
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {config.form.fields.map((field: any, index: number) => (
-                <div key={field.id} className="p-4 border border-slate-700 rounded-xl space-y-3">
+                <div key={field.id} className="p-4 border border-gray-200 rounded-xl space-y-3 bg-gray-50">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-white">Field {index + 1}</div>
+                    <div className="text-sm font-medium text-gray-900">Field {index + 1}</div>
                     {config.form.fields.length > 1 && (
                       <Button
                         onClick={() => removeField(field.id)}
                         size="sm"
                         variant="ghost"
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -738,7 +738,7 @@ export default function LeadMagnetBuilder() {
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs text-slate-400">Label</Label>
+                      <Label className="text-xs text-gray-600 font-medium">Label</Label>
                       <Input
                         value={field.label}
                         onChange={(e) => {
@@ -749,12 +749,12 @@ export default function LeadMagnetBuilder() {
                             form: { ...config.form, fields: newFields }
                           });
                         }}
-                        className="bg-slate-800 border-slate-600 text-white text-sm"
+                        className="bg-white border-gray-200 text-gray-900 text-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                     
                     <div>
-                      <Label className="text-xs text-slate-400">Type</Label>
+                      <Label className="text-xs text-gray-600 font-medium">Type</Label>
                       <Select
                         value={field.type}
                         onValueChange={(value) => {
@@ -766,7 +766,7 @@ export default function LeadMagnetBuilder() {
                           });
                         }}
                       >
-                        <SelectTrigger className="bg-slate-800 border-slate-600 text-white text-sm">
+                        <SelectTrigger className="bg-white border-gray-200 text-gray-900 text-sm focus:border-blue-500 focus:ring-blue-500">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1197,28 +1197,28 @@ export default function LeadMagnetBuilder() {
   const Launch = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Launch & Embed</h2>
-        <p className="text-slate-400">Publish your lead magnet and get embed codes.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Launch & Embed</h2>
+        <p className="text-gray-600">Publish your lead magnet and get embed codes.</p>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="bg-slate-900/60 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-white">Publish Settings</CardTitle>
+            <CardTitle className="text-gray-900">Publish Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-slate-300">URL Slug</Label>
+              <Label className="text-gray-700 font-medium">URL Slug</Label>
               <div className="flex gap-2 mt-1">
-                <div className="flex-1 flex items-center bg-slate-800 border border-slate-600 rounded-lg px-3 py-2">
-                  <span className="text-slate-400 text-sm">advantaai.com/lead/</span>
-                  <span className="text-white">{config.launch.slug}</span>
+                <div className="flex-1 flex items-center bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                  <span className="text-gray-500 text-sm">advantaai.com/lead/</span>
+                  <span className="text-gray-900 font-medium">{config.launch.slug}</span>
                 </div>
                 <Button
                   onClick={() => copyToClipboard(`https://advantaai.com/lead/${config.launch.slug}`)}
                   variant="outline"
                   size="sm"
-                  className="border-slate-600"
+                  className="border-gray-200 hover:bg-gray-50"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
@@ -1228,7 +1228,7 @@ export default function LeadMagnetBuilder() {
             <div className="flex gap-3">
               <Button 
                 onClick={handlePublish} 
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <Play className="w-4 h-4 mr-2" />
                 Publish Live
@@ -1236,7 +1236,7 @@ export default function LeadMagnetBuilder() {
               <Button 
                 onClick={() => setActive("preview")} 
                 variant="outline"
-                className="border-slate-600"
+                className="border-gray-200 hover:bg-gray-50"
               >
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
@@ -1244,26 +1244,26 @@ export default function LeadMagnetBuilder() {
             </div>
             
             {config.launch.publishedUrl && (
-              <div className="text-sm text-green-400 bg-green-900/20 p-2 rounded-lg">
+              <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
                 ✓ Published at: {config.launch.publishedUrl}
               </div>
             )}
           </CardContent>
         </Card>
         
-        <Card className="bg-slate-900/60 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-white">Embed Codes</CardTitle>
+            <CardTitle className="text-gray-900">Embed Codes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-slate-300">iframe Embed</Label>
+                <Label className="text-gray-700 font-medium">iframe Embed</Label>
                 <Button
                   onClick={() => copyToClipboard(embedCode.iframe)}
                   size="sm"
                   variant="outline"
-                  className="border-slate-600"
+                  className="border-gray-200 hover:bg-gray-50"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
@@ -1271,19 +1271,19 @@ export default function LeadMagnetBuilder() {
               <Textarea
                 value={embedCode.iframe}
                 readOnly
-                className="bg-slate-800 border-slate-600 text-slate-300 text-sm font-mono"
+                className="bg-gray-50 border-gray-200 text-gray-700 text-sm font-mono"
                 rows={3}
               />
             </div>
             
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-slate-300">Script Embed</Label>
+                <Label className="text-gray-700 font-medium">Script Embed</Label>
                 <Button
                   onClick={() => copyToClipboard(embedCode.script)}
                   size="sm"
                   variant="outline"
-                  className="border-slate-600"
+                  className="border-gray-200 hover:bg-gray-50"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
@@ -1291,7 +1291,7 @@ export default function LeadMagnetBuilder() {
               <Textarea
                 value={embedCode.script}
                 readOnly
-                className="bg-slate-800 border-slate-600 text-slate-300 text-sm font-mono"
+                className="bg-gray-50 border-gray-200 text-gray-700 text-sm font-mono"
                 rows={2}
               />
             </div>
@@ -1304,48 +1304,48 @@ export default function LeadMagnetBuilder() {
   const Analytics = () => (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Analytics</h2>
-        <p className="text-slate-400">Track performance and optimize your lead generation.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
+        <p className="text-gray-600">Track performance and optimize your lead generation.</p>
       </div>
       
       <div className="grid md:grid-cols-3 gap-6">
-        <Card className="bg-slate-900/60 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-slate-400">Total Views</div>
-              <Eye className="w-5 h-5 text-blue-400" />
+              <div className="text-gray-600 font-medium">Total Views</div>
+              <Eye className="w-5 h-5 text-blue-500" />
             </div>
-            <div className="text-3xl font-bold text-white">{config.analytics.views.toLocaleString()}</div>
-            <div className="text-sm text-slate-400">Last 30 days</div>
+            <div className="text-3xl font-bold text-gray-900">{config.analytics.views.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Last 30 days</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-slate-900/60 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-slate-400">Conversions</div>
-              <Users className="w-5 h-5 text-green-400" />
+              <div className="text-gray-600 font-medium">Conversions</div>
+              <Users className="w-5 h-5 text-green-500" />
             </div>
-            <div className="text-3xl font-bold text-white">{config.analytics.conversions}</div>
-            <div className="text-sm text-slate-400">New leads captured</div>
+            <div className="text-3xl font-bold text-gray-900">{config.analytics.conversions.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">New leads captured</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-slate-900/60 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-slate-400">Conversion Rate</div>
-              <MousePointer className="w-5 h-5 text-purple-400" />
+              <div className="text-gray-600 font-medium">Conversion Rate</div>
+              <MousePointer className="w-5 h-5 text-purple-500" />
             </div>
-            <div className="text-3xl font-bold text-white">{config.analytics.rate}%</div>
-            <div className="text-sm text-slate-400">Views to leads</div>
+            <div className="text-3xl font-bold text-gray-900">{config.analytics.rate}%</div>
+            <div className="text-sm text-gray-500">Views to leads</div>
           </CardContent>
         </Card>
       </div>
       
-      <Card className="bg-slate-900/60 border-slate-700">
+      <Card className="bg-white border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white">24-Hour Activity</CardTitle>
+          <CardTitle className="text-gray-900">24-Hour Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-40 flex items-end space-x-1">
@@ -1362,18 +1362,18 @@ export default function LeadMagnetBuilder() {
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-xs text-slate-400 mt-2">
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
             <span>24h ago</span>
             <span>Now</span>
           </div>
           <div className="flex items-center gap-4 mt-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-600 rounded"></div>
-              <span className="text-slate-300">Views</span>
+              <span className="text-gray-700">Views</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-600 rounded"></div>
-              <span className="text-slate-300">Conversions</span>
+              <span className="text-gray-700">Conversions</span>
             </div>
           </div>
         </CardContent>
