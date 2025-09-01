@@ -1,85 +1,3 @@
-// Mock database operations for now - replace with actual Drizzle operations
-const mockDb = {
-  async findAgentRun(runId: string) {
-    return {
-      id: runId,
-      agentId: 'agent-1',
-      userId: 'user-1',
-      projectId: 'project-1',
-      goal: 'Test agent execution',
-      status: 'succeeded',
-      output: { result: 'Execution completed successfully' },
-      creditsUsed: 150,
-      tokensIn: 1000,
-      tokensOut: 500,
-      startedAt: new Date(),
-      finishedAt: new Date(),
-      agent: {
-        name: 'Research Agent',
-        graph: {
-          nodes: [
-            { id: 'plan', data: { label: 'Plan' } },
-            { id: 'search', data: { label: 'Web Search' } },
-            { id: 'llm', data: { label: 'LLM Analysis' } }
-          ],
-          edges: [
-            { source: 'plan', target: 'search' },
-            { source: 'search', target: 'llm' }
-          ]
-        }
-      },
-      steps: [
-        {
-          id: 'step-1',
-          index: 0,
-          tool: 'plan',
-          status: 'done',
-          request: { mode: 'graph' },
-          response: { compiled: [] },
-          credits: 20,
-          tokensIn: 100,
-          tokensOut: 50,
-          error: undefined
-        },
-        {
-          id: 'step-2',
-          index: 1,
-          tool: 'web_search',
-          status: 'done',
-          request: { query: 'AI developments' },
-          response: { results: [{ title: 'AI News', snippet: 'Latest developments...' }] },
-          credits: 30,
-          tokensIn: 200,
-          tokensOut: 150,
-          error: undefined
-        },
-        {
-          id: 'step-3',
-          index: 2,
-          tool: 'llm',
-          status: 'done',
-          request: { prompt: 'Analyze findings' },
-          response: { text: 'Based on the search results, here are the key insights...' },
-          credits: 100,
-          tokensIn: 700,
-          tokensOut: 300,
-          error: undefined
-        }
-      ]
-    };
-  },
-
-  async createArtifact(data: any) {
-    const artifact = {
-      id: `artifact-${Date.now()}`,
-      ...data,
-      createdAt: new Date()
-    };
-    console.log('Created artifact:', artifact);
-    return artifact;
-  }
-};
-
 function codeBlock(lang: string, s: string) {
   return "```" + lang + "\n" + s + "\n```";
 }
@@ -94,17 +12,36 @@ function mermaidFromGraph(graph: any) {
   if (!graph?.nodes?.length || !graph?.edges?.length) return "";
   const nodeLabel = (n:any) => (n?.data?.label || n?.data?.tool || n.id);
   const lines = ["graph TD"];
-  for (const n of graph.nodes) lines.push(`  ${n.id}[${nodeLabel(n)}]`);
-  for (const e of graph.edges) lines.push(`  ${e.source} --> ${e.target}`);
+  for (const n of graph.nodes) lines.push(`${n.id}[${nodeLabel(n)}]`);
+  for (const e of graph.edges) lines.push(`${e.source} --> ${e.target}`);
   return "```mermaid\n" + lines.join("\n") + "\n```";
 }
 
-export async function composeAndSaveRunArtifact(runId: string) {
-  const run = await mockDb.findAgentRun(runId);
-  if (!run) return;
-
-  // Roll up per-step credits/tokens from step.response meta if present (optional)
-  const rows = run.steps.map(s => ({
+export async function generateRunSummary(runData: {
+  id: string;
+  status: string;
+  goal?: string;
+  creditsUsed: number;
+  tokensIn: number;
+  tokensOut: number;
+  startedAt?: Date;
+  finishedAt?: Date;
+  output?: any;
+  agent?: { name?: string; graph?: any };
+  steps: Array<{
+    index: number;
+    tool: string;
+    status: string;
+    request?: any;
+    response?: any;
+    error?: string;
+    credits?: number;
+    tokensIn?: number;
+    tokensOut?: number;
+  }>;
+}) {
+  // Roll up per-step credits/tokens from step data
+  const rows = runData.steps.map(s => ({
     idx: s.index,
     tool: s.tool,
     status: s.status,
@@ -115,47 +52,32 @@ export async function composeAndSaveRunArtifact(runId: string) {
 
   const header = `# Agent Run Summary
 
-**Agent:** ${run.agent?.name ?? run.agentId}  
-**Run ID:** ${run.id}  
-**Status:** ${run.status}  
-**Goal:** ${run.goal || "(graph-run)"}  
+**Agent:** ${runData.agent?.name ?? 'Unknown Agent'}  
+**Run ID:** ${runData.id}  
+**Status:** ${runData.status}  
+**Goal:** ${runData.goal || "(graph-run)"}  
 
-**Credits:** ${run.creditsUsed}  
-**Tokens:** in ${run.tokensIn} • out ${run.tokensOut}  
+**Credits:** ${runData.creditsUsed}  
+**Tokens:** in ${runData.tokensIn} • out ${runData.tokensOut}  
 
-**Started:** ${run.startedAt?.toISOString() ?? ""}  
-**Finished:** ${run.finishedAt?.toISOString() ?? ""}`;
+**Started:** ${runData.startedAt?.toISOString() ?? ""}  
+**Finished:** ${runData.finishedAt?.toISOString() ?? ""}`;
 
   const table = asTable(rows);
 
-  const details = run.steps.map(s => {
+  const details = runData.steps.map(s => {
     const req = codeBlock("json", JSON.stringify(s.request ?? {}, null, 2));
     const res = s.response ? codeBlock("json", JSON.stringify(s.response ?? {}, null, 2)) : "";
     const err = s.error ? ("\n**Error:** " + codeBlock("text", s.error)) : "";
-    return `### Step ${s.index}: ${s.tool} — ${s.status}\n\n**Request**\n${req}\n\n**Response**\n${res}${err}`;
+    return `### Step ${s.index}: ${s.tool} — ${s.status}\n**Request**\n${req}\n\n**Response**\n${res}${err}`;
   }).join("\n\n");
 
-  const mermaid = run.agent?.graph ? mermaidFromGraph(run.agent.graph) : "";
+  const mermaid = runData.agent?.graph ? mermaidFromGraph(runData.agent.graph) : "";
 
-  const tail = `## Final Output
+  const tail = `## Output
+${codeBlock("json", JSON.stringify(runData.output ?? {}, null, 2))}`;
 
-${codeBlock("json", JSON.stringify(run.output ?? {}, null, 2))}
+  const md = [header, "", mermaid, "", "## Steps", table, "", details, "", tail].join("\n");
 
----
-
-*This summary was automatically generated from the agent execution. All steps, inputs, outputs, and resource usage are documented above.*`;
-
-  const md = [header, "", mermaid, "", "## Execution Steps", "", table, "", "## Step Details", "", details, "", tail].join("\n");
-
-  // Save as markdown artifact for the project (or user if no project)
-  const artifact = await mockDb.createArtifact({
-    name: `Agent Run Summary — ${run.agent?.name ?? run.agentId}`,
-    kind: "markdown",
-    data: { md },
-    userId: run.userId,
-    projectId: run.projectId || undefined
-  });
-
-  console.log(`Created run summary artifact: ${artifact.id} for run: ${runId}`);
-  return artifact;
+  return md;
 }

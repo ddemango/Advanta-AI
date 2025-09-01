@@ -8693,6 +8693,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Agent execution API
+  app.post("/api/agent/run", async (req, res) => {
+    try {
+      const { goal, graph } = req.body;
+      
+      const { executeAgentRun } = await import('./lib/agents/runner');
+      const runId = `run-${Date.now()}`;
+      
+      const result = await executeAgentRun(runId, 'enterprise');
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error("Agent run failed:", error);
+      res.status(500).json({ error: "Agent run failed", details: error.message });
+    }
+  });
+
+  // Code session management
+  app.post("/api/code/session", async (req, res) => {
+    try {
+      const sessionId = `session-${Date.now()}`;
+      res.json({ ok: true, sessionId });
+    } catch (error: any) {
+      console.error("Session creation failed:", error);
+      res.status(500).json({ error: "Session creation failed" });
+    }
+  });
+
+  app.delete("/api/code/session/:sessionId", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      // In production, clean up session resources
+      res.json({ ok: true });
+    } catch (error: any) {
+      console.error("Session cleanup failed:", error);
+      res.status(500).json({ error: "Session cleanup failed" });
+    }
+  });
+
   // CodeLLM endpoints
   app.post('/api/codellm/suggest', async (req, res) => {
     try {

@@ -1,212 +1,316 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import ReactFlow, { 
-  Background, 
-  Controls, 
-  MiniMap, 
-  addEdge, 
-  useNodesState, 
-  useEdgesState,
-  Node,
-  Edge 
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+"use client";
+import React, { useState, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Save, Play, Plus } from "lucide-react";
 
-interface AgentDagEditorProps {
-  agentId: string;
-  initial?: { nodes: Node[]; edges: Edge[] };
+interface Node {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    tool: string;
+    input?: any;
+  };
 }
 
-export function AgentDagEditor({ agentId, initial }: AgentDagEditorProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initial?.nodes || [
-    { 
-      id: 'plan', 
-      position: { x: 0, y: 0 }, 
-      data: { label: 'Plan' }, 
-      type: 'input',
-      style: {
-        background: '#1f2937',
-        color: '#fff',
-        border: '1px solid #374151',
-        borderRadius: '8px'
-      }
-    },
-    { 
-      id: 'llm', 
-      position: { x: 220, y: 80 }, 
-      data: { label: 'LLM' },
-      style: {
-        background: '#1f2937',
-        color: '#fff',
-        border: '1px solid #374151',
-        borderRadius: '8px'
-      }
-    },
-    { 
-      id: 'web_search', 
-      position: { x: 440, y: 160 }, 
-      data: { label: 'Web Search' },
-      style: {
-        background: '#1f2937',
-        color: '#fff',
-        border: '1px solid #374151',
-        borderRadius: '8px'
-      }
-    }
-  ]);
-  
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initial?.edges || [
-    { 
-      id: 'e1', 
-      source: 'plan', 
-      target: 'llm', 
-      animated: true,
-      style: { stroke: '#6366f1' }
-    }
-  ]);
+interface Edge {
+  id: string;
+  source: string;
+  target: string;
+}
 
-  const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+interface GraphData {
+  nodes: Node[];
+  edges: Edge[];
+}
 
-  const onConnect = useCallback((params: any) => {
-    setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#6366f1' } }, eds));
-  }, [setEdges]);
-
-  const addNode = (nodeType: string) => {
-    const newNode: Node = {
-      id: `${nodeType}_${Date.now()}`,
-      position: { 
-        x: Math.random() * 400, 
-        y: Math.random() * 300 + 200 
+export function AgentDagEditor() {
+  const [graph, setGraph] = useState<GraphData>({
+    nodes: [
+      {
+        id: "plan",
+        type: "input",
+        position: { x: 100, y: 100 },
+        data: { label: "Plan", tool: "plan" }
       },
-      data: { label: nodeType.replace('_', ' ').toUpperCase() },
-      style: {
-        background: '#1f2937',
-        color: '#fff',
-        border: '1px solid #374151',
-        borderRadius: '8px'
+      {
+        id: "search",
+        type: "default",
+        position: { x: 300, y: 100 },
+        data: { label: "Web Search", tool: "web_search", input: { query: "{{step:plan.response.query}}" } }
+      },
+      {
+        id: "analyze",
+        type: "default",
+        position: { x: 500, y: 100 },
+        data: { label: "Analyze", tool: "llm", input: { prompt: "Analyze findings: {{step:search.response.results[0].snippet}}" } }
       }
+    ],
+    edges: [
+      { id: "e1", source: "plan", target: "search" },
+      { id: "e2", source: "search", target: "analyze" }
+    ]
+  });
+
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
+
+  const addNode = (tool: string) => {
+    const newNode: Node = {
+      id: `node-${Date.now()}`,
+      type: "default",
+      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      data: { label: tool.charAt(0).toUpperCase() + tool.slice(1), tool }
     };
-    setNodes((nds) => [...nds, newNode]);
+    
+    setGraph(prev => ({
+      ...prev,
+      nodes: [...prev.nodes, newNode]
+    }));
   };
 
-  const save = async () => {
-    setSaving(true);
-    setSaveStatus('saving');
-    
-    try {
-      const response = await fetch(`/api/agents/${agentId}/graph`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ nodes, edges })
-      });
+  const updateNodeData = (nodeId: string, updates: Partial<Node['data']>) => {
+    setGraph(prev => ({
+      ...prev,
+      nodes: prev.nodes.map(node => 
+        node.id === nodeId 
+          ? { ...node, data: { ...node.data, ...updates } }
+          : node
+      )
+    }));
+  };
 
-      if (response.ok) {
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
-      } else {
-        setSaveStatus('error');
-      }
-    } catch (error) {
-      console.error('Failed to save graph:', error);
-      setSaveStatus('error');
+  const deleteNode = (nodeId: string) => {
+    setGraph(prev => ({
+      nodes: prev.nodes.filter(n => n.id !== nodeId),
+      edges: prev.edges.filter(e => e.source !== nodeId && e.target !== nodeId)
+    }));
+    setSelectedNode(null);
+  };
+
+  const saveGraph = async () => {
+    setSaving(true);
+    try {
+      // Mock save - in production would save to backend
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Saved graph:', graph);
     } finally {
       setSaving(false);
     }
   };
 
-  const availableTools = [
-    'llm',
-    'web_search', 
-    'operator_exec',
-    'data_analysis',
-    'rag_search'
-  ];
+  const executeGraph = async () => {
+    setRunning(true);
+    try {
+      // Mock execution - in production would trigger backend execution
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Executed graph:', graph);
+    } finally {
+      setRunning(false);
+    }
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            Agent Workflow Designer
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={save}
-              disabled={saving}
-              variant={saveStatus === 'saved' ? 'default' : 'outline'}
-              size="sm"
-            >
-              {saving ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save Graph'}
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Tool Palette */}
-        <div className="mb-4 p-3 border rounded-lg bg-gray-50">
-          <p className="text-sm font-medium mb-2">Add Tools:</p>
-          <div className="flex flex-wrap gap-2">
-            {availableTools.map((tool) => (
-              <Button
-                key={tool}
-                onClick={() => addNode(tool)}
-                variant="outline"
-                size="sm"
-                className="text-xs"
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Visual DAG Editor</CardTitle>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => addNode('web_search')}
               >
-                + {tool.replace('_', ' ')}
+                <Plus className="h-4 w-4 mr-1" />
+                Search
               </Button>
-            ))}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => addNode('llm')}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                LLM
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => addNode('operator_exec')}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Code
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={saveGraph}
+                disabled={saving}
+              >
+                <Save className="h-4 w-4 mr-1" />
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+              <Button 
+                onClick={executeGraph}
+                disabled={running}
+                size="sm"
+              >
+                <Play className="h-4 w-4 mr-1" />
+                {running ? 'Running...' : 'Execute'}
+              </Button>
+            </div>
           </div>
-          <p className="text-xs text-gray-600 mt-2">
-            <strong>Tip:</strong> Use templates in inputs like: <code>{'{{step:nodeId.response.results[0].snippet}}'}</code>
-          </p>
-        </div>
+        </CardHeader>
+      </Card>
 
-        {/* ReactFlow Canvas */}
-        <div className="border rounded-lg overflow-hidden" style={{ height: 500 }}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            fitView
-            className="bg-gray-50"
-          >
-            <Background color="#e5e7eb" gap={16} />
-            <MiniMap 
-              nodeColor="#1f2937"
-              maskColor="rgba(0, 0, 0, 0.1)"
-              className="bg-white border rounded"
-            />
-            <Controls className="bg-white border rounded" />
-          </ReactFlow>
-        </div>
+      <div className="grid grid-cols-3 gap-4">
+        {/* Canvas */}
+        <Card className="col-span-2">
+          <CardContent className="p-4">
+            <div className="relative bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[400px] border-2 border-dashed border-gray-300 dark:border-gray-700">
+              {/* Render nodes */}
+              {graph.nodes.map(node => (
+                <div
+                  key={node.id}
+                  className={`absolute bg-white dark:bg-gray-800 border-2 rounded-lg p-3 cursor-pointer shadow-md transition-all ${
+                    selectedNode?.id === node.id 
+                      ? 'border-blue-500 shadow-lg' 
+                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                  }`}
+                  style={{
+                    left: node.position.x,
+                    top: node.position.y,
+                    minWidth: '120px'
+                  }}
+                  onClick={() => setSelectedNode(node)}
+                >
+                  <div className="text-sm font-medium">{node.data.label}</div>
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    {node.data.tool}
+                  </Badge>
+                </div>
+              ))}
 
-        {/* Instructions */}
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Visual Workflow Designer:</strong> Drag nodes to reposition them. Connect nodes by dragging from one node's edge to another. 
-            The workflow executes in topological order (respecting dependencies). Use template variables to pass data between steps.
-          </p>
-          <div className="mt-2 text-xs text-blue-700">
-            <strong>Template Examples:</strong><br/>
-            • <code>{'{{step:search.response.results[0].title}}'}</code> - Get first search result title<br/>
-            • <code>{'{{step:analyze.response.text}}'}</code> - Get analysis output text
+              {/* Render edges (simplified) */}
+              {graph.edges.map(edge => {
+                const sourceNode = graph.nodes.find(n => n.id === edge.source);
+                const targetNode = graph.nodes.find(n => n.id === edge.target);
+                if (!sourceNode || !targetNode) return null;
+
+                return (
+                  <svg
+                    key={edge.id}
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ zIndex: 1 }}
+                  >
+                    <line
+                      x1={sourceNode.position.x + 60}
+                      y1={sourceNode.position.y + 25}
+                      x2={targetNode.position.x + 60}
+                      y2={targetNode.position.y + 25}
+                      stroke="#3b82f6"
+                      strokeWidth="2"
+                      markerEnd="url(#arrowhead)"
+                    />
+                    <defs>
+                      <marker
+                        id="arrowhead"
+                        markerWidth="10"
+                        markerHeight="7"
+                        refX="9"
+                        refY="3.5"
+                        orient="auto"
+                      >
+                        <polygon
+                          points="0 0, 10 3.5, 0 7"
+                          fill="#3b82f6"
+                        />
+                      </marker>
+                    </defs>
+                  </svg>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Properties Panel */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Node Properties</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {selectedNode ? (
+              <>
+                <div>
+                  <label className="text-sm font-medium">Label</label>
+                  <Input
+                    value={selectedNode.data.label}
+                    onChange={(e) => updateNodeData(selectedNode.id, { label: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Tool</label>
+                  <Input
+                    value={selectedNode.data.tool}
+                    onChange={(e) => updateNodeData(selectedNode.id, { tool: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Input (JSON)</label>
+                  <Textarea
+                    value={JSON.stringify(selectedNode.data.input || {}, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        const input = JSON.parse(e.target.value);
+                        updateNodeData(selectedNode.id, { input });
+                      } catch (err) {
+                        // Invalid JSON, don't update
+                      }
+                    }}
+                    rows={4}
+                    className="mt-1 font-mono text-xs"
+                  />
+                </div>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteNode(selectedNode.id)}
+                  className="w-full"
+                >
+                  Delete Node
+                </Button>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 text-center py-8">
+                Select a node to edit its properties
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Template Variables Help */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="text-xs text-gray-500">
+            <strong>Template Variables:</strong> Use <code>{'{{step:nodeId.response.field}}'}</code> to reference previous step outputs.
+            Example: <code>{'{{step:search.response.results[0].snippet}}'}</code>
           </div>
-        </div>
-
-        {saveStatus === 'error' && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-            Failed to save workflow. Please try again.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

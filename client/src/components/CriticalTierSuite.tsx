@@ -13,6 +13,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Save, Search, Code, Sparkles, Globe, FileText, Terminal, Zap, Eye, Wrench, HelpCircle } from "lucide-react";
 import Editor from "@monaco-editor/react";
+import { AgentDagEditor } from "@/components/ai-portal/AgentDagEditor";
+import { OperatorNotebook } from "@/components/ai-portal/OperatorNotebook";
 
 interface AgentStep {
   id: string;
@@ -384,6 +386,11 @@ console.log(factorial(5));`);
 
         {/* DeepAgent Panel */}
         <TabsContent value="deepagent" className="h-[calc(100%-4rem)]">
+          <AgentDagEditor />
+        </TabsContent>
+
+        {/* Original DeepAgent (preserved as fallback) */}
+        <TabsContent value="deepagent-old" className="h-[calc(100%-4rem)]">
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -565,6 +572,13 @@ console.log(factorial(5));`);
 
         {/* CodeLLM Panel */}
         <TabsContent value="codellm" className="h-[calc(100%-4rem)]">
+          <div className="space-y-4 h-full">
+            <OperatorNotebook />
+          </div>
+        </TabsContent>
+
+        {/* Original CodeLLM (preserved as fallback) */}
+        <TabsContent value="codellm-old" className="h-[calc(100%-4rem)]">
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
