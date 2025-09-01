@@ -101,7 +101,7 @@ export function AIPortal() {
   const [model, setModel] = useState('gpt-4o');
   
   // Tab state
-  const [activeTab, setActiveTab] = useState('critical-tier');
+  const [activeTab, setActiveTab] = useState('chat');
   
   // Project and chat management
   const [projects, setProjects] = useState<Project[]>([]);
@@ -404,11 +404,7 @@ export function AIPortal() {
         <title>AI Portal - Advanta AI</title>
       </Helmet>
 
-      {activeTab === 'critical-tier' ? (
-        <CriticalTierSuite />
-      ) : (
-        <MainLayout />
-      )}
+      <MainLayout activeTab={activeTab} setActiveTab={setActiveTab} />
 
     </div>
   );
