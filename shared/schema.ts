@@ -70,7 +70,117 @@ export const quotes = pgTable("quotes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// AI Portal Usage Tracking
+export const aiUsage = pgTable("ai_usage", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  model: varchar("model").notNull(),
+  inputTokens: integer("input_tokens").default(0),
+  outputTokens: integer("output_tokens").default(0),
+  totalTokens: integer("total_tokens").default(0),
+  operationType: varchar("operation_type").notNull(), // 'chat', 'code', 'tts', 'humanize'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Portal Projects
+export const aiProjects = pgTable("ai_projects", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  defaultModel: varchar("default_model").default("gpt-4o"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Portal Chats
+export const aiChats = pgTable("ai_chats", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => aiProjects.id),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: varchar("title"),
+  model: varchar("model").default("gpt-4o"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Portal Messages
+export const aiMessages = pgTable("ai_messages", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").references(() => aiChats.id).notNull(),
+  role: varchar("role").notNull(), // 'user', 'assistant', 'system'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Portal Datasets
+export const aiDatasets = pgTable("ai_datasets", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => aiProjects.id).notNull(),
+  name: varchar("name").notNull(),
+  type: varchar("type").notNull(), // 'csv', 'xlsx', 'json'
+  preview: jsonb("preview"), // Sample rows and columns
+  fullData: jsonb("full_data"), // Complete dataset
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Portal Artifacts (generated content)
+export const aiArtifacts = pgTable("ai_artifacts", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => aiProjects.id).notNull(),
+  name: varchar("name").notNull(),
+  type: varchar("type").notNull(), // 'chart', 'report', 'code', 'document'
+  data: jsonb("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Audit Logs
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  action: varchar("action").notNull(),
+  targetType: varchar("target_type"),
+  targetId: varchar("target_id"),
+  metadata: jsonb("metadata"),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertQuoteSchema = createInsertSchema(quotes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Insert schemas for AI Portal tables
+export const insertAiUsageSchema = createInsertSchema(aiUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiProjectSchema = createInsertSchema(aiProjects).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiChatSchema = createInsertSchema(aiChats).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiDatasetSchema = createInsertSchema(aiDatasets).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiArtifactSchema = createInsertSchema(aiArtifacts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   id: true,
   createdAt: true,
 });

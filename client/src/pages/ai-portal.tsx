@@ -21,8 +21,13 @@ import {
   Mic,
   FileText,
   Zap,
-  Settings
+  Settings,
+  Database,
+  Wand2
 } from 'lucide-react';
+import { ModelSelector } from '@/components/ai-portal/ModelSelector';
+import { HumanizePanel } from '@/components/ai-portal/HumanizePanel';
+import { DataPanel } from '@/components/ai-portal/DataPanel';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -87,7 +92,7 @@ export default function AIPortal() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
   // Active tab
-  const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'search' | 'tts' | 'projects'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'search' | 'tts' | 'humanize' | 'data' | 'projects'>('chat');
   
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -328,6 +333,8 @@ export default function AIPortal() {
               { id: 'chat', label: 'Chat', icon: MessageSquare },
               { id: 'code', label: 'Code Runner', icon: Terminal },
               { id: 'search', label: 'Search', icon: Search },
+              { id: 'humanize', label: 'Humanize', icon: Wand2 },
+              { id: 'data', label: 'Data Analysis', icon: Database },
               { id: 'tts', label: 'Text-to-Speech', icon: Volume2 },
               { id: 'projects', label: 'Projects', icon: FileText }
             ].map(({ id, label, icon: Icon }) => (
@@ -347,31 +354,11 @@ export default function AIPortal() {
             {/* Sidebar */}
             <div className="lg:col-span-3 space-y-4">
               {/* Model Settings */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Settings className="w-5 h-5" />
-                    Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm text-zinc-400">Model</label>
-                      <select
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        className="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2"
-                      >
-                        <option value="gpt-4o">GPT-4o</option>
-                        <option value="gpt-4o-mini">GPT-4o Mini</option>
-                        <option value="gpt-4">GPT-4</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                      </select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ModelSelector 
+                selectedModel={model}
+                onModelChange={setModel}
+                showAdvanced={true}
+              />
 
               {/* Quick Actions */}
               <Card>
@@ -544,6 +531,14 @@ export default function AIPortal() {
                     )}
                   </CardContent>
                 </Card>
+              )}
+
+              {activeTab === 'humanize' && (
+                <HumanizePanel model={model} />
+              )}
+
+              {activeTab === 'data' && (
+                <DataPanel projectId={currentProject || undefined} />
               )}
 
               {activeTab === 'tts' && (

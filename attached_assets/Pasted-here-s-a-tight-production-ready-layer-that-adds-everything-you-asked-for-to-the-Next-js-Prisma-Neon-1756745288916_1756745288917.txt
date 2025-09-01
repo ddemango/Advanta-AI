@@ -1,0 +1,1208 @@
+here’s a tight, production-ready layer that adds everything you asked for to the Next.js/Prisma/Neon/pg-boss scaffold we built.
+
+Below are copy-paste files and schema patches. They’re intentionally minimal but complete, so you can run immediately and extend.
+
+0) Prisma schema patch (plans, usage, tasks, connectors, instructions, datasets, audit)
+
+prisma/schema.prisma — add/merge these models & fields (then run pnpm prisma generate && pnpm prisma migrate dev):
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  image            String?
+  supabaseId       String?   @unique
+  createdAt        DateTime  @default(now())
+
+  // NEW
+  plan             String    @default("free") // "free" | "pro" | "enterprise"
+  defaultModel     String?   // e.g. "gpt-4o-mini"
+  dailyTokenLimit  Int?      // null = unlimited
+  retentionDays    Int?      // null = no auto-delete
+
+  projects         Project[]
+  chats            Chat[]
+  usages           Usage[]
+  connectors       Connector[]
+  instructionSets  InstructionTemplate[]
+  tasks            Task[]
+  auditLogs        AuditLog[]
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  ownerId       String
+  owner         User      @relation(fields:[ownerId], references:[id])
+  name          String
+  description   String?
+  createdAt     DateTime  @default(now())
+
+  // NEW
+  defaultModel  String?
+
+  artifacts     Artifact[]
+  chats         Chat[]
+  datasets      Dataset[]
+  tasks         Task[]
+}
+
+model Chat {
+  id         String    @id @default(cuid())
+  projectId  String?
+  project    Project?  @relation(fields:[projectId], references:[id])
+  userId     String
+  user       User      @relation(fields:[userId], references:[id])
+  title      String?
+  createdAt  DateTime  @default(now())
+  messages   Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields:[chatId], references:[id])
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Artifact {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields:[projectId], references:[id])
+  kind       String    // html | image | mermaid | file | table | report | chart
+  name       String
+  data       Json
+  createdAt  DateTime  @default(now())
+}
+
+model Usage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields:[userId], references:[id])
+  model     String
+  date      DateTime @default(now())
+  inTokens  Int      @default(0)
+  outTokens Int      @default(0)
+  total     Int      @default(0)
+}
+
+model InstructionTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields:[userId], references:[id])
+  name      String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Connector {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields:[userId], references:[id])
+  provider  String   // "slack" | "dropbox" | "github" | ...
+  tokenEnc  String   // AES-GCM encrypted blob
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields:[userId], references:[id])
+  projectId  String?
+  project    Project? @relation(fields:[projectId], references:[id])
+  name       String
+  type       String   // "deep_research" | "github_pr" | "ingest_doc" | "custom"
+  cron       String   // "*/15 * * * *"
+  payload    Json
+  isActive   Boolean  @default(true)
+  lastRunAt  DateTime?
+  nextRunAt  DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Dataset {
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields:[projectId], references:[id])
+  name       String
+  kind       String   // "csv" | "xlsx"
+  preview    Json     // { rows: [...], columns: [...] } small sample
+  createdAt  DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields:[userId], references:[id])
+  action     String   // e.g. "CHAT_COMPLETION", "INGEST_DOC"
+  targetType String?
+  targetId   String?
+  meta       Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+}
+
+1) Core libs (encryption, audit, models, quota)
+
+apps/web/lib/crypto.ts
+
+import crypto from "crypto";
+const KEY = crypto.createHash("sha256").update(process.env.NODE_SECRET || "dev").digest();
+
+export function encryptJSON(obj: any): string {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", KEY, iv);
+  const enc = Buffer.concat([cipher.update(JSON.stringify(obj), "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return Buffer.concat([iv, tag, enc]).toString("base64");
+}
+
+export function decryptJSON(b64: string): any {
+  const buf = Buffer.from(b64, "base64");
+  const iv = buf.subarray(0, 12);
+  const tag = buf.subarray(12, 28);
+  const data = buf.subarray(28);
+  const decipher = crypto.createDecipheriv("aes-256-gcm", KEY, iv);
+  decipher.setAuthTag(tag);
+  const dec = Buffer.concat([decipher.update(data), decipher.final()]).toString("utf8");
+  return JSON.parse(dec);
+}
+
+
+apps/web/lib/audit.ts
+
+import { prisma } from "./db";
+
+export async function logAudit(params: {
+  userId?: string, action: string, targetType?: string, targetId?: string, meta?: any, ip?: string
+}) {
+  try {
+    await prisma.auditLog.create({ data: { ...params } as any });
+  } catch {}
+}
+
+
+apps/web/lib/models.ts (model catalog + routing)
+
+export type ProviderModel = { key: string; label: string; provider: "openai"|"replicate"|"anthropic"|"google"; kind: "chat"|"image"|"tts" };
+export const MODEL_CATALOG: ProviderModel[] = [
+  { key:"gpt-4o-mini", label:"OpenAI GPT-4o mini", provider:"openai", kind:"chat" },
+  { key:"gpt-4o", label:"OpenAI GPT-4o", provider:"openai", kind:"chat" },
+  { key:"gpt-image-1", label:"OpenAI Image", provider:"openai", kind:"image" },
+  // add more mappings if you wire more providers
+];
+
+export function listChatModels() { return MODEL_CATALOG.filter(m=>m.kind==="chat"); }
+export function getModel(key: string) { return MODEL_CATALOG.find(m=>m.key===key); }
+
+
+apps/web/lib/quota.ts
+
+import { prisma } from "./db";
+import { encode } from "gpt-tokenizer";
+
+export async function recordUsage(userId: string, model: string, prompt: string, completion: string) {
+  const inTokens = encode(prompt).length;
+  const outTokens = encode(completion).length;
+  const total = inTokens + outTokens;
+  await prisma.usage.create({ data: { userId, model, inTokens, outTokens, total }});
+  const user = await prisma.user.findUnique({ where: { id: userId }});
+  if (user?.dailyTokenLimit) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const used = await prisma.usage.aggregate({
+      where: { userId, date: { gte: today } },
+      _sum: { total: true }
+    });
+    if ((used._sum.total ?? 0) > user.dailyTokenLimit) {
+      throw new Error("Daily token limit exceeded for your plan.");
+    }
+  }
+}
+
+2) Model selection (API + UI + chat route update)
+
+API — apps/web/app/api/models/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { listChatModels } from "@/lib/models";
+
+export async function GET() {
+  return NextResponse.json({ ok:true, models: listChatModels() });
+}
+
+export async function PUT(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { defaultModel, projectId } = await req.json();
+  if (projectId) {
+    const p = await prisma.project.update({ where: { id: projectId }, data: { defaultModel }});
+    return NextResponse.json({ ok:true, project: p });
+  } else {
+    const u = await prisma.user.update({ where: { id: user.sub }, data: { defaultModel }});
+    return NextResponse.json({ ok:true, user: u });
+  }
+}
+
+
+UI — apps/web/components/ModelSelector.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function ModelSelector({ projectId }: { projectId?: string }) {
+  const [models, setModels] = useState<{key:string,label:string}[]>([]);
+  const [sel, setSel] = useState("gpt-4o-mini");
+
+  useEffect(()=>{ fetch("/api/models").then(r=>r.json()).then(d=>setModels(d.models)); }, []);
+  async function save() {
+    const token = await getAccessToken();
+    await fetch("/api/models", {
+      method:"PUT",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ defaultModel: sel, projectId })
+    });
+    alert("Saved model preference");
+  }
+  return (
+    <div className="flex gap-2 items-center">
+      <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1"
+              value={sel} onChange={e=>setSel(e.target.value)}>
+        {models.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
+      </select>
+      <button className="px-2 py-1 rounded border border-zinc-700" onClick={save}>Set Default</button>
+    </div>
+  );
+}
+
+
+Use it in your project header:
+
+// apps/web/components/ProjectHeader.tsx (add near edit buttons)
+import ModelSelector from "./ModelSelector";
+// ...
+<ModelSelector projectId={projectId} />
+
+
+Update Chat route to honor default model + humanization (below)
+
+3) Tone presets / humanization
+
+API — apps/web/app/api/humanize/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+import { verifySupabaseJWT } from "@/lib/auth";
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+const TONES: Record<string,string> = {
+  professional: "Rewrite to be concise, professional, and neutral.",
+  humorous: "Rewrite with light, clever humor—keep it tasteful.",
+  caring: "Rewrite to be warm, supportive, and empathetic.",
+  bold: "Rewrite to be punchy, confident, and action-oriented."
+};
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { text, tone = "professional", model = "gpt-4o-mini" } = await req.json();
+  const sys = `You are a rewriting engine. ${TONES[tone] || TONES.professional}`;
+  const r = await client.chat.completions.create({ model, messages:[
+    { role:"system", content: sys },
+    { role:"user", content: text }
+  ], temperature: 0.3, max_tokens: 800 });
+  return NextResponse.json({ ok:true, out: r.choices[0]?.message?.content ?? "" });
+}
+
+
+UI — apps/web/components/HumanizePanel.tsx
+
+"use client";
+import { useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function HumanizePanel() {
+  const [text, setText] = useState("");
+  const [out, setOut] = useState("");
+  const [tone, setTone] = useState("professional");
+  async function run() {
+    const token = await getAccessToken();
+    const r = await fetch("/api/humanize", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ text, tone })
+    });
+    const d = await r.json();
+    setOut(d.out);
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Humanize</div>
+      <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={tone} onChange={e=>setTone(e.target.value)}>
+        <option value="professional">Professional</option>
+        <option value="humorous">Humorous</option>
+        <option value="caring">Caring</option>
+        <option value="bold">Bold</option>
+      </select>
+      <textarea className="w-full bg-zinc-900 border border-zinc-800 rounded p-2" rows={4} value={text} onChange={e=>setText(e.target.value)} />
+      <button className="px-3 py-2 rounded bg-blue-600" onClick={run}>Rewrite</button>
+      <textarea className="w-full bg-zinc-900 border border-zinc-800 rounded p-2" rows={4} value={out} readOnly />
+    </div>
+  );
+}
+
+4) CSV/Excel ingestion + chart render
+
+Install: pnpm add xlsx chart.js
+
+API — apps/web/app/api/data/ingest/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import * as XLSX from "xlsx";
+
+export const runtime = "nodejs";
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const fd = await req.formData();
+  const projectId = String(fd.get("projectId"));
+  const file = fd.get("file") as File;
+  const buf = Buffer.from(await file.arrayBuffer());
+  const wb = XLSX.read(buf, { type:"buffer" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const json = XLSX.utils.sheet_to_json(ws, { defval: null });
+  const columns = Object.keys(json[0] ?? {});
+  const preview = { columns, rows: json.slice(0, 50) };
+
+  const ds = await prisma.dataset.create({ data: {
+    projectId, name: file.name, kind: file.name.endsWith(".csv")?"csv":"xlsx", preview
+  }});
+  await prisma.artifact.create({ data: {
+    projectId, kind:"table", name:`Dataset ${file.name}`, data: preview as any
+  }});
+  return NextResponse.json({ ok:true, dataset: ds });
+}
+
+
+UI — apps/web/components/DataPanel.tsx
+
+"use client";
+import { useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function DataPanel({ projectId }: { projectId: string }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [rows, setRows] = useState<any[]>([]);
+  async function upload() {
+    if (!file) return;
+    const token = await getAccessToken();
+    const fd = new FormData();
+    fd.set("projectId", projectId);
+    fd.set("file", file);
+    const r = await fetch("/api/data/ingest", { method:"POST", headers:{ Authorization:`Bearer ${token}` }, body: fd });
+    const d = await r.json();
+    setColumns(d.dataset.preview.columns);
+    setRows(d.dataset.preview.rows);
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="font-semibold">Data (CSV/XLSX)</div>
+      <input type="file" accept=".csv,.xlsx" onChange={e=>setFile(e.target.files?.[0] ?? null)} />
+      <button className="px-3 py-2 rounded bg-blue-600" onClick={upload}>Upload</button>
+      {!!rows.length && (
+        <div className="overflow-auto">
+          <table className="min-w-full text-sm">
+            <thead><tr>{columns.map(c=><th key={c} className="text-left pr-4">{c}</th>)}</tr></thead>
+            <tbody>{rows.slice(0,15).map((r,i)=><tr key={i}>{columns.map(c=><td key={c} className="pr-4">{String(r[c])}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+Chart render — apps/web/components/ChartPanel.tsx
+
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, LineController, LineElement, PointElement } from "chart.js";
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, LineController, LineElement, PointElement);
+
+export default function ChartPanel() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [labels, setLabels] = useState<string>("A,B,C,D");
+  const [values, setValues] = useState<string>("4,6,2,7");
+  useEffect(() => {
+    const c = canvasRef.current; if (!c) return;
+    const existing = (c as any)._chart as Chart | undefined; existing?.destroy();
+    const chart = new Chart(c, {
+      type: "bar",
+      data: { labels: labels.split(",").map(s=>s.trim()), datasets: [{ label: "Series", data: values.split(",").map(n=>Number(n.trim())) }] },
+      options: { responsive:true, maintainAspectRatio:false }
+    });
+    (c as any)._chart = chart;
+    return () => chart.destroy();
+  }, [labels, values]);
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Chart</div>
+      <div className="flex gap-2">
+        <input className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={labels} onChange={e=>setLabels(e.target.value)} />
+        <input className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={values} onChange={e=>setValues(e.target.value)} />
+      </div>
+      <div className="h-64"><canvas ref={canvasRef} /></div>
+    </div>
+  );
+}
+
+5) Rich doc uploads (PPTX & Images to RAG)
+
+Install: pnpm add jszip xml2js (PPTX text extract)
+
+API — apps/web/app/api/docs/ingest/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import JSZip from "jszip";
+import { parseStringPromise } from "xml2js";
+import OpenAI from "openai";
+import { upsertDocs } from "@/lib/rag";
+import { prisma } from "@/lib/db";
+
+export const runtime = "nodejs";
+
+async function pptxToText(buf: Buffer): Promise<string> {
+  const zip = await JSZip.loadAsync(buf);
+  const slides = Object.keys(zip.files).filter(k => k.startsWith("ppt/slides/slide") && k.endsWith(".xml"));
+  let out = "";
+  for (const s of slides) {
+    const xml = await zip.files[s].async("string");
+    const parsed = await parseStringPromise(xml);
+    const texts: string[] = [];
+    (parsed['p:sld']?.['p:cSld']?.[0]?.['p:spTree']?.[0]?.['p:sp'] || []).forEach((sp: any) => {
+      const runs = sp['p:txBody']?.[0]?.['a:p'] || [];
+      runs.forEach((p: any) => (p['a:r'] || []).forEach((r: any) => { const t = r['a:t']?.[0]; if (t) texts.push(t); }));
+    });
+    out += texts.join(" ") + "\n\n";
+  }
+  return out.trim();
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const fd = await req.formData();
+  const projectId = String(fd.get("projectId"));
+  const file = fd.get("file") as File;
+  const buf = Buffer.from(await file.arrayBuffer());
+
+  let text = "";
+  if (file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation") {
+    text = await pptxToText(buf);
+  } else if (file.type.startsWith("image/")) {
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+    const res = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role:"system", content:"Describe the image content in detail for knowledge retrieval." },
+        { role:"user", content:[{ type:"input_text", text:"Please extract key facts." }, { type:"input_image", image_url:"data:"+file.type+";base64,"+buf.toString("base64") }] as any }
+      ],
+      temperature:0.2, max_tokens:400
+    } as any);
+    text = res.choices[0]?.message?.content ?? "";
+  } else {
+    return NextResponse.json({ ok:false, error:"unsupported type" }, { status:400 });
+  }
+
+  const chunks = text.match(/[\s\S]{1,1500}/g)?.map((t,i)=>({ id:`${projectId}:${Date.now()}:${i}`, text:t })) ?? [];
+  await upsertDocs(chunks);
+
+  await prisma.artifact.create({ data: { projectId, kind:"doc", name:file.name, data:{ bytes: buf.length, chunks: chunks.length } as any }});
+  return NextResponse.json({ ok:true, chunks: chunks.length });
+}
+
+
+UI: just reuse the DataPanel pattern; change accept to .pptx,image/* and post to /api/docs/ingest.
+
+6) Task scheduler CRUD + worker schedule
+
+API — apps/web/app/api/tasks/route.ts (GET, POST)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getBoss } from "@/lib/queue";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const url = new URL(req.url);
+  const projectId = url.searchParams.get("projectId") || undefined;
+  const tasks = await prisma.task.findMany({ where: { userId: user.sub, ...(projectId?{projectId}:{}) }, orderBy:{createdAt:"desc"} });
+  return NextResponse.json({ ok:true, tasks });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name, type, cron, payload, projectId } = await req.json();
+  const t = await prisma.task.create({ data: { userId:user.sub, name, type, cron, payload, projectId }});
+  // schedule in pg-boss
+  const boss = await getBoss();
+  await boss.schedule(`task:${t.id}`, cron, { type, payload, userId: user.sub, projectId });
+  return NextResponse.json({ ok:true, task: t });
+}
+
+
+API — apps/web/app/api/tasks/[id]/route.ts (PUT toggle/cron, DELETE)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getBoss } from "@/lib/queue";
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { cron, isActive } = await req.json();
+  const boss = await getBoss();
+  const t = await prisma.task.update({ where:{ id: params.id }, data:{ cron, isActive }});
+  await boss.unschedule(`task:${t.id}`).catch(()=>{});
+  if (t.isActive) await boss.schedule(`task:${t.id}`, t.cron, { type: t.type, payload: t.payload, userId: t.userId, projectId: t.projectId });
+  return NextResponse.json({ ok:true, task: t });
+}
+
+export async function DELETE(_: NextRequest, { params }: { params: { id: string }}) {
+  const boss = await getBoss();
+  await boss.unschedule(`task:${params.id}`).catch(()=>{});
+  await prisma.task.delete({ where:{ id: params.id }});
+  return NextResponse.json({ ok:true });
+}
+
+
+UI — apps/web/components/TasksPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function TasksPanel({ projectId }: { projectId?: string }) {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [form, setForm] = useState({ name:"My Task", type:"deep_research", cron:"0 * * * *", payload:"{\"query\":\"Acme competitor scan\"}" });
+
+  async function load() {
+    const token = await getAccessToken();
+    const r = await fetch(`/api/tasks${projectId?`?projectId=${projectId}`:""}`, { headers:{ Authorization:`Bearer ${token}` }});
+    const d = await r.json(); setTasks(d.tasks);
+  }
+  useEffect(()=>{ load(); }, [projectId]);
+
+  async function create() {
+    const token = await getAccessToken();
+    await fetch("/api/tasks", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ ...form, payload: JSON.parse(form.payload), projectId })
+    });
+    load();
+  }
+  async function toggle(id: string, isActive: boolean) {
+    const token = await getAccessToken();
+    await fetch(`/api/tasks/${id}`, { method:"PUT", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` }, body: JSON.stringify({ isActive: !isActive })});
+    load();
+  }
+  async function remove(id: string) {
+    const token = await getAccessToken();
+    await fetch(`/api/tasks/${id}`, { method:"DELETE", headers:{ Authorization:`Bearer ${token}` }});
+    load();
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="font-semibold">Tasks</div>
+      <div className="grid grid-cols-4 gap-2">
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} />
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={form.type} onChange={e=>setForm({...form, type:e.target.value})} />
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={form.cron} onChange={e=>setForm({...form, cron:e.target.value})} />
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={form.payload} onChange={e=>setForm({...form, payload:e.target.value})} />
+      </div>
+      <button className="px-3 py-2 rounded bg-blue-600" onClick={create}>Create Task</button>
+
+      <div className="divide-y divide-zinc-800">
+        {tasks.map(t => (
+          <div key={t.id} className="py-2 flex items-center justify-between">
+            <div>
+              <div className="font-medium">{t.name}</div>
+              <div className="text-xs text-zinc-400">{t.type} • {t.cron} • active: {String(t.isActive)}</div>
+            </div>
+            <div className="flex gap-2">
+              <button className="px-2 py-1 rounded border border-zinc-700" onClick={()=>toggle(t.id, t.isActive)}>{t.isActive?"Pause":"Resume"}</button>
+              <button className="px-2 py-1 rounded bg-red-600" onClick={()=>remove(t.id)}>Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+7) Custom instructions templates (CRUD)
+
+API — apps/web/app/api/instructions/route.ts (GET, POST)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const sets = await prisma.instructionTemplate.findMany({ where:{ userId: user.sub }, orderBy:{ createdAt:"desc" }});
+  return NextResponse.json({ ok:true, sets });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name, content } = await req.json();
+  const s = await prisma.instructionTemplate.create({ data:{ userId: user.sub, name, content }});
+  return NextResponse.json({ ok:true, set: s });
+}
+
+
+API — apps/web/app/api/instructions/[id]/route.ts (PUT, DELETE)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name, content } = await req.json();
+  const s = await prisma.instructionTemplate.update({ where:{ id: params.id }, data:{ name, content }});
+  return NextResponse.json({ ok:true, set:s });
+}
+export async function DELETE(req: NextRequest, { params }: { params: { id: string }}) {
+  await prisma.instructionTemplate.delete({ where:{ id: params.id }});
+  return NextResponse.json({ ok:true });
+}
+
+
+UI — apps/web/components/InstructionsPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function InstructionsPanel() {
+  const [items, setItems] = useState<any[]>([]);
+  const [form, setForm] = useState({ name:"Default", content:"You are helpful and concise." });
+
+  async function load() {
+    const token = await getAccessToken();
+    const r = await fetch("/api/instructions", { headers:{ Authorization:`Bearer ${token}` }});
+    const d = await r.json(); setItems(d.sets);
+  }
+  useEffect(()=>{ load(); }, []);
+
+  async function create() {
+    const token = await getAccessToken();
+    await fetch("/api/instructions", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` }, body: JSON.stringify(form) });
+    setForm({ name:"", content:"" }); load();
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Custom Instructions</div>
+      <input className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} placeholder="Name" />
+      <textarea className="w-full bg-zinc-900 border border-zinc-800 rounded p-2" rows={4} value={form.content} onChange={e=>setForm({...form, content:e.target.value})} placeholder="System prompt..." />
+      <button className="px-3 py-2 rounded bg-blue-600" onClick={create}>Save</button>
+      <div className="divide-y divide-zinc-800">
+        {items.map(it=>(
+          <div key={it.id} className="py-2">
+            <div className="font-medium">{it.name}</div>
+            <div className="text-sm text-zinc-400 whitespace-pre-wrap">{it.content}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+8) Integrations (Slack & Dropbox minimal)
+
+API — apps/web/app/api/connectors/route.ts (GET list, POST save token)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { encryptJSON, decryptJSON } from "@/lib/crypto";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const list = await prisma.connector.findMany({ where:{ userId: user.sub }, orderBy:{ createdAt:"desc" }});
+  return NextResponse.json({ ok:true, connectors: list.map(c=>({ ...c, tokenEnc: undefined })) });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { provider, accessToken, meta } = await req.json();
+  const c = await prisma.connector.create({ data:{
+    userId: user.sub, provider, tokenEnc: encryptJSON({ accessToken }), meta
+  }});
+  return NextResponse.json({ ok:true, connectorId: c.id });
+}
+
+
+Slack post — apps/web/app/api/connectors/slack/post/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { decryptJSON } from "@/lib/crypto";
+
+export async function POST(req: NextRequest) {
+  const { connectorId, channel, text } = await req.json();
+  const c = await prisma.connector.findUnique({ where:{ id: connectorId }});
+  if (!c || c.provider!=="slack") return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  const { accessToken } = decryptJSON(c.tokenEnc);
+  const r = await fetch("https://slack.com/api/chat.postMessage", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${accessToken}` },
+    body: JSON.stringify({ channel, text })
+  });
+  const d = await r.json();
+  return NextResponse.json({ ok: d.ok });
+}
+
+
+Dropbox list — apps/web/app/api/connectors/dropbox/list/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { decryptJSON } from "@/lib/crypto";
+
+export async function POST(req: NextRequest) {
+  const { connectorId, path = "" } = await req.json();
+  const c = await prisma.connector.findUnique({ where:{ id: connectorId }});
+  if (!c || c.provider!=="dropbox") return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  const { accessToken } = decryptJSON(c.tokenEnc);
+  const r = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${accessToken}` },
+    body: JSON.stringify({ path })
+  });
+  const d = await r.json();
+  return NextResponse.json({ ok:true, entries: d.entries });
+}
+
+
+UI — apps/web/components/IntegrationsPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function IntegrationsPanel() {
+  const [list, setList] = useState<any[]>([]);
+  const [provider, setProvider] = useState("slack");
+  const [token, setToken] = useState("");
+
+  async function load() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/connectors", { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setList(d.connectors);
+  }
+  useEffect(()=>{ load(); }, []);
+
+  async function save() {
+    const t = await getAccessToken();
+    await fetch("/api/connectors", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ provider, accessToken: token }) });
+    setToken(""); load();
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Integrations</div>
+      <div className="flex gap-2">
+        <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={provider} onChange={e=>setProvider(e.target.value)}>
+          <option value="slack">Slack (OAuth token)</option>
+          <option value="dropbox">Dropbox (OAuth token)</option>
+        </select>
+        <input className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={token} onChange={e=>setToken(e.target.value)} placeholder="Paste access token…" />
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={save}>Connect</button>
+      </div>
+      <div className="text-sm text-zinc-400">For demo, we store the token encrypted and call provider APIs.</div>
+      <ul className="text-sm list-disc pl-5">
+        {list.map(c => <li key={c.id}>{c.provider} • {new Date(c.createdAt).toLocaleString()}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+9) Playground area
+
+Page — apps/web/app/playground/page.tsx
+
+import HumanizePanel from "@/components/HumanizePanel";
+import ChartPanel from "@/components/ChartPanel";
+import ModelSelector from "@/components/ModelSelector";
+
+export default function Playground() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-zinc-800 p-4 flex items-center justify-between">
+        <div className="font-semibold">Playground</div>
+        <ModelSelector />
+      </div>
+      <HumanizePanel />
+      <ChartPanel />
+    </div>
+  );
+}
+
+10) Token usage tracking + quota UI
+
+API — apps/web/app/api/usage/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const since = new Date(); since.setDate(since.getDate()-30);
+  const rows = await prisma.usage.findMany({ where:{ userId: user.sub, date:{ gte: since }}, orderBy:{ date:"desc" }});
+  const userRec = await prisma.user.findUnique({ where:{ id: user.sub }, select:{ dailyTokenLimit:true, plan:true }});
+  return NextResponse.json({ ok:true, rows, plan: userRec?.plan, dailyTokenLimit: userRec?.dailyTokenLimit ?? null });
+}
+
+export async function PUT(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { dailyTokenLimit } = await req.json();
+  await prisma.user.update({ where:{ id: user.sub }, data:{ dailyTokenLimit }});
+  return NextResponse.json({ ok:true });
+}
+
+
+UI — apps/web/components/UsagePanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function UsagePanel() {
+  const [rows, setRows] = useState<any[]>([]);
+  const [plan, setPlan] = useState("free");
+  const [limit, setLimit] = useState<number | "">("");
+
+  async function load() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/usage", { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setRows(d.rows); setPlan(d.plan); setLimit(d.dailyTokenLimit ?? "");
+  }
+  useEffect(()=>{ load(); }, []);
+
+  async function saveLimit() {
+    const t = await getAccessToken();
+    await fetch("/api/usage", { method:"PUT", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ dailyTokenLimit: limit===""?null:Number(limit) }) });
+    load();
+  }
+
+  const total30 = rows.reduce((a,r)=>a+r.total,0);
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Usage & Quota</div>
+      <div className="text-sm text-zinc-400">Plan: {plan} • 30-day tokens: {total30.toLocaleString()}</div>
+      <div className="flex gap-2 items-center">
+        <input className="w-40 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" placeholder="Daily token limit" value={limit} onChange={e=>setLimit(e.target.value as any)} />
+        <button className="px-3 py-2 rounded border border-zinc-700" onClick={saveLimit}>Save</button>
+      </div>
+      <div className="max-h-64 overflow-auto text-xs">
+        {rows.map(r=>(
+          <div key={r.id} className="py-1 border-b border-zinc-900">
+            {new Date(r.date).toLocaleString()} — {r.model} — in:{r.inTokens} out:{r.outTokens} total:{r.total}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+Chat route update — record usage & apply model preference + optional instructions
+
+Replace your existing apps/web/app/api/chat/route.ts with:
+
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { recordUsage } from "@/lib/quota";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+export async function POST(req: NextRequest) {
+  const auth = req.headers.get("authorization") || "";
+  const token = auth.replace(/^Bearer\s+/i, "");
+  const user = await verifySupabaseJWT(token).catch(() => null);
+  if (!user) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
+  const { messages, model, chatId, projectId, instructionTemplateId } = await req.json();
+
+  const userRec = await prisma.user.findUnique({ where: { id: user.sub }});
+  const proj = projectId ? await prisma.project.findUnique({ where: { id: projectId }}) : null;
+  const modelKey = model || proj?.defaultModel || userRec?.defaultModel || "gpt-4o-mini";
+
+  let sysInstructions = "";
+  if (instructionTemplateId) {
+    const t = await prisma.instructionTemplate.findUnique({ where:{ id: instructionTemplateId }});
+    sysInstructions = t?.content ?? "";
+  }
+
+  const mm = [
+    ...(sysInstructions ? [{ role:"system", content: sysInstructions }] : []),
+    ...messages
+  ];
+
+  const completion = await openai.chat.completions.create({ model: modelKey, messages: mm, temperature: 0.6, max_tokens: 1200 });
+  const text = completion.choices[0]?.message?.content ?? "";
+
+  const chat = chatId ? await prisma.chat.findUnique({ where: { id: chatId } }) :
+    await prisma.chat.create({ data: { userId: user.sub, projectId, title: messages?.[0]?.content?.slice(0, 48) ?? "Chat" } });
+
+  await prisma.message.createMany({ data: [
+    { chatId: chat!.id, role: "user", content: messages.at(-1)?.content ?? "" },
+    { chatId: chat!.id, role: "assistant", content: text }
+  ]});
+
+  await recordUsage(user.sub, modelKey, messages.map((m:any)=>m.content).join("\n"), text);
+
+  return NextResponse.json({ ok: true, chatId: chat!.id, message: text });
+}
+
+11) Billing / subscriptions (mock)
+
+API — apps/web/app/api/billing/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+const PLANS = [
+  { id:"free", name:"Free", dailyTokenLimit: 10_000 },
+  { id:"pro", name:"Pro", dailyTokenLimit: 250_000 },
+  { id:"enterprise", name:"Enterprise", dailyTokenLimit: null }
+];
+
+export async function GET() {
+  return NextResponse.json({ ok:true, plans: PLANS });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { planId } = await req.json();
+  const plan = PLANS.find(p=>p.id===planId) || PLANS[0];
+  await prisma.user.update({ where:{ id: user.sub }, data:{ plan: plan.id, dailyTokenLimit: plan.dailyTokenLimit }});
+  return NextResponse.json({ ok:true });
+}
+
+
+UI — apps/web/components/BillingPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function BillingPanel() {
+  const [plans, setPlans] = useState<any[]>([]);
+  const [sel, setSel] = useState("free");
+  useEffect(()=>{ fetch("/api/billing").then(r=>r.json()).then(d=>setPlans(d.plans)); }, []);
+  async function choose() {
+    const t = await getAccessToken();
+    await fetch("/api/billing", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ planId: sel }) });
+    alert("Plan updated.");
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Billing (Mock)</div>
+      <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={sel} onChange={e=>setSel(e.target.value)}>
+        {plans.map(p=><option key={p.id} value={p.id}>{p.name} {p.dailyTokenLimit ? `(${p.dailyTokenLimit.toLocaleString()} tokens/day)` : "(Unlimited)"}</option>)}
+      </select>
+      <button className="px-3 py-2 rounded bg-blue-600" onClick={choose}>Select</button>
+    </div>
+  );
+}
+
+12) Compliance / security (headers, retention, audit view)
+
+Global middleware — apps/web/middleware.ts
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.headers.set("Content-Security-Policy",
+    "default-src 'self'; img-src 'self' data: blob: https:; media-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https: http:; frame-ancestors 'none';");
+  return res;
+}
+
+
+Retention worker logic — add a simple job in apps/worker/src/jobs/refreshArtifacts.ts (already exists) or create cleanup.ts:
+
+import { prisma } from "@ai/shared/prisma"; // or import your shared db client
+
+export async function cleanup(job: any) {
+  // delete messages older than retentionDays per user setting
+  const users = await prisma.user.findMany({ where: { retentionDays: { not: null }}, select:{ id:true, retentionDays:true }});
+  for (const u of users) {
+    const cutoff = new Date(Date.now() - (u.retentionDays! * 86400_000));
+    await prisma.message.deleteMany({ where:{ chat: { userId: u.id }, createdAt: { lt: cutoff } }});
+    await prisma.auditLog.create({ data:{ userId: u.id, action:"DATA_RETENTION_PURGE", meta:{ cutoff } as any }});
+  }
+  return { ok: true, users: users.length };
+}
+
+
+Register it in apps/worker/src/index.ts:
+
+import { cleanup } from "./jobs/cleanup";
+await boss.work("cleanup", cleanup);
+
+
+Schedule a daily task via pg-boss admin or by creating a Task with cron 0 3 * * * and type cleanup.
+
+UI — apps/web/components/CompliancePanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function CompliancePanel() {
+  const [days, setDays] = useState<number | "">("");
+  async function load() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/me", { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setDays(d.user.retentionDays ?? "");
+  }
+  useEffect(()=>{ load(); }, []);
+  async function save() {
+    const t = await getAccessToken();
+    await fetch("/api/me", { method:"PUT", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ retentionDays: days===""?null:Number(days) }) });
+    alert("Retention updated.");
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Compliance</div>
+      <div className="text-sm text-zinc-400">Set automatic data deletion (messages) after N days.</div>
+      <input className="w-40 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={days} onChange={e=>setDays(e.target.value as any)} placeholder="Retention days" />
+      <button className="px-3 py-2 rounded border border-zinc-700" onClick={save}>Save</button>
+    </div>
+  );
+}
+
+
+Me API — apps/web/app/api/me/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const user = await prisma.user.findUnique({ where:{ id: u.sub }, select:{ id:true, email:true, plan:true, retentionDays:true, dailyTokenLimit:true, defaultModel:true }});
+  return NextResponse.json({ ok:true, user });
+}
+export async function PUT(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const body = await req.json();
+  const user = await prisma.user.update({ where:{ id: u.sub }, data: body });
+  return NextResponse.json({ ok:true, user });
+}
+
+13) Dashboard wiring snippets
+
+Add panels where you like (settings pages or dashboard):
+
+// apps/web/app/(dashboard)/page.tsx
+import UsagePanel from "@/components/UsagePanel";
+import BillingPanel from "@/components/BillingPanel";
+import IntegrationsPanel from "@/components/IntegrationsPanel";
+import InstructionsPanel from "@/components/InstructionsPanel";
+import CompliancePanel from "@/components/CompliancePanel";
+
+export default function Page() {
+  return (
+    <div className="space-y-6">
+      <UsagePanel />
+      <BillingPanel />
+      <IntegrationsPanel />
+      <InstructionsPanel />
+      <CompliancePanel />
+    </div>
+  );
+}
+
+
+On a project page, add:
+
+// apps/web/app/project/[id]/page.tsx
+import DataPanel from "@/components/DataPanel";
+import TasksPanel from "@/components/TasksPanel";
+import ChartPanel from "@/components/ChartPanel";
+// ...
+< DataPanel projectId={id} />
+< TasksPanel projectId={id} />
+< ChartPanel />
+
+Final notes
+
+Env: add NODE_SECRET for encryption, keep your existing keys (OPENAI_API_KEY, Supabase, Neon).
+
+Migrations: after schema patch, run pnpm prisma generate && pnpm prisma migrate dev.
+
+Packages to add:
+
+pnpm add xlsx chart.js jszip xml2js gpt-tokenizer jwks-rsa jsonwebtoken
+
+
+Worker: ensure pg-boss is running and add the cleanup worker if you enable retention.

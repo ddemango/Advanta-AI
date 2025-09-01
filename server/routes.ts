@@ -8072,6 +8072,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/tts', aiPortalApi.textToSpeech);
   app.get('/api/ai-portal/health', aiPortalApi.health);
 
+  // Enhanced AI Portal endpoints - simplified implementation for now
+  app.get('/api/ai-portal/usage', async (req, res) => {
+    res.json({ ok: true, usage: [] });
+  });
+  
+  app.post('/api/humanize', async (req, res) => {
+    const { text, tone = 'professional', model = 'gpt-4o-mini' } = req.body;
+    
+    const tonePrompts = {
+      professional: 'Rewrite this text to be concise, professional, and business-appropriate while maintaining all key information.',
+      humorous: 'Rewrite this text with light, clever humor while keeping it tasteful and appropriate.',
+      caring: 'Rewrite this text to be warm, supportive, and empathetic while preserving the essential information.',
+      bold: 'Rewrite this text to be punchy, confident, and action-oriented.',
+      technical: 'Rewrite this text to be precise, detailed, and expert-focused with technical accuracy.',
+      casual: 'Rewrite this text to be friendly, conversational, and approachable while keeping it informative.'
+    };
+
+    try {
+      const systemPrompt = tonePrompts[tone as keyof typeof tonePrompts] || tonePrompts.professional;
+      const response = await openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      });
+
+      const output = response.choices[0]?.message?.content || '';
+      res.json({ ok: true, output });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
   // Health check endpoint
   app.get('/healthz', async (req, res) => {
     try {
