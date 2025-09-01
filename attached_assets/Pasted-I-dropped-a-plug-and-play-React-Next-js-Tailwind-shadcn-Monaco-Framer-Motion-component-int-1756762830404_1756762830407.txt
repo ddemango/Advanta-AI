@@ -1,0 +1,148 @@
+I dropped a plug-and-play React (Next.js + Tailwind + shadcn + Monaco + Framer Motion) component into the canvas: it adds four production-ready panels to your AI-portal page:
+
+DeepAgent (planner/runner + composed result)
+
+AppLLM (generate → deploy → publish URL + embed)
+
+CodeLLM (Monaco editor with Suggest/Fix/Explain/Run)
+
+Web Search Connector (Bing/Brave/Serper + artifact save)
+
+How to use
+
+Import it on your portal page:
+
+import CriticalTierSuite from "@/components/CriticalTierSuite"; // or the path you save it at
+
+export default function Portal() {
+  return <CriticalTierSuite />;
+}
+
+
+Wire the backend endpoints (same names used in the UI):
+
+POST /api/agent/plan → { goal, enableMemory, autoRefine } → returns AgentPlan
+
+POST /api/agent/execute → { goal, stepId, title, enableMemory, autoRefine, verbose } → { output }
+
+POST /api/agent/save-artifact → { goal, markdown, tasks }
+
+POST /api/appllm/create → { template, name, target } → { id }
+
+POST /api/appllm/deploy → { id, target } → { url }
+
+POST /api/code/run → { language, code } → { stdout, stderr? }
+
+POST /api/codellm/suggest|fix|explain → { language, code } → { result }
+
+POST /api/codellm/save → { code, language, output }
+
+POST /api/search/web → { provider, query, topK } → { results: [{title,url,snippet?,source?}] }
+
+POST /api/search/save → { provider, query, results }
+
+Add env keys for search connectors:
+
+BING_API_KEY, BRAVE_API_KEY, SERPER_API_KEY
+
+If you want, I can paste in Next.js API route stubs for each endpoint (with safe exec for Node/Python runners, Supabase pgvector memory, and provider proxies) so your team can drop them in and go.
+
+You said:
+yes please
+ChatGPT said:
+Thought for 17s
+Advanta Ai – Critical Tier Suite (deep Agent, App Llm, Code Llm, Web Search)
+· typescript
+"use client";
+
+
+Code:
+${code}`;
+  const resp = await openai.chat.completions.create({ model: "gpt-4o-mini", messages: [{ role: "system", content: sys }, { role: "user", content: user }], temperature: 0.2 });
+  return NextResponse.json({ result: resp.choices?.[0]?.message?.content || code });
+}
+
+
+// app/api/codellm/fix/route.ts
+import { NextResponse } from "next/server";
+import { openai } from "@/lib/openai";
+export async function POST(req: Request) {
+  const { code, language } = await req.json();
+  const sys = "You are a strict linter and bug fixer. Return corrected code only.";
+  const user = `Language: ${language}
+
+
+Fix bugs and lint:
+${code}`;
+  const resp = await openai.chat.completions.create({ model: "gpt-4o-mini", messages: [{ role: "system", content: sys }, { role: "user", content: user }], temperature: 0 });
+  return NextResponse.json({ result: resp.choices?.[0]?.message?.content || code });
+}
+
+
+// app/api/codellm/explain/route.ts
+import { NextResponse } from "next/server";
+import { openai } from "@/lib/openai";
+export async function POST(req: Request) {
+  const { code, language } = await req.json();
+  const sys = "You are a teacher. Explain in clear bullet points.";
+  const user = `Language: ${language}
+
+
+Explain this code:
+${code}`;
+  const resp = await openai.chat.completions.create({ model: "gpt-4o-mini", messages: [{ role: "system", content: sys }, { role: "user", content: user }], temperature: 0.2 });
+  return NextResponse.json({ result: resp.choices?.[0]?.message?.content || "" });
+}
+
+
+// app/api/search/web/route.ts
+import { NextResponse } from "next/server";
+import { searchWeb, type WebProvider } from "@/lib/providers/search";
+export async function POST(req: Request) {
+  const { provider = "bing", query = "", topK = 5 } = await req.json();
+  if (!query) return NextResponse.json({ results: [] });
+  const results = await searchWeb(provider as WebProvider, query, Math.min(Math.max(Number(topK)||5,1),10));
+  return NextResponse.json({ results });
+}
+
+
+// app/api/search/save/route.ts
+import { NextResponse } from "next/server";
+export async function POST(req: Request) {
+  const { provider, query, results } = await req.json();
+  // TODO: persist search artifact for citations & recall
+  const id = `search_${Date.now()}`;
+  return NextResponse.json({ ok: true, id, count: Array.isArray(results) ? results.length : 0, provider, query });
+}
+
+
+
+
+
+All set — I added a full set of Next.js API route stubs + lib helpers to the canvas so you can wire the UI immediately.
+
+What you’ve got now (ready to paste into your repo):
+
+App Router endpoints for:
+
+/api/agent/plan, /api/agent/execute, /api/agent/save-artifact
+
+/api/appllm/create, /api/appllm/deploy
+
+/api/code/run, /api/code/save
+
+/api/codellm/suggest, /api/codellm/fix, /api/codellm/explain
+
+/api/search/web, /api/search/save
+
+lib/openai.ts, lib/env.ts, and lib/providers/search.ts with Bing/Brave/Serper proxies.
+
+Quick setup checklist
+
+Add env vars: OPENAI_API_KEY, and any of BING_API_KEY, BRAVE_API_KEY, SERPER_API_KEY.
+
+Ensure your project pathing matches @/lib/* and app/api/*.
+
+(Optional) Replace the stubbed code/run with a secure runner (Cloudflare Workers/Isolates, Firecracker, Modal, or a jailed container) before enabling for end users.
+
+Connect persistence (Supabase/Neon) in the save-* routes when you’re ready.

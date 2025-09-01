@@ -38,7 +38,8 @@ const mockDb = {
           response: { compiled: [] },
           credits: 20,
           tokensIn: 100,
-          tokensOut: 50
+          tokensOut: 50,
+          error: undefined
         },
         {
           id: 'step-2',
@@ -49,7 +50,8 @@ const mockDb = {
           response: { results: [{ title: 'AI News', snippet: 'Latest developments...' }] },
           credits: 30,
           tokensIn: 200,
-          tokensOut: 150
+          tokensOut: 150,
+          error: undefined
         },
         {
           id: 'step-3',
@@ -60,7 +62,8 @@ const mockDb = {
           response: { text: 'Based on the search results, here are the key insights...' },
           credits: 100,
           tokensIn: 700,
-          tokensOut: 300
+          tokensOut: 300,
+          error: undefined
         }
       ]
     };

@@ -8577,6 +8577,247 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Critical Tier Suite API Endpoints
+  
+  // Agent endpoints
+  app.post('/api/agent/plan', async (req, res) => {
+    try {
+      const { goal, enableMemory, autoRefine } = req.body;
+      
+      // Mock planning - in production this would use the actual planner
+      const steps = [
+        { id: 'step-1', title: 'Research the topic', tool: 'web_search' },
+        { id: 'step-2', title: 'Analyze findings', tool: 'llm' },
+        { id: 'step-3', title: 'Generate summary', tool: 'llm' }
+      ];
+      
+      res.json({ ok: true, steps });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/agent/execute', async (req, res) => {
+    try {
+      const { goal, stepId, title, enableMemory, autoRefine, verbose } = req.body;
+      
+      // Mock execution
+      const mockOutputs = [
+        'Research completed successfully. Found 10 relevant sources.',
+        'Analysis shows strong trends in AI automation adoption.',
+        'Summary generated with key insights and recommendations.'
+      ];
+      
+      const output = mockOutputs[Math.floor(Math.random() * mockOutputs.length)];
+      
+      res.json({ ok: true, output });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/agent/save-artifact', async (req, res) => {
+    try {
+      const { goal, markdown, tasks } = req.body;
+      
+      console.log('Saving agent artifact:', { goal, markdown: markdown?.length, tasks: tasks?.length });
+      
+      res.json({ ok: true, id: `artifact-${Date.now()}` });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // AppLLM endpoints
+  app.post('/api/appllm/create', async (req, res) => {
+    try {
+      const { template, name, target } = req.body;
+      
+      const id = `app-${Date.now()}`;
+      console.log(`Creating ${template} app: ${name} for ${target}`);
+      
+      res.json({ ok: true, id });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/appllm/deploy', async (req, res) => {
+    try {
+      const { id, target } = req.body;
+      
+      const urls = {
+        vercel: `https://${id}.vercel.app`,
+        netlify: `https://${id}.netlify.app`,
+        replit: `https://${id}.replit.app`
+      };
+      
+      const url = urls[target as keyof typeof urls] || `https://${id}.example.com`;
+      
+      res.json({ ok: true, url });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // Code execution endpoints
+  app.post('/api/code/run', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      // Mock code execution - in production use secure sandbox
+      const mockResults = {
+        javascript: { stdout: 'Hello World!\n120', stderr: '', returncode: 0 },
+        python: { stdout: 'Hello, Python!\n[1, 4, 9, 16, 25]', stderr: '', returncode: 0 },
+        typescript: { stdout: 'TypeScript compiled successfully', stderr: '', returncode: 0 }
+      };
+      
+      const result = mockResults[language as keyof typeof mockResults] || 
+        { stdout: `${language} code executed`, stderr: '', returncode: 0 };
+      
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/code/save', async (req, res) => {
+    try {
+      const { code, language, output } = req.body;
+      
+      console.log(`Saving ${language} code snippet:`, code?.length, 'chars');
+      
+      res.json({ ok: true, id: `code-${Date.now()}` });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // CodeLLM endpoints
+  app.post('/api/codellm/suggest', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({ ok: false, error: 'OpenAI API key not configured' });
+      }
+
+      const { openai } = await import('./lib/openai');
+      
+      const sys = "You are a helpful coding assistant. Provide concise suggestions to improve the code.";
+      const user = `Language: ${language}\n\nCode:\n${code}`;
+      
+      const resp = await openai.chat.completions.create({ 
+        // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        model: "gpt-5", 
+        messages: [{ role: "system", content: sys }, { role: "user", content: user }], 
+        temperature: 0.2 
+      });
+      
+      res.json({ result: resp.choices?.[0]?.message?.content || 'No suggestions available' });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/codellm/fix', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({ ok: false, error: 'OpenAI API key not configured' });
+      }
+
+      const { openai } = await import('./lib/openai');
+      
+      const sys = "You are a strict linter and bug fixer. Return corrected code only.";
+      const user = `Language: ${language}\n\nFix bugs and lint:\n${code}`;
+      
+      const resp = await openai.chat.completions.create({ 
+        // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        model: "gpt-5", 
+        messages: [{ role: "system", content: sys }, { role: "user", content: user }], 
+        temperature: 0 
+      });
+      
+      res.json({ result: resp.choices?.[0]?.message?.content || code });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/codellm/explain', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({ ok: false, error: 'OpenAI API key not configured' });
+      }
+
+      const { openai } = await import('./lib/openai');
+      
+      const sys = "You are a teacher. Explain code in clear bullet points.";
+      const user = `Language: ${language}\n\nExplain this code:\n${code}`;
+      
+      const resp = await openai.chat.completions.create({ 
+        // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        model: "gpt-5", 
+        messages: [{ role: "system", content: sys }, { role: "user", content: user }], 
+        temperature: 0.2 
+      });
+      
+      res.json({ result: resp.choices?.[0]?.message?.content || 'No explanation available' });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // Web search endpoints
+  app.post('/api/search/web', async (req, res) => {
+    try {
+      const { provider = 'bing', query = '', topK = 5 } = req.body;
+      
+      if (!query) {
+        return res.json({ results: [] });
+      }
+
+      const { searchWeb } = await import('./lib/providers/search');
+      const results = await searchWeb(provider, query, Math.min(Math.max(Number(topK) || 5, 1), 10));
+      
+      res.json({ results });
+    } catch (error: any) {
+      // Fallback to mock results if API fails
+      const mockResults = [
+        {
+          title: `${req.body.query} - Latest Information`,
+          url: 'https://example.com/search-result',
+          snippet: `This is a mock search result for "${req.body.query}". The actual search API is not configured.`,
+          source: req.body.provider || 'mock'
+        }
+      ];
+      
+      res.json({ results: mockResults });
+    }
+  });
+
+  app.post('/api/search/save', async (req, res) => {
+    try {
+      const { provider, query, results } = req.body;
+      
+      console.log(`Saving search artifact: ${provider} query "${query}" with ${results?.length} results`);
+      
+      res.json({ 
+        ok: true, 
+        id: `search-${Date.now()}`, 
+        count: Array.isArray(results) ? results.length : 0, 
+        provider, 
+        query 
+      });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

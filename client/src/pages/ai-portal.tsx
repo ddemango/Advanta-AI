@@ -43,6 +43,7 @@ import { DataPanel } from '@/components/ai-portal/DataPanel';
 import { OperatorPanel } from '@/components/ai-portal/OperatorPanel';
 import { OperatorTerminal } from '@/components/ai-portal/OperatorTerminal';
 import { PlanGate, PlanBadge } from '@/components/ai-portal/PlanGate';
+import CriticalTierSuite from '@/components/CriticalTierSuite';
 import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
 import { TopNav } from '@/components/ai-portal/TopNav';
 import { LeftRail } from '@/components/ai-portal/LeftRail';

@@ -27,7 +27,7 @@ export function compileGraphToSteps(graph: RFGraph): CompiledStep[] {
 
   // Kahn's algorithm
   const q: string[] = [];
-  for (const [id, d] of indeg.entries()) if (d === 0) q.push(id);
+  for (const [id, d] of Array.from(indeg.entries())) if (d === 0) q.push(id);
 
   const order: string[] = [];
   while (q.length) {
