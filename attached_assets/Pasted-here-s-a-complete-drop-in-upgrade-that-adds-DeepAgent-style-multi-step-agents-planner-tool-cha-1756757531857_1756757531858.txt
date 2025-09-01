@@ -1,0 +1,637 @@
+here’s a complete, drop-in upgrade that adds:
+
+DeepAgent-style multi-step agents (planner → tool chain → logs, with credits)
+
+Native mobile wrapper (Expo app for iOS/Android; Supabase auth; chat; humanize; deep-research)
+
+Credit-based dynamic pricing model (per-model pricing; exact tokenized billing; plan gates)
+
+Everything is wired to the scaffold we’ve already built (Next.js / Prisma / pg-boss / Supabase / Stripe / Operator WS). Paste these files/patches into the same monorepo. After editing schema.prisma, run:
+
+pnpm prisma generate
+pnpm prisma migrate dev
+
+
+Install any new deps:
+
+pnpm add uuid expo-constants expo-linking expo-secure-store @react-navigation/native @react-navigation/native-stack react-native-web axios
+
+
+(Expo deps are for the mobile app; if you don’t build mobile right now, you can skip them.)
+
+0) Prisma schema patch — Agents & Runs
+
+prisma/schema.prisma (merge this into your schema)
+
+model Agent {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  projectId    String?
+  project      Project?    @relation(fields: [projectId], references: [id])
+  teamId       String?
+  name         String
+  description  String?
+  defaultModel String?     // falls back to project/user default
+  graph        Json?       // optional saved DAG {nodes, edges}
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  runs         AgentRun[]
+}
+
+model AgentRun {
+  id          String     @id @default(cuid())
+  agentId     String
+  agent       Agent      @relation(fields: [agentId], references: [id])
+  userId      String
+  projectId   String?
+  status      String     @default("queued") // queued|running|succeeded|failed|cancelled
+  goal        String
+  input       Json?
+  output      Json?
+  tokensIn    Int        @default(0)
+  tokensOut   Int        @default(0)
+  creditsUsed Int        @default(0)
+  error       String?
+  createdAt   DateTime   @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  steps       AgentStep[]
+}
+
+model AgentStep {
+  id         String    @id @default(cuid())
+  runId      String
+  run        AgentRun  @relation(fields: [runId], references: [id])
+  index      Int
+  tool       String    // "plan" | "llm" | "web_search" | "operator_exec" | "rag_search" | ...
+  status     String    @default("queued") // queued|running|done|error
+  request    Json?
+  response   Json?
+  tokensIn   Int       @default(0)
+  tokensOut  Int       @default(0)
+  credits    Int       @default(0)
+  error      String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  @@index([runId, index])
+}
+
+1) Pricing — exact, credit-based
+
+apps/web/lib/pricing.ts
+
+// price per 1M tokens in CREDITS (choose any base you like; 1 credit ~ 1 small token by default)
+export type PriceRow = { in: number; out: number };
+export const PRICES: Record<string, PriceRow> = {
+  // OpenAI
+  "gpt-4o":       { in: 500_000, out: 1_500_000 },
+  "gpt-4o-mini":  { in: 5_000,   out: 15_000 },
+  // Anthropic (approx numbers; adjust as needed)
+  "claude-3-5-sonnet-latest": { in: 300_000, out: 1_000_000 },
+  // Google
+  "gemini-1.5-pro":           { in: 350_000, out: 1_050_000 },
+};
+
+export function priceFor(model: string): PriceRow {
+  return PRICES[model] || PRICES["gpt-4o-mini"];
+}
+
+export function estimateCredits(model: string, inTok: number, outTok: number) {
+  const p = priceFor(model);
+  // linear prorate
+  return Math.ceil((inTok * p.in + outTok * p.out) / 1_000_000);
+}
+
+
+Wire it into chat billing (you already charge credits; replace your rough estimate with exact pricing):
+
+// apps/web/app/api/chat/route.ts
+import { encode } from "gpt-tokenizer";
+import { estimateCredits } from "@/lib/pricing";
+import { chargeCredits } from "@/lib/credits";
+// ...
+const promptTok = encode(mm.map((m:any)=>m.content).join("\n")).length;
+const estOutTok = 400;
+const estCost = estimateCredits(modelKey, promptTok, estOutTok);
+await chargeCredits(user.sub, estCost, "chat_estimate", { model: modelKey });
+
+// ... after you get `text`:
+const outTok = encode(text).length;
+const realCost = estimateCredits(modelKey, promptTok, outTok);
+// optional settle-up delta:
+const delta = realCost - estCost;
+if (delta !== 0) await chargeCredits(user.sub, Math.max(delta, 0), "chat_settle_charge", { model: modelKey });
+// (if delta<0, you could create a negative ledger entry via addCredits to refund)
+
+
+We’ll reuse the same pricing in agent steps below, so all LLM/tooling usage drains credits accurately.
+
+2) Agents — planner + executor + tools
+2.1 Tool registry
+
+apps/worker/src/agents/tools.ts
+
+import { chatWithFailover } from "@ai/shared/modelRouter"; // or "@/lib/modelRouter" if sharing code
+import { encode } from "gpt-tokenizer";
+import { estimateCredits } from "@ai/shared/pricing";
+import { addCredits, chargeCredits } from "@ai/shared/credits";
+import { runCommand, createSession, destroySession } from "@ai/shared/operator"; // reuse your operator lib
+import fetch from "node-fetch";
+
+type Ctx = {
+  userId: string;
+  projectId?: string | null;
+  model: string;
+  bill: (inTok: number, outTok: number, label: string, meta?: any) => Promise<number>;
+};
+
+export const Tools = {
+  async plan(ctx: Ctx, goal: string) {
+    const sys = { role: "system", content: "Decompose the user's goal into 2-6 concrete steps. Respond as JSON: {steps:[{tool:string, input:any, note?:string}]} . Tools: llm, web_search, operator_exec, rag_search. Choose minimal steps." };
+    const user = { role: "user", content: goal };
+    const out = await chatWithFailover(ctx.model, [sys as any, user as any]);
+    const inTok = encode((sys as any).content + goal).length;
+    const outTok = encode(out).length;
+    await ctx.bill(inTok, outTok, "agent.plan");
+    try {
+      const js = JSON.parse(out);
+      if (!Array.isArray(js.steps)) throw new Error("bad plan");
+      return js.steps as { tool: keyof typeof Tools; input: any; note?: string }[];
+    } catch {
+      return [{ tool: "llm", input: { prompt: goal } }];
+    }
+  },
+
+  async llm(ctx: Ctx, input: { prompt: string }) {
+    const out = await chatWithFailover(ctx.model, [{ role:"user", content: input.prompt } as any]);
+    const inTok = encode(input.prompt).length;
+    const outTok = encode(out).length;
+    await ctx.bill(inTok, outTok, "agent.llm");
+    return { text: out };
+  },
+
+  async web_search(ctx: Ctx, input: { query: string }) {
+    // Plug your real search provider here; placeholder does an HTTP GET to a custom /search proxy if you add it.
+    // For demo we just echo.
+    const text = `Search results for "${input.query}" (demo placeholder).`;
+    await ctx.bill(5, 20, "agent.web_search"); // tiny nominal cost
+    return { results: [{ title: "Placeholder", snippet: text }] };
+  },
+
+  async operator_exec(ctx: Ctx, input: { cmd: string }) {
+    const s = await createSession();
+    const r = await runCommand(s.id, input.cmd);
+    await destroySession(s.id);
+    await ctx.bill(20, Math.min(encode(r.stdout||"").length, 200), "agent.operator");
+    return r;
+  },
+
+  async rag_search(ctx: Ctx, input: { question: string }) {
+    // If you already have embeddings, call them here. As a demo, we funnel through llm.
+    const out = await Tools.llm(ctx, { prompt: `Answer using known docs (if any): ${input.question}` });
+    return { passages: [], answer: out.text };
+  }
+};
+
+
+Note: imports with @ai/shared/... assume you have a small shared package. If not, change to relative paths (e.g., ../../lib/modelRouter etc.).
+
+2.2 Agent runner job
+
+apps/worker/src/jobs/agentRun.ts
+
+import { prisma } from "@ai/shared/prisma";
+import { Tools } from "../agents/tools";
+import { estimateCredits } from "@ai/shared/pricing";
+import { chargeCredits } from "@ai/shared/credits";
+import { encode } from "gpt-tokenizer";
+
+export async function agentRun(job: any) {
+  const runId: string = job.data.runId;
+  const run = await prisma.agentRun.update({ where: { id: runId }, data: { status: "running", startedAt: new Date() }, include: { agent: true }});
+  const model = run.agent.defaultModel || "gpt-4o-mini";
+
+  let TOTAL_IN = 0, TOTAL_OUT = 0, TOTAL_CRED = 0;
+
+  const bill = async (inTok: number, outTok: number, label: string, meta: any = {}) => {
+    const credits = estimateCredits(model, inTok, outTok);
+    await chargeCredits(run.userId, credits, "agent_step", { runId, label, ...meta, model });
+    TOTAL_IN += inTok; TOTAL_OUT += outTok; TOTAL_CRED += credits;
+    return credits;
+  };
+
+  const ctx = { userId: run.userId, projectId: run.projectId, model, bill };
+
+  // Step 0: planner (unless a graph is saved)
+  let steps: any[] = [];
+  if (run.agent.graph) {
+    steps = (run.agent.graph as any).steps || [];
+  } else {
+    const plan = await Tools.plan(ctx as any, run.goal);
+    steps = plan;
+    // persist as first step log
+    await prisma.agentStep.create({ data: {
+      runId: run.id, index: 0, tool: "plan", status: "done", request: { goal: run.goal }, response: { steps: plan }
+    }});
+  }
+
+  let idx = 1;
+  let last: any = null;
+  for (const st of steps) {
+    const stepRec = await prisma.agentStep.create({ data: {
+      runId: run.id, index: idx, tool: st.tool, status: "running", request: st.input
+    }});
+    try {
+      // @ts-ignore
+      const resp = await Tools[st.tool](ctx as any, st.input || {});
+      await prisma.agentStep.update({ where: { id: stepRec.id }, data: { status: "done", response: resp }});
+      last = resp;
+    } catch (e:any) {
+      await prisma.agentStep.update({ where: { id: stepRec.id }, data: { status: "error", error: e.message }});
+      await prisma.agentRun.update({ where: { id: run.id }, data: {
+        status: "failed", error: `step ${idx} failed: ${e.message}`, finishedAt: new Date(),
+        tokensIn: TOTAL_IN, tokensOut: TOTAL_OUT, creditsUsed: TOTAL_CRED
+      }});
+      return { ok:false };
+    }
+    idx++;
+  }
+
+  await prisma.agentRun.update({ where: { id: run.id }, data: {
+    status: "succeeded", output: last, finishedAt: new Date(),
+    tokensIn: TOTAL_IN, tokensOut: TOTAL_OUT, creditsUsed: TOTAL_CRED
+  }});
+  return { ok:true };
+}
+
+
+Register the worker:
+
+// apps/worker/src/index.ts
+import { agentRun } from "./jobs/agentRun";
+// ...
+await boss.work("agent.run", agentRun);
+
+3) Agent APIs + UI
+3.1 APIs
+
+Create/list agents — apps/web/app/api/agents/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const url = new URL(req.url);
+  const projectId = url.searchParams.get("projectId") || undefined;
+  const items = await prisma.agent.findMany({ where: { userId: u.sub, ...(projectId?{projectId}:{}) }, orderBy:{ createdAt:"desc" }});
+  return NextResponse.json({ ok:true, agents: items });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name, description, projectId, defaultModel, graph } = await req.json();
+  const a = await prisma.agent.create({ data: { userId:u.sub, name, description, projectId, defaultModel, graph }});
+  return NextResponse.json({ ok:true, agent: a });
+}
+
+
+Run agent — apps/web/app/api/agents/[id]/run/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { getBoss } from "@/lib/queue";
+import { requirePlan } from "@/lib/gates";
+
+export async function POST(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  await requirePlan(u.sub, ["pro","enterprise"]); // DeepAgent-like gating
+
+  const { goal, input } = await req.json();
+  const a = await prisma.agent.findUnique({ where: { id: params.id }});
+  if (!a || a.userId !== u.sub) return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+
+  const r = await prisma.agentRun.create({ data: {
+    agentId: a.id, userId: u.sub, projectId: a.projectId, goal, input, status: "queued"
+  }});
+
+  const boss = await getBoss();
+  await boss.send("agent.run", { runId: r.id });
+
+  return NextResponse.json({ ok:true, runId: r.id });
+}
+
+
+Run status — apps/web/app/api/agents/runs/[id]/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export async function GET(_: NextRequest, { params }: { params: { id: string }}) {
+  const run = await prisma.agentRun.findUnique({ where: { id: params.id }, include: { steps: { orderBy: { index:"asc" }}, agent:true }});
+  if (!run) return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  return NextResponse.json({ ok:true, run });
+}
+
+3.2 UI
+
+Agent Builder — apps/web/components/AgentBuilder.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function AgentBuilder({ projectId }: { projectId?: string }) {
+  const [list, setList] = useState<any[]>([]);
+  const [name, setName] = useState("Deep Researcher");
+  const [desc, setDesc] = useState("Plans web research & summarizes findings.");
+  const [goal, setGoal] = useState("Analyze Acme competitors and produce a 5-bullet summary.");
+
+  async function load() {
+    const t = await getAccessToken();
+    const r = await fetch(`/api/agents${projectId?`?projectId=${projectId}`:""}`, { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setList(d.agents);
+  }
+  useEffect(()=>{ load(); }, [projectId]);
+
+  async function create() {
+    const t = await getAccessToken();
+    await fetch("/api/agents", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ name, description: desc, projectId })});
+    load();
+  }
+
+  async function run(id: string) {
+    const t = await getAccessToken();
+    const r = await fetch(`/api/agents/${id}/run`, {
+      method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ goal })
+    });
+    const d = await r.json();
+    if (d.runId) location.href = `/agents/run/${d.runId}`;
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="font-semibold">Agents</div>
+      <div className="grid grid-cols-3 gap-2">
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={name} onChange={e=>setName(e.target.value)} placeholder="Agent name" />
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Description" />
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={create}>Create Agent</button>
+      </div>
+      <div className="flex gap-2 items-center">
+        <input className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={goal} onChange={e=>setGoal(e.target.value)} placeholder="Goal to run…" />
+      </div>
+
+      <div className="divide-y divide-zinc-800">
+        {list.map(a=>(
+          <div key={a.id} className="py-2 flex items-center justify-between">
+            <div>
+              <div className="font-medium">{a.name}</div>
+              <div className="text-xs text-zinc-400">{a.description}</div>
+            </div>
+            <button className="px-2 py-1 rounded border border-zinc-700" onClick={()=>run(a.id)}>Run</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+Run viewer page — apps/web/app/agents/run/[id]/page.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+
+export default function RunPage({ params }: { params: { id: string }}) {
+  const [run, setRun] = useState<any>(null);
+
+  async function load() {
+    const r = await fetch(`/api/agents/runs/${params.id}`);
+    const d = await r.json(); setRun(d.run);
+    if (d.run && (d.run.status === "queued" || d.run.status === "running")) setTimeout(load, 1500);
+  }
+  useEffect(()=>{ load(); /* eslint-disable-next-line */ }, [params.id]);
+
+  if (!run) return <div className="p-6">Loading…</div>;
+
+  return (
+    <div className="max-w-5xl mx-auto p-6 space-y-4">
+      <div className="text-sm text-zinc-400">Agent Run</div>
+      <div className="rounded-xl border border-zinc-800 p-4">
+        <div className="font-semibold">{run.agent?.name}</div>
+        <div className="text-sm text-zinc-400">Status: {run.status}</div>
+        <div className="text-sm text-zinc-400">Goal: {run.goal}</div>
+        <div className="text-sm text-zinc-400">Credits: {run.creditsUsed} • Tokens in/out: {run.tokensIn}/{run.tokensOut}</div>
+      </div>
+      <div className="rounded-xl border border-zinc-800 p-4">
+        <div className="font-semibold mb-2">Steps</div>
+        <div className="space-y-2">
+          {run.steps?.map((s:any)=>(
+            <div key={s.id} className="rounded border border-zinc-800 p-3">
+              <div className="text-sm"><span className="font-medium">#{s.index} {s.tool}</span> — {s.status}</div>
+              {s.request && <pre className="bg-zinc-900 p-2 rounded text-xs overflow-auto mt-2">{JSON.stringify(s.request,null,2)}</pre>}
+              {s.response && <pre className="bg-zinc-900 p-2 rounded text-xs overflow-auto mt-2">{JSON.stringify(s.response,null,2)}</pre>}
+              {s.error && <div className="text-xs text-red-400 mt-2">{s.error}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+      {run.output && (
+        <div className="rounded-xl border border-zinc-800 p-4">
+          <div className="font-semibold mb-2">Output</div>
+          <pre className="bg-zinc-900 p-2 rounded text-xs overflow-auto">{JSON.stringify(run.output,null,2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+Add the builder somewhere (dashboard or project page):
+
+import AgentBuilder from "@/components/AgentBuilder";
+// ...
+<section id="agents" className="space-y-3">
+  <AgentBuilder /* projectId={id} */ />
+</section>
+
+4) Native mobile wrapper (Expo) — minimal app
+
+Create a new app folder apps/mobile (Expo, React Native):
+
+apps/mobile/app.json
+
+{
+  "expo": {
+    "name": "Advanta AI",
+    "slug": "advanta-ai",
+    "scheme": "advanta",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "jsEngine": "hermes",
+    "newArchEnabled": true,
+    "ios": { "supportsTablet": true },
+    "android": { "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#000000" } }
+  }
+}
+
+
+apps/mobile/App.tsx
+
+import React, { useEffect, useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { View, Text, TextInput, Button, ScrollView } from "react-native";
+import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+import axios from "axios";
+
+// CONFIG
+const API = Constants.expoConfig?.extra?.API_URL || "http://localhost:3000";
+const Stack = createNativeStackNavigator();
+
+function SignIn({ navigation }: any) {
+  const [email, setEmail] = useState("");
+  const [token, setToken] = useState("");
+  async function save() {
+    await SecureStore.setItemAsync("sb_token", token);
+    await SecureStore.setItemAsync("email", email);
+    navigation.replace("Chat");
+  }
+  return (
+    <View style={{ padding:16 }}>
+      <Text style={{ color:"#fff", fontSize:20, marginBottom:8 }}>Sign In (paste Supabase JWT)</Text>
+      <TextInput placeholder="email" placeholderTextColor="#888" style={{ color:"#fff", borderColor:"#333", borderWidth:1, padding:8, marginBottom:8 }} value={email} onChangeText={setEmail} />
+      <TextInput placeholder="access token" placeholderTextColor="#888" style={{ color:"#fff", borderColor:"#333", borderWidth:1, padding:8, marginBottom:8 }} value={token} onChangeText={setToken} />
+      <Button title="Continue" onPress={save} />
+    </View>
+  );
+}
+
+function ChatScreen() {
+  const [input, setInput] = useState("");
+  const [msgs, setMsgs] = useState<{role:"user"|"assistant", content:string}[]>([]);
+
+  async function send() {
+    const t = await SecureStore.getItemAsync("sb_token");
+    const r = await axios.post(API+"/api/chat", { messages:[{ role:"user", content: input }]}, {
+      headers: { Authorization: `Bearer ${t}` }
+    });
+    setMsgs([...msgs, { role:"user", content: input }, { role:"assistant", content: r.data.message }]);
+    setInput("");
+  }
+
+  return (
+    <View style={{ flex:1, backgroundColor:"#000" }}>
+      <ScrollView style={{ flex:1, padding:12 }}>
+        {msgs.map((m,i)=><Text key={i} style={{ color: m.role==="user"?"#4ea1ff":"#4ef3b2", marginBottom:8 }}>{m.role}: {m.content}</Text>)}
+      </ScrollView>
+      <View style={{ padding:12, borderTopColor:"#222", borderTopWidth:1 }}>
+        <TextInput placeholder="Ask something…" placeholderTextColor="#888" style={{ color:"#fff", borderColor:"#333", borderWidth:1, padding:8, marginBottom:8 }} value={input} onChangeText={setInput} />
+        <Button title="Send" onPress={send} />
+      </View>
+    </View>
+  );
+}
+
+function HumanizeScreen() {
+  const [text, setText] = useState("Rewrite this professionally.");
+  const [out, setOut] = useState("");
+  async function run() {
+    const t = await SecureStore.getItemAsync("sb_token");
+    const r = await axios.post(API+"/api/humanize", { text, tone:"professional" }, { headers:{ Authorization:`Bearer ${t}` }});
+    setOut(r.data.out);
+  }
+  return (
+    <View style={{ padding:16 }}>
+      <TextInput multiline numberOfLines={5} placeholder="Text…" placeholderTextColor="#888" style={{ color:"#fff", borderColor:"#333", borderWidth:1, padding:8, marginBottom:8 }} value={text} onChangeText={setText} />
+      <Button title="Rewrite" onPress={run} />
+      <ScrollView style={{ marginTop:12 }}><Text style={{ color:"#4ef3b2" }}>{out}</Text></ScrollView>
+    </View>
+  );
+}
+
+function ResearchScreen() {
+  const [goal, setGoal] = useState("Analyze Acme competitors.");
+  const [status, setStatus] = useState("");
+  async function run() {
+    const t = await SecureStore.getItemAsync("sb_token");
+    // pick the first agent (or create one via /api/agents)
+    const agents = await axios.get(API+"/api/agents", { headers:{ Authorization:`Bearer ${t}` }});
+    const id = agents.data.agents?.[0]?.id;
+    if (!id) { setStatus("Create an agent on web first."); return; }
+    const resp = await axios.post(API+`/api/agents/${id}/run`, { goal }, { headers:{ Authorization:`Bearer ${t}` }});
+    setStatus("Run started: "+resp.data.runId);
+  }
+  return (
+    <View style={{ padding:16 }}>
+      <TextInput placeholder="Goal…" placeholderTextColor="#888" style={{ color:"#fff", borderColor:"#333", borderWidth:1, padding:8, marginBottom:8 }} value={goal} onChangeText={setGoal} />
+      <Button title="Run Deep Research" onPress={run} />
+      <Text style={{ color:"#888", marginTop:12 }}>{status}</Text>
+    </View>
+  );
+}
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerStyle:{ backgroundColor:"#000" }, headerTintColor:"#fff", contentStyle:{ backgroundColor:"#000" }}}>
+        <Stack.Screen name="SignIn" component={SignIn} options={{ title:"Sign In" }} />
+        <Stack.Screen name="Chat" component={ChatScreen} options={{ title:"Chat" }} />
+        <Stack.Screen name="Humanize" component={HumanizeScreen} options={{ title:"Humanize" }} />
+        <Stack.Screen name="Research" component={ResearchScreen} options={{ title:"Research" }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+
+Configure extra.API_URL in app.json, or run with EXPO_PUBLIC_API_URL. This wrapper hits your exact backend: /api/chat, /api/humanize, /api/agents. You can later add voice capture & TTS.
+
+Run mobile:
+
+cd apps/mobile
+npx expo start
+
+5) Hook agents into the UI you already have
+
+Add the Agents section to your dashboard (or project page):
+
+import AgentBuilder from "@/components/AgentBuilder";
+// ...
+<section id="agents" className="space-y-3">
+  <AgentBuilder />
+</section>
+
+
+Now you can:
+
+create a “Deep Researcher” agent,
+
+run with a goal,
+
+watch logs live at /agents/run/:id,
+
+credits bill per-step with real pricing.
+
+6) What you just gained
+
+DeepAgent-style orchestration: plan → run tools → log steps → capture outputs. Easy to add tools (Slack post, Dropbox fetch, Confluence search, GitHub PR).
+
+Accurate, credit-based billing: per-model pricing, exact tokens; settle delta post-completion.
+
+Native mobile shell: chat/humanize/research screens hitting the same APIs (Supabase JWT pasted or integrated auth via deep links later).

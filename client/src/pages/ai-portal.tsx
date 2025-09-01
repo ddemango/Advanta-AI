@@ -47,6 +47,7 @@ import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
 import { TopNav } from '@/components/ai-portal/TopNav';
 import { LeftRail } from '@/components/ai-portal/LeftRail';
 import { QuickActions, QuickActionsMobile, QuickActionsLower } from '@/components/ai-portal/QuickActions';
+import { AgentPanel } from '@/components/ai-portal/AgentPanel';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -554,6 +555,14 @@ export function AIPortal() {
             <div className="mt-8">
               <PlanGate feature="Data Analysis" requiredPlans={['pro', 'enterprise']}>
                 <DataPanel />
+              </PlanGate>
+            </div>
+          )}
+
+          {activeTab === 'agents' && (
+            <div className="mt-8">
+              <PlanGate feature="DeepAgent Studio" requiredPlans={['pro', 'enterprise']}>
+                <AgentPanel />
               </PlanGate>
             </div>
           )}

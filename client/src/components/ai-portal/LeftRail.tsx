@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Plus, ChevronDown, Search, Terminal, Wand2, Database, Users2, FolderPlus, ListStart, Code2, UserRound, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Plus, ChevronDown, Search, Terminal, Wand2, Database, Users2, FolderPlus, ListStart, Code2, UserRound, MoreHorizontal, Workflow } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -194,6 +194,12 @@ export function LeftRail({
             icon={Database}
             label="Data Analysis"
             onClick={() => handleTabChange('data')}
+          />
+          <RailLink
+            active={activeTab === 'agents'}
+            icon={Workflow}
+            label="DeepAgent Studio"
+            onClick={() => handleTabChange('agents')}
           />
         </div>
 

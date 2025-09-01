@@ -8176,6 +8176,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ ok: false, error: error.message });
     }
   });
+
+  // Agent Management APIs
+  app.get('/api/agents', async (req, res) => {
+    try {
+      // Mock agents data for now
+      const agents = [
+        {
+          id: 'agent-1',
+          name: 'Research Agent',
+          description: 'Multi-step research and analysis agent',
+          defaultModel: 'gpt-4o',
+          createdAt: new Date().toISOString()
+        }
+      ];
+      res.json({ ok: true, agents });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/agents', async (req, res) => {
+    try {
+      const { name, description, defaultModel } = req.body;
+      
+      const agent = {
+        id: `agent-${Date.now()}`,
+        name,
+        description,
+        defaultModel: defaultModel || 'gpt-4o',
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json({ ok: true, agent });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/agents/:id/run', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { goal } = req.body;
+      
+      // Check if user has required plan
+      const userId = '1'; // TODO: Get from auth
+      const userPlan = 'enterprise'; // TODO: Get actual plan
+      
+      if (userPlan === 'free') {
+        return res.status(403).json({ 
+          ok: false, 
+          error: 'DeepAgent functionality requires Pro or Enterprise plan',
+          requiredPlans: ['pro', 'enterprise']
+        });
+      }
+
+      const runId = `run-${Date.now()}`;
+      
+      // In production, this would queue the job and return immediately
+      // For demo, we'll simulate the execution
+      setTimeout(async () => {
+        const { executeAgentRun } = await import('./lib/agents/runner');
+        await executeAgentRun(runId, userPlan);
+      }, 1000);
+      
+      res.json({ ok: true, runId });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.get('/api/agent-runs', async (req, res) => {
+    try {
+      // Mock runs data
+      const runs = [
+        {
+          id: 'run-1',
+          agentId: 'agent-1',
+          status: 'succeeded',
+          goal: 'Research latest AI developments',
+          creditsUsed: 150,
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          finishedAt: new Date(Date.now() - 3500000).toISOString(),
+          steps: [
+            { id: 'step-1', index: 1, tool: 'plan', status: 'done' },
+            { id: 'step-2', index: 2, tool: 'web_search', status: 'done' },
+            { id: 'step-3', index: 3, tool: 'llm', status: 'done' }
+          ]
+        }
+      ];
+      res.json({ ok: true, runs });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.get('/api/agent-runs/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Mock single run data
+      const run = {
+        id,
+        agentId: 'agent-1',
+        status: 'running',
+        goal: 'Test agent execution',
+        creditsUsed: 75,
+        createdAt: new Date().toISOString(),
+        steps: [
+          { id: 'step-1', index: 1, tool: 'plan', status: 'done' },
+          { id: 'step-2', index: 2, tool: 'web_search', status: 'running' }
+        ]
+      };
+      
+      res.json({ ok: true, run });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
   
   app.post('/api/humanize', async (req, res) => {
     const { text, tone = 'professional', model = 'gpt-4o-mini' } = req.body;
