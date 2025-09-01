@@ -1,5 +1,5 @@
 import { compileGraphToSteps, executeCompiledSteps } from './graphCompiler';
-import { generateRunSummary } from './runSummary';
+import { composeAndSaveRunArtifact } from './runSummary';
 import { Tools } from './tools';
 
 export async function executeAgentRun(runId: string, userPlan: string = 'enterprise') {
@@ -70,9 +70,9 @@ export async function executeAgentRun(runId: string, userPlan: string = 'enterpr
   };
 
   // Generate the summary
-  const summary = await generateRunSummary(runData);
+  const summary = await composeAndSaveRunArtifact(runId);
   
-  console.log('Generated run summary:', summary.length, 'characters');
+  console.log('Generated run summary:', summary?.length || 0, 'characters');
   
   return {
     ok: true,

@@ -8698,12 +8698,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { goal, graph } = req.body;
       
-      const { executeAgentRun } = await import('./lib/agents/runner');
-      const runId = `run-${Date.now()}`;
-      
-      const result = await executeAgentRun(runId, 'enterprise');
-      
-      res.json(result);
+      if (graph?.nodes?.length) {
+        // Execute graph-based agent run
+        const { compileGraphToSteps, executeCompiledSteps } = await import('./lib/agents/graphCompiler');
+        const { composeAndSaveRunArtifact } = await import('./lib/agents/runSummary');
+        
+        const compiledSteps = compileGraphToSteps(graph);
+        console.log('Compiled graph steps:', compiledSteps);
+        
+        // Mock execution context
+        const bill = async (inTok: number, outTok: number, label: string) => {
+          console.log(`Billing: ${label} - ${inTok} in, ${outTok} out tokens`);
+          return inTok + outTok;
+        };
+        
+        const persistStep = async (idx: number, nodeId: string, tool: string, status: string, request?: any, response?: any, error?: string) => {
+          console.log(`Step ${idx} (${nodeId}): ${tool} - ${status}`);
+        };
+        
+        const outputs = await executeCompiledSteps({
+          bill,
+          persistStep,
+          projectId: null,
+          userId: 'demo',
+          model: 'gpt-5' // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        }, compiledSteps);
+        
+        const runId = `run-${Date.now()}`;
+        const summary = await composeAndSaveRunArtifact(runId);
+        
+        res.json({ 
+          ok: true, 
+          runId,
+          summary,
+          outputs,
+          creditsUsed: 150,
+          status: 'succeeded'
+        });
+      } else {
+        // Fallback to traditional execution
+        const { executeAgentRun } = await import('./lib/agents/runner');
+        const runId = `run-${Date.now()}`;
+        
+        const result = await executeAgentRun(runId, 'enterprise');
+        
+        res.json(result);
+      }
     } catch (error: any) {
       console.error("Agent run failed:", error);
       res.status(500).json({ error: "Agent run failed", details: error.message });
