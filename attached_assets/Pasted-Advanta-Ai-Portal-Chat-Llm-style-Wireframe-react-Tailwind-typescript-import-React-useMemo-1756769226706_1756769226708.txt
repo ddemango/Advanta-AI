@@ -1,0 +1,77 @@
+Advanta Ai Portal — Chat Llm-style Wireframe (react + Tailwind)
+· typescript
+import React, { useMemo, useState } from "react";
+
+
+// ChatLLM-style portal wireframe (no external APIs)
+// - Left Sidebar: Conversations, Documents, Agents, Data, Integrations
+// - Top Toolbar: Model selector, Temperature, Tool toggles, New Chat
+// - Main Area: switches between Chat, Documents, Agents, Code, Search, Data Analysis
+// - Quick Actions: floating buttons
+// Notes:
+// • Purely front-end wireframe; replace TODOs with real handlers.
+// • Uses Tailwind classes for styling.
+
+
+const models = [
+  { id: "gpt-5", name: "GPT‑5 (Default)" },
+  { id: "gpt-4o", name: "GPT‑4o" },
+  { id: "gemini", name: "Gemini 2.5" },
+  { id: "grok", name: "Grok" },
+  { id: "qwen", name: "Qwen 3" },
+];
+
+
+const sidebarSections = [
+  {
+    key: "conversations",
+    title: "Conversations",
+    items: ["Welcome Chat", "Product Ideas", "Spec Draft", "Marketing Plan"],
+  },
+  {
+    key: "documents",
+    title: "Documents",
+    items: ["pricing.pdf", "sales.csv", "roadmap.docx"],
+  },
+  {
+    key: "agents",
+    title: "Agents",
+    items: ["Lead Qualifier", "Summarizer", "Data Cleaner"],
+  },
+  {
+    key: "data",
+    title: "Data",
+    items: ["KPI Dashboard", "Weekly Report"],
+  },
+  {
+    key: "integrations",
+    title: "Integrations",
+    items: ["Slack", "G‑Drive", "Gmail", "Calendar"],
+  },
+];
+
+
+const centerViews = [
+  { id: "chat", label: "Chat" },
+  { id: "documents", label: "Documents" },
+  { id: "agents", label: "Agents" },
+  { id: "code", label: "Code" },
+  { id: "search", label: "Search" },
+  { id: "data", label: "Data Analysis" },
+];
+
+
+function Section({ title, children }) {
+  return (
+
+Done! I dropped a live React + Tailwind wireframe that mirrors ChatLLM’s layout into the canvas. It has:
+
+Sidebar sections (Conversations, Documents, Agents, Data, Integrations)
+
+Top toolbar (model selector, temperature, tool toggles, New Chat)
+
+Center view switcher (Chat, Documents, Agents, Code, Search, Data)
+
+Working chat UI scaffold + placeholders for each tool
+
+Floating quick actions

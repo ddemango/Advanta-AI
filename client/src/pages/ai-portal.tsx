@@ -43,7 +43,7 @@ import { DataPanel } from '@/components/ai-portal/DataPanel';
 import { OperatorPanel } from '@/components/ai-portal/OperatorPanel';
 import { OperatorTerminal } from '@/components/ai-portal/OperatorTerminal';
 import { PlanGate, PlanBadge } from '@/components/ai-portal/PlanGate';
-import MainLayout from '@/components/ai-portal/MainLayout';
+import ChatLLMLayout from '@/components/ai-portal/ChatLLMLayout';
 import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
 import { TopNav } from '@/components/ai-portal/TopNav';
 import { LeftRail } from '@/components/ai-portal/LeftRail';
@@ -51,7 +51,7 @@ import { QuickActions, QuickActionsMobile, QuickActionsLower } from '@/component
 import AgentPanel from '@/components/ai-portal/AgentPanel';
 import WebSearchPanel from '@/components/ai-portal/WebSearchPanel';
 import OperatorNotebook from '@/components/ai-portal/OperatorNotebook';
-import CriticalTierSuite from '@/components/ai-portal/CriticalTierSuite';
+
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -404,7 +404,7 @@ export function AIPortal() {
         <title>AI Portal - Advanta AI</title>
       </Helmet>
 
-      <MainLayout activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ChatLLMLayout />
 
     </div>
   );
