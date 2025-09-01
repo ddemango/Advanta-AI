@@ -162,6 +162,9 @@ export function AgentDagEditor({ agentId, initial }: AgentDagEditorProps) {
               </Button>
             ))}
           </div>
+          <p className="text-xs text-gray-600 mt-2">
+            <strong>Tip:</strong> Use templates in inputs like: <code>{'{{step:nodeId.response.results[0].snippet}}'}</code>
+          </p>
         </div>
 
         {/* ReactFlow Canvas */}
@@ -188,9 +191,14 @@ export function AgentDagEditor({ agentId, initial }: AgentDagEditorProps) {
         {/* Instructions */}
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-800">
-            <strong>Instructions:</strong> Drag nodes to reposition them. Connect nodes by dragging from one node's edge to another. 
-            Double-click nodes to edit labels. The workflow will execute in the connected order when the agent runs.
+            <strong>Visual Workflow Designer:</strong> Drag nodes to reposition them. Connect nodes by dragging from one node's edge to another. 
+            The workflow executes in topological order (respecting dependencies). Use template variables to pass data between steps.
           </p>
+          <div className="mt-2 text-xs text-blue-700">
+            <strong>Template Examples:</strong><br/>
+            • <code>{'{{step:search.response.results[0].title}}'}</code> - Get first search result title<br/>
+            • <code>{'{{step:analyze.response.text}}'}</code> - Get analysis output text
+          </div>
         </div>
 
         {saveStatus === 'error' && (

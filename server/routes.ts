@@ -8275,18 +8275,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Mock single run data
+      // Mock single run data - simulate different statuses for demo
+      const statuses = ['running', 'succeeded', 'failed'];
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
+      
       const run = {
         id,
         agentId: 'agent-1',
-        status: 'running',
-        goal: 'Test agent execution',
-        creditsUsed: 75,
-        createdAt: new Date().toISOString(),
+        status,
+        goal: 'Analyze competitive landscape for AI tools',
+        creditsUsed: 125,
+        createdAt: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
+        finishedAt: status !== 'running' ? new Date().toISOString() : undefined,
         steps: [
-          { id: 'step-1', index: 1, tool: 'plan', status: 'done' },
-          { id: 'step-2', index: 2, tool: 'web_search', status: 'running' }
-        ]
+          { id: 'step-1', index: 0, tool: 'plan', status: 'done' },
+          { id: 'step-2', index: 1, tool: 'web_search', status: status === 'failed' ? 'error' : 'done' },
+          { id: 'step-3', index: 2, tool: 'llm', status: status === 'running' ? 'running' : (status === 'failed' ? 'error' : 'done') }
+        ],
+        output: status === 'succeeded' ? {
+          analysis: 'Based on research findings, key competitors include...',
+          insights: ['Market trend 1', 'Market trend 2', 'Market trend 3']
+        } : null,
+        error: status === 'failed' ? 'Web search API rate limit exceeded' : undefined
       };
       
       res.json({ ok: true, run });
@@ -8361,6 +8371,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Operator Session Management
+  app.post('/api/operator/session', async (req, res) => {
+    try {
+      const sessionId = `session-${Date.now()}`;
+      console.log(`Created operator session: ${sessionId}`);
+      
+      res.json({
+        ok: true,
+        session: {
+          id: sessionId,
+          status: 'active',
+          createdAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.delete('/api/operator/session/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log(`Closed operator session: ${id}`);
+      
+      res.json({ ok: true });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
   // Operator Run Command API
   app.post('/api/operator/run', async (req, res) => {
     try {
@@ -8389,6 +8429,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mockExecution.stdout = 'file1.txt\nfile2.py\ndata.csv\nnotebook.ipynb';
       } else if (cmd.includes('pwd')) {
         mockExecution.stdout = `/tmp/operator-session-${sessionId}`;
+      } else if (cmd.includes('pip list')) {
+        mockExecution.stdout = 'pandas==1.5.3\nnumpy==1.24.3\nmatplotlib==3.7.1\nscikit-learn==1.2.2';
+      } else if (cmd.includes('echo')) {
+        const echoMatch = cmd.match(/echo\s+['"]?(.+?)['"]?$/);
+        mockExecution.stdout = echoMatch ? echoMatch[1] : 'Hello World';
       }
 
       res.json({

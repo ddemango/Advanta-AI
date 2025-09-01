@@ -1,5 +1,7 @@
 import { estimateCredits, getTokenCount, getPlanLimits } from '../pricing';
 import { Tools } from './tools';
+import { compileGraphToSteps, executeCompiledSteps } from './graphCompiler';
+import { composeAndSaveRunArtifact } from './runSummary';
 
 // Mock database operations for now - replace with actual Drizzle operations
 const mockDb = {
@@ -29,7 +31,17 @@ const mockDb = {
       status: 'running',
       agent: {
         defaultModel: 'gpt-4o',
-        graph: null
+        graph: {
+          nodes: [
+            { id: 'plan', data: { label: 'Plan', tool: 'plan' } },
+            { id: 'search', data: { label: 'Web Search', tool: 'web_search', input: { query: 'AI developments' } } },
+            { id: 'analyze', data: { label: 'Analysis', tool: 'llm', input: { prompt: 'Analyze: {{step:search.response.results[0].snippet}}' } } }
+          ],
+          edges: [
+            { source: 'plan', target: 'search' },
+            { source: 'search', target: 'analyze' }
+          ]
+        }
       }
     };
   }
@@ -82,29 +94,92 @@ export async function executeAgentRun(runId: string, userPlan: string = 'free') 
   };
 
   try {
-    // Step 0: Planning (unless saved graph exists)
-    let steps: any[] = [];
-    
-    if (run.agent.graph && (run.agent.graph as any).steps) {
-      steps = (run.agent.graph as any).steps;
-      console.log('Using saved workflow graph');
-    } else {
-      console.log('Planning steps for goal:', run.goal);
-      const planResult = await Tools.plan(ctx, run.goal);
-      steps = planResult;
+    // Check if agent has a visual graph workflow
+    if (run.agent.graph && (run.agent.graph as any).nodes?.length) {
+      console.log('Executing visual workflow graph');
       
-      // Log planning step
+      // Compile graph to steps
+      const compiled = compileGraphToSteps(run.agent.graph as any);
+      
+      // Log planning step for graph mode
       await mockDb.createStep({
         runId: run.id,
         index: 0,
         tool: 'plan',
         status: 'done',
-        request: { goal: run.goal },
-        response: { steps: planResult },
+        request: { mode: 'graph' },
+        response: { compiled },
         startedAt: new Date().toISOString(),
         finishedAt: new Date().toISOString()
       });
+
+      // Execute the compiled workflow
+      const persistStep = async (idx: number, nodeId: string, tool: string, status: string, request?: any, response?: any, error?: string) => {
+        await mockDb.createStep({
+          runId: run.id,
+          index: idx,
+          tool,
+          status,
+          request,
+          response,
+          error,
+          startedAt: new Date().toISOString(),
+          finishedAt: status !== 'running' ? new Date().toISOString() : undefined
+        });
+      };
+
+      const outputs = await executeCompiledSteps({ 
+        bill, 
+        projectId: run.projectId, 
+        userId: run.userId, 
+        model, 
+        persistStep 
+      }, compiled);
+
+      // Get final result from last node
+      const lastNodeId = compiled[compiled.length - 1]?.nodeId;
+      const finalResult = lastNodeId ? outputs[lastNodeId]?.response : null;
+
+      await mockDb.updateRun(runId, {
+        status: 'succeeded',
+        output: finalResult,
+        finishedAt: new Date().toISOString(),
+        tokensIn: totalInTokens,
+        tokensOut: totalOutTokens,
+        creditsUsed: totalCredits
+      });
+
+      // Generate and save summary artifact
+      await composeAndSaveRunArtifact(runId);
+
+      console.log(`Graph workflow ${runId} completed successfully. Used ${totalCredits} credits.`);
+      
+      return {
+        ok: true,
+        result: finalResult,
+        tokensUsed: { in: totalInTokens, out: totalOutTokens },
+        creditsUsed: totalCredits,
+        stepsExecuted: compiled.length
+      };
     }
+
+    // Fallback: Traditional step-by-step planning
+    console.log('Planning steps for goal:', run.goal);
+    const planResult = await Tools.plan(ctx, run.goal);
+    
+    // Log planning step
+    await mockDb.createStep({
+      runId: run.id,
+      index: 0,
+      tool: 'plan',
+      status: 'done',
+      request: { goal: run.goal },
+      response: { steps: planResult },
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString()
+    });
+
+    const steps = planResult;
 
     // Enforce plan limits
     if (steps.length > limits.maxStepsPerRun) {
@@ -183,6 +258,9 @@ export async function executeAgentRun(runId: string, userPlan: string = 'free') 
       creditsUsed: totalCredits
     });
 
+    // Generate and save summary artifact
+    await composeAndSaveRunArtifact(runId);
+
     console.log(`Agent run ${runId} completed successfully. Used ${totalCredits} credits.`);
     
     return {
@@ -204,6 +282,13 @@ export async function executeAgentRun(runId: string, userPlan: string = 'free') 
       tokensOut: totalOutTokens,
       creditsUsed: totalCredits
     });
+
+    // Even on failure, try to generate a summary to help with debugging
+    try {
+      await composeAndSaveRunArtifact(runId);
+    } catch (summaryError) {
+      console.error('Failed to create summary artifact:', summaryError);
+    }
 
     return {
       ok: false,
