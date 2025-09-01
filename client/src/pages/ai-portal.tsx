@@ -62,7 +62,7 @@ interface CodeExecutionResult {
   returncode: number;
 }
 
-export default function AIPortal() {
+export function AIPortal() {
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');

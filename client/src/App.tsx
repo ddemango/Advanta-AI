@@ -73,7 +73,8 @@ import AIStackBuilder from "@/pages/ai-stack-builder";
 import LeadMagnetBuilder from "@/pages/lead-magnet-builder";
 import FlightFinder from "@/pages/flight-finder";
 import FantasyFootballTools from "@/pages/fantasy-football-tools";
-import AIPortal from "@/pages/ai-portal";
+import { AIPortal } from "./pages/ai-portal";
+import { AbacusDemo } from './pages/abacus-demo';
 import TVMatchmaker from "@/pages/tv-matchmaker";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import { BestAIAgencyPage, AIMarketingAgencyPage } from "@/pages/seo-landing-pages";
@@ -228,6 +229,7 @@ function Router() {
       <Route path="/flight-finder" component={FlightFinder} />
       <Route path="/fantasy-football-tools" component={FantasyFootballTools} />
       <Route path="/ai-portal" component={AIPortal} />
+      <Route path="/abacus-demo" component={AbacusDemo} />
       <Route path="/tv-matchmaker" component={TVMatchmaker} />
       <Route path="/free-tools" component={FreeTools} />
       <Route path="/privacy" component={PrivacyPolicy} />
