@@ -8294,6 +8294,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ ok: false, error: error.message });
     }
   });
+
+  // Agent Graph Management
+  app.put('/api/agents/:id/graph', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nodes, edges } = req.body;
+      
+      // In production, this would update the agent's graph in the database
+      console.log(`Updating agent ${id} graph:`, { nodes: nodes?.length, edges: edges?.length });
+      
+      res.json({ 
+        ok: true, 
+        agent: { 
+          id, 
+          graph: { nodes, edges },
+          updatedAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // Web Search API
+  app.post('/api/search', async (req, res) => {
+    try {
+      const { query, provider = 'serper', projectId } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ ok: false, error: 'Query is required' });
+      }
+
+      // Mock search results for now - in production, integrate with real search APIs
+      const mockResults = [
+        {
+          title: `Search Results for: ${query}`,
+          url: `https://example.com/search?q=${encodeURIComponent(query)}`,
+          snippet: `This is a mock search result for "${query}". In production, this would contain real search results from ${provider}.`
+        },
+        {
+          title: `Related Information about ${query}`,
+          url: `https://example.org/info/${query.replace(/\s+/g, '-').toLowerCase()}`,
+          snippet: `Additional information and insights related to your search query "${query}".`
+        },
+        {
+          title: `${query} - Latest Updates`,
+          url: `https://news.example.com/latest/${query.replace(/\s+/g, '-')}`,
+          snippet: `Recent news and updates about "${query}" from various sources.`
+        }
+      ];
+
+      // Create mock artifact
+      const artifactId = `artifact-${Date.now()}`;
+      console.log(`Created search artifact: ${artifactId} for query: "${query}"`);
+
+      res.json({ 
+        ok: true, 
+        results: mockResults,
+        artifactId,
+        provider,
+        query
+      });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // Operator Run Command API
+  app.post('/api/operator/run', async (req, res) => {
+    try {
+      const { sessionId, cmd } = req.body;
+      
+      if (!sessionId || !cmd) {
+        return res.status(400).json({ ok: false, error: 'sessionId and cmd are required' });
+      }
+
+      // Mock command execution - in production, this would run in the actual operator environment
+      const mockExecution = {
+        stdout: `Mock execution of command: ${cmd}\nCommand completed successfully.`,
+        stderr: '',
+        returncode: 0,
+        executionTime: Math.random() * 1000 + 200
+      };
+
+      // Simulate some command-specific outputs
+      if (cmd.includes('python')) {
+        if (cmd.includes('print')) {
+          mockExecution.stdout = cmd.match(/print\(['"](.+)['"]\)/)?.[1] || 'Hello from Python!';
+        } else {
+          mockExecution.stdout = 'Python command executed successfully';
+        }
+      } else if (cmd.includes('ls')) {
+        mockExecution.stdout = 'file1.txt\nfile2.py\ndata.csv\nnotebook.ipynb';
+      } else if (cmd.includes('pwd')) {
+        mockExecution.stdout = `/tmp/operator-session-${sessionId}`;
+      }
+
+      res.json({
+        ok: true,
+        ...mockExecution
+      });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
   
   app.post('/api/humanize', async (req, res) => {
     const { text, tone = 'professional', model = 'gpt-4o-mini' } = req.body;

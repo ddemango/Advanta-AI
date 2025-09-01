@@ -1,0 +1,416 @@
+here are drop-in patches for the four features you asked for. They plug straight into the scaffold we’ve been building (Next.js + Prisma + Supabase + pg-boss + Stripe + Operator WS).
+
+0) New deps & env
+
+Install
+
+pnpm add reactflow cross-fetch
+# (search providers - choose any subset)
+pnpm add serper jsdom
+# or:
+pnpm add bing-web-search brave-search
+
+
+If you don’t want extra SDKs, the route below also shows plain fetch calls.
+
+.env
+
+# Web search (pick 1+)
+SERPER_API_KEY=...
+BING_SEARCH_KEY=...
+BRAVE_SEARCH_KEY=...
+
+# Mobile (OAuth)
+EXPO_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+EXPO_PUBLIC_OAUTH_PROVIDER=google     # or github, etc.
+EXPO_PUBLIC_REDIRECT_SCHEME=advanta    # must match app.json scheme
+
+1) Visual DAG Editor for Agent.graph (nodes/edges JSON)
+1.1 API to update agent graph
+
+apps/web/app/api/agents/[id]/graph/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const body = await req.json(); // {nodes, edges}
+  const a = await prisma.agent.findUnique({ where:{ id: params.id }});
+  if (!a || a.userId !== u.sub) return NextResponse.json({ ok:false, error:"not_found" }, { status:404 });
+  const saved = await prisma.agent.update({ where:{ id: a.id }, data:{ graph: body }});
+  return NextResponse.json({ ok:true, agent: saved });
+}
+
+1.2 ReactFlow editor
+
+apps/web/components/AgentDagEditor.tsx
+
+"use client";
+import React, { useState, useCallback, useEffect } from "react";
+import ReactFlow, { Background, Controls, MiniMap, addEdge, useNodesState, useEdgesState } from "reactflow";
+import "reactflow/dist/style.css";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function AgentDagEditor({ agentId, initial }: { agentId: string; initial?: {nodes:any[]; edges:any[]} }) {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initial?.nodes || [
+    { id:"plan", position:{x:0,y:0}, data:{ label:"plan" }, type:"input"},
+    { id:"llm", position:{x:220,y:80}, data:{ label:"llm"}, type:"default"},
+  ]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initial?.edges || [
+    { id:"e1", source:"plan", target:"llm", animated:true }
+  ]);
+  const onConnect = useCallback((params:any) => setEdges((eds)=>addEdge({ ...params, animated:true }, eds)),[]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(()=>{ /* allow external initialize */ },[]);
+
+  async function save() {
+    setSaving(true);
+    const t = await getAccessToken();
+    await fetch(`/api/agents/${agentId}/graph`, {
+      method:"PUT", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ nodes, edges })
+    });
+    setSaving(false);
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
+        <div className="font-semibold">Agent DAG</div>
+        <button onClick={save} className="px-3 py-1.5 rounded bg-blue-600" disabled={saving}>{saving?"Saving…":"Save"}</button>
+      </div>
+      <div style={{ height: 420 }}>
+        <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} fitView>
+          <MiniMap /><Controls /><Background />
+        </ReactFlow>
+      </div>
+      <div className="p-3 text-xs text-zinc-400">Tips: double-click a node to rename; connect nodes to define order. Tools supported in runner: <code>plan, llm, web_search, operator_exec, rag_search</code>.</div>
+    </div>
+  );
+}
+
+1.3 Add it to an agent details page
+
+apps/web/app/agents/[id]/page.tsx
+
+import AgentDagEditor from "@/components/AgentDagEditor";
+
+export default async function Page({ params }: { params: { id: string }}) {
+  const r = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/agents/runs/${params.id}`, { cache:"no-store" }).catch(()=>null);
+  // Or fetch the agent directly:
+  const a = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/agents?agentId=${params.id}`, { cache:"no-store" }).catch(()=>null);
+
+  const agent = a ? (await a.json()).agents?.[0] : null;
+  return (
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <div className="text-2xl font-semibold">{agent?.name || "Agent"}</div>
+      <AgentDagEditor agentId={params.id} initial={agent?.graph || undefined} />
+    </div>
+  );
+}
+
+
+The runner already checks agent.graph?.steps; update your worker to interpret edges as a linear path if you want—simple approach: topologically sort and turn into {tool, input} steps.
+
+2) Real Web Search connector (Bing / Brave / Serper) + artifact saving
+2.1 API
+
+apps/web/app/api/search/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+async function searchSerper(q:string) {
+  const r = await fetch("https://google.serper.dev/search", {
+    method:"POST",
+    headers:{ "X-API-KEY": process.env.SERPER_API_KEY!, "Content-Type":"application/json" },
+    body: JSON.stringify({ q })
+  });
+  const j = await r.json();
+  return (j?.organic||[]).map((o:any)=>({ title:o.title, url:o.link, snippet:o.snippet }));
+}
+async function searchBing(q:string) {
+  const r = await fetch(`https://api.bing.microsoft.com/v7.0/search?q=${encodeURIComponent(q)}`, {
+    headers:{ "Ocp-Apim-Subscription-Key": process.env.BING_SEARCH_KEY! }
+  });
+  const j = await r.json();
+  return (j?.webPages?.value||[]).map((o:any)=>({ title:o.name, url:o.url, snippet:o.snippet }));
+}
+async function searchBrave(q:string) {
+  const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}`, {
+    headers:{ "X-Subscription-Token": process.env.BRAVE_SEARCH_KEY! }
+  });
+  const j = await r.json();
+  return (j?.web?.results||[]).map((o:any)=>({ title:o.title, url:o.url, snippet:o.description }));
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const { query, provider="serper", projectId } = await req.json();
+  let results: any[] = [];
+  if (provider==="bing" && process.env.BING_SEARCH_KEY) results = await searchBing(query);
+  else if (provider==="brave" && process.env.BRAVE_SEARCH_KEY) results = await searchBrave(query);
+  else if (process.env.SERPER_API_KEY) results = await searchSerper(query);
+  else return NextResponse.json({ ok:false, error:"no_provider_configured" }, { status:500 });
+
+  // Save as an artifact
+  const md = `# Web Search: ${query}\n\n` + results.slice(0,10).map((r,i)=>`${i+1}. [${r.title}](${r.url}) — ${r.snippet}`).join("\n");
+  const artifact = await prisma.artifact.create({
+    data: { name:`Search: ${query}`, kind:"markdown", data:{ md } as any, userId:u.sub, projectId }
+  });
+
+  return NextResponse.json({ ok:true, results, artifactId: artifact.id });
+}
+
+2.2 Tiny UI hook
+
+apps/web/components/WebSearchPanel.tsx
+
+"use client";
+import { useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function WebSearchPanel({ projectId }: { projectId?: string }) {
+  const [query, setQuery] = useState("latest on Acme earnings");
+  const [provider, setProvider] = useState("serper");
+  const [out, setOut] = useState<any>(null);
+
+  async function run() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/search", { method:"POST",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ query, provider, projectId })
+    });
+    setOut(await r.json());
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Web Search</div>
+      <div className="flex gap-2">
+        <input className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={query} onChange={e=>setQuery(e.target.value)} />
+        <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={provider} onChange={e=>setProvider(e.target.value)}>
+          <option value="serper">Serper</option>
+          <option value="bing">Bing</option>
+          <option value="brave">Brave</option>
+        </select>
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={run}>Search</button>
+      </div>
+      {out?.results && <pre className="bg-zinc-900 p-3 rounded text-xs overflow-auto">{JSON.stringify(out.results,null,2)}</pre>}
+    </div>
+  );
+}
+
+
+Drop at the #search anchor on your dashboard: <WebSearchPanel projectId={demoProjectId || "demo"} />
+
+3) Operator Code Cells (Notebook-style exec in a session)
+3.1 Client component
+
+apps/web/components/OperatorNotebook.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+type Cell = { id: string; lang: "bash"|"python"; code: string; out?: string };
+
+export default function OperatorNotebook() {
+  const [sid, setSid] = useState<string | null>(null);
+  const [cells, setCells] = useState<Cell[]>([
+    { id:"c1", lang:"python", code:"print('hello from python')" }
+  ]);
+
+  async function open() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/operator/session", { method:"POST", headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setSid(d.session.id);
+  }
+  async function close() {
+    if (!sid) return;
+    const t = await getAccessToken();
+    await fetch(`/api/operator/session/${sid}`, { method:"DELETE", headers:{ Authorization:`Bearer ${t}` }});
+    setSid(null);
+  }
+  function add(lang:"bash"|"python") {
+    setCells(v => [...v, { id: Math.random().toString(36).slice(2), lang, code: lang==="python"?"# python\n":"# bash\n" }]);
+  }
+  async function runCell(idx: number) {
+    if (!sid) return alert("Open a session first.");
+    const c = cells[idx];
+    const t = await getAccessToken();
+    const cmd = c.lang === "python"
+      ? `python - <<'PY'\n${c.code}\nPY`
+      : c.code;
+    const r = await fetch("/api/operator/run", { method:"POST",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ sessionId: sid, cmd })
+    });
+    const d = await r.json();
+    setCells(v => v.map((x,i)=> i===idx ? { ...x, out: (d.stdout||"") + (d.stderr?`\n[stderr]\n${d.stderr}`:"") } : x));
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">Operator Notebook</div>
+        <div className="flex gap-2">
+          <button className="px-3 py-1.5 rounded bg-blue-600" onClick={open} disabled={!!sid}>Open Session</button>
+          <button className="px-3 py-1.5 rounded border border-zinc-700" onClick={close} disabled={!sid}>Close</button>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button className="px-2 py-1 rounded border border-zinc-700" onClick={()=>add("python")}>+ Python</button>
+        <button className="px-2 py-1 rounded border border-zinc-700" onClick={()=>add("bash")}>+ Bash</button>
+      </div>
+      <div className="space-y-4">
+        {cells.map((c, i)=>(
+          <div key={c.id} className="rounded border border-zinc-800">
+            <div className="px-3 py-2 text-xs text-zinc-400">{c.lang.toUpperCase()}</div>
+            <textarea className="w-full bg-zinc-950 border-y border-zinc-900 p-3 font-mono text-sm"
+                      rows={c.code.split("\n").length+1}
+                      value={c.code} onChange={e=>setCells(v=>v.map((x,j)=>j===i?{...x, code:e.target.value}:x))} />
+            <div className="p-2 flex items-center justify-between">
+              <button className="px-2 py-1 rounded bg-zinc-800" onClick={()=>runCell(i)} disabled={!sid}>Run</button>
+            </div>
+            {c.out && <pre className="bg-zinc-900 p-3 rounded-b text-xs overflow-auto">{c.out}</pre>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+Place this under #operator (alongside OperatorTerminal) for a “notebook” UX that persists files in the same session workspace.
+
+4) Polished Mobile Auth (Supabase OAuth via Expo + deeplink)
+
+We’ll add real OAuth (e.g., Google) using Expo AuthSession + Supabase.
+
+4.1 Add deep link scheme and extras
+
+apps/mobile/app.json
+
+{
+  "expo": {
+    "name": "Advanta AI",
+    "slug": "advanta-ai",
+    "scheme": "advanta",           // must match EXPO_PUBLIC_REDIRECT_SCHEME
+    "extra": {
+      "SUPABASE_URL": process.env.EXPO_PUBLIC_SUPABASE_URL,
+      "SUPABASE_ANON_KEY": process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      "OAUTH_PROVIDER": process.env.EXPO_PUBLIC_OAUTH_PROVIDER || "google",
+      "API_URL": process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000"
+    }
+  }
+}
+
+4.2 Auth screen using AuthSession
+
+apps/mobile/src/supabase.ts
+
+import "react-native-url-polyfill/auto";
+import { createClient } from "@supabase/supabase-js";
+import Constants from "expo-constants";
+
+export const supabase = createClient(
+  Constants.expoConfig!.extra!.SUPABASE_URL,
+  Constants.expoConfig!.extra!.SUPABASE_ANON_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+);
+
+
+apps/mobile/App.tsx (replace SignIn with OAuth)
+
+import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
+import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
+import { supabase } from "./src/supabase";
+// call once so Expo can capture the redirect
+WebBrowser.maybeCompleteAuthSession();
+
+function SignIn({ navigation }: any) {
+  async function signInWithOAuth() {
+    const redirectTo = `${Constants.expoConfig?.scheme}://auth-callback`;
+    const provider = Constants.expoConfig?.extra?.OAUTH_PROVIDER || "google";
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: provider as any,
+      options: { redirectTo, skipBrowserRedirect: true }
+    });
+    if (error) { alert(error.message); return; }
+    const res = await WebBrowser.openAuthSessionAsync(data.url!, redirectTo);
+    // parse session from URL fragment
+    if (res.type === "success" && res.url) {
+      const { params } = AuthSession.getAuthRequestResult(res.url);
+      const access_token = params["access_token"] || params["#access_token"];
+      if (access_token) {
+        await SecureStore.setItemAsync("sb_token", access_token);
+        navigation.replace("Chat");
+      } else {
+        alert("No token returned");
+      }
+    }
+  }
+  return (
+    <View style={{ padding:16 }}>
+      <Text style={{ color:"#fff", fontSize:20, marginBottom:8 }}>Sign In</Text>
+      <Button title="Continue with OAuth" onPress={signInWithOAuth} />
+    </View>
+  );
+}
+
+
+After login, the mobile app stores the Supabase access token in SecureStore, and your screens reuse it when calling /api/* (as in the earlier mobile scaffold). This is production-friendly and avoids manual token pasting.
+
+5) Wire the new UI blocks on your dashboard
+
+Add the search & notebook to your main page:
+
+// apps/web/app/(dashboard)/page.tsx
+import WebSearchPanel from "@/components/WebSearchPanel";
+import OperatorNotebook from "@/components/OperatorNotebook";
+import AgentDagEditor from "@/components/AgentDagEditor"; // if you expose it here for a selected agent
+
+// ...inside <main>:
+<section id="search" className="space-y-3">
+  <WebSearchPanel projectId={demoProjectId || "demo"} />
+</section>
+
+<section id="operator" className="space-y-3">
+  <OperatorTerminal />
+  <OperatorNotebook />
+</section>
+
+6) Quick verification checklist
+
+DAG Editor
+
+Open an Agent detail page → draw nodes/edges → Save → /api/agents/:id/graph persists JSON.
+
+Worker reads agent.graph (optional: convert edges to steps).
+
+Web Search
+
+Fill query → choose provider (Serper/Bing/Brave) → Search → returns results and writes a Markdown artifact visible in ArtifactList.
+
+Operator Notebook
+
+Open Session → add Python and Bash cells → Run → output/side-effects appear.
+
+Files persist within the Operator session folder (same as terminal).
+
+Mobile OAuth
+
+App launches → Continue with OAuth → completes in in-app browser → returns to app via advanta://auth-callback → token stored → Chat/Humanize/Research work with your backend.

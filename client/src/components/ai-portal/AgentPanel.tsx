@@ -17,8 +17,10 @@ import {
   Zap,
   Target,
   Workflow,
-  BarChart3
+  BarChart3,
+  Edit3
 } from 'lucide-react';
+import { AgentDagEditor } from './AgentDagEditor';
 
 interface Agent {
   id: string;
@@ -79,6 +81,8 @@ export function AgentPanel() {
   
   // Create/Run forms
   const [showCreateAgent, setShowCreateAgent] = useState(false);
+  const [showDagEditor, setShowDagEditor] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [newAgentName, setNewAgentName] = useState('');
   const [newAgentDescription, setNewAgentDescription] = useState('');
   const [runGoal, setRunGoal] = useState('');
@@ -231,9 +235,24 @@ export function AgentPanel() {
                   {agent.description && (
                     <p className="text-sm text-gray-600 mt-1">{agent.description}</p>
                   )}
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                    <Badge variant="secondary">{agent.defaultModel || 'gpt-4o'}</Badge>
-                    <span>Created {new Date(agent.createdAt).toLocaleDateString()}</span>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Badge variant="secondary">{agent.defaultModel || 'gpt-4o'}</Badge>
+                      <span>Created {new Date(agent.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingAgent(agent);
+                        setShowDagEditor(true);
+                      }}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Edit3 className="h-3 w-3 mr-1" />
+                      Edit Workflow
+                    </Button>
                   </div>
                 </div>
               ))
@@ -391,6 +410,34 @@ export function AgentPanel() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* DAG Editor Modal */}
+      {showDagEditor && editingAgent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-6xl h-full max-h-[90vh] bg-white rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-xl font-semibold">
+                Edit Workflow: {editingAgent.name}
+              </h2>
+              <Button
+                onClick={() => {
+                  setShowDagEditor(false);
+                  setEditingAgent(null);
+                }}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+            <div className="p-4 h-[calc(100%-80px)] overflow-auto">
+              <AgentDagEditor 
+                agentId={editingAgent.id}
+                initial={undefined} // In production, pass saved graph data
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

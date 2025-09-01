@@ -48,6 +48,8 @@ import { TopNav } from '@/components/ai-portal/TopNav';
 import { LeftRail } from '@/components/ai-portal/LeftRail';
 import { QuickActions, QuickActionsMobile, QuickActionsLower } from '@/components/ai-portal/QuickActions';
 import { AgentPanel } from '@/components/ai-portal/AgentPanel';
+import { WebSearchPanel } from '@/components/ai-portal/WebSearchPanel';
+import { OperatorNotebook } from '@/components/ai-portal/OperatorNotebook';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -563,6 +565,22 @@ export function AIPortal() {
             <div className="mt-8">
               <PlanGate feature="DeepAgent Studio" requiredPlans={['pro', 'enterprise']}>
                 <AgentPanel />
+              </PlanGate>
+            </div>
+          )}
+
+          {activeTab === 'search' && (
+            <div className="mt-8">
+              <PlanGate feature="Web Search" requiredPlans={['free', 'pro', 'enterprise']}>
+                <WebSearchPanel projectId={currentProject || undefined} />
+              </PlanGate>
+            </div>
+          )}
+
+          {activeTab === 'notebook' && (
+            <div className="mt-8">
+              <PlanGate feature="Code Notebook" requiredPlans={['pro', 'enterprise']}>
+                <OperatorNotebook />
               </PlanGate>
             </div>
           )}
