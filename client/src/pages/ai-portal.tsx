@@ -28,6 +28,7 @@ import {
 import { ModelSelector } from '@/components/ai-portal/ModelSelector';
 import { HumanizePanel } from '@/components/ai-portal/HumanizePanel';
 import { DataPanel } from '@/components/ai-portal/DataPanel';
+import { OperatorPanel } from '@/components/ai-portal/OperatorPanel';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -92,7 +93,7 @@ export default function AIPortal() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
   // Active tab
-  const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'search' | 'tts' | 'humanize' | 'data' | 'projects'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'search' | 'operator' | 'humanize' | 'data' | 'tts' | 'projects'>('chat');
   
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -333,6 +334,7 @@ export default function AIPortal() {
               { id: 'chat', label: 'Chat', icon: MessageSquare },
               { id: 'code', label: 'Code Runner', icon: Terminal },
               { id: 'search', label: 'Search', icon: Search },
+              { id: 'operator', label: 'Virtual Computer', icon: Terminal },
               { id: 'humanize', label: 'Humanize', icon: Wand2 },
               { id: 'data', label: 'Data Analysis', icon: Database },
               { id: 'tts', label: 'Text-to-Speech', icon: Volume2 },
@@ -531,6 +533,10 @@ export default function AIPortal() {
                     )}
                   </CardContent>
                 </Card>
+              )}
+
+              {activeTab === 'operator' && (
+                <OperatorPanel />
               )}
 
               {activeTab === 'humanize' && (

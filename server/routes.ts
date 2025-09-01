@@ -8108,6 +8108,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Operator (Virtual Computer) endpoints
+  app.get('/api/operator/sessions', async (req, res) => {
+    try {
+      const userId = 1; // TODO: Get from session/auth
+      const operatorLib = await import('./lib/operator');
+      const sessions = await operatorLib.getUserSessions(userId);
+      res.json({ ok: true, sessions });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/operator/session', async (req, res) => {
+    try {
+      const userId = 1; // TODO: Get from session/auth
+      const operatorLib = await import('./lib/operator');
+      const session = await operatorLib.createSession(userId);
+      res.json({ ok: true, session });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/operator/run', async (req, res) => {
+    try {
+      const userId = 1; // TODO: Get from session/auth
+      const { sessionId, cmd } = req.body;
+      const operatorLib = await import('./lib/operator');
+      const result = await operatorLib.runCommand(sessionId, cmd, userId);
+      res.json({ ok: true, ...result });
+    } catch (error: any) {
+      res.status(400).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.delete('/api/operator/session/:id', async (req, res) => {
+    try {
+      const userId = 1; // TODO: Get from session/auth
+      const { id } = req.params;
+      const operatorLib = await import('./lib/operator');
+      const success = await operatorLib.destroySession(id, userId);
+      res.json({ ok: success });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
   // Health check endpoint
   app.get('/healthz', async (req, res) => {
     try {

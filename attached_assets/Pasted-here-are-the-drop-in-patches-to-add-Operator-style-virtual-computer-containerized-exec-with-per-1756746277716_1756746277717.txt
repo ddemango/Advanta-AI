@@ -1,0 +1,684 @@
+here are the drop-in patches to add:
+
+Operator-style “virtual computer” (containerized exec with per-session workspace + fallback)
+
+Multi-provider model router (OpenAI + Anthropic + Google) with failover
+
+Natural-language Task Builder (LLM → cron/type/payload)
+
+Teams & shared projects/chats (roles, invites)
+
+Real credits counter + plan gates
+
+Paste these into the same monorepo from my previous scaffold. After editing schema.prisma, run:
+
+pnpm prisma generate
+pnpm prisma migrate dev
+
+
+Add the new deps:
+
+pnpm add anthropic @google/generative-ai uuid
+
+0) Prisma schema patch
+
+prisma/schema.prisma – add/merge the following models/fields:
+
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  createdAt DateTime     @default(now())
+  members   TeamMember[]
+  projects  Project[]
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  role      String   // 'owner' | 'admin' | 'member'
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  email     String
+  role      String   @default("member")
+  token     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model CreditLedger {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  delta     Int      // +credits for top-up, -charges for usage
+  reason    String   // "topup", "chat_usage", "video_gen", etc.
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  image            String?
+  supabaseId       String?   @unique
+  createdAt        DateTime  @default(now())
+
+  plan             String    @default("free")
+  defaultModel     String?
+  dailyTokenLimit  Int?
+  retentionDays    Int?
+  credits          Int       @default(0)      // cached balance for fast checks
+
+  projects         Project[]
+  chats            Chat[]
+  usages           Usage[]
+  connectors       Connector[]
+  instructionSets  InstructionTemplate[]
+  tasks            Task[]
+  auditLogs        AuditLog[]
+  memberships      TeamMember[]
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id])
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id])
+  name          String
+  description   String?
+  createdAt     DateTime  @default(now())
+  defaultModel  String?
+
+  artifacts     Artifact[]
+  chats         Chat[]
+  datasets      Dataset[]
+  tasks         Task[]
+}
+
+1) Access helpers (team/project auth)
+
+apps/web/lib/access.ts
+
+import { prisma } from "./db";
+
+export async function canAccessProject(userId: string, projectId: string) {
+  const p = await prisma.project.findUnique({ where: { id: projectId }, include: { team: { include: { members: true }}}});
+  if (!p) return false;
+  if (p.ownerId === userId) return true;
+  if (p.teamId) return !!p.team?.members.find(m => m.userId === userId);
+  return false;
+}
+
+export async function requireProjectMember(userId: string, projectId: string) {
+  if (!(await canAccessProject(userId, projectId))) throw new Error("forbidden");
+}
+
+export async function teamRole(userId: string, teamId: string) {
+  const m = await prisma.teamMember.findFirst({ where: { userId, teamId }});
+  return m?.role ?? null;
+}
+
+2) Operator (“virtual computer”) API + UI
+
+Uses Docker if available (python:3.11-alpine), persists a per-session workspace. Falls back to host subprocess if Docker is not present.
+
+ENV
+
+OPERATOR_IMAGE=python:3.11-alpine
+
+
+apps/web/lib/operator.ts
+
+import { randomUUID } from "crypto";
+import fs from "fs";
+import path from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
+
+const pexec = promisify(execFile);
+const ROOT = path.join(process.cwd(), ".operator-sessions");
+if (!fs.existsSync(ROOT)) fs.mkdirSync(ROOT);
+
+async function hasDocker() {
+  try { await pexec("docker", ["version"]); return true; } catch { return false; }
+}
+
+export async function createSession() {
+  const id = randomUUID();
+  const dir = path.join(ROOT, id);
+  fs.mkdirSync(dir);
+  return { id, dir };
+}
+
+export async function destroySession(id: string) {
+  const dir = path.join(ROOT, id);
+  try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+  return true;
+}
+
+export async function runCommand(sessionId: string, cmd: string) {
+  const dir = path.join(ROOT, sessionId);
+  if (!fs.existsSync(dir)) throw new Error("invalid session");
+  const docker = await hasDocker();
+
+  const shell = docker
+    ? ["docker","run","--rm","-v",`${dir}:/work`,"-w","/work",process.env.OPERATOR_IMAGE || "python:3.11-alpine","/bin/sh","-lc",cmd]
+    : ["sh","-lc",cmd];
+
+  const bin = shell.shift()!;
+  const { stdout, stderr } = await pexec(bin, shell, { cwd: dir, timeout: 15_000, maxBuffer: 2_000_000 });
+  // return a quick directory listing snapshot to feel “VM-like”
+  const listing = fs.readdirSync(dir, { withFileTypes: true }).map(d => (d.isDirectory()? "d ":"- ") + d.name);
+  return { stdout, stderr, cwd: "/work", listing };
+}
+
+
+Routes
+
+apps/web/app/api/operator/session/route.ts – create & list sessions (in-memory would vanish, so we list from fs)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { createSession } from "@/lib/operator";
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const s = await createSession();
+  return NextResponse.json({ ok:true, session: s });
+}
+
+
+apps/web/app/api/operator/run/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { runCommand } from "@/lib/operator";
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { sessionId, cmd } = await req.json();
+  try {
+    const r = await runCommand(sessionId, cmd);
+    return NextResponse.json({ ok:true, ...r });
+  } catch (e:any) {
+    return NextResponse.json({ ok:false, error:e.message }, { status:400 });
+  }
+}
+
+
+apps/web/app/api/operator/session/[id]/route.ts – destroy
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { destroySession } from "@/lib/operator";
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  await destroySession(params.id);
+  return NextResponse.json({ ok:true });
+}
+
+
+UI – apps/web/components/OperatorPanel.tsx
+
+"use client";
+import { useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function OperatorPanel() {
+  const [sid, setSid] = useState<string| null>(null);
+  const [cmd, setCmd] = useState("python -V && echo 'hello' > hi.txt && ls -la");
+  const [out, setOut] = useState("");
+
+  async function open() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/operator/session", { method:"POST", headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setSid(d.session.id);
+  }
+  async function run() {
+    if (!sid) return;
+    const t = await getAccessToken();
+    const r = await fetch("/api/operator/run", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ sessionId: sid, cmd })});
+    const d = await r.json();
+    setOut(`$ ${cmd}\n\n${d.stdout || ""}\n${d.stderr ? "\n[stderr]\n"+d.stderr : ""}\n\n[listing]\n${(d.listing||[]).join("\n")}`);
+  }
+  async function close() {
+    if (!sid) return;
+    const t = await getAccessToken();
+    await fetch(`/api/operator/session/${sid}`, { method:"DELETE", headers:{ Authorization:`Bearer ${t}` }});
+    setSid(null); setOut("");
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Operator (Virtual Computer)</div>
+      <div className="flex gap-2">
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={open} disabled={!!sid}>New Session</button>
+        <button className="px-3 py-2 rounded border border-zinc-700" onClick={close} disabled={!sid}>Close</button>
+      </div>
+      <textarea className="w-full bg-zinc-900 border border-zinc-800 rounded p-2" rows={3} value={cmd} onChange={e=>setCmd(e.target.value)} />
+      <button className="px-3 py-2 rounded border border-zinc-700" onClick={run} disabled={!sid}>Run</button>
+      <pre className="bg-zinc-900 p-3 rounded overflow-auto text-xs min-h-[160px]">{out}</pre>
+      {!sid && <div className="text-xs text-zinc-500">Tip: If Docker is unavailable, commands run in a local shell sandbox.</div>}
+    </div>
+  );
+}
+
+3) Multi-provider model router + failover
+
+ENV
+
+ANTHROPIC_API_KEY=...
+GOOGLE_API_KEY=...
+
+
+apps/web/lib/modelRouter.ts
+
+import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
+const google = process.env.GOOGLE_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_API_KEY) : null;
+
+export type ChatMsg = { role: "system"|"user"|"assistant"; content: string };
+
+export async function chatWithFailover(modelKey: string, messages: ChatMsg[]) {
+  const providers = route(modelKey);
+  const errors: string[] = [];
+  for (const p of providers) {
+    try {
+      if (p.provider === "openai") {
+        const r = await openai.chat.completions.create({ model: p.model, messages, temperature: 0.6, max_tokens: 1200 });
+        return r.choices[0]?.message?.content ?? "";
+      }
+      if (p.provider === "anthropic" && anthropic) {
+        const sys = messages.find(m=>m.role==="system")?.content;
+        const user = messages.filter(m=>m.role!=="system").map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
+        const r = await anthropic.messages.create({ model: p.model, system: sys, messages: user as any, max_tokens: 1200, temperature: 0.6 });
+        return r.content?.[0]?.type === "text" ? (r.content[0] as any).text : JSON.stringify(r.content);
+      }
+      if (p.provider === "google" && google) {
+        const gen = google.getGenerativeModel({ model: p.model });
+        const prompt = messages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n");
+        const r = await gen.generateContent(prompt);
+        return r.response.text();
+      }
+    } catch (e:any) {
+      errors.push(`${p.provider}:${p.model} -> ${e.message}`);
+      continue;
+    }
+  }
+  throw new Error("All providers failed: " + errors.join(" | "));
+}
+
+function route(modelKey: string): { provider: "openai"|"anthropic"|"google", model: string }[] {
+  // Simple mapping + fallback chain
+  switch (modelKey) {
+    case "gpt-4o": return [{ provider:"openai", model:"gpt-4o" }, { provider:"anthropic", model:"claude-3-5-sonnet-latest" }];
+    case "claude-3-5": return [{ provider:"anthropic", model:"claude-3-5-sonnet-latest" }, { provider:"openai", model:"gpt-4o-mini" }];
+    case "gemini-1.5-pro": return [{ provider:"google", model:"gemini-1.5-pro" }, { provider:"openai", model:"gpt-4o-mini" }];
+    default: return [{ provider:"openai", model:"gpt-4o-mini" }];
+  }
+}
+
+
+Update Chat API to use router
+Replace your chat route logic (model call) with:
+
+// apps/web/app/api/chat/route.ts (inside POST after computing modelKey & mm)
+import { chatWithFailover } from "@/lib/modelRouter";
+// ...
+const text = await chatWithFailover(modelKey, mm);
+
+4) Natural-language Task Builder
+
+API — apps/web/app/api/tasks/nl/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import OpenAI from "openai";
+import { prisma } from "@/lib/db";
+import { getBoss } from "@/lib/queue";
+
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { instruction, projectId } = await req.json();
+
+  const sys = { role:"system", content:"Extract a JSON object: {name, type, cron, payload}. 'cron' must be a 5-field cron string. 'payload' an object. Respond ONLY with JSON." };
+  const r = await client.chat.completions.create({ model:"gpt-4o-mini", temperature:0, messages: [sys, { role:"user", content: instruction }], response_format: { type:"json_object" } as any });
+  const parsed = JSON.parse(r.choices[0]?.message?.content || "{}");
+  if (!parsed.name || !parsed.cron) return NextResponse.json({ ok:false, error:"parse_failed", raw: parsed }, { status:400 });
+
+  const t = await prisma.task.create({ data: { userId:u.sub, projectId, name: parsed.name, type: parsed.type || "custom", cron: parsed.cron, payload: parsed.payload || {} }});
+  const boss = await getBoss();
+  await boss.schedule(`task:${t.id}`, t.cron, { type: t.type, payload: t.payload, userId: u.sub, projectId });
+
+  return NextResponse.json({ ok:true, task: t, parsed });
+}
+
+
+UI — apps/web/components/TaskNLPanel.tsx
+
+"use client";
+import { useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function TaskNLPanel({ projectId }: { projectId?: string }) {
+  const [text, setText] = useState("Every weekday at 9am, run deep research on Acme competitors and email me a summary.");
+  const [resp, setResp] = useState<any>(null);
+  async function create() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/tasks/nl", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ instruction: text, projectId })});
+    setResp(await r.json());
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Natural-Language Task Builder</div>
+      <textarea className="w-full bg-zinc-900 border border-zinc-800 rounded p-2" rows={3} value={text} onChange={e=>setText(e.target.value)} />
+      <button className="px-3 py-2 rounded bg-blue-600" onClick={create}>Create Task</button>
+      {resp && <pre className="bg-zinc-900 p-3 rounded overflow-auto text-xs">{JSON.stringify(resp, null, 2)}</pre>}
+    </div>
+  );
+}
+
+5) Teams & shared projects/chats
+
+APIs
+
+apps/web/app/api/teams/route.ts – list/create team
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const teams = await prisma.team.findMany({ where: { members: { some: { userId: u.sub } }}, include: { members: { include: { user: true } } }});
+  return NextResponse.json({ ok:true, teams });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name } = await req.json();
+  const t = await prisma.team.create({ data: { name, members: { create: { userId: u.sub, role: "owner" }}}});
+  return NextResponse.json({ ok:true, team: t });
+}
+
+
+apps/web/app/api/teams/[id]/invite/route.ts – invite (mock token)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { randomUUID } from "crypto";
+
+export async function POST(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { email, role="member" } = await req.json();
+  const inv = await prisma.invite.create({ data: { teamId: params.id, email, role, token: randomUUID() }});
+  return NextResponse.json({ ok:true, invite: inv });
+}
+
+
+apps/web/app/api/teams/accept/route.ts – accept invite by token
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { inviteToken } = await req.json();
+  const inv = await prisma.invite.findUnique({ where: { token: inviteToken }});
+  if (!inv) return NextResponse.json({ ok:false, error:"invalid_invite" }, { status:400 });
+  await prisma.teamMember.upsert({
+    where: { teamId_userId: { teamId: inv.teamId, userId: u.sub }},
+    update: {},
+    create: { teamId: inv.teamId, userId: u.sub, role: inv.role }
+  });
+  await prisma.invite.delete({ where: { id: inv.id }});
+  return NextResponse.json({ ok:true });
+}
+
+
+UI – apps/web/components/TeamPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function TeamPanel() {
+  const [teams, setTeams] = useState<any[]>([]);
+  const [name, setName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteTeam, setInviteTeam] = useState("");
+
+  async function load() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/teams", { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setTeams(d.teams);
+    if (d.teams?.[0]?.id) setInviteTeam(d.teams[0].id);
+  }
+  useEffect(()=>{ load(); }, []);
+
+  async function create() {
+    const t = await getAccessToken();
+    await fetch("/api/teams", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ name }) });
+    setName(""); load();
+  }
+  async function invite() {
+    const t = await getAccessToken();
+    const r = await fetch(`/api/teams/${inviteTeam}/invite`, { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ email: inviteEmail }) });
+    const d = await r.json();
+    alert("Invite token (mock): " + d.invite.token);
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Teams</div>
+      <div className="flex gap-2">
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={name} onChange={e=>setName(e.target.value)} placeholder="Team name" />
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={create}>Create Team</button>
+      </div>
+      <div className="text-sm text-zinc-400">Your teams:</div>
+      <ul className="text-sm list-disc pl-5">
+        {teams.map((t:any)=>(
+          <li key={t.id}>{t.name} — {t.members.length} members</li>
+        ))}
+      </ul>
+      <div className="flex gap-2 pt-2">
+        <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={inviteTeam} onChange={e=>setInviteTeam(e.target.value)}>
+          {teams.map((t:any)=><option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} placeholder="Invite email" />
+        <button className="px-3 py-2 rounded border border-zinc-700" onClick={invite}>Invite</button>
+      </div>
+    </div>
+  );
+}
+
+
+Shared chats/projects: because Project now supports teamId, any member can access chats/artifacts under that project. Your existing project/chats APIs work with the requireProjectMember guard (use in routes where appropriate).
+
+6) Real credits counter + plan gates
+
+Helpers
+
+apps/web/lib/credits.ts
+
+import { prisma } from "./db";
+
+export async function creditBalance(userId: string) {
+  const u = await prisma.user.findUnique({ where:{ id: userId }, select:{ credits:true }});
+  return u?.credits ?? 0;
+}
+
+export async function addCredits(userId: string, delta: number, reason: string, meta?: any) {
+  await prisma.$transaction([
+    prisma.creditLedger.create({ data:{ userId, delta, reason, meta } as any }),
+    prisma.user.update({ where:{ id: userId }, data:{ credits: { increment: delta }}})
+  ]);
+}
+
+export async function chargeCredits(userId: string, cost: number, reason: string, meta?: any) {
+  const bal = await creditBalance(userId);
+  if (bal < cost) throw new Error("Insufficient credits");
+  await prisma.$transaction([
+    prisma.creditLedger.create({ data:{ userId, delta: -cost, reason, meta } as any }),
+    prisma.user.update({ where:{ id: userId }, data:{ credits: { decrement: cost }}})
+  ]);
+}
+
+
+API – topup & ledger
+apps/web/app/api/credits/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { addCredits } from "@/lib/credits";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const rows = await prisma.creditLedger.findMany({ where:{ userId: u.sub }, orderBy:{ createdAt: "desc" }});
+  const user = await prisma.user.findUnique({ where:{ id: u.sub }, select:{ credits:true, plan:true }});
+  return NextResponse.json({ ok:true, credits: user?.credits ?? 0, plan: user?.plan, ledger: rows });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { amount } = await req.json(); // mock topup
+  await addCredits(u.sub, Number(amount || 0), "topup");
+  return NextResponse.json({ ok:true });
+}
+
+
+UI – apps/web/components/CreditsPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function CreditsPanel() {
+  const [credits, setCredits] = useState(0);
+  const [amount, setAmount] = useState(10000);
+  const [ledger, setLedger] = useState<any[]>([]);
+
+  async function load() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/credits", { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setCredits(d.credits); setLedger(d.ledger);
+  }
+  useEffect(()=>{ load(); }, []);
+  async function topup() {
+    const t = await getAccessToken();
+    await fetch("/api/credits", { method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` }, body: JSON.stringify({ amount })});
+    load();
+  }
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="font-semibold">Credits</div>
+      <div className="text-sm text-zinc-400">Balance: {credits.toLocaleString()}</div>
+      <div className="flex gap-2">
+        <input className="w-32 bg-zinc-900 border border-zinc-800 rounded px-2 py-1" type="number" value={amount} onChange={e=>setAmount(Number(e.target.value))} />
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={topup}>Top up (mock)</button>
+      </div>
+      <div className="max-h-48 overflow-auto text-xs">
+        {ledger.map(l => <div key={l.id}>{new Date(l.createdAt).toLocaleString()} — {l.reason} — {l.delta}</div>)}
+      </div>
+    </div>
+  );
+}
+
+
+Plan gates + credit charging in Chat
+Update your chat route to estimate cost and charge before returning:
+
+// apps/web/app/api/chat/route.ts
+import { chargeCredits } from "@/lib/credits";
+import { encode } from "gpt-tokenizer";
+// ...
+const promptTok = encode(mm.map((m:any)=>m.content).join("\n")).length;
+const estOut = 400; // rough estimate
+const estTotal = promptTok + estOut;
+
+// simple pricing: 1 credit per token (adjust as you like)
+const cost = estTotal;
+await chargeCredits(user.sub, cost, "chat_usage", { model: modelKey });
+
+// after getting `text`, you can refund diff/charge delta by re-counting if you want.
+
+
+Add feature gates wherever needed (e.g., disallow certain routes if plan === "free").
+
+7) Add panels to your pages
+
+Playground: already added previously.
+
+Operator: add to dashboard or project page.
+
+// apps/web/app/(dashboard)/page.tsx
+import OperatorPanel from "@/components/OperatorPanel";
+import TaskNLPanel from "@/components/TaskNLPanel";
+import TeamPanel from "@/components/TeamPanel";
+import CreditsPanel from "@/components/CreditsPanel";
+// ...
+<div className="space-y-6">
+  <OperatorPanel />
+  <TaskNLPanel />
+  <TeamPanel />
+  <CreditsPanel />
+</div>
+
+
+Project page (optional): show TaskNLPanel scoped to project:
+
+// apps/web/app/project/[id]/page.tsx
+import TaskNLPanel from "@/components/TaskNLPanel";
+// ...
+<TaskNLPanel projectId={id} />
+
+Notes
+
+Operator uses docker run -v <session>:/work per command to keep state; if Docker isn’t available it falls back to sh -lc in a temp folder. For real isolation, run a long-lived container and attach via websocket/pty; this REST design is the simple, Replit-friendly path.
+
+Model router is pluggable; add more keys and reshuffle fallbacks in route().
+
+Teams enables shared access by setting project.teamId. Add a tiny UI to assign a project to a team if you want (simple PUT /api/projects/[id] with teamId).
+
+Credits now gate usage; top-up is mocked. Swap to Stripe later.
+
+NL Tasks schedule via pg-boss; workers you already run will process by type.

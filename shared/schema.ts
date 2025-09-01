@@ -34,6 +34,11 @@ export const users = pgTable("users", {
   picture: varchar("picture"),
   provider: varchar("provider"), // 'google', 'apple', 'local' - nullable for traditional auth
   providerId: varchar("provider_id"), // nullable for traditional auth
+  plan: varchar("plan").default("free"), // 'free', 'pro', 'enterprise'
+  defaultModel: varchar("default_model"),
+  dailyTokenLimit: integer("daily_token_limit"),
+  retentionDays: integer("retention_days"),
+  credits: integer("credits").default(0), // cached balance for fast checks
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -86,6 +91,7 @@ export const aiUsage = pgTable("ai_usage", {
 export const aiProjects = pgTable("ai_projects", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  teamId: integer("team_id").references(() => teams.id),
   name: varchar("name").notNull(),
   description: text("description"),
   defaultModel: varchar("default_model").default("gpt-4o"),
@@ -129,6 +135,51 @@ export const aiArtifacts = pgTable("ai_artifacts", {
   name: varchar("name").notNull(),
   type: varchar("type").notNull(), // 'chart', 'report', 'code', 'document'
   data: jsonb("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Teams for collaborative work
+export const teams = pgTable("teams", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const teamMembers = pgTable("team_members", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: varchar("role").notNull().default("member"), // 'owner', 'admin', 'member'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const invites = pgTable("invites", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  email: varchar("email").notNull(),
+  role: varchar("role").notNull().default("member"),
+  token: varchar("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Credits system for usage tracking
+export const creditLedger = pgTable("credit_ledger", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  delta: integer("delta").notNull(), // +credits for top-up, -charges for usage
+  reason: varchar("reason").notNull(), // "topup", "chat_usage", "operator_exec", etc.
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Operator sessions for containerized execution
+export const operatorSessions = pgTable("operator_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id").notNull().unique(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  status: varchar("status").notNull().default("active"), // 'active', 'destroyed'
+  workspaceDir: varchar("workspace_dir").notNull(),
+  lastUsed: timestamp("last_used").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -178,6 +229,33 @@ export const insertAiDatasetSchema = createInsertSchema(aiDatasets).omit({
 export const insertAiArtifactSchema = createInsertSchema(aiArtifacts).omit({
   id: true,
   createdAt: true,
+});
+
+// Insert schemas for new tables
+export const insertTeamSchema = createInsertSchema(teams).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertInviteSchema = createInsertSchema(invites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCreditLedgerSchema = createInsertSchema(creditLedger).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOperatorSessionSchema = createInsertSchema(operatorSessions).omit({
+  id: true,
+  createdAt: true,
+  lastUsed: true,
 });
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
