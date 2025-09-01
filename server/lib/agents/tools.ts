@@ -48,10 +48,10 @@ export const Tools = {
     return { text: out };
   },
 
-  async web_search(ctx: Ctx, input: { query: string }) {
+  async web_search(ctx: Ctx, input: { query: string; provider?: string }) {
     try {
       const { searchWeb } = await import('../providers/search');
-      const results = await searchWeb('bing', input.query, 5);
+      const results = await searchWeb(input.provider || 'bing', input.query, 5);
       await ctx.bill(5, 20, "agent.web_search");
       return { results };
     } catch (e) {

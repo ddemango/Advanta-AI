@@ -15,6 +15,7 @@ import { Play, Save, Search, Code, Sparkles, Globe, FileText, Terminal, Zap, Eye
 import Editor from "@monaco-editor/react";
 import { AgentDagEditor } from "@/components/ai-portal/AgentDagEditor";
 import { OperatorNotebook } from "@/components/ai-portal/OperatorNotebook";
+import { WebSearchPanel } from "@/components/ai-portal/WebSearchPanel";
 
 interface AgentStep {
   id: string;
@@ -575,6 +576,11 @@ console.log(factorial(5));`);
           <div className="space-y-4 h-full">
             <OperatorNotebook />
           </div>
+        </TabsContent>
+
+        {/* Web Search Panel */}
+        <TabsContent value="websearch" className="h-[calc(100%-4rem)]">
+          <WebSearchPanel projectId="demo" />
         </TabsContent>
 
         {/* Original CodeLLM (preserved as fallback) */}

@@ -1,11 +1,11 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Save, Play, Plus } from "lucide-react";
+import { Save, Play, Plus, Download } from "lucide-react";
 
 interface Node {
   id: string;
@@ -108,9 +108,30 @@ export function AgentDagEditor() {
   const executeGraph = async () => {
     setRunning(true);
     try {
-      // Mock execution - in production would trigger backend execution
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Executed graph:', graph);
+      const response = await fetch('/api/agent/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          goal: 'Execute visual DAG workflow',
+          graph: graph
+        })
+      });
+      
+      const result = await response.json();
+      console.log('Graph execution result:', result);
+      
+      if (result.summary) {
+        // Download the summary report
+        const blob = new Blob([result.summary], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agent-run-${result.runId}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Graph execution failed:', error);
     } finally {
       setRunning(false);
     }
@@ -164,6 +185,22 @@ export function AgentDagEditor() {
               >
                 <Play className="h-4 w-4 mr-1" />
                 {running ? 'Running...' : 'Execute'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(graph, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'workflow-graph.json';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
               </Button>
             </div>
           </div>

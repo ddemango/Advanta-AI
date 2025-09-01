@@ -8732,6 +8732,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Web search endpoints
+  app.post("/api/search/web", async (req, res) => {
+    try {
+      const { provider = "bing", query = "", topK = 5 } = req.body;
+      
+      if (!query) {
+        return res.json({ results: [] });
+      }
+
+      const { searchWeb } = await import('./lib/providers/search');
+      const results = await searchWeb(provider, query, Math.min(Math.max(Number(topK) || 5, 1), 10));
+      
+      res.json({ results });
+    } catch (error: any) {
+      console.error("Web search failed:", error);
+      res.status(500).json({ error: "Web search failed", details: error.message });
+    }
+  });
+
+  app.post("/api/search/save", async (req, res) => {
+    try {
+      const { provider, query, results, projectId } = req.body;
+      
+      // Create markdown artifact from search results
+      const markdown = `# Web Search: ${query}\n\n**Provider:** ${provider}\n**Results:** ${Array.isArray(results) ? results.length : 0}\n\n` +
+        (Array.isArray(results) ? results.slice(0, 10).map((r: any, i: number) => 
+          `${i + 1}. [${r.title}](${r.url})\n   ${r.snippet || 'No description available'}\n`
+        ).join('\n') : '');
+      
+      const id = `search_${Date.now()}`;
+      console.log(`Saving search artifact: ${query} (${results?.length || 0} results)`);
+      
+      res.json({ 
+        ok: true, 
+        id, 
+        count: Array.isArray(results) ? results.length : 0, 
+        provider, 
+        query,
+        markdown 
+      });
+    } catch (error: any) {
+      console.error("Save search failed:", error);
+      res.status(500).json({ error: "Save search failed", details: error.message });
+    }
+  });
+
   // CodeLLM endpoints
   app.post('/api/codellm/suggest', async (req, res) => {
     try {
