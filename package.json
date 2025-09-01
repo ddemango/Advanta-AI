@@ -80,6 +80,7 @@
     "fuse.js": "^7.1.0",
     "input-otp": "^1.4.2",
     "ioredis": "^5.7.0",
+    "jsdom": "^26.1.0",
     "jsonwebtoken": "^9.0.2",
     "lighthouse": "^12.8.1",
     "lucide-react": "^0.453.0",

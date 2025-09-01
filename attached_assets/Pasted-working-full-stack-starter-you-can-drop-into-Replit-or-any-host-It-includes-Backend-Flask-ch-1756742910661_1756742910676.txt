@@ -1,0 +1,639 @@
+working full-stack starter you can drop into Replit (or any host). It includes:
+
+Backend (Flask): chat ➜ OpenAI, code runner (Python sandbox), lightweight web search (DuckDuckGo HTML scrape), text-to-speech (gTTS), CORS.
+
+Frontend (vanilla HTML/CSS/JS): chat UI, code runner UI, search UI, TTS UI.
+
+Set OPENAI_API_KEY in your environment before running.
+
+📂 Project structure
+llm_portal/
+  backend/
+    app.py
+    requirements.txt
+    README.md
+  frontend/
+    index.html
+    styles.css
+    script.js
+    README.md
+
+🔧 Backend
+backend/requirements.txt
+flask
+flask_cors
+openai
+gTTS
+requests
+beautifulsoup4
+
+backend/app.py
+import os
+import io
+import json
+import shlex
+import subprocess
+import tempfile
+import textwrap
+from datetime import datetime
+from typing import List, Dict, Any
+
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+from gtts import gTTS
+import requests
+from bs4 import BeautifulSoup
+
+# ---- OpenAI (SDK v1.x) ----
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None  # allow app to boot without the package during setup
+
+# ---------------------------
+# App bootstrap
+# ---------------------------
+app = Flask(__name__)
+CORS(app)
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+MODEL_DEFAULT = os.getenv("LLM_MODEL", "gpt-4o-mini")  # adjust as you like
+
+if OpenAI and OPENAI_API_KEY:
+    oai = OpenAI(api_key=OPENAI_API_KEY)
+else:
+    oai = None
+
+
+def _err(msg: str, code: int = 400):
+    return jsonify({"ok": False, "error": msg}), code
+
+
+# ---------------------------
+# Health
+# ---------------------------
+@app.get("/api/health")
+def health():
+    return jsonify({
+        "ok": True,
+        "time": datetime.utcnow().isoformat() + "Z",
+        "openai": bool(oai),
+    })
+
+
+# ---------------------------
+# Chat (OpenAI)
+# ---------------------------
+@app.post("/api/chat")
+def api_chat():
+    """
+    Body:
+      {
+        "messages": [{"role":"system|user|assistant","content":"..."}],
+        "model": "gpt-4o-mini",
+        "temperature": 0.6,
+        "max_tokens": 1024
+      }
+    """
+    if not oai:
+        return _err("OpenAI client not initialized. Set OPENAI_API_KEY and install openai==1.x")
+
+    data = request.get_json(force=True, silent=True) or {}
+    messages: List[Dict[str, str]] = data.get("messages") or []
+    if not messages:
+        return _err("messages[] required")
+
+    model = data.get("model") or MODEL_DEFAULT
+    temperature = float(data.get("temperature", 0.6))
+    max_tokens = int(data.get("max_tokens", 1024))
+
+    try:
+        resp = oai.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        choice = resp.choices[0]
+        text = choice.message.content
+        return jsonify({"ok": True, "message": text, "raw": resp.model_dump()})
+    except Exception as e:
+        return _err(f"OpenAI error: {e}", 500)
+
+
+# ---------------------------
+# Code runner (Python)
+# ---------------------------
+@app.post("/api/run_code")
+def run_code():
+    """
+    Body:
+      { "language": "python", "code": "print('hi')" }
+    WARNING: This is a minimal sandbox for demo only.
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    language = (data.get("language") or "python").lower()
+    code = data.get("code") or ""
+
+    if language != "python":
+        return _err("Only 'python' supported in this demo", 400)
+    if not code.strip():
+        return _err("code required")
+
+    # Very basic isolation: temp dir, no network, resource/time limits where supported.
+    # Replit environments vary—consider using Docker, firejail, or a serverless runner in prod.
+    wrapped = textwrap.dedent(code)
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            src = os.path.join(td, "main.py")
+            with open(src, "w", encoding="utf-8") as f:
+                f.write(wrapped)
+
+            # Run with 5s timeout
+            proc = subprocess.run(
+                ["python3", src],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=5,
+                cwd=td,
+                env={"PYTHONUNBUFFERED": "1"},
+            )
+        return jsonify({
+            "ok": True,
+            "stdout": proc.stdout,
+            "stderr": proc.stderr,
+            "returncode": proc.returncode
+        })
+    except subprocess.TimeoutExpired:
+        return _err("Execution timed out (>5s)", 408)
+    except Exception as e:
+        return _err(f"Runner failure: {e}", 500)
+
+
+# ---------------------------
+# Lightweight web search (DuckDuckGo HTML scrape)
+# ---------------------------
+@app.post("/api/search")
+def search():
+    """
+    Body:
+      { "q": "query", "max_results": 5 }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    q = (data.get("q") or "").strip()
+    if not q:
+        return _err("q required")
+
+    max_results = int(data.get("max_results", 5))
+    url = "https://duckduckgo.com/html/"
+    try:
+        r = requests.post(url, data={"q": q}, timeout=10, headers={
+            "User-Agent": "Mozilla/5.0"
+        })
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
+        out = []
+        for a in soup.select(".result__title a")[:max_results]:
+            href = a.get("href")
+            title = a.get_text(" ", strip=True)
+            snippet_el = a.find_parent("div").find_next_sibling(class_="result__snippet")
+            snippet = snippet_el.get_text(" ", strip=True) if snippet_el else ""
+            out.append({"title": title, "url": href, "snippet": snippet})
+        return jsonify({"ok": True, "results": out})
+    except Exception as e:
+        return _err(f"search failed: {e}", 500)
+
+
+# ---------------------------
+# Text to speech (mp3)
+# ---------------------------
+@app.post("/api/tts")
+def tts():
+    """
+    Body:
+      { "text": "Hello world" }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    text = (data.get("text") or "").strip()
+    if not text:
+        return _err("text required")
+
+    try:
+        tts = gTTS(text=text, lang="en")
+        buf = io.BytesIO()
+        tts.write_to_fp(buf)
+        buf.seek(0)
+        return send_file(
+            buf,
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name="speech.mp3"
+        )
+    except Exception as e:
+        return _err(f"tts failed: {e}", 500)
+
+
+# ---------------------------
+# Main
+# ---------------------------
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", "5050"))
+    app.run(host="0.0.0.0", port=port, debug=True)
+
+backend/README.md
+# AI Chat Portal – Backend
+
+## Quick start
+1) `python -m venv .venv && source .venv/bin/activate`
+2) `pip install -r requirements.txt`
+3) Set `OPENAI_API_KEY=sk-...`
+4) `python app.py` (defaults to port 5050)
+
+### Endpoints
+- `GET /api/health`
+- `POST /api/chat` — body: `{ messages:[{role,content}], model?, temperature?, max_tokens? }`
+- `POST /api/run_code` — body: `{ language: "python", code: "..." }`
+- `POST /api/search` — body: `{ q: "query", max_results?: 5 }`
+- `POST /api/tts` — body: `{ text: "Hello" }`
+
+> Security note: The Python runner is a minimal demo and **not** a secure sandbox. Use containers/VMs for real workloads.
+
+🎨 Frontend
+frontend/index.html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>AI Chat Portal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>AI Chat Portal</h1>
+        <p class="sub">Chat • Run Code • Search • Text-to-Speech</p>
+      </header>
+
+      <main class="grid">
+        <!-- Chat -->
+        <section class="card">
+          <h2>Chat</h2>
+          <div id="chat-window"></div>
+          <div class="row">
+            <input id="model" class="input" placeholder="Model (optional, e.g. gpt-4o-mini)" />
+          </div>
+          <div class="row">
+            <textarea id="message-input" class="input" rows="3" placeholder="Type your message..."></textarea>
+          </div>
+          <div class="row right">
+            <button id="send-btn" class="btn">Send</button>
+            <button id="clear-chat" class="btn ghost">Clear</button>
+          </div>
+        </section>
+
+        <!-- Code runner -->
+        <section class="card">
+          <h2>Run Code (Python)</h2>
+          <textarea id="code-input" class="input mono" rows="8" placeholder="print('hello')"></textarea>
+          <div class="row right">
+            <button id="code-btn" class="btn">Run</button>
+          </div>
+          <pre id="code-out" class="output"></pre>
+        </section>
+
+        <!-- Search -->
+        <section class="card">
+          <h2>Search</h2>
+          <div class="row">
+            <input id="search-q" class="input" placeholder="Search query..." />
+            <button id="search-btn" class="btn">Search</button>
+          </div>
+          <div id="search-results" class="list"></div>
+        </section>
+
+        <!-- TTS -->
+        <section class="card">
+          <h2>Text-to-Speech</h2>
+          <textarea id="tts-text" class="input" rows="3" placeholder="Say something..."></textarea>
+          <div class="row right">
+            <button id="tts-btn" class="btn">Speak</button>
+          </div>
+          <audio id="tts-audio" controls></audio>
+        </section>
+      </main>
+
+      <footer>
+        <span>Backend URL:</span>
+        <input id="base-url" class="input tiny" value="http://localhost:5050" />
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+
+frontend/styles.css
+:root {
+  --bg: #0b0c10;
+  --panel: #111218;
+  --elev: #161821;
+  --text: #eaeefb;
+  --muted: #a0a6b8;
+  --primary: #7c88ff;
+  --primary-ghost: rgba(124,136,255,0.2);
+  --border: #27293a;
+  --success: #1fbf74;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: radial-gradient(1200px 600px at 50% -200px, #1a1b25, #0b0c10);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, sans-serif;
+  margin: 0;
+}
+
+#app { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+header { text-align: center; margin-bottom: 16px; }
+h1 { margin: 0; font-weight: 700; letter-spacing: 0.5px; }
+.sub { color: var(--muted); margin: 6px 0 0; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: linear-gradient(180deg, var(--panel), var(--elev));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 2px 18px rgba(0,0,0,0.22);
+}
+
+h2 { margin: 4px 0 10px; font-size: 16px; }
+
+.row { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+.row.right { justify-content: flex-end; }
+
+.input {
+  background: #0f1016;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  width: 100%;
+}
+
+.input.tiny { width: 360px; }
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.btn {
+  background: var(--primary);
+  border: 1px solid var(--border);
+  color: white;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(124,136,255,0.25); }
+.btn:active { transform: none; }
+
+.btn.ghost {
+  background: var(--primary-ghost);
+  color: var(--text);
+}
+
+#chat-window {
+  height: 260px;
+  overflow: auto;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: #0e0f15;
+}
+
+.msg { padding: 8px 10px; margin: 6px 0; border-radius: 8px; }
+.msg.user { background: rgba(124,136,255,0.1); }
+.msg.assistant { background: rgba(31,191,116,0.12); }
+
+.output {
+  min-height: 120px;
+  background: #0e0f15;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
+.list .item {
+  padding: 8px 10px;
+  margin: 6px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0e0f15;
+}
+
+footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+}
+
+frontend/script.js
+const $ = (sel) => document.querySelector(sel);
+const chatWin = $("#chat-window");
+const msgInput = $("#message-input");
+const sendBtn = $("#send-btn");
+const clearBtn = $("#clear-chat");
+const modelInput = $("#model");
+
+const codeInput = $("#code-input");
+const codeBtn = $("#code-btn");
+const codeOut = $("#code-out");
+
+const searchQ = $("#search-q");
+const searchBtn = $("#search-btn");
+const searchResults = $("#search-results");
+
+const ttsText = $("#tts-text");
+const ttsBtn = $("#tts-btn");
+const ttsAudio = $("#tts-audio");
+
+const baseUrlInput = $("#base-url");
+const base = () => (baseUrlInput.value || "http://localhost:5050").replace(/\/+$/, "");
+
+let messages = [
+  { role: "system", content: "You are a helpful, concise AI assistant." }
+];
+
+function appendMsg(role, text) {
+  const el = document.createElement("div");
+  el.className = `msg ${role}`;
+  el.textContent = text;
+  chatWin.appendChild(el);
+  chatWin.scrollTop = chatWin.scrollHeight;
+}
+
+async function chatSend() {
+  const content = msgInput.value.trim();
+  if (!content) return;
+  appendMsg("user", content);
+  messages.push({ role: "user", content });
+  msgInput.value = "";
+  sendBtn.disabled = true;
+  try {
+    const model = modelInput.value.trim() || undefined;
+    const resp = await fetch(`${base()}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages,
+        ...(model ? { model } : {}),
+        temperature: 0.6,
+        max_tokens: 800
+      })
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || "Chat failed");
+    const text = data.message || "[no content]";
+    appendMsg("assistant", text);
+    messages.push({ role: "assistant", content: text });
+  } catch (err) {
+    appendMsg("assistant", `⚠️ ${err.message}`);
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+async function runCode() {
+  const code = codeInput.value;
+  codeBtn.disabled = true;
+  codeOut.textContent = "Running…";
+  try {
+    const resp = await fetch(`${base()}/api/run_code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language: "python", code })
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || "Run failed");
+    const out = [
+      data.stdout ? `🔊 stdout:\n${data.stdout}` : "",
+      data.stderr ? `⚠️ stderr:\n${data.stderr}` : "",
+      `⏎ exit code: ${data.returncode}`
+    ].filter(Boolean).join("\n\n");
+    codeOut.textContent = out || "(no output)";
+  } catch (err) {
+    codeOut.textContent = `Failed: ${err.message}`;
+  } finally {
+    codeBtn.disabled = false;
+  }
+}
+
+async function doSearch() {
+  const q = searchQ.value.trim();
+  if (!q) return;
+  searchBtn.disabled = true;
+  searchResults.innerHTML = "<div class='item'>Searching…</div>";
+  try {
+    const resp = await fetch(`${base()}/api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q, max_results: 6 })
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || "Search failed");
+    searchResults.innerHTML = "";
+    (data.results || []).forEach(r => {
+      const item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = `<div><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a></div><div style="color:#a0a6b8">${r.snippet || ""}</div>`;
+      searchResults.appendChild(item);
+    });
+  } catch (err) {
+    searchResults.innerHTML = `<div class='item'>⚠️ ${err.message}</div>`;
+  } finally {
+    searchBtn.disabled = false;
+  }
+}
+
+async function speak() {
+  const text = ttsText.value.trim();
+  if (!text) return;
+  ttsBtn.disabled = true;
+  try {
+    const resp = await fetch(`${base()}/api/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    if (!resp.ok) throw new Error("TTS failed");
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    ttsAudio.src = url;
+    await ttsAudio.play().catch(() => {});
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    ttsBtn.disabled = false;
+  }
+}
+
+sendBtn.addEventListener("click", chatSend);
+msgInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) chatSend();
+});
+clearBtn.addEventListener("click", () => {
+  messages = [{ role: "system", content: "You are a helpful, concise AI assistant." }];
+  chatWin.innerHTML = "";
+});
+
+codeBtn.addEventListener("click", runCode);
+searchBtn.addEventListener("click", doSearch);
+ttsBtn.addEventListener("click", speak);
+
+frontend/README.md
+# AI Chat Portal – Frontend
+
+Open `index.html` in a static server (e.g., `python3 -m http.server 8000`) and point “Backend URL” to your Flask server (default `http://localhost:5050`).
+
+Shortcuts:
+- Chat: ⌘/Ctrl + Enter to send.
+- Clear resets conversation.
+
+▶️ How to run (Replit or local)
+
+Backend
+
+cd llm_portal/backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export OPENAI_API_KEY=sk-...   # or set in Replit Secrets
+python app.py                  # http://localhost:5050
+
+
+Frontend
+
+cd ../frontend
+python3 -m http.server 8000
+# open http://localhost:8000
+# set Backend URL at bottom of page if needed

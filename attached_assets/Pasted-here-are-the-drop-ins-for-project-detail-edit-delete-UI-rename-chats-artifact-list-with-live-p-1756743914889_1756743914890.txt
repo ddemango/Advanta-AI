@@ -1,0 +1,423 @@
+here are the drop-ins for:
+
+project detail edit & delete UI
+
+rename chats
+
+artifact list with live previews (html, image/url, text/markdown, mermaid placeholder)
+
+Paste these into the same monorepo (apps/web) from my previous scaffold.
+
+0) (Optional) tighten ownership checks
+
+Replace your existing apps/web/app/api/projects/[id]/route.ts with this version (adds ownership checks on GET/PUT/DELETE):
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+async function assertOwner(userId: string, projectId: string) {
+  const p = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!p) throw new Error("not_found");
+  if (p.ownerId !== userId) throw new Error("forbidden");
+  return p;
+}
+
+export async function GET(_: NextRequest, { params }: { params: { id: string }}) {
+  const p = await prisma.project.findUnique({ where: { id: params.id } });
+  if (!p) return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  return NextResponse.json({ ok:true, project: p });
+}
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  await assertOwner(user.sub, params.id);
+  const { name, description } = await req.json();
+  const p = await prisma.project.update({ where: { id: params.id }, data: { name, description }});
+  return NextResponse.json({ ok:true, project: p });
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  await assertOwner(user.sub, params.id);
+  await prisma.project.delete({ where: { id: params.id }});
+  return NextResponse.json({ ok:true });
+}
+
+1) Chat rename API
+
+Create apps/web/app/api/chats/[id]/route.ts:
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const { title } = await req.json();
+  // ensure chat belongs to the user
+  const chat = await prisma.chat.findUnique({ where: { id: params.id }});
+  if (!chat) return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  if (chat.userId !== user.sub) return NextResponse.json({ ok:false, error:"forbidden" }, { status:403 });
+
+  const updated = await prisma.chat.update({ where: { id: params.id }, data: { title }});
+  return NextResponse.json({ ok:true, chat: updated });
+}
+
+2) Artifacts list API
+
+Create apps/web/app/api/artifacts/list/route.ts:
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const url = new URL(req.url);
+  const projectId = url.searchParams.get("projectId")!;
+  if (!projectId) return NextResponse.json({ ok:false, error:"projectId required" }, { status:400 });
+
+  // Ensure ownership
+  const proj = await prisma.project.findUnique({ where: { id: projectId }});
+  if (!proj) return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  if (proj.ownerId !== user.sub) return NextResponse.json({ ok:false, error:"forbidden" }, { status:403 });
+
+  const artifacts = await prisma.artifact.findMany({
+    where: { projectId },
+    orderBy: { createdAt: "desc" },
+    select: { id:true, kind:true, name:true, data:true, createdAt:true }
+  });
+  return NextResponse.json({ ok:true, artifacts });
+}
+
+3) Project header with Edit / Delete
+
+Create apps/web/components/ProjectHeader.tsx:
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
+
+type P = { id: string; name: string; description?: string };
+
+export default function ProjectHeader({ projectId }: { projectId: string }) {
+  const [project, setProject] = useState<P | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}`).then(r=>r.json()).then(d=>{
+      if (d.project) {
+        setProject(d.project);
+        setName(d.project.name || "");
+        setDesc(d.project.description || "");
+      }
+    });
+  }, [projectId]);
+
+  async function save() {
+    const token = await getAccessToken();
+    const r = await fetch(`/api/projects/${projectId}`, {
+      method: "PUT",
+      headers: { "Content-Type":"application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name, description: desc })
+    });
+    const d = await r.json();
+    if (d.ok) { setProject(d.project); setEditing(false); }
+  }
+
+  async function destroy() {
+    if (!confirm("Delete this project? This cannot be undone.")) return;
+    const token = await getAccessToken();
+    await fetch(`/api/projects/${projectId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    router.push("/");
+  }
+
+  if (!project) return <div className="rounded-xl border border-zinc-800 p-4">Loading…</div>;
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 flex items-center justify-between">
+      <div>
+        {!editing ? (
+          <>
+            <div className="text-xl font-semibold">{project.name}</div>
+            {project.description && <div className="text-sm text-zinc-400">{project.description}</div>}
+          </>
+        ) : (
+          <div className="space-y-2">
+            <input className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 w-[420px]"
+                   value={name} onChange={e=>setName(e.target.value)} />
+            <textarea className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 w-[420px]" rows={3}
+                      value={desc} onChange={e=>setDesc(e.target.value)} />
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        {!editing ? (
+          <>
+            <button className="px-3 py-2 rounded border border-zinc-700" onClick={()=>setEditing(true)}>Edit</button>
+            <button className="px-3 py-2 rounded bg-red-600" onClick={destroy}>Delete</button>
+          </>
+        ) : (
+          <>
+            <button className="px-3 py-2 rounded bg-blue-600" onClick={save}>Save</button>
+            <button className="px-3 py-2 rounded border border-zinc-700" onClick={()=>setEditing(false)}>Cancel</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+4) Artifact list + previews
+
+Create apps/web/components/ArtifactList.tsx:
+
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+type Artifact = {
+  id: string; kind: string; name: string;
+  data: any; createdAt: string;
+};
+
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-xl border border-zinc-800 p-4">{children}</div>;
+}
+
+function RenderArtifact({ a }: { a: Artifact }) {
+  if (a.kind === "html" && typeof a.data?.html === "string") {
+    return <iframe className="w-full h-72 rounded border border-zinc-800 bg-white" srcDoc={a.data.html} />;
+  }
+  if (a.kind === "image" && typeof a.data?.url === "string") {
+    return <img src={a.data.url} alt={a.name} className="rounded max-h-72 object-contain border border-zinc-800" />;
+  }
+  if (a.kind === "mermaid" && typeof a.data?.code === "string") {
+    // Placeholder: render raw code; you can integrate mermaid.js on client for full diagrams.
+    return <pre className="bg-zinc-900 p-3 rounded overflow-auto text-xs">{a.data.code}</pre>;
+  }
+  if (a.kind === "file" && typeof a.data?.url === "string") {
+    return <a className="text-blue-400 underline" href={a.data.url} target="_blank">Download</a>;
+  }
+  // default: text/json
+  return <pre className="bg-zinc-900 p-3 rounded overflow-auto text-xs">{JSON.stringify(a.data, null, 2)}</pre>;
+}
+
+export default function ArtifactList({ projectId }: { projectId: string }) {
+  const [items, setItems] = useState<Artifact[]>([]);
+  const grouped = useMemo(() => {
+    const m: Record<string, Artifact[]> = {};
+    for (const a of items) (m[a.kind] = m[a.kind] || []).push(a);
+    return m;
+  }, [items]);
+
+  async function load() {
+    const token = await getAccessToken();
+    const r = await fetch(`/api/artifacts/list?projectId=${projectId}`, { headers: { Authorization: `Bearer ${token}` }});
+    const d = await r.json();
+    if (d.ok) setItems(d.artifacts);
+  }
+  useEffect(()=>{ load(); }, [projectId]);
+
+  if (!items.length) return <Card><div className="text-sm text-zinc-400">No artifacts yet.</div></Card>;
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(grouped).map(([kind, arr]) => (
+        <Card key={kind}>
+          <div className="font-semibold mb-2 capitalize">{kind} ({arr.length})</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {arr.map(a => (
+              <div key={a.id} className="rounded-lg border border-zinc-800 p-3">
+                <div className="text-sm font-medium mb-1">{a.name}</div>
+                <RenderArtifact a={a} />
+                <div className="text-xs text-zinc-500 mt-2">{new Date(a.createdAt).toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+5) Chat rename UI (in ChatWindow)
+
+Replace your apps/web/components/ChatWindow.tsx with this version (adds inline rename):
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+type Msg = { role: "user"|"assistant"; content: string };
+type Chat = { id: string; title?: string };
+
+export default function ChatWindow({ projectId }: { projectId?: string }) {
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState("");
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [renaming, setRenaming] = useState(false);
+
+  async function loadChats() {
+    const token = await getAccessToken();
+    const r = await fetch(`/api/chats/list?projectId=${projectId??""}`, { headers:{ Authorization:`Bearer ${token}` }});
+    const d = await r.json();
+    setChats(d.chats);
+    if (d.chats.length && !chatId) selectChat(d.chats[0].id);
+  }
+
+  async function selectChat(id: string) {
+    setChatId(id);
+    const r = await fetch(`/api/chats/${id}/messages`);
+    const d = await r.json();
+    setMessages(d.messages.map((m: any)=>({ role: m.role, content: m.content })));
+    const found = chats.find(c=>c.id===id);
+    setTitle(found?.title || "");
+  }
+
+  useEffect(()=>{ loadChats(); /* eslint-disable-next-line */ }, [projectId]);
+
+  async function onSend() {
+    if (!input.trim()) return;
+    const userMsg = { role: "user" as const, content: input };
+    setMessages(m => [...m, userMsg]);
+    setInput("");
+    setLoading(true);
+    try {
+      const token = await getAccessToken();
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ messages:[userMsg], chatId, projectId })
+      });
+      const data = await resp.json();
+      if (!chatId) setChatId(data.chatId);
+      setMessages(m => [...m, { role:"assistant", content: data.message }]);
+      if (!chats.find(c=>c.id===data.chatId)) loadChats();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function doRename() {
+    if (!chatId) return;
+    const token = await getAccessToken();
+    await fetch(`/api/chats/${chatId}`, {
+      method: "PUT",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body: JSON.stringify({ title })
+    });
+    setRenaming(false);
+    loadChats();
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-zinc-400">Project Chat</div>
+        <div className="flex gap-2 items-center">
+          {renaming ? (
+            <>
+              <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1"
+                     value={title} onChange={e=>setTitle(e.target.value)} placeholder="Chat title" />
+              <button className="px-2 py-1 rounded bg-blue-600" onClick={doRename}>Save</button>
+              <button className="px-2 py-1 rounded border border-zinc-700" onClick={()=>setRenaming(false)}>Cancel</button>
+            </>
+          ) : (
+            <button className="px-2 py-1 rounded border border-zinc-700" onClick={()=>setRenaming(true)}>
+              Rename
+            </button>
+          )}
+          <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1"
+                  value={chatId ?? ""} onChange={e=>selectChat(e.target.value)}>
+            <option value="" disabled>Select chat…</option>
+            {chats.map(c => <option key={c.id} value={c.id}>{c.title ?? c.id.slice(0,8)}</option>)}
+          </select>
+          <button className="px-2 py-1 rounded border border-zinc-700"
+                  onClick={()=>{ setChatId(null); setMessages([]); setTitle(""); }}>New</button>
+        </div>
+      </div>
+
+      <div className="min-h-[220px] max-h-[320px] overflow-y-auto bg-zinc-900/50 p-3 rounded">
+        {messages.map((m, i) => (
+          <div key={i} className={m.role === "user" ? "text-blue-300" : "text-emerald-300"}>
+            <span className="opacity-70">{m.role}:</span> {m.content}
+          </div>
+        ))}
+        {loading && <div className="text-zinc-400">…thinking</div>}
+      </div>
+
+      <div className="flex gap-2">
+        <input className="flex-1 bg-zinc-900 rounded px-3 py-2 border border-zinc-800"
+               value={input} onChange={e=>setInput(e.target.value)} placeholder="Type a message..." />
+        <button onClick={onSend} className="px-3 py-2 rounded bg-blue-600">Send</button>
+      </div>
+    </div>
+  );
+}
+
+6) Use the new components on the project page
+
+Update apps/web/app/project/[id]/page.tsx:
+
+import ProjectHeader from "@/components/ProjectHeader";
+import ChatWindow from "@/components/ChatWindow";
+import ArtifactList from "@/components/ArtifactList";
+import ProjectSidebar from "@/components/ProjectSidebar";
+
+export default async function ProjectPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  return (
+    <div className="grid grid-cols-12 gap-4">
+      <aside className="col-span-3">
+        <ProjectSidebar activeProjectId={id} />
+      </aside>
+      <main className="col-span-9 space-y-6">
+        <ProjectHeader projectId={id} />
+        <ChatWindow projectId={id} />
+        <ArtifactList projectId={id} />
+      </main>
+    </div>
+  );
+}
+
+Run checklist
+
+Env vars set (Supabase + JWKS, OpenAI, Neon, etc.)
+
+pnpm prisma migrate dev
+
+pnpm --filter @ai/web dev (and your worker if you’re using background jobs)
+
+That’s it — you now have:
+
+Authenticated dashboard,
+
+Project CRUD + delete,
+
+Saved chat history with chat selector + rename,
+
+Artifact list with previews (html, image/url, mermaid as code, json/text fallback).

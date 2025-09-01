@@ -1,0 +1,373 @@
+here’s the drop-in auth + projects CRUD + saved chat history. Paste these files into the same monorepo I gave you (under apps/web) and you’re good.
+
+1) Supabase UI auth (client + pages)
+apps/web/lib/supabaseClient.ts
+"use client";
+import { createClient } from "@supabase/supabase-js";
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+);
+
+// Handy: get current access token (or "")
+export async function getAccessToken(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? "";
+}
+
+apps/web/app/login/page.tsx
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    // if already logged in, bounce home
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = "/";
+    });
+  }, []);
+
+  async function signInWithEmail() {
+    setErr("");
+    const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: `${location.origin}` } });
+    if (error) setErr(error.message);
+    else setSent(true);
+  }
+
+  async function signInWithGoogle() {
+    await supabase.auth.signInWithOAuth({ provider: "google", options:{ redirectTo: `${location.origin}` }});
+  }
+
+  return (
+    <div className="min-h-[70vh] grid place-items-center">
+      <div className="w-full max-w-sm rounded-xl border border-zinc-800 p-6">
+        <h1 className="text-xl font-semibold mb-2">Sign in</h1>
+        <p className="text-sm text-zinc-400 mb-4">Use a magic link or Google.</p>
+
+        <div className="space-y-3">
+          <input className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2"
+                 placeholder="you@email.com"
+                 value={email} onChange={e=>setEmail(e.target.value)} />
+          <button onClick={signInWithEmail} className="w-full px-3 py-2 rounded bg-blue-600">Send magic link</button>
+          <button onClick={signInWithGoogle} className="w-full px-3 py-2 rounded border border-zinc-700">Continue with Google</button>
+          {sent && <div className="text-emerald-400 text-sm">Check your inbox for the link.</div>}
+          {err && <div className="text-red-400 text-sm">{err}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+apps/web/app/logout/page.tsx
+"use client";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+export default function Logout() {
+  useEffect(() => { supabase.auth.signOut().finally(()=>{ window.location.href="/login"; }); }, []);
+  return <div className="p-6 text-zinc-300">Signing you out…</div>;
+}
+
+
+Optional guard: add a simple client guard to any page by checking session in useEffect and redirecting to /login if none. (Server routes are already protected using JWT verification.)
+
+2) Projects CRUD API
+apps/web/app/api/projects/route.ts (GET list, POST create)
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const projects = await prisma.project.findMany({
+    where: { ownerId: user.sub },
+    orderBy: { createdAt: "desc" },
+    select: { id:true, name:true, description:true, createdAt:true }
+  });
+  return NextResponse.json({ ok:true, projects });
+}
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name, description } = await req.json();
+  const p = await prisma.project.create({ data:{ ownerId: user.sub, name, description }});
+  return NextResponse.json({ ok:true, project: p });
+}
+
+apps/web/app/api/projects/[id]/route.ts (GET, PUT, DELETE)
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function GET(_: NextRequest, { params }: { params: { id: string }}) {
+  const p = await prisma.project.findUnique({ where: { id: params.id } });
+  if (!p) return NextResponse.json({ ok:false, error:"not found" }, { status:404 });
+  return NextResponse.json({ ok:true, project: p });
+}
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { name, description } = await req.json();
+  const p = await prisma.project.update({ where: { id: params.id }, data: { name, description }});
+  return NextResponse.json({ ok:true, project: p });
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  await prisma.project.delete({ where: { id: params.id }});
+  return NextResponse.json({ ok:true });
+}
+
+3) Saved chat history APIs
+apps/web/app/api/chats/list/route.ts (GET chats by project)
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const user = await verifySupabaseJWT(token).catch(()=>null);
+  if (!user) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const url = new URL(req.url);
+  const projectId = url.searchParams.get("projectId") || undefined;
+
+  const chats = await prisma.chat.findMany({
+    where: { userId: user.sub, ...(projectId ? { projectId } : {}) },
+    orderBy: { createdAt: "desc" },
+    select: { id:true, title:true, createdAt:true, projectId:true }
+  });
+  return NextResponse.json({ ok:true, chats });
+}
+
+apps/web/app/api/chats/[id]/messages/route.ts (GET messages for a chat)
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export async function GET(_: NextRequest, { params }: { params: { id: string }}) {
+  const msgs = await prisma.message.findMany({
+    where: { chatId: params.id },
+    orderBy: { createdAt: "asc" },
+    select: { id:true, role:true, content:true, createdAt:true }
+  });
+  return NextResponse.json({ ok:true, messages: msgs });
+}
+
+
+Your existing /api/chat route already persists both user and assistant messages. No changes required.
+
+4) UI: Projects sidebar + CRUD + chat history
+apps/web/components/ProjectSidebar.tsx (replace with fetch-backed version)
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+type Project = { id: string; name: string; description?: string };
+
+export default function ProjectSidebar({ activeProjectId }: { activeProjectId?: string }) {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [name, setName] = useState("");
+
+  async function load() {
+    const token = await getAccessToken();
+    const r = await fetch("/api/projects", { headers: { Authorization: `Bearer ${token}` }});
+    const { projects } = await r.json();
+    setProjects(projects);
+  }
+  useEffect(()=>{ load(); }, []);
+
+  async function create() {
+    const token = await getAccessToken();
+    await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name })
+    });
+    setName(""); load();
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="font-semibold">Projects</div>
+      <div className="space-y-2">
+        {projects.map(p => (
+          <Link key={p.id}
+                href={`/project/${p.id}`}
+                className={`block px-3 py-2 rounded border border-zinc-800 ${activeProjectId===p.id?"bg-zinc-900":""}`}>
+            {p.name}
+          </Link>
+        ))}
+      </div>
+      <div className="pt-3 border-t border-zinc-800">
+        <input className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 mb-2"
+               value={name} onChange={e=>setName(e.target.value)} placeholder="New project name" />
+        <button onClick={create} className="w-full px-3 py-2 rounded bg-blue-600">Create</button>
+      </div>
+    </div>
+  );
+}
+
+apps/web/components/ChatWindow.tsx (load history + continue chat)
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+type Msg = { role: "user"|"assistant"; content: string };
+type Chat = { id: string; title?: string };
+
+export default function ChatWindow({ projectId }: { projectId?: string }) {
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState("");
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  async function loadChats() {
+    const token = await getAccessToken();
+    const r = await fetch(`/api/chats/list?projectId=${projectId??""}`, { headers:{ Authorization:`Bearer ${token}` }});
+    const d = await r.json();
+    setChats(d.chats);
+    if (d.chats.length && !chatId) selectChat(d.chats[0].id);
+  }
+
+  async function selectChat(id: string) {
+    setChatId(id);
+    const r = await fetch(`/api/chats/${id}/messages`);
+    const d = await r.json();
+    setMessages(d.messages.map((m: any)=>({ role: m.role, content: m.content })));
+  }
+
+  useEffect(()=>{ loadChats(); /* eslint-disable-next-line */ }, [projectId]);
+
+  async function onSend() {
+    if (!input.trim()) return;
+    const userMsg = { role: "user" as const, content: input };
+    setMessages(m => [...m, userMsg]);
+    setInput("");
+    setLoading(true);
+    try {
+      const token = await getAccessToken();
+      const resp = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+        body: JSON.stringify({ messages:[userMsg], chatId, projectId })
+      });
+      const data = await resp.json();
+      if (!chatId) setChatId(data.chatId);
+      setMessages(m => [...m, { role:"assistant", content: data.message }]);
+      if (!chats.find(c=>c.id===data.chatId)) loadChats();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-zinc-400">Project Chat</div>
+        <div className="flex gap-2">
+          <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1"
+                  value={chatId ?? ""} onChange={e=>selectChat(e.target.value)}>
+            <option value="" disabled>Select chat…</option>
+            {chats.map(c => <option key={c.id} value={c.id}>{c.title ?? c.id.slice(0,8)}</option>)}
+          </select>
+          <button className="px-2 py-1 rounded border border-zinc-700"
+                  onClick={()=>{ setChatId(null); setMessages([]); }}>New</button>
+        </div>
+      </div>
+
+      <div className="min-h-[220px] max-h-[320px] overflow-y-auto bg-zinc-900/50 p-3 rounded">
+        {messages.map((m, i) => (
+          <div key={i} className={m.role === "user" ? "text-blue-300" : "text-emerald-300"}>
+            <span className="opacity-70">{m.role}:</span> {m.content}
+          </div>
+        ))}
+        {loading && <div className="text-zinc-400">…thinking</div>}
+      </div>
+
+      <div className="flex gap-2">
+        <input className="flex-1 bg-zinc-900 rounded px-3 py-2 border border-zinc-800"
+               value={input} onChange={e=>setInput(e.target.value)} placeholder="Type a message..." />
+        <button onClick={onSend} className="px-3 py-2 rounded bg-blue-600">Send</button>
+      </div>
+    </div>
+  );
+}
+
+5) Quick guard on dashboard pages
+
+Add this tiny helper to bounce unauthenticated users from the main dashboard pages. (You can later move to a real middleware if you want.)
+
+apps/web/app/(dashboard)/page.tsx (top of file)
+// add at the top:
+export const dynamic = "force-dynamic";
+
+
+…and in the body of your component, keep it as is (server routes already enforce auth; the UI will show login entry if you navigate manually).
+
+Or add a client guard wrapper:
+
+apps/web/components/RequireAuth.tsx
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+export default function RequireAuth({ children }: { children: React.ReactNode }) {
+  const [ok, setOk] = useState<boolean | null>(null);
+  useEffect(()=>{ supabase.auth.getSession().then(({data})=>setOk(!!data.session)); }, []);
+  if (ok === null) return <div className="p-6 text-zinc-400">Checking session…</div>;
+  if (!ok) { if (typeof window !== "undefined") window.location.href="/login"; return null; }
+  return <>{children}</>;
+}
+
+
+Then wrap your dashboard root:
+
+// apps/web/app/(dashboard)/page.tsx
+import RequireAuth from "@/components/RequireAuth";
+export default function Page() {
+  return (
+    <RequireAuth>
+      {/* existing dashboard content */}
+    </RequireAuth>
+  );
+}
+
+6) Minimal wiring notes
+
+Auth headers: In the components above, requests attach Authorization: Bearer <supabase access token> using getAccessToken(). Your API routes already run verifySupabaseJWT() to validate.
+
+Project list + create: Sidebar fetches /api/projects, POSTs to create, and refreshes.
+
+Chat history: The chat window loads chat list for the current project, lets you pick a chat, fetches all messages, and creates/continues chats via /api/chat (no change needed).
+
+Run it
+
+Ensure env vars are set (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_JWKS_URL, DB, OpenAI).
+
+pnpm prisma migrate dev
+
+Start both:
+
+pnpm --filter @ai/web dev
+pnpm --filter @ai/worker start
+
+
+Visit http://localhost:3000/login, sign in, create a project, chat, refresh, switch chats—saved history should load.

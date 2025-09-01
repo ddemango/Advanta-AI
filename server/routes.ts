@@ -46,6 +46,7 @@ import { blogRouter } from './enhanced-blog-routes';
 import { statusRouter } from './status-routes';
 import { adminRouter } from './admin-routes';
 import trendingContentRoutes from './trending-content-routes';
+import * as aiPortalApi from './api/ai-portal';
 import Stripe from "stripe";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -8063,6 +8064,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+  // AI Portal endpoints
+  app.post('/api/chat', aiPortalApi.chat);
+  app.post('/api/run-code', aiPortalApi.runCode);
+  app.post('/api/search', aiPortalApi.search);
+  app.post('/api/tts', aiPortalApi.textToSpeech);
+  app.get('/api/ai-portal/health', aiPortalApi.health);
 
   // Health check endpoint
   app.get('/healthz', async (req, res) => {
