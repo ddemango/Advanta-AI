@@ -58,7 +58,11 @@ const publicApiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: process.env.NODE_ENV === 'production'
+  skip: (req) => {
+    // Skip rate limiting for localhost and development
+    const ip = req.ip || req.connection.remoteAddress;
+    return ip === '127.0.0.1' || ip === '::1' || process.env.NODE_ENV === 'development';
+  }
 });
 
 // Rate limiting for blog view tracking
@@ -66,7 +70,11 @@ const viewTrackingLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 60, // 60 view tracking requests per minute
   message: { error: 'Too many view requests' },
-  trustProxy: process.env.NODE_ENV === 'production'
+  skip: (req) => {
+    // Skip rate limiting for localhost and development
+    const ip = req.ip || req.connection.remoteAddress;
+    return ip === '127.0.0.1' || ip === '::1' || process.env.NODE_ENV === 'development';
+  }
 });
 
 // Fantasy Football Analysis Engine

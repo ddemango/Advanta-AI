@@ -11,6 +11,11 @@ export const createRateLimit = (windowMs: number, max: number, message: string) 
     message: { error: message },
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => {
+      // Skip rate limiting for localhost and development
+      const ip = req.ip || req.connection.remoteAddress;
+      return ip === '127.0.0.1' || ip === '::1' || process.env.NODE_ENV === 'development';
+    }
   });
 };
 

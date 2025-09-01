@@ -14,7 +14,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { Editor } from "@monaco-editor/react";
+import Editor from "@monaco-editor/react";
 import { 
   Play, 
   Search, 
@@ -518,6 +518,19 @@ const CriticalTierSuite: React.FC = () => {
                       scrollBeyondLastLine: false,
                       fontSize: 14,
                       fontFamily: 'JetBrains Mono, Consolas, monospace',
+                      automaticLayout: true
+                    }}
+                    beforeMount={(monaco) => {
+                      // Disable WebWorkers to prevent CDN loading issues
+                      if (typeof window !== 'undefined') {
+                        window.MonacoEnvironment = {
+                          getWorker: () => new Worker(
+                            URL.createObjectURL(
+                              new Blob(['self.MonacoEnvironment = { baseUrl: "/" };'], { type: 'application/javascript' })
+                            )
+                          )
+                        };
+                      }
                     }}
                   />
                 </div>
