@@ -1,0 +1,468 @@
+here are copy-paste patches for the five features you asked for. They bolt directly onto the scaffold we’ve been iterating.
+
+0) New deps & env
+
+Install:
+
+pnpm add node-pty ws xterm react-markdown remark-gfm mermaid stripe
+
+
+Env (add to .env):
+
+# WS PTY (no keys needed; we’ll bind to localhost)
+OPERATOR_IMAGE=python:3.11-alpine
+
+# Stripe (mock → real-ready)
+STRIPE_SECRET=sk_live_or_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+PRICE_ID_CREDITS=price_XXXXXXXX   # a one-time purchase that maps to a credits pack
+CREDITS_PER_PURCHASE=100000       # credits to add when checkout completes
+
+1) WS/PTY terminal with xterm.js (interactive Operator)
+
+We’ll run a tiny WebSocket + PTY service alongside Next.js (just like the worker). It mounts each command session’s working directory (.operator-sessions/<sid>).
+
+apps/web/server/terminal.ts (standalone server)
+// run: pnpm tsx apps/web/server/terminal.ts
+import http from "http";
+import { WebSocketServer } from "ws";
+import * as url from "url";
+import * as fs from "fs";
+import * as path from "path";
+import pty from "node-pty";
+
+const PORT = Number(process.env.TERMINAL_PORT || 4001);
+const ROOT = path.join(process.cwd(), ".operator-sessions");
+if (!fs.existsSync(ROOT)) fs.mkdirSync(ROOT, { recursive: true });
+
+const server = http.createServer((_, res) => {
+  res.writeHead(200).end("OK");
+});
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws, req) => {
+  const { query } = url.parse(req.url || "", true);
+  const sid = String(query.sid || "");
+  if (!sid) { ws.close(); return; }
+  const cwd = path.join(ROOT, sid);
+  if (!fs.existsSync(cwd)) { ws.close(); return; }
+
+  const shell = process.platform === "win32" ? "powershell.exe" : "bash";
+  const p = pty.spawn(shell, [], {
+    name: "xterm-color",
+    cols: 120,
+    rows: 32,
+    cwd,
+    env: process.env as any
+  });
+
+  p.onData(data => ws.readyState === ws.OPEN && ws.send(data));
+  ws.on("message", (m) => {
+    // Expect JSON {type:"data"|"resize", data:string|{cols,rows}}
+    try {
+      const msg = JSON.parse(m.toString());
+      if (msg.type === "data") p.write(msg.data);
+      else if (msg.type === "resize") p.resize(msg.data.cols, msg.data.rows);
+    } catch { /* ignore */ }
+  });
+  ws.on("close", () => p.kill());
+});
+
+server.listen(PORT, () => console.log("PTY WS listening on", PORT));
+
+
+Add script in root package.json:
+
+{
+  "scripts": {
+    "terminal": "tsx apps/web/server/terminal.ts"
+  }
+}
+
+
+Run it side-by-side with Next:
+
+pnpm --filter @ai/web dev
+pnpm terminal
+
+apps/web/components/OperatorTerminal.tsx (xterm UI)
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { Terminal } from "xterm";
+import "xterm/css/xterm.css";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function OperatorTerminal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const termRef = useRef<Terminal>();
+  const wsRef = useRef<WebSocket>();
+  const [sid, setSid] = useState<string | null>(null);
+
+  async function newSession() {
+    const t = await getAccessToken();
+    const r = await fetch("/api/operator/session", { method:"POST", headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setSid(d.session.id);
+  }
+  function connect() {
+    if (!sid || !ref.current) return;
+    if (termRef.current) termRef.current.dispose();
+    if (wsRef.current) wsRef.current.close();
+
+    const term = new Terminal({ convertEol: true, fontSize: 14, cursorBlink: true });
+    term.open(ref.current);
+    term.write("Connected. Type commands…\r\n");
+    const wsUrl = `ws://localhost:${process.env.NEXT_PUBLIC_TERMINAL_PORT || 4001}?sid=${encodeURIComponent(sid)}`;
+    const ws = new WebSocket(wsUrl);
+    ws.onmessage = (ev) => term.write(ev.data as string);
+    term.onData((d) => ws.send(JSON.stringify({ type: "data", data: d })));
+    termRef.current = term; wsRef.current = ws;
+  }
+  async function closeSession() {
+    if (!sid) return;
+    const t = await getAccessToken();
+    await fetch(`/api/operator/session/${sid}`, { method:"DELETE", headers:{ Authorization:`Bearer ${t}` }});
+    wsRef.current?.close(); termRef.current?.dispose(); setSid(null);
+  }
+
+  useEffect(() => { if (sid) connect(); /* eslint-disable-next-line */ }, [sid]);
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="font-semibold">Operator Terminal (xterm.js)</div>
+        <div className="flex gap-2">
+          <button className="px-3 py-2 rounded bg-blue-600" onClick={newSession} disabled={!!sid}>New</button>
+          <button className="px-3 py-2 rounded border border-zinc-700" onClick={closeSession} disabled={!sid}>Close</button>
+        </div>
+      </div>
+      <div ref={ref} className="h-80 rounded border border-zinc-800 overflow-hidden bg-black" />
+      {!sid && <div className="text-xs text-zinc-500">Start a session, then the terminal will attach via WS.</div>}
+    </div>
+  );
+}
+
+
+Tip: add NEXT_PUBLIC_TERMINAL_PORT=4001 to .env if you want a custom port.
+
+2) Feature gates (e.g., Deep Research only for Pro)
+
+Create a simple guard.
+
+apps/web/lib/gates.ts
+import { prisma } from "./db";
+
+export async function requirePlan(userId: string, allowed: ("free"|"pro"|"enterprise")[]) {
+  const u = await prisma.user.findUnique({ where:{ id: userId }, select:{ plan:true }});
+  if (!u || !allowed.includes(u.plan as any)) {
+    const needed = allowed.join(" or ");
+    const err: any = new Error(`Feature requires ${needed}`);
+    err.code = "PLAN_FORBIDDEN";
+    throw err;
+  }
+}
+
+
+Apply to Deep Research queue enqueue route:
+
+apps/web/app/api/agent/enqueue/route.ts (wrap)
+import { requirePlan } from "@/lib/gates";
+// ...
+export async function POST(req: NextRequest) {
+  // ...existing auth...
+  await requirePlan(user.sub, ["pro","enterprise"]);  // gate
+  // continue enqueue...
+}
+
+
+Gate UI elements with a tiny helper:
+
+apps/web/components/PlanBadge.tsx
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function PlanBadge() {
+  const [plan, setPlan] = useState<string>("free");
+  useEffect(() => { (async () => {
+    const t = await getAccessToken();
+    const r = await fetch("/api/me", { headers:{ Authorization:`Bearer ${t}` }});
+    const d = await r.json(); setPlan(d.user.plan);
+  })(); }, []);
+  return <span className="text-xs px-2 py-1 rounded border border-zinc-700">{plan.toUpperCase()}</span>;
+}
+
+3) Stripe checkout + webhook to add credits
+apps/web/app/api/stripe/checkout/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET!, { apiVersion: "2024-06-20" });
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: [{ price: process.env.PRICE_ID_CREDITS!, quantity: 1 }],
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/?success=1`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/?canceled=1`,
+    metadata: { userId: u.sub } // we’ll read this in webhook
+  });
+  return NextResponse.json({ ok:true, url: session.url });
+}
+
+apps/web/app/api/stripe/webhook/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { prisma } from "@/lib/db";
+import { addCredits } from "@/lib/credits";
+
+export async function POST(req: NextRequest) {
+  const sig = req.headers.get("stripe-signature")!;
+  const stripe = new Stripe(process.env.STRIPE_SECRET!, { apiVersion: "2024-06-20" });
+  const raw = await req.text();
+
+  let evt: Stripe.Event;
+  try {
+    evt = stripe.webhooks.constructEvent(raw, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+
+  if (evt.type === "checkout.session.completed") {
+    const session = evt.data.object as Stripe.Checkout.Session;
+    const userId = session.metadata?.userId;
+    if (userId) {
+      const amount = Number(process.env.CREDITS_PER_PURCHASE || 100000);
+      await addCredits(userId, amount, "stripe_topup", { sessionId: session.id });
+      await prisma.auditLog.create({ data: { userId, action:"STRIPE_TOPUP", meta:{ amount, sessionId: session.id } as any }});
+    }
+  }
+  return NextResponse.json({ received: true });
+}
+
+
+UI button somewhere (e.g., in CreditsPanel)
+
+async function buy() {
+  const t = await getAccessToken();
+  const r = await fetch("/api/stripe/checkout", { method:"POST", headers:{ Authorization:`Bearer ${t}` }});
+  const d = await r.json();
+  if (d.url) window.location.href = d.url;
+}
+
+
+Set up the webhook on your Stripe dashboard pointing to /api/stripe/webhook.
+
+4) Mermaid + Markdown rendering for artifacts
+apps/web/components/ArtifactList.tsx (replace RenderArtifact)
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import mermaid from "mermaid";
+
+// ... keep imports/top of file the same ...
+
+function MermaidBlock({ code }: { code: string }) {
+  const id = "mmd-" + Math.random().toString(36).slice(2);
+  useEffect(() => {
+    mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "dark" });
+    mermaid.render(id, code, (svg) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = svg;
+    });
+  }, [code]);
+  return <div id={id} className="bg-white rounded p-2 overflow-auto" />;
+}
+
+function RenderArtifact({ a }: { a: Artifact }) {
+  if (a.kind === "html" && typeof a.data?.html === "string") {
+    return <iframe className="w-full h-72 rounded border border-zinc-800 bg-white" srcDoc={a.data.html} />;
+  }
+  if (a.kind === "image" && typeof a.data?.url === "string") {
+    return <img src={a.data.url} alt={a.name} className="rounded max-h-72 object-contain border border-zinc-800" />;
+  }
+  if (a.kind === "mermaid" && typeof a.data?.code === "string") {
+    return <MermaidBlock code={a.data.code} />;
+  }
+  if (a.kind === "markdown" && typeof a.data?.md === "string") {
+    return <div className="prose prose-invert max-w-none">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{a.data.md}</ReactMarkdown>
+    </div>;
+  }
+  if (a.kind === "table" && a.data?.columns && a.data?.rows) {
+    return (
+      <div className="overflow-auto">
+        <table className="min-w-full text-xs">
+          <thead><tr>{a.data.columns.map((c:string)=><th key={c} className="text-left pr-3">{c}</th>)}</tr></thead>
+          <tbody>{a.data.rows.slice(0,20).map((r:any,i:number)=><tr key={i}>{a.data.columns.map((c:string)=><td key={c} className="pr-3">{String(r[c])}</td>)}</tr>)}</tbody>
+        </table>
+      </div>
+    );
+  }
+  return <pre className="bg-zinc-900 p-3 rounded overflow-auto text-xs">{JSON.stringify(a.data, null, 2)}</pre>;
+}
+
+
+You can now save artifacts with kind: "markdown" (data: { md: "# Hello *world*" }) or kind: "mermaid" (data: { code: "graph TD; A-->B" }).
+
+5) Team role admin UI (promote/demote/remove)
+API: update role / remove member
+
+apps/web/app/api/teams/[id]/members/route.ts (GET list, POST add by email)
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export async function GET(req: NextRequest, { params }: { params: { id: string }}) {
+  const members = await prisma.teamMember.findMany({ where:{ teamId: params.id }, include:{ user:true }});
+  return NextResponse.json({ ok:true, members });
+}
+
+export async function POST(req: NextRequest, { params }: { params: { id: string }}) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+  const { email, role="member" } = await req.json();
+  const user = await prisma.user.findUnique({ where:{ email }});
+  if (!user) return NextResponse.json({ ok:false, error:"user not found" }, { status:404 });
+  const m = await prisma.teamMember.upsert({
+    where: { teamId_userId: { teamId: params.id, userId: user.id }},
+    update: { role },
+    create: { teamId: params.id, userId: user.id, role }
+  });
+  return NextResponse.json({ ok:true, member: m });
+}
+
+
+apps/web/app/api/teams/[id]/members/[userId]/route.ts (PUT role, DELETE remove)
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string, userId: string }}) {
+  const { role } = await req.json();
+  const m = await prisma.teamMember.update({ where:{ teamId_userId: { teamId: params.id, userId: params.userId }}, data:{ role }});
+  return NextResponse.json({ ok:true, member: m });
+}
+export async function DELETE(_: NextRequest, { params }: { params: { id: string, userId: string }}) {
+  await prisma.teamMember.delete({ where:{ teamId_userId: { teamId: params.id, userId: params.userId }}});
+  return NextResponse.json({ ok:true });
+}
+
+UI: Admin panel
+
+apps/web/components/TeamAdminPanel.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function TeamAdminPanel({ teamId }: { teamId: string }) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("member");
+
+  async function load() {
+    const r = await fetch(`/api/teams/${teamId}/members`);
+    const d = await r.json(); setMembers(d.members);
+  }
+  useEffect(()=>{ load(); }, [teamId]);
+
+  async function add() {
+    const t = await getAccessToken();
+    await fetch(`/api/teams/${teamId}/members`, {
+      method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ email, role })
+    });
+    setEmail(""); load();
+  }
+  async function setMemberRole(userId: string, newRole: string) {
+    const t = await getAccessToken();
+    await fetch(`/api/teams/${teamId}/members/${userId}`, {
+      method:"PUT", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ role: newRole })
+    });
+    load();
+  }
+  async function remove(userId: string) {
+    const t = await getAccessToken();
+    await fetch(`/api/teams/${teamId}/members/${userId}`, { method:"DELETE", headers:{ Authorization:`Bearer ${t}` }});
+    load();
+  }
+
+  return (
+    <div className="rounded-xl border border-zinc-800 p-4 space-y-3">
+      <div className="font-semibold">Team Admin</div>
+      <div className="flex gap-2">
+        <input className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" placeholder="user@example.com" value={email} onChange={e=>setEmail(e.target.value)} />
+        <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={role} onChange={e=>setRole(e.target.value)}>
+          <option value="member">member</option>
+          <option value="admin">admin</option>
+        </select>
+        <button className="px-3 py-2 rounded bg-blue-600" onClick={add}>Add/Invite</button>
+      </div>
+      <div className="divide-y divide-zinc-800 text-sm">
+        {members.map((m:any)=>(
+          <div key={m.id} className="py-2 flex items-center justify-between">
+            <div>{m.user?.email || m.userId}</div>
+            <div className="flex gap-2 items-center">
+              <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={m.role} onChange={e=>setMemberRole(m.userId, e.target.value)}>
+                <option value="owner">owner</option>
+                <option value="admin">admin</option>
+                <option value="member">member</option>
+              </select>
+              <button className="px-2 py-1 rounded bg-red-600" onClick={()=>remove(m.userId)}>Remove</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+Add this panel anywhere you manage teams (e.g., under a selected team).
+
+6) Put the new widgets on your pages
+
+Dashboard (or a Settings page):
+
+// apps/web/app/(dashboard)/page.tsx
+import OperatorTerminal from "@/components/OperatorTerminal";
+import PlanBadge from "@/components/PlanBadge";
+import TeamPanel from "@/components/TeamPanel";
+import TeamAdminPanel from "@/components/TeamAdminPanel";
+
+export default function Page() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-zinc-800 p-4 flex items-center justify-between">
+        <div className="font-semibold">Dashboard</div>
+        <PlanBadge />
+      </div>
+      <OperatorTerminal />
+      <TeamPanel />
+      {/* If you want to manage a specific team: */}
+      {/* <TeamAdminPanel teamId="YOUR_TEAM_ID" /> */}
+    </div>
+  );
+}
+
+
+CreditsPanel: add the “Buy credits” button calling /api/stripe/checkout as shown above.
+
+Notes
+
+WS/PTY server is a separate process (like the worker). This keeps things clean and avoids serverless websocket constraints. In Replit, run it in a second tab.
+
+Security: For production, protect the WS with a short-lived JWT query param (signed by your API) and validate it server-side before spawning the PTY.
+
+Stripe: The webhook adds credits on checkout.session.completed. Use test mode keys first.
+
+Mermaid/Markdown: render entirely client-side; keep diagrams small to avoid layout jank.
+
+Feature gates: apply requirePlan() in any route you want gated, and hide UI controls on non-eligible plans.
