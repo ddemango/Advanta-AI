@@ -1,0 +1,410 @@
+here are the copy-paste patches for the four asks:
+
+JWT-signed WS tickets for the terminal
+
+Project → Team picker (move a project into a team)
+
+“Deep Research” client-side gate (disabled button + tooltip unless Pro/Enterprise)
+
+Stripe customer portal (manage billing + add credits post-purchase)
+
+After any schema change below, run:
+
+pnpm prisma generate
+pnpm prisma migrate dev
+
+0) Small schema patch (Stripe customer id)
+
+prisma/schema.prisma — add this field to User:
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  // ...
+  plan             String   @default("free")
+  defaultModel     String?
+  dailyTokenLimit  Int?
+  retentionDays    Int?
+  credits          Int      @default(0)
+
+  // NEW
+  stripeCustomerId String?  @unique
+
+  // ...
+}
+
+1) JWT-signed WS tickets for terminal
+
+We’ll mint a short-lived JWT that the WS server verifies before spawning a PTY.
+
+1.1 Ticket mint API
+
+apps/web/app/api/operator/ticket/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
+import { verifySupabaseJWT } from "@/lib/auth";
+
+const SECRET = process.env.NODE_SECRET || "dev";
+const WSPORT = process.env.NEXT_PUBLIC_TERMINAL_PORT || "4001";
+
+export async function GET(req: NextRequest) {
+  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const u = await verifySupabaseJWT(token).catch(() => null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status: 401 });
+
+  const url = new URL(req.url);
+  const sessionId = url.searchParams.get("sessionId");
+  if (!sessionId) return NextResponse.json({ ok:false, error:"sessionId required" }, { status: 400 });
+
+  const ticket = jwt.sign(
+    { sub: u.sub, sid: sessionId, scope: "operator_ws" },
+    SECRET,
+    { expiresIn: "5m", issuer: "ai-app" }
+  );
+
+  const ws = `ws://localhost:${WSPORT}?ticket=${encodeURIComponent(ticket)}`;
+  return NextResponse.json({ ok:true, ws });
+}
+
+1.2 Secure WS server
+
+Replace your terminal server to require/verify ticket instead of raw sid.
+
+apps/web/server/terminal.ts
+
+import http from "http";
+import { WebSocketServer } from "ws";
+import * as url from "url";
+import * as fs from "fs";
+import * as path from "path";
+import pty from "node-pty";
+import jwt from "jsonwebtoken";
+
+const PORT = Number(process.env.TERMINAL_PORT || process.env.NEXT_PUBLIC_TERMINAL_PORT || 4001);
+const SECRET = process.env.NODE_SECRET || "dev";
+const ROOT = path.join(process.cwd(), ".operator-sessions");
+if (!fs.existsSync(ROOT)) fs.mkdirSync(ROOT, { recursive: true });
+
+const server = http.createServer((_, res) => res.writeHead(200).end("OK"));
+const wss = new WebSocketServer({ server });
+
+wss.on("connection", (ws, req) => {
+  try {
+    const { query } = url.parse(req.url || "", true);
+    const ticket = String(query.ticket || "");
+    if (!ticket) throw new Error("missing ticket");
+    const payload = jwt.verify(ticket, SECRET) as any;
+    if (payload.scope !== "operator_ws") throw new Error("bad scope");
+    const sid = payload.sid as string;
+    const cwd = path.join(ROOT, sid);
+    if (!sid || !fs.existsSync(cwd)) throw new Error("invalid session");
+
+    const shell = process.platform === "win32" ? "powershell.exe" : "bash";
+    const p = pty.spawn(shell, [], { name: "xterm-color", cols: 120, rows: 32, cwd, env: process.env as any });
+
+    p.onData(data => ws.readyState === ws.OPEN && ws.send(data));
+    ws.on("message", (m) => {
+      try {
+        const msg = JSON.parse(m.toString());
+        if (msg.type === "data") p.write(msg.data);
+        else if (msg.type === "resize") p.resize(Math.max(10, msg.data.cols), Math.max(5, msg.data.rows));
+      } catch { /* ignore */ }
+    });
+    ws.on("close", () => p.kill());
+  } catch (e:any) {
+    ws.send(`\r\n[auth error] ${e.message}\r\n`);
+    ws.close();
+  }
+});
+
+server.listen(PORT, () => console.log("PTY WS listening on", PORT));
+
+1.3 Terminal client updates
+
+Swap the client to ask API for a signed WS URL.
+
+apps/web/components/OperatorTerminal.tsx (only the connect() function changes)
+
+function connect() {
+  if (!sid || !ref.current) return;
+  if (termRef.current) termRef.current.dispose();
+  if (wsRef.current) wsRef.current.close();
+
+  const term = new Terminal({ convertEol: true, fontSize: 14, cursorBlink: true });
+  term.open(ref.current);
+  term.write("Authorizing…\r\n");
+
+  (async () => {
+    const t = await getAccessToken();
+    const r = await fetch(`/api/operator/ticket?sessionId=${encodeURIComponent(sid)}`, {
+      headers: { Authorization: `Bearer ${t}` }
+    });
+    const d = await r.json();
+    if (!d.ws) { term.write("Failed to authorize WS.\r\n"); return; }
+
+    const ws = new WebSocket(d.ws);
+    ws.onopen = () => term.write("Connected. Type commands…\r\n");
+    ws.onmessage = (ev) => term.write(ev.data as string);
+    ws.onclose = () => term.write("\r\n[disconnected]\r\n");
+    term.onData((data) => ws.send(JSON.stringify({ type:"data", data })));
+    termRef.current = term; wsRef.current = ws;
+  })();
+}
+
+2) Project → Team picker
+
+Let owners/admins move a project into a team (or back to personal).
+
+2.1 Allow teamId in project update API
+
+apps/web/app/api/projects/[id]/route.ts (extend PUT handler)
+
+// inside PUT:
+const { name, description, teamId } = await req.json();
+
+// ownership check done earlier;
+// If providing teamId, ensure the user is a member of that team.
+if (typeof teamId !== "undefined") {
+  if (teamId === null) {
+    // move back to personal
+  } else {
+    const m = await prisma.teamMember.findFirst({ where: { teamId, userId: user.sub }});
+    if (!m) return NextResponse.json({ ok:false, error:"not member of team" }, { status:403 });
+  }
+}
+
+const p = await prisma.project.update({
+  where: { id: params.id },
+  data: { name, description, teamId: teamId ?? undefined }
+});
+
+2.2 Team picker UI
+
+apps/web/components/ProjectTeamPicker.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+type Team = { id: string; name: string };
+
+export default function ProjectTeamPicker({ projectId }: { projectId: string }) {
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [sel, setSel] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/teams").then(r=>r.json()).then(d => setTeams(d.teams || []));
+    // preload project to set current team selection
+    fetch(`/api/projects/${projectId}`).then(r=>r.json()).then(d => setSel(d?.project?.teamId || ""));
+  }, [projectId]);
+
+  async function save() {
+    const t = await getAccessToken();
+    await fetch(`/api/projects/${projectId}`, {
+      method: "PUT",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+      body: JSON.stringify({ teamId: sel || null })
+    });
+    alert("Project team updated.");
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <select className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1" value={sel} onChange={e=>setSel(e.target.value)}>
+        <option value="">Personal</option>
+        {teams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+      <button className="px-2 py-1 rounded border border-zinc-700" onClick={save}>Move</button>
+    </div>
+  );
+}
+
+
+Add it to your project header:
+
+// apps/web/components/ProjectHeader.tsx
+import ProjectTeamPicker from "@/components/ProjectTeamPicker";
+// ...
+<div className="flex gap-3 items-center">
+  {/* existing Edit/Delete/ModelSelector … */}
+  <ProjectTeamPicker projectId={projectId} />
+</div>
+
+3) Deep Research gated on Pro (client UX)
+
+We already gated the server with requirePlan(["pro","enterprise"]). Now, disable the button on Free with a tooltip.
+
+apps/web/components/DeepResearchButton.tsx
+
+"use client";
+import { useEffect, useState } from "react";
+import { getAccessToken } from "@/lib/supabaseClient";
+
+export default function DeepResearchButton({ projectId }: { projectId?: string }) {
+  const [plan, setPlan] = useState<"free"|"pro"|"enterprise">("free");
+  const [loading, setLoading] = useState(false);
+  const allowed = plan === "pro" || plan === "enterprise";
+
+  useEffect(() => {
+    (async () => {
+      const t = await getAccessToken();
+      const r = await fetch("/api/me", { headers: { Authorization: `Bearer ${t}` }});
+      const d = await r.json();
+      setPlan(d.user.plan);
+    })();
+  }, []);
+
+  async function enqueue() {
+    setLoading(true);
+    try {
+      const t = await getAccessToken();
+      await fetch("/api/agent/enqueue", {
+        method: "POST",
+        headers: { "Content-Type":"application/json", Authorization:`Bearer ${t}` },
+        body: JSON.stringify({ projectId, type: "deep_research", payload: { query: "…" } })
+      });
+      alert("Deep Research queued.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      className={`px-3 py-2 rounded ${allowed ? "bg-purple-600" : "bg-zinc-800 cursor-not-allowed"}`}
+      disabled={!allowed || loading}
+      title={allowed ? "" : "Deep Research is available on Pro and Enterprise plans."}
+      onClick={enqueue}
+    >
+      {loading ? "Queuing…" : "Run Deep Research"}
+    </button>
+  );
+}
+
+
+Drop this button anywhere (dashboard or project page). Free users will see it disabled with a tooltip; Pro/Enterprise can click.
+
+4) Stripe customer portal
+
+Create/retrieve a Stripe Customer for each user and generate a Billing Portal session that returns to your app.
+
+4.1 Customer helper
+
+apps/web/lib/stripe.ts
+
+import Stripe from "stripe";
+import { prisma } from "./db";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET!, { apiVersion: "2024-06-20" });
+
+export async function getOrCreateCustomer(userId: string, email: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }});
+  if (user?.stripeCustomerId) return await stripe.customers.retrieve(user.stripeCustomerId);
+
+  // Try to find by email first
+  const list = await stripe.customers.list({ email, limit: 1 });
+  let cust = list.data[0];
+  if (!cust) cust = await stripe.customers.create({ email });
+
+  await prisma.user.update({ where: { id: userId }, data: { stripeCustomerId: cust.id }});
+  return cust;
+}
+
+4.2 Portal API
+
+apps/web/app/api/stripe/portal/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
+import { verifySupabaseJWT } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getOrCreateCustomer } from "@/lib/stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET!, { apiVersion: "2024-06-20" });
+
+export async function POST(req: NextRequest) {
+  const token = (req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+  const u = await verifySupabaseJWT(token).catch(()=>null);
+  if (!u) return NextResponse.json({ ok:false, error:"unauthorized" }, { status:401 });
+
+  const me = await prisma.user.findUnique({ where: { id: u.sub }, select: { email: true, stripeCustomerId: true }});
+  if (!me?.email) return NextResponse.json({ ok:false, error:"no email" }, { status:400 });
+
+  const customer = await getOrCreateCustomer(u.sub, me.email);
+  const session = await stripe.billingPortal.sessions.create({
+    customer: typeof customer === "string" ? customer : (customer as any).id,
+    return_url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  });
+
+  return NextResponse.json({ ok:true, url: session.url });
+}
+
+4.3 Add a “Manage billing” button
+
+Add to your BillingPanel or anywhere you like:
+
+async function openPortal() {
+  const t = await getAccessToken();
+  const r = await fetch("/api/stripe/portal", { method:"POST", headers:{ Authorization:`Bearer ${t}` }});
+  const d = await r.json();
+  if (d.url) window.location.href = d.url;
+}
+
+
+…and a button:
+
+<button className="px-3 py-2 rounded border border-zinc-700" onClick={openPortal}>
+  Manage billing
+</button>
+
+5) Wire it on pages (quick example)
+
+Project page: add team mover + deep research button.
+
+// apps/web/app/project/[id]/page.tsx
+import ProjectTeamPicker from "@/components/ProjectTeamPicker";
+import DeepResearchButton from "@/components/DeepResearchButton";
+// ...
+< ProjectTeamPicker projectId={id} />
+< DeepResearchButton projectId={id} />
+
+
+Dashboard: replace the old terminal panel with JWT-ticketed one (no UI change—already updated). Add “Manage billing” to your BillingPanel.
+
+6) Env & scripts recap
+
+Add to .env:
+
+NODE_SECRET=super_secret_32_chars_min
+NEXT_PUBLIC_TERMINAL_PORT=4001
+STRIPE_SECRET=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+PRICE_ID_CREDITS=price_xxx
+CREDITS_PER_PURCHASE=100000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+
+Scripts:
+
+{
+  "scripts": {
+    "terminal": "tsx apps/web/server/terminal.ts"
+  }
+}
+
+
+Run:
+
+pnpm --filter @ai/web dev
+pnpm terminal
+
+7) Notes
+
+Security for WS: tickets expire in 5 minutes and are bound to (userId, sessionId). Rotate NODE_SECRET per environment.
+
+Server gates remain source of truth; client disable is UX sugar.
+
+Portal: Stripe portal handles payment methods, invoices, subscriptions. We retain your mock credits logic; real top-ups should come from a Checkout session + webhook (already provided earlier).
+
+Team moves: updating teamId impacts who can read project chats/artifacts; use your existing requireProjectMember guards on read/write routes.

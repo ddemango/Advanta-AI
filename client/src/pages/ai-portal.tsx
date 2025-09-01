@@ -41,6 +41,9 @@ import { ModelSelector } from '@/components/ai-portal/ModelSelector';
 import { HumanizePanel } from '@/components/ai-portal/HumanizePanel';
 import { DataPanel } from '@/components/ai-portal/DataPanel';
 import { OperatorPanel } from '@/components/ai-portal/OperatorPanel';
+import { OperatorTerminal } from '@/components/ai-portal/OperatorTerminal';
+import { PlanGate, PlanBadge } from '@/components/ai-portal/PlanGate';
+import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -418,6 +421,7 @@ export function AIPortal() {
 
           {/* Right cluster: portal info + avatar */}
           <div className="flex items-center gap-3">
+            <PlanBadge />
             <button className="hidden rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium md:inline-flex">
               AI Portal / Team
             </button>
@@ -639,7 +643,11 @@ export function AIPortal() {
                             : 'bg-gray-100 text-gray-900'
                         }`}
                       >
-                        <div className="whitespace-pre-wrap">{message.content}</div>
+                        {message.role === 'assistant' ? (
+                          <EnhancedMarkdown content={message.content} className="text-gray-900" />
+                        ) : (
+                          <div className="whitespace-pre-wrap">{message.content}</div>
+                        )}
                         <div className="text-xs opacity-70 mt-1">
                           {message.timestamp.toLocaleTimeString()}
                         </div>
@@ -760,19 +768,25 @@ export function AIPortal() {
 
           {activeTab === 'operator' && (
             <div className="mt-8">
-              <OperatorPanel />
+              <PlanGate feature="Virtual Computer" requiredPlans={['pro', 'enterprise']}>
+                <OperatorTerminal />
+              </PlanGate>
             </div>
           )}
 
           {activeTab === 'humanize' && (
             <div className="mt-8">
-              <HumanizePanel />
+              <PlanGate feature="Text Humanization" requiredPlans={['free', 'pro', 'enterprise']}>
+                <HumanizePanel />
+              </PlanGate>
             </div>
           )}
 
           {activeTab === 'data' && (
             <div className="mt-8">
-              <DataPanel />
+              <PlanGate feature="Data Analysis" requiredPlans={['pro', 'enterprise']}>
+                <DataPanel />
+              </PlanGate>
             </div>
           )}
         </main>

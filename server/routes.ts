@@ -8076,6 +8076,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/ai-portal/usage', async (req, res) => {
     res.json({ ok: true, usage: [] });
   });
+
+  app.get('/api/ai-portal/projects', async (req, res) => {
+    try {
+      const projects = [
+        {
+          id: 'project-1',
+          name: 'AI Development',
+          description: 'Main AI development project',
+          chats: [
+            {
+              id: 'chat-1',
+              title: 'Welcome Chat',
+              messages: [],
+              createdAt: new Date()
+            }
+          ]
+        }
+      ];
+      res.json({ ok: true, projects });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.get('/api/ai-portal/me', async (req, res) => {
+    try {
+      // Mock user data for development
+      const user = {
+        id: '1',
+        email: 'admin@advanta.ai',
+        plan: 'enterprise', // Change this to test different plan gates: 'free', 'pro', 'enterprise'
+        credits: 50000,
+        defaultModel: 'gpt-4o'
+      };
+      res.json({ ok: true, user });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/ai-portal/chat', async (req, res) => {
+    try {
+      const { messages, model = 'gpt-4o' } = req.body;
+      
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ ok: false, error: 'Messages array is required' });
+      }
+
+      // Prepare messages for OpenAI
+      const openaiMessages = messages.map((msg: any) => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+      // Add system message
+      openaiMessages.unshift({
+        role: 'system',
+        content: 'You are an AI assistant in the Advanta AI Portal. You help users with AI development, code execution, data analysis, and automation tasks. Be helpful, accurate, and professional.'
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: openaiMessages,
+        max_tokens: 2000,
+        temperature: 0.7,
+      });
+
+      const response = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+
+      res.json({ 
+        ok: true, 
+        response,
+        model,
+        usage: completion.usage
+      });
+
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      res.status(500).json({ 
+        ok: false, 
+        error: error.message || 'An error occurred while processing your request'
+      });
+    }
+  });
   
   app.post('/api/humanize', async (req, res) => {
     const { text, tone = 'professional', model = 'gpt-4o-mini' } = req.body;
@@ -8126,6 +8210,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const operatorLib = await import('./lib/operator');
       const session = await operatorLib.createSession(userId);
       res.json({ ok: true, session });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // JWT-signed WebSocket ticket endpoint
+  app.get('/api/operator/ticket', async (req, res) => {
+    try {
+      const userId = 1; // TODO: Get from session/auth
+      const { sessionId } = req.query;
+      
+      if (!sessionId) {
+        return res.status(400).json({ ok: false, error: 'sessionId required' });
+      }
+
+      const jwt = await import('jsonwebtoken');
+      const SECRET = process.env.NODE_SECRET || 'dev-secret-key-change-in-production';
+      const WSPORT = process.env.TERMINAL_PORT || '4001';
+
+      const ticket = jwt.sign(
+        { sub: userId, sid: sessionId, scope: 'operator_ws' },
+        SECRET,
+        { expiresIn: '5m', issuer: 'ai-portal' }
+      );
+
+      const ws = `ws://localhost:${WSPORT}?ticket=${encodeURIComponent(ticket)}`;
+      res.json({ ok: true, ws });
     } catch (error: any) {
       res.status(500).json({ ok: false, error: error.message });
     }
