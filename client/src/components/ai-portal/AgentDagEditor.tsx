@@ -1,5 +1,17 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
+import ReactFlow, { 
+  Background, 
+  Controls, 
+  MiniMap, 
+  addEdge, 
+  useNodesState, 
+  useEdgesState,
+  Node,
+  Edge,
+  Connection
+} from "reactflow";
+import "reactflow/dist/style.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,10 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Save, Play, Plus, Download } from "lucide-react";
 
-interface Node {
-  id: string;
-  type: string;
-  position: { x: number; y: number };
+interface FlowNode extends Node {
   data: {
     label: string;
     tool: string;
@@ -18,88 +27,81 @@ interface Node {
   };
 }
 
-interface Edge {
-  id: string;
-  source: string;
-  target: string;
-}
-
 interface GraphData {
-  nodes: Node[];
+  nodes: FlowNode[];
   edges: Edge[];
 }
 
 export function AgentDagEditor() {
-  const [graph, setGraph] = useState<GraphData>({
-    nodes: [
-      {
-        id: "plan",
-        type: "input",
-        position: { x: 100, y: 100 },
-        data: { label: "Plan", tool: "plan" }
-      },
-      {
-        id: "search",
-        type: "default",
-        position: { x: 300, y: 100 },
-        data: { label: "Web Search", tool: "web_search", input: { query: "{{step:plan.response.query}}" } }
-      },
-      {
-        id: "analyze",
-        type: "default",
-        position: { x: 500, y: 100 },
-        data: { label: "Analyze", tool: "llm", input: { prompt: "Analyze findings: {{step:search.response.results[0].snippet}}" } }
-      }
-    ],
-    edges: [
-      { id: "e1", source: "plan", target: "search" },
-      { id: "e2", source: "search", target: "analyze" }
-    ]
-  });
+  const [nodes, setNodes, onNodesChange] = useNodesState([
+    {
+      id: "plan",
+      type: "input",
+      position: { x: 100, y: 100 },
+      data: { label: "Plan", tool: "plan" }
+    },
+    {
+      id: "search",
+      type: "default", 
+      position: { x: 300, y: 100 },
+      data: { label: "Web Search", tool: "web_search", input: { query: "{{step:plan.response.query}}" } }
+    },
+    {
+      id: "analyze",
+      type: "default",
+      position: { x: 500, y: 100 },
+      data: { label: "Analyze", tool: "llm", input: { prompt: "Analyze findings: {{step:search.response.results[0].snippet}}" } }
+    }
+  ]);
 
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([
+    { id: "e1", source: "plan", target: "search", animated: true },
+    { id: "e2", source: "search", target: "analyze", animated: true }
+  ]);
+
+  const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
 
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
+    [setEdges]
+  );
+
   const addNode = (tool: string) => {
-    const newNode: Node = {
+    const newNode: FlowNode = {
       id: `node-${Date.now()}`,
       type: "default",
       position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
       data: { label: tool.charAt(0).toUpperCase() + tool.slice(1), tool }
     };
     
-    setGraph(prev => ({
-      ...prev,
-      nodes: [...prev.nodes, newNode]
-    }));
+    setNodes(prev => [...prev, newNode]);
   };
 
-  const updateNodeData = (nodeId: string, updates: Partial<Node['data']>) => {
-    setGraph(prev => ({
-      ...prev,
-      nodes: prev.nodes.map(node => 
-        node.id === nodeId 
-          ? { ...node, data: { ...node.data, ...updates } }
-          : node
-      )
-    }));
+  const updateNodeData = (nodeId: string, updates: Partial<FlowNode['data']>) => {
+    setNodes(prev => prev.map(node => 
+      node.id === nodeId 
+        ? { ...node, data: { ...node.data, ...updates } }
+        : node
+    ));
   };
 
   const deleteNode = (nodeId: string) => {
-    setGraph(prev => ({
-      nodes: prev.nodes.filter(n => n.id !== nodeId),
-      edges: prev.edges.filter(e => e.source !== nodeId && e.target !== nodeId)
-    }));
+    setNodes(prev => prev.filter(n => n.id !== nodeId));
+    setEdges(prev => prev.filter(e => e.source !== nodeId && e.target !== nodeId));
     setSelectedNode(null);
   };
 
   const saveGraph = async () => {
     setSaving(true);
     try {
+      const graph = { nodes, edges };
+      console.log("Saving graph:", graph);
       // Mock save - in production would save to backend
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Saved graph:', graph);
+    } catch (error) {
+      console.error("Save failed:", error);
     } finally {
       setSaving(false);
     }
@@ -108,30 +110,31 @@ export function AgentDagEditor() {
   const executeGraph = async () => {
     setRunning(true);
     try {
-      const response = await fetch('/api/agent/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          goal: 'Execute visual DAG workflow',
-          graph: graph
-        })
+      const graph = { nodes, edges };
+      const response = await fetch("/api/agent/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          goal: "Execute visual DAG workflow", 
+          graph: graph 
+        }),
       });
       
-      const result = await response.json();
-      console.log('Graph execution result:', result);
-      
-      if (result.summary) {
-        // Download the summary report
-        const blob = new Blob([result.summary], { type: 'text/markdown' });
+      const data = await response.json();
+      if (data.summary) {
+        // Create and download the summary
+        const blob = new Blob([data.summary], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `agent-run-${result.runId}.md`;
+        a.download = `agent-run-${data.runId}.md`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error('Graph execution failed:', error);
+      console.error("Run failed:", error);
     } finally {
       setRunning(false);
     }
@@ -190,6 +193,7 @@ export function AgentDagEditor() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
+                  const graph = { nodes, edges };
                   const blob = new Blob([JSON.stringify(graph, null, 2)], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -208,72 +212,24 @@ export function AgentDagEditor() {
       </Card>
 
       <div className="grid grid-cols-3 gap-4">
-        {/* Canvas */}
+        {/* ReactFlow Canvas */}
         <Card className="col-span-2">
-          <CardContent className="p-4">
-            <div className="relative bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[400px] border-2 border-dashed border-gray-300 dark:border-gray-700">
-              {/* Render nodes */}
-              {graph.nodes.map(node => (
-                <div
-                  key={node.id}
-                  className={`absolute bg-white dark:bg-gray-800 border-2 rounded-lg p-3 cursor-pointer shadow-md transition-all ${
-                    selectedNode?.id === node.id 
-                      ? 'border-blue-500 shadow-lg' 
-                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
-                  }`}
-                  style={{
-                    left: node.position.x,
-                    top: node.position.y,
-                    minWidth: '120px'
-                  }}
-                  onClick={() => setSelectedNode(node)}
-                >
-                  <div className="text-sm font-medium">{node.data.label}</div>
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    {node.data.tool}
-                  </Badge>
-                </div>
-              ))}
-
-              {/* Render edges (simplified) */}
-              {graph.edges.map(edge => {
-                const sourceNode = graph.nodes.find(n => n.id === edge.source);
-                const targetNode = graph.nodes.find(n => n.id === edge.target);
-                if (!sourceNode || !targetNode) return null;
-
-                return (
-                  <svg
-                    key={edge.id}
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ zIndex: 1 }}
-                  >
-                    <line
-                      x1={sourceNode.position.x + 60}
-                      y1={sourceNode.position.y + 25}
-                      x2={targetNode.position.x + 60}
-                      y2={targetNode.position.y + 25}
-                      stroke="#3b82f6"
-                      strokeWidth="2"
-                      markerEnd="url(#arrowhead)"
-                    />
-                    <defs>
-                      <marker
-                        id="arrowhead"
-                        markerWidth="10"
-                        markerHeight="7"
-                        refX="9"
-                        refY="3.5"
-                        orient="auto"
-                      >
-                        <polygon
-                          points="0 0, 10 3.5, 0 7"
-                          fill="#3b82f6"
-                        />
-                      </marker>
-                    </defs>
-                  </svg>
-                );
-              })}
+          <CardContent className="p-0">
+            <div style={{ height: 500 }}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={(_, node) => setSelectedNode(node as FlowNode)}
+                fitView
+                className="rounded-lg"
+              >
+                <Background />
+                <Controls />
+                <MiniMap />
+              </ReactFlow>
             </div>
           </CardContent>
         </Card>

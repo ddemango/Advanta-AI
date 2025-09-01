@@ -8772,6 +8772,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CodeLLM endpoints  
+  app.post("/api/codellm/suggest", async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      const suggestion = `// Suggested improvement for ${language} code:\n// Consider adding error handling and input validation\n${code}\n\n// Additional suggestions:\n// - Add type annotations\n// - Use const/let instead of var\n// - Consider async/await for promises`;
+      res.json({ result: suggestion });
+    } catch (error: any) {
+      res.status(500).json({ error: "Code suggestion failed", details: error.message });
+    }
+  });
+
+  app.post("/api/codellm/fix", async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      const fixed = code.replace(/var /g, 'const ').replace(/===/g, '===').replace(/console\.log/g, '// console.log');
+      res.json({ result: fixed });
+    } catch (error: any) {
+      res.status(500).json({ error: "Code fix failed", details: error.message });
+    }
+  });
+
+  app.post("/api/codellm/explain", async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      const explanation = `This ${language} code:\n\n• Defines variables and functions\n• Implements core logic\n• Uses standard ${language} patterns\n• Could benefit from additional error handling`;
+      res.json({ result: explanation });
+    } catch (error: any) {
+      res.status(500).json({ error: "Code explanation failed", details: error.message });
+    }
+  });
+
+  app.post("/api/codellm/save", async (req, res) => {
+    try {
+      const { code, language, output } = req.body;
+      console.log(`Saving ${language} code snippet:`, code?.length, 'chars');
+      res.json({ ok: true, id: `code-${Date.now()}` });
+    } catch (error: any) {
+      res.status(500).json({ error: "Code save failed", details: error.message });
+    }
+  });
+
+  // AppLLM endpoints
+  app.post("/api/appllm/create", async (req, res) => {
+    try {
+      const { template, name, target } = req.body;
+      const id = `app-${Date.now()}`;
+      console.log(`Creating ${template} app: ${name} for ${target}`);
+      res.json({ ok: true, id });
+    } catch (error: any) {
+      res.status(500).json({ error: "App creation failed", details: error.message });
+    }
+  });
+
+  app.post("/api/appllm/deploy", async (req, res) => {
+    try {
+      const { id, target } = req.body;
+      const url = `https://${id}.${target}.app`;
+      console.log(`Deploying app ${id} to ${target}: ${url}`);
+      res.json({ ok: true, url });
+    } catch (error: any) {
+      res.status(500).json({ error: "App deployment failed", details: error.message });
+    }
+  });
+
+  // Agent planning and execution endpoints
+  app.post("/api/agent/plan", async (req, res) => {
+    try {
+      const { goal, enableMemory, autoRefine } = req.body;
+      const plan = {
+        steps: [
+          { tool: "web_search", input: { query: goal } },
+          { tool: "llm", input: { prompt: `Analyze and summarize: ${goal}` } }
+        ],
+        enableMemory,
+        autoRefine
+      };
+      res.json({ ok: true, plan });
+    } catch (error: any) {
+      res.status(500).json({ error: "Agent planning failed", details: error.message });
+    }
+  });
+
+  app.post("/api/agent/execute", async (req, res) => {
+    try {
+      const { goal, stepId, title, enableMemory, autoRefine, verbose } = req.body;
+      const output = {
+        stepId,
+        title,
+        result: `Executed step: ${title} for goal: ${goal}`,
+        status: "completed"
+      };
+      res.json({ ok: true, output });
+    } catch (error: any) {
+      res.status(500).json({ error: "Agent execution failed", details: error.message });
+    }
+  });
+
+  app.post("/api/agent/save-artifact", async (req, res) => {
+    try {
+      const { goal, markdown, tasks } = req.body;
+      const id = `artifact-${Date.now()}`;
+      console.log(`Saving agent artifact for goal: ${goal}`);
+      res.json({ ok: true, id, markdown });
+    } catch (error: any) {
+      res.status(500).json({ error: "Artifact save failed", details: error.message });
+    }
+  });
+
   // Web search endpoints
   app.post("/api/search/web", async (req, res) => {
     try {
