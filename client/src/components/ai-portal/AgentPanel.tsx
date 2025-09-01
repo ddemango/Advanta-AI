@@ -443,3 +443,5 @@ export function AgentPanel() {
     </div>
   );
 }
+
+export default AgentPanel;

@@ -8077,6 +8077,259 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true, usage: [] });
   });
 
+  // Critical Tier Suite API Routes
+  
+  // Agent/DeepAgent routes
+  app.post('/api/agent/plan', async (req, res) => {
+    try {
+      const { goal, enableMemory, autoRefine } = req.body;
+      
+      // Mock planning response
+      const plan = {
+        goal,
+        steps: [
+          { id: 'step1', tool: 'plan', title: 'Analyze Goal', status: 'pending' },
+          { id: 'step2', tool: 'llm', title: 'Generate Response', status: 'pending' },
+          { id: 'step3', tool: 'web_search', title: 'Search for Information', status: 'pending' }
+        ],
+        enableMemory,
+        autoRefine
+      };
+      
+      res.json({ ok: true, plan });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/agent/execute', async (req, res) => {
+    try {
+      const { goal, stepId, title, enableMemory, autoRefine, verbose, graph } = req.body;
+      
+      if (graph) {
+        // Graph execution using graph compiler
+        const { compileGraphToSteps, executeCompiledSteps } = await import('./lib/agents/graphCompiler');
+        const { composeResultsToMarkdown, saveMarkdownArtifact } = await import('./lib/agents/resultsComposer');
+        
+        try {
+          const compiled = compileGraphToSteps(graph);
+          
+          const ctx = {
+            bill: async (inTok: number, outTok: number, label: string, meta?: any) => {
+              // Mock billing
+              return 1;
+            },
+            projectId: 'demo-project',
+            userId: 'demo-user',
+            model: 'gpt-4',
+            persistStep: async (idx: number, nodeId: string, tool: string, status: string, request?: any, response?: any, error?: string) => {
+              // Mock persistence
+              console.log(`Step ${idx}: ${nodeId} ${tool} ${status}`);
+            }
+          };
+          
+          const outputs = await executeCompiledSteps(ctx, compiled);
+          
+          // Generate markdown summary
+          const steps = Object.entries(outputs).map(([nodeId, data]) => ({
+            nodeId,
+            tool: compiled.find(s => s.nodeId === nodeId)?.tool || 'unknown',
+            request: data.request,
+            response: data.response,
+            status: 'done'
+          }));
+          
+          const markdown = composeResultsToMarkdown(goal || 'Workflow Execution', steps);
+          
+          res.json({ 
+            ok: true, 
+            output: markdown,
+            results: outputs,
+            downloadUrl: `/api/agent/download/${Date.now()}`
+          });
+        } catch (error) {
+          res.status(500).json({ ok: false, error: error.message });
+        }
+      } else {
+        // Simple execution
+        const output = `Executed step: ${title || stepId} for goal: ${goal}`;
+        res.json({ ok: true, output });
+      }
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/agent/save-artifact', async (req, res) => {
+    try {
+      const { goal, markdown, tasks } = req.body;
+      
+      const artifact = {
+        id: `artifact_${Date.now()}`,
+        goal,
+        markdown,
+        tasks,
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json({ ok: true, artifact });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // AppLLM routes
+  app.post('/api/appllm/create', async (req, res) => {
+    try {
+      const { template, name, target } = req.body;
+      
+      const app = {
+        id: `app_${Date.now()}`,
+        template,
+        name,
+        target,
+        status: 'created',
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json({ ok: true, ...app });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/appllm/deploy', async (req, res) => {
+    try {
+      const { id, target } = req.body;
+      
+      const deploymentUrl = `https://demo-app-${id}.${target}.com`;
+      
+      res.json({ 
+        ok: true, 
+        url: deploymentUrl,
+        status: 'deployed',
+        deployedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // Code execution routes
+  app.post('/api/code/run', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      // Mock code execution
+      const result = {
+        stdout: `// Executed ${language} code:\n${code}\n// Output: Success`,
+        stderr: '',
+        returncode: 0
+      };
+      
+      res.json({ ok: true, ...result });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // CodeLLM routes
+  app.post('/api/codellm/suggest', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      const suggestion = `// Suggested improvement for ${language} code:\n// 1. Add error handling\n// 2. Optimize performance\n// 3. Add documentation\n\n${code}`;
+      
+      res.json({ ok: true, result: suggestion });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/codellm/fix', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      const fixedCode = `// Fixed ${language} code:\ntry {\n${code.split('\n').map(line => '  ' + line).join('\n')}\n} catch (error) {\n  console.error('Error:', error);\n}`;
+      
+      res.json({ ok: true, result: fixedCode });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/codellm/explain', async (req, res) => {
+    try {
+      const { language, code } = req.body;
+      
+      const explanation = `## Code Explanation (${language})\n\n• This code performs the following operations:\n• Line-by-line analysis:\n  - Variables and functions are defined\n  - Logic flow is executed\n  - Results are returned\n\n**Code Quality:** Good\n**Suggestions:** Consider adding comments and error handling`;
+      
+      res.json({ ok: true, result: explanation });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/codellm/save', async (req, res) => {
+    try {
+      const { code, language, output } = req.body;
+      
+      const savedCode = {
+        id: `code_${Date.now()}`,
+        code,
+        language,
+        output,
+        savedAt: new Date().toISOString()
+      };
+      
+      res.json({ ok: true, saved: savedCode });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  // Web Search routes
+  app.post('/api/search/web', async (req, res) => {
+    try {
+      const { provider = 'bing', query = '', topK = 5 } = req.body;
+      
+      if (!query) {
+        return res.json({ ok: true, results: [] });
+      }
+      
+      // Mock search results
+      const results = Array.from({ length: Math.min(topK, 5) }, (_, i) => ({
+        title: `${query} - Result ${i + 1}`,
+        url: `https://example${i + 1}.com/search?q=${encodeURIComponent(query)}`,
+        snippet: `This is a search result snippet for "${query}" from ${provider} provider. Result number ${i + 1}.`,
+        source: provider
+      }));
+      
+      res.json({ ok: true, results });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
+  app.post('/api/search/save', async (req, res) => {
+    try {
+      const { provider, query, results } = req.body;
+      
+      const savedSearch = {
+        id: `search_${Date.now()}`,
+        provider,
+        query,
+        results,
+        count: Array.isArray(results) ? results.length : 0,
+        savedAt: new Date().toISOString()
+      };
+      
+      res.json({ ok: true, ...savedSearch });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+
   app.get('/api/ai-portal/projects', async (req, res) => {
     try {
       const projects = [

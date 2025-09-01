@@ -307,3 +307,5 @@ export function AgentDagEditor() {
     </div>
   );
 }
+
+export default AgentDagEditor;

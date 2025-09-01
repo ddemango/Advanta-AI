@@ -48,9 +48,10 @@ import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
 import { TopNav } from '@/components/ai-portal/TopNav';
 import { LeftRail } from '@/components/ai-portal/LeftRail';
 import { QuickActions, QuickActionsMobile, QuickActionsLower } from '@/components/ai-portal/QuickActions';
-import { AgentPanel } from '@/components/ai-portal/AgentPanel';
-import { WebSearchPanel } from '@/components/ai-portal/WebSearchPanel';
-import { OperatorNotebook } from '@/components/ai-portal/OperatorNotebook';
+import AgentPanel from '@/components/ai-portal/AgentPanel';
+import WebSearchPanel from '@/components/ai-portal/WebSearchPanel';
+import OperatorNotebook from '@/components/ai-portal/OperatorNotebook';
+import CriticalTierSuite from '@/components/ai-portal/CriticalTierSuite';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -100,7 +101,7 @@ export function AIPortal() {
   const [model, setModel] = useState('gpt-4o');
   
   // Tab state
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState('critical-tier');
   
   // Project and chat management
   const [projects, setProjects] = useState<Project[]>([]);
@@ -403,7 +404,11 @@ export function AIPortal() {
         <title>AI Portal - Advanta AI</title>
       </Helmet>
 
-      <MainLayout />
+      {activeTab === 'critical-tier' ? (
+        <CriticalTierSuite />
+      ) : (
+        <MainLayout />
+      )}
 
     </div>
   );

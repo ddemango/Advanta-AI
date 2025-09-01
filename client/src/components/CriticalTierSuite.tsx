@@ -13,9 +13,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Save, Search, Code, Sparkles, Globe, FileText, Terminal, Zap, Eye, Wrench, HelpCircle } from "lucide-react";
 import Editor from "@monaco-editor/react";
-import { AgentDagEditor } from "@/components/ai-portal/AgentDagEditor";
-import { OperatorNotebook } from "@/components/ai-portal/OperatorNotebook";
-import { WebSearchPanel } from "@/components/ai-portal/WebSearchPanel";
+import AgentDagEditor from "@/components/ai-portal/AgentDagEditor";
+import OperatorNotebook from "@/components/ai-portal/OperatorNotebook";
+import WebSearchPanel from "@/components/ai-portal/WebSearchPanel";
 
 interface AgentStep {
   id: string;

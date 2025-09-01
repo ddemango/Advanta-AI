@@ -1,77 +1,71 @@
-"use client";
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Play, Plus, Trash2, Terminal } from "lucide-react";
+import React, { useState, useRef } from 'react';
+import { Editor } from '@monaco-editor/react';
+import { Play, Plus, Trash2, Copy, Download, Terminal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-type Cell = { 
-  id: string; 
-  lang: "bash" | "python"; 
-  code: string; 
+interface NotebookCell {
+  id: string;
+  type: 'code' | 'markdown';
+  language: string;
+  content: string;
   output?: string;
-  status?: "idle" | "running" | "done" | "error";
-};
+  isRunning?: boolean;
+}
 
-export function OperatorNotebook() {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [cells, setCells] = useState<Cell[]>([
-    { 
-      id: "c1", 
-      lang: "python", 
-      code: "# Python example\nprint('Hello from Python!')\nimport json\ndata = {'message': 'success', 'value': 42}\nprint(json.dumps(data, indent=2))",
-      status: "idle"
+interface OperatorNotebookProps {
+  onCellExecute?: (cell: NotebookCell) => void;
+}
+
+const OperatorNotebook: React.FC<OperatorNotebookProps> = ({ onCellExecute }) => {
+  const [cells, setCells] = useState<NotebookCell[]>([
+    {
+      id: '1',
+      type: 'code',
+      language: 'python',
+      content: '# Welcome to Operator Notebook\nprint("Hello, World!")',
     }
   ]);
+  const [activeCellId, setActiveCellId] = useState('1');
+  const [isRunning, setIsRunning] = useState(false);
 
-  const openSession = async () => {
-    try {
-      const response = await fetch('/api/code/session', { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await response.json();
-      if (data.ok) {
-        setSessionId(data.sessionId);
-      }
-    } catch (error) {
-      console.error('Failed to open session:', error);
-    }
-  };
-
-  const closeSession = async () => {
-    if (!sessionId) return;
-    
-    try {
-      await fetch(`/api/code/session/${sessionId}`, { 
-        method: 'DELETE' 
-      });
-      setSessionId(null);
-    } catch (error) {
-      console.error('Failed to close session:', error);
-    }
-  };
-
-  const addCell = (lang: "bash" | "python") => {
-    const newCell: Cell = {
-      id: Math.random().toString(36).slice(2),
-      lang,
-      code: lang === "python" ? "# Python code\n" : "# Bash command\n",
-      status: "idle"
+  const addCell = (type: 'code' | 'markdown' = 'code') => {
+    const newCell: NotebookCell = {
+      id: Date.now().toString(),
+      type,
+      language: type === 'code' ? 'python' : 'markdown',
+      content: type === 'code' ? '# New cell' : '# New markdown cell\n\nEnter your content here...',
     };
-    setCells(prev => [...prev, newCell]);
+    
+    const activeIndex = cells.findIndex(cell => cell.id === activeCellId);
+    const newCells = [...cells];
+    newCells.splice(activeIndex + 1, 0, newCell);
+    setCells(newCells);
+    setActiveCellId(newCell.id);
   };
 
-  const runCell = async (cellId: string) => {
-    const cellIndex = cells.findIndex(c => c.id === cellId);
-    if (cellIndex === -1) return;
-
-    const cell = cells[cellIndex];
+  const deleteCell = (cellId: string) => {
+    if (cells.length === 1) return; // Don't delete the last cell
     
-    // Update cell status to running
+    setCells(prev => prev.filter(cell => cell.id !== cellId));
+    if (activeCellId === cellId) {
+      const remainingCells = cells.filter(cell => cell.id !== cellId);
+      setActiveCellId(remainingCells[0]?.id || '');
+    }
+  };
+
+  const updateCellContent = (cellId: string, content: string) => {
+    setCells(prev => prev.map(cell => 
+      cell.id === cellId ? { ...cell, content } : cell
+    ));
+  };
+
+  const executeCell = async (cellId: string) => {
+    const cell = cells.find(c => c.id === cellId);
+    if (!cell || cell.type !== 'code') return;
+
+    setIsRunning(true);
     setCells(prev => prev.map(c => 
-      c.id === cellId ? { ...c, status: "running" as const, output: "Running..." } : c
+      c.id === cellId ? { ...c, isRunning: true, output: undefined } : c
     ));
 
     try {
@@ -79,155 +73,194 @@ export function OperatorNotebook() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          language: cell.lang,
-          code: cell.code,
-          sessionId
+          language: cell.language,
+          code: cell.content
         })
       });
 
-      const result = await response.json();
-      
-      const output = result.stdout || '';
-      const stderr = result.stderr || '';
-      const fullOutput = stderr ? `${output}\n[stderr]\n${stderr}` : output;
-
-      setCells(prev => prev.map(c => 
-        c.id === cellId 
-          ? { 
-              ...c, 
-              status: result.returncode === 0 ? "done" as const : "error" as const,
-              output: fullOutput || "No output"
-            } 
-          : c
-      ));
+      const data = await response.json();
+      if (data.ok) {
+        const output = data.stdout + (data.stderr ? `\nErrors:\n${data.stderr}` : '');
+        setCells(prev => prev.map(c => 
+          c.id === cellId ? { ...c, output, isRunning: false } : c
+        ));
+        onCellExecute?.({ ...cell, output });
+      }
     } catch (error) {
+      console.error('Execution error:', error);
       setCells(prev => prev.map(c => 
-        c.id === cellId 
-          ? { ...c, status: "error" as const, output: `Error: ${error}` } 
-          : c
+        c.id === cellId ? { ...c, output: `Error: ${error}`, isRunning: false } : c
       ));
+    } finally {
+      setIsRunning(false);
     }
   };
 
-  const updateCell = (cellId: string, code: string) => {
-    setCells(prev => prev.map(c => 
-      c.id === cellId ? { ...c, code } : c
-    ));
+  const copyCellContent = (content: string) => {
+    navigator.clipboard.writeText(content);
   };
 
-  const deleteCell = (cellId: string) => {
-    setCells(prev => prev.filter(c => c.id !== cellId));
-  };
-
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case "running": return "bg-yellow-500";
-      case "done": return "bg-green-500";
-      case "error": return "bg-red-500";
-      default: return "bg-gray-500";
-    }
+  const exportNotebook = () => {
+    const notebookData = {
+      cells: cells.map(cell => ({
+        cell_type: cell.type,
+        source: cell.content.split('\n'),
+        metadata: { language: cell.language },
+        outputs: cell.output ? [{ text: cell.output }] : []
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(notebookData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'notebook.json';
+    a.click();
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Terminal className="h-5 w-5" />
-            Code Notebook
-          </CardTitle>
-          <div className="flex gap-2">
-            {!sessionId ? (
-              <Button onClick={openSession} size="sm">
-                Start Session
-              </Button>
-            ) : (
-              <Button onClick={closeSession} variant="outline" size="sm">
-                Close Session
-              </Button>
-            )}
-          </div>
+    <div className="h-full flex flex-col bg-gray-900 text-white">
+      {/* Toolbar */}
+      <div className="h-12 border-b border-gray-700 bg-gray-800/30 flex items-center justify-between px-4">
+        <div className="flex items-center space-x-2">
+          <Terminal className="w-5 h-5 text-green-400" />
+          <h3 className="font-semibold">Operator Notebook</h3>
         </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Add Cell Buttons */}
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => addCell("python")}
+        
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => addCell('code')}
+            className="px-3 py-1 bg-blue-600 text-xs rounded flex items-center space-x-1"
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Python
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => addCell("bash")}
+            <Plus className="w-3 h-3" />
+            <span>Code</span>
+          </button>
+          <button
+            onClick={() => addCell('markdown')}
+            className="px-3 py-1 bg-gray-600 text-xs rounded flex items-center space-x-1"
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Bash
-          </Button>
+            <Plus className="w-3 h-3" />
+            <span>Markdown</span>
+          </button>
+          <button
+            onClick={exportNotebook}
+            className="px-3 py-1 bg-green-600 text-xs rounded flex items-center space-x-1"
+          >
+            <Download className="w-3 h-3" />
+            <span>Export</span>
+          </button>
         </div>
+      </div>
 
-        {/* Cells */}
-        <div className="space-y-4">
+      {/* Notebook Cells */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <AnimatePresence>
           {cells.map((cell, index) => (
-            <div key={cell.id} className="border rounded-lg overflow-hidden">
+            <motion.div
+              key={cell.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`border rounded-lg overflow-hidden transition-colors ${
+                activeCellId === cell.id ? 'border-blue-500' : 'border-gray-700'
+              }`}
+              onClick={() => setActiveCellId(cell.id)}
+            >
               {/* Cell Header */}
-              <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 flex items-center justify-between border-b">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {cell.lang.toUpperCase()}
-                  </Badge>
-                  <div className={`w-2 h-2 rounded-full ${getStatusColor(cell.status)}`} />
-                  <span className="text-xs text-gray-500">Cell {index + 1}</span>
+              <div className="bg-gray-800 px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-400">
+                    [{index + 1}] {cell.type === 'code' ? cell.language : 'markdown'}
+                  </span>
+                  {cell.isRunning && (
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                  )}
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => runCell(cell.id)}
-                    disabled={!sessionId || cell.status === "running"}
+                
+                <div className="flex items-center space-x-1">
+                  {cell.type === 'code' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        executeCell(cell.id);
+                      }}
+                      disabled={isRunning}
+                      className="p-1 hover:bg-gray-700 rounded text-green-400 disabled:opacity-50"
+                    >
+                      <Play className="w-3 h-3" />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyCellContent(cell.content);
+                    }}
+                    className="p-1 hover:bg-gray-700 rounded text-gray-400"
                   >
-                    <Play className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteCell(cell.id)}
+                    <Copy className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteCell(cell.id);
+                    }}
+                    className="p-1 hover:bg-gray-700 rounded text-red-400"
+                    disabled={cells.length === 1}
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                    <Trash2 className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
 
-              {/* Code Input */}
-              <Textarea
-                value={cell.code}
-                onChange={(e) => updateCell(cell.id, e.target.value)}
-                className="border-0 rounded-none font-mono text-sm min-h-[100px] resize-none"
-                placeholder={`Enter ${cell.lang} code...`}
-              />
+              {/* Cell Content */}
+              <div className="bg-gray-900">
+                {cell.type === 'code' ? (
+                  <Editor
+                    height="120px"
+                    language={cell.language}
+                    value={cell.content}
+                    onChange={(value) => updateCellContent(cell.id, value || '')}
+                    theme="vs-dark"
+                    options={{
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      fontSize: 13,
+                      fontFamily: 'JetBrains Mono, Consolas, monospace',
+                      lineNumbers: 'off',
+                      glyphMargin: false,
+                      folding: false,
+                      lineDecorationsWidth: 0,
+                      lineNumbersMinChars: 0
+                    }}
+                  />
+                ) : (
+                  <textarea
+                    value={cell.content}
+                    onChange={(e) => updateCellContent(cell.id, e.target.value)}
+                    className="w-full bg-transparent p-3 text-sm resize-none focus:outline-none"
+                    rows={3}
+                    placeholder="Enter markdown content..."
+                  />
+                )}
+              </div>
 
-              {/* Output */}
+              {/* Cell Output */}
               {cell.output && (
-                <div className="bg-gray-900 text-gray-100 p-3 font-mono text-xs">
-                  <div className="text-gray-400 mb-1">Output:</div>
-                  <pre className="whitespace-pre-wrap">{cell.output}</pre>
+                <div className="bg-gray-800 border-t border-gray-700">
+                  <div className="px-3 py-2 text-xs text-gray-400 border-b border-gray-700">
+                    Output:
+                  </div>
+                  <pre className="p-3 text-sm text-green-400 font-mono whitespace-pre-wrap overflow-auto max-h-48">
+                    {cell.output}
+                  </pre>
                 </div>
               )}
-            </div>
+            </motion.div>
           ))}
-        </div>
-
-        {cells.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No cells yet. Add a Python or Bash cell to get started.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </AnimatePresence>
+      </div>
+    </div>
   );
-}
+};
+
+export default OperatorNotebook;
