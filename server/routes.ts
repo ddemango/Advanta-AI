@@ -8133,7 +8133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add system message
       openaiMessages.unshift({
         role: 'system',
-        content: 'You are an AI assistant in the Advanta AI Portal. You help users with AI development, code execution, data analysis, and automation tasks. Be helpful, accurate, and professional.'
+        content: 'You are an AI assistant in the Advanta AI Portal. You help users with AI development, code execution, data analysis, and automation tasks. Be helpful, accurate, and professional. Format your responses in markdown when appropriate for better readability.'
       });
 
       const completion = await openai.chat.completions.create({
@@ -8158,6 +8158,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ok: false, 
         error: error.message || 'An error occurred while processing your request'
       });
+    }
+  });
+
+  app.put('/api/ai-portal/model', async (req, res) => {
+    try {
+      const { model } = req.body;
+      
+      if (!model) {
+        return res.status(400).json({ ok: false, error: 'Model is required' });
+      }
+
+      // In a real app, this would save to user preferences
+      // For now, just acknowledge the change
+      res.json({ ok: true, model });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
     }
   });
   
