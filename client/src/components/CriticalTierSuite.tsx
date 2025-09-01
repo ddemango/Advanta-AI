@@ -364,31 +364,35 @@ console.log(factorial(5));`);
   };
 
   return (
-    <div className="h-screen bg-gray-50 p-4">
-      <Tabs defaultValue="deepagent" className="w-full h-full">
-        <TabsList className="grid w-full grid-cols-4 mb-4">
-          <TabsTrigger value="deepagent" className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            DeepAgent
-          </TabsTrigger>
-          <TabsTrigger value="appllm" className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            AppLLM
-          </TabsTrigger>
-          <TabsTrigger value="codellm" className="flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            CodeLLM
-          </TabsTrigger>
-          <TabsTrigger value="websearch" className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            Web Search
-          </TabsTrigger>
-        </TabsList>
+    <div className="h-screen bg-zinc-950 flex flex-col">
+      {/* Import TopNav, LeftRail, QuickActions */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col">
+          <div className="p-4 bg-zinc-900">
+            <Tabs defaultValue="deepagent" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-4 bg-zinc-800 border-zinc-700">
+                <TabsTrigger value="deepagent" className="flex items-center gap-2 data-[state=active]:bg-zinc-700">
+                  <Sparkles className="h-4 w-4" />
+                  DeepAgent
+                </TabsTrigger>
+                <TabsTrigger value="appllm" className="flex items-center gap-2 data-[state=active]:bg-zinc-700">
+                  <Globe className="h-4 w-4" />
+                  AppLLM
+                </TabsTrigger>
+                <TabsTrigger value="codellm" className="flex items-center gap-2 data-[state=active]:bg-zinc-700">
+                  <Code className="h-4 w-4" />
+                  CodeLLM
+                </TabsTrigger>
+                <TabsTrigger value="websearch" className="flex items-center gap-2 data-[state=active]:bg-zinc-700">
+                  <Search className="h-4 w-4" />
+                  Web Search
+                </TabsTrigger>
+              </TabsList>
 
-        {/* DeepAgent Panel */}
-        <TabsContent value="deepagent" className="h-[calc(100%-4rem)]">
-          <AgentDagEditor />
-        </TabsContent>
+              {/* DeepAgent Panel */}
+              <TabsContent value="deepagent" className="h-[calc(100vh-12rem)] bg-zinc-950 text-white">
+                <AgentDagEditor />
+              </TabsContent>
 
         {/* Original DeepAgent (preserved as fallback) */}
         <TabsContent value="deepagent-old" className="h-[calc(100%-4rem)]">

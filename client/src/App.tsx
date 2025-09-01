@@ -73,6 +73,7 @@ import AIStackBuilder from "@/pages/ai-stack-builder";
 import LeadMagnetBuilder from "@/pages/lead-magnet-builder";
 import FlightFinder from "@/pages/flight-finder";
 import FantasyFootballTools from "@/pages/fantasy-football-tools";
+import MainLayout from "@/components/ai-portal/MainLayout";
 import { AIPortal } from "./pages/ai-portal";
 import { AbacusDemo } from './pages/abacus-demo';
 import TVMatchmaker from "@/pages/tv-matchmaker";

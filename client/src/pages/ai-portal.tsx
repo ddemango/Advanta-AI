@@ -43,7 +43,7 @@ import { DataPanel } from '@/components/ai-portal/DataPanel';
 import { OperatorPanel } from '@/components/ai-portal/OperatorPanel';
 import { OperatorTerminal } from '@/components/ai-portal/OperatorTerminal';
 import { PlanGate, PlanBadge } from '@/components/ai-portal/PlanGate';
-import CriticalTierSuite from '@/components/CriticalTierSuite';
+import MainLayout from '@/components/ai-portal/MainLayout';
 import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
 import { TopNav } from '@/components/ai-portal/TopNav';
 import { LeftRail } from '@/components/ai-portal/LeftRail';
@@ -398,195 +398,13 @@ export function AIPortal() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white text-gray-900">
+    <div className="min-h-screen w-full bg-zinc-950 text-white">
       <Helmet>
         <title>AI Portal - Advanta AI</title>
       </Helmet>
 
-      <TopNav 
-        model={model}
-        onModelChange={setModel}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-      />
+      <MainLayout />
 
-      <div className="mx-auto flex max-w-[1600px] gap-0 md:gap-4">
-        <LeftRail
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          currentProject={currentProject}
-          setCurrentProject={setCurrentProject}
-          currentChat={currentChat}
-          setCurrentChat={setCurrentChat}
-          createNewProject={createNewProject}
-          createNewChat={createNewChat}
-        />
-
-        {/* Main content area */}
-        <main className="flex min-h-[calc(100vh-56px)] flex-1 flex-col px-3 md:px-6">
-          {activeTab === 'chat' && (
-            <>
-              <QuickActions onQuickPrompt={handleQuickPrompt} setActiveTab={setActiveTab} />
-              <QuickActionsMobile onQuickPrompt={handleQuickPrompt} />
-
-              {/* Chat messages */}
-              <div className="mx-auto mt-6 w-full max-w-5xl flex-1">
-                <div className="space-y-4 mb-6">
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                          message.role === 'user'
-                            ? 'bg-[#5b46f3] text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        {message.role === 'assistant' ? (
-                          <EnhancedMarkdown content={message.content} className="text-gray-900" />
-                        ) : (
-                          <div className="whitespace-pre-wrap">{message.content}</div>
-                        )}
-                        <div className="text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString()}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {loading && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                          <span>Thinking...</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              </div>
-
-              {/* Composer */}
-              <div className="mx-auto mt-6 w-full max-w-5xl rounded-2xl border border-gray-200 bg-white p-3 md:p-4">
-                {/* Input row */}
-                <div className="flex items-end gap-2">
-                  <button className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200" aria-label="Attach file">
-                    <Paperclip className="h-5 w-5" />
-                  </button>
-
-                  <div className="flex-1">
-                    <label className="sr-only" htmlFor="composer">Write something…</label>
-                    <textarea
-                      id="composer"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
-                      className="h-16 w-full resize-none rounded-2xl bg-gray-50 px-4 py-3 text-base outline-none placeholder:text-gray-400 md:h-20"
-                      placeholder="Ask about AI development, code execution, or data analysis..."
-                    />
-
-                    {/* Controls under textarea */}
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <button className="inline-flex h-9 items-center gap-2 rounded-xl border border-gray-200 px-3 text-sm" aria-label="Language">
-                          <Globe className="h-4 w-4" />
-                        </button>
-                        <button className="inline-flex h-9 items-center gap-2 rounded-xl border border-gray-200 px-3 text-sm" aria-haspopup="menu" aria-label="Chat mode">
-                          <span>Chat</span>
-                          <ChevronDown className="h-4 w-4 text-gray-500" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={startVoiceInput}
-                          disabled={recognizing}
-                          className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${
-                            recognizing ? 'bg-red-100 text-red-600' : 'border border-gray-200'
-                          } disabled:opacity-50`}
-                          aria-label="Voice input"
-                        >
-                          <Mic className="h-5 w-5" />
-                        </button>
-                        <button 
-                          onClick={sendMessage}
-                          disabled={loading || !input.trim()}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#5b46f3] text-white shadow-sm disabled:opacity-50" 
-                          aria-label="Send"
-                        >
-                          <Send className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <QuickActionsLower onQuickPrompt={handleQuickPrompt} setActiveTab={setActiveTab} />
-
-              {/* Footer link */}
-              <div className="mx-auto my-8 w-full max-w-5xl text-center">
-                <a href="#" className="inline-flex items-center gap-2 text-sm font-medium text-[#5b46f3] hover:underline">
-                  <span>AI Portal Documentation & Tips</span>
-                </a>
-              </div>
-            </>
-          )}
-
-          {activeTab === 'operator' && (
-            <div className="mt-8">
-              <PlanGate feature="Virtual Computer" requiredPlans={['pro', 'enterprise']}>
-                <OperatorTerminal />
-              </PlanGate>
-            </div>
-          )}
-
-          {activeTab === 'humanize' && (
-            <div className="mt-8">
-              <PlanGate feature="Text Humanization" requiredPlans={['free', 'pro', 'enterprise']}>
-                <HumanizePanel />
-              </PlanGate>
-            </div>
-          )}
-
-          {activeTab === 'data' && (
-            <div className="mt-8">
-              <PlanGate feature="Data Analysis" requiredPlans={['pro', 'enterprise']}>
-                <DataPanel />
-              </PlanGate>
-            </div>
-          )}
-
-          {activeTab === 'agents' && (
-            <div className="mt-8">
-              <PlanGate feature="DeepAgent Studio" requiredPlans={['pro', 'enterprise']}>
-                <AgentPanel />
-              </PlanGate>
-            </div>
-          )}
-
-          {activeTab === 'search' && (
-            <div className="mt-8">
-              <PlanGate feature="Web Search" requiredPlans={['free', 'pro', 'enterprise']}>
-                <WebSearchPanel projectId={currentProject || undefined} />
-              </PlanGate>
-            </div>
-          )}
-
-          {activeTab === 'notebook' && (
-            <div className="mt-8">
-              <PlanGate feature="Code Notebook" requiredPlans={['pro', 'enterprise']}>
-                <OperatorNotebook />
-              </PlanGate>
-            </div>
-          )}
-        </main>
-      </div>
     </div>
   );
 }
