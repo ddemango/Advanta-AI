@@ -43,14 +43,10 @@ import { DataPanel } from '@/components/ai-portal/DataPanel';
 import { OperatorPanel } from '@/components/ai-portal/OperatorPanel';
 import { OperatorTerminal } from '@/components/ai-portal/OperatorTerminal';
 import { PlanGate, PlanBadge } from '@/components/ai-portal/PlanGate';
-import ChatLLMLayout from '@/components/ai-portal/ChatLLMLayout';
+import ChatLLMHome from '@/components/ai-portal/ChatLLMHome';
 import { EnhancedMarkdown } from '@/components/ai-portal/EnhancedMarkdown';
-import { TopNav } from '@/components/ai-portal/TopNav';
-import { LeftRail } from '@/components/ai-portal/LeftRail';
-import { QuickActions, QuickActionsMobile, QuickActionsLower } from '@/components/ai-portal/QuickActions';
-import AgentPanel from '@/components/ai-portal/AgentPanel';
-import WebSearchPanel from '@/components/ai-portal/WebSearchPanel';
-import OperatorNotebook from '@/components/ai-portal/OperatorNotebook';
+
+
 
 
 interface Message {
@@ -280,7 +276,7 @@ export function AIPortal() {
       return await response.json();
     } catch (error) {
       console.error('Code execution error:', error);
-      return { ok: false, error: error.message };
+      return { ok: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -298,7 +294,7 @@ export function AIPortal() {
       return data;
     } catch (error) {
       console.error('Search error:', error);
-      return { ok: false, error: error.message };
+      return { ok: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -316,7 +312,7 @@ export function AIPortal() {
       return data;
     } catch (error) {
       console.error('Speech generation error:', error);
-      return { ok: false, error: error.message };
+      return { ok: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -404,7 +400,7 @@ export function AIPortal() {
         <title>AI Portal - Advanta AI</title>
       </Helmet>
 
-      <ChatLLMLayout />
+      <ChatLLMHome />
 
     </div>
   );
