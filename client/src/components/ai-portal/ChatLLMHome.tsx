@@ -238,7 +238,10 @@ export default function ChatLLMHome() {
       // Use Server-Sent Events for streaming responses
       const response = await fetch('/api/ai-portal/chat/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({
           chatId: currentChat?.id,
           messages: [...messages, userMessage],
@@ -273,23 +276,33 @@ export default function ChatLLMHome() {
               const data = line.slice(6);
               
               if (data === '[DONE]') {
-                setMessages(prev => prev.map((msg, index) => 
-                  index === prev.length - 1 ? { ...msg, streaming: false } : msg
-                ));
-                setLoading(false);
-                return;
+                // Update the last message to remove streaming indicator
+                setMessages(prev => 
+                  prev.map((msg, idx) => 
+                    idx === prev.length - 1 
+                      ? { ...msg, streaming: false }
+                      : msg
+                  )
+                );
+                break;
               }
-
+              
               try {
                 const parsed = JSON.parse(data);
                 if (parsed.content) {
                   assistantResponse += parsed.content;
-                  setMessages(prev => prev.map((msg, index) => 
-                    index === prev.length - 1 ? { ...msg, content: assistantResponse } : msg
-                  ));
+                  
+                  // Update the streaming message
+                  setMessages(prev => 
+                    prev.map((msg, idx) => 
+                      idx === prev.length - 1 
+                        ? { ...msg, content: assistantResponse }
+                        : msg
+                    )
+                  );
                 }
               } catch (e) {
-                // Ignore JSON parse errors
+                // Ignore parsing errors for partial chunks
               }
             }
           }

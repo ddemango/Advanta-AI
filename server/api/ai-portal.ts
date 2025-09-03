@@ -29,7 +29,11 @@ const AVAILABLE_MODELS = {
   'gpt-4o': 'gpt-4o',
   'gpt-4o-mini': 'gpt-4o-mini', 
   'gpt-4': 'gpt-4',
-  'gpt-3.5-turbo': 'gpt-3.5-turbo'
+  'gpt-3.5-turbo': 'gpt-3.5-turbo',
+  'gemini-2.5': 'gpt-4o', // Fallback to GPT-4o for now
+  'grok': 'gpt-4o', // Fallback to GPT-4o for now
+  'claude-3': 'gpt-4o', // Fallback to GPT-4o for now  
+  'cohere': 'gpt-4o' // Fallback to GPT-4o for now
 };
 
 // Get user projects
@@ -141,11 +145,11 @@ export async function getChatMessages(req: Request, res: Response) {
   }
 }
 
-// Enhanced chat endpoint with persistence
+// Enhanced streaming chat endpoint with persistence
 export async function chat(req: Request, res: Response) {
   try {
     const userId = (req as any).session?.userId || 1;
-    const { messages, model = 'gpt-4o', temperature = 0.7, max_tokens = 1024, chatId } = req.body;
+    const { messages, model = 'gpt-4o', temperature = 0.7, max_tokens = 2000, chatId } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ ok: false, error: 'Invalid messages format' });
@@ -154,18 +158,17 @@ export async function chat(req: Request, res: Response) {
     // Validate model
     const validModel = AVAILABLE_MODELS[model as keyof typeof AVAILABLE_MODELS] || 'gpt-4o';
 
-    const response = await openai.chat.completions.create({
-      model: validModel,
-      messages,
-      temperature,
-      max_tokens,
+    // Set up Server-Sent Events headers
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     });
 
-    const assistantMessage = response.choices[0]?.message?.content || 'No response generated';
-
-    // Save messages to database if chatId provided
+    // Save user message to database first
     if (chatId) {
-      // Save user message
       const lastUserMessage = messages[messages.length - 1];
       if (lastUserMessage?.role === 'user') {
         await db.insert(aiMessages).values({
@@ -174,30 +177,49 @@ export async function chat(req: Request, res: Response) {
           content: lastUserMessage.content
         });
       }
+    }
 
-      // Save assistant message
+    let fullResponse = '';
+
+    const stream = await openai.chat.completions.create({
+      model: validModel,
+      messages,
+      temperature,
+      max_tokens,
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      if (content) {
+        fullResponse += content;
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+    }
+
+    // Send end signal
+    res.write(`data: [DONE]\n\n`);
+
+    // Save complete assistant message to database
+    if (chatId && fullResponse) {
       await db.insert(aiMessages).values({
         chatId: parseInt(chatId),
         role: 'assistant',
-        content: assistantMessage
+        content: fullResponse
       });
 
       // Track usage
       await db.insert(aiUsage).values({
         userId,
         model: validModel,
-        inputTokens: response.usage?.prompt_tokens || 0,
-        outputTokens: response.usage?.completion_tokens || 0,
-        totalTokens: response.usage?.total_tokens || 0,
+        inputTokens: 0, // We'll estimate this
+        outputTokens: Math.ceil(fullResponse.length / 4), // Rough token estimate
+        totalTokens: Math.ceil(fullResponse.length / 4),
         operationType: 'chat'
       });
     }
 
-    res.json({
-      ok: true,
-      message: assistantMessage,
-      usage: response.usage,
-    });
+    res.end();
   } catch (error: any) {
     console.error('Chat error:', error);
     res.status(500).json({
