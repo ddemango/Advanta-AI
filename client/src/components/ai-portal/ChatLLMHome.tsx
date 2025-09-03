@@ -109,6 +109,7 @@ export default function ChatLLMHome() {
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [chatMode, setChatMode] = useState('Chat');
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [, setLocation] = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -644,6 +645,46 @@ export default function ChatLLMHome() {
           <div className="p-4 border-t border-zinc-200 bg-white">
             <div className="mx-auto rounded-3xl bg-white border border-zinc-200 shadow-sm max-w-[820px]">
               <div className="p-6">
+                {/* Active tool indicator */}
+                {activeTool && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-full">
+                      <span className="text-sm">
+                        {activeTool === 'image' && '🖼️'}
+                        {activeTool === 'code' && '💻'}
+                        {activeTool === 'playground' && '🧪'}
+                        {activeTool === 'powerpoint' && '📊'}
+                        {activeTool === 'research' && '🔍'}
+                        {activeTool === 'data' && '📈'}
+                      </span>
+                      <span className="text-sm font-medium text-indigo-700">
+                        {activeTool === 'image' && 'Image'}
+                        {activeTool === 'code' && 'Code'}
+                        {activeTool === 'playground' && 'Playground'}
+                        {activeTool === 'powerpoint' && 'PowerPoint'}
+                        {activeTool === 'research' && 'Deep Research'}
+                        {activeTool === 'data' && 'Data Analysis'}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setActiveTool(null);
+                          setSelectedTool(null);
+                          // Reset all tool states
+                          setShowImageGen(false);
+                          setShowCodeRunner(false);
+                          setShowPlayground(false);
+                          setShowPowerPoint(false);
+                          setShowResearch(false);
+                          setShowDataAnalysis(false);
+                        }}
+                        className="text-indigo-400 hover:text-indigo-600 ml-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -656,7 +697,12 @@ export default function ChatLLMHome() {
                 {/* Quick Action Tools */}
                 <div className="flex items-center gap-3 flex-wrap justify-center mb-4">
                   <button 
-                    onClick={() => { setShowImageGen(!showImageGen); setSelectedTool(selectedTool === 'image' ? null : 'image'); }}
+                    onClick={() => { 
+                      const isActive = selectedTool === 'image';
+                      setShowImageGen(!showImageGen); 
+                      setSelectedTool(isActive ? null : 'image');
+                      setActiveTool(isActive ? null : 'image');
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
                       selectedTool === 'image' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
@@ -667,7 +713,12 @@ export default function ChatLLMHome() {
                     <span className="text-sm font-medium">Image</span>
                   </button>
                   <button 
-                    onClick={() => { setShowCodeRunner(!showCodeRunner); setSelectedTool(selectedTool === 'code' ? null : 'code'); }}
+                    onClick={() => { 
+                      const isActive = selectedTool === 'code';
+                      setShowCodeRunner(!showCodeRunner); 
+                      setSelectedTool(isActive ? null : 'code');
+                      setActiveTool(isActive ? null : 'code');
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
                       selectedTool === 'code' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
@@ -678,7 +729,12 @@ export default function ChatLLMHome() {
                     <span className="text-sm font-medium">Code</span>
                   </button>
                   <button 
-                    onClick={() => { setShowPlayground(!showPlayground); setSelectedTool(selectedTool === 'playground' ? null : 'playground'); }}
+                    onClick={() => { 
+                      const isActive = selectedTool === 'playground';
+                      setShowPlayground(!showPlayground); 
+                      setSelectedTool(isActive ? null : 'playground');
+                      setActiveTool(isActive ? null : 'playground');
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
                       selectedTool === 'playground' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
@@ -689,7 +745,12 @@ export default function ChatLLMHome() {
                     <span className="text-sm font-medium">Playground</span>
                   </button>
                   <button 
-                    onClick={() => { setShowPowerPoint(!showPowerPoint); setSelectedTool(selectedTool === 'powerpoint' ? null : 'powerpoint'); }}
+                    onClick={() => { 
+                      const isActive = selectedTool === 'powerpoint';
+                      setShowPowerPoint(!showPowerPoint); 
+                      setSelectedTool(isActive ? null : 'powerpoint');
+                      setActiveTool(isActive ? null : 'powerpoint');
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
                       selectedTool === 'powerpoint' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
@@ -700,7 +761,12 @@ export default function ChatLLMHome() {
                     <span className="text-sm font-medium">PowerPoint</span>
                   </button>
                   <button 
-                    onClick={() => { setShowResearch(!showResearch); setSelectedTool(selectedTool === 'research' ? null : 'research'); }}
+                    onClick={() => { 
+                      const isActive = selectedTool === 'research';
+                      setShowResearch(!showResearch); 
+                      setSelectedTool(isActive ? null : 'research');
+                      setActiveTool(isActive ? null : 'research');
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
                       selectedTool === 'research' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
@@ -711,7 +777,12 @@ export default function ChatLLMHome() {
                     <span className="text-sm font-medium">Deep Research</span>
                   </button>
                   <button 
-                    onClick={() => { setShowDataAnalysis(!showDataAnalysis); setSelectedTool(selectedTool === 'data' ? null : 'data'); }}
+                    onClick={() => { 
+                      const isActive = selectedTool === 'data';
+                      setShowDataAnalysis(!showDataAnalysis); 
+                      setSelectedTool(isActive ? null : 'data');
+                      setActiveTool(isActive ? null : 'data');
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
                       selectedTool === 'data' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
