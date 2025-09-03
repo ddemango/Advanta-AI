@@ -8073,17 +8073,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // AI Portal endpoints
-  app.post('/api/chat', aiPortalApi.chat);
-  app.post('/api/run-code', aiPortalApi.runCode);
-  app.post('/api/search', aiPortalApi.search);
-  app.post('/api/tts', aiPortalApi.textToSpeech);
+  // Simple AI Portal authentication middleware
+  const requireAiPortalAuth = (req: Request, res: Response, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader === 'Bearer admin123') {
+      next();
+    } else {
+      res.status(401).json({ ok: false, error: 'Unauthorized' });
+    }
+  };
+
+  // AI Portal endpoints with authentication
+  app.post('/api/chat', requireAiPortalAuth, aiPortalApi.chat);
+  app.post('/api/run-code', requireAiPortalAuth, aiPortalApi.runCode);
+  app.post('/api/search', requireAiPortalAuth, aiPortalApi.search);
+  app.post('/api/tts', requireAiPortalAuth, aiPortalApi.textToSpeech);
   app.get('/api/ai-portal/health', aiPortalApi.health);
 
-  // Enhanced AI Portal endpoints - simplified implementation for now
-  app.get('/api/ai-portal/usage', async (req, res) => {
+  // Enhanced AI Portal endpoints with authentication
+  app.get('/api/ai-portal/usage', requireAiPortalAuth, async (req, res) => {
     res.json({ ok: true, usage: [] });
   });
+
+  // AI Portal API routes using proper handlers
+  app.get('/api/ai-portal/projects', requireAiPortalAuth, aiPortalApi.getProjects);
+  app.post('/api/ai-portal/projects', requireAiPortalAuth, aiPortalApi.createProject);
+  app.get('/api/ai-portal/projects/:projectId/chats', requireAiPortalAuth, aiPortalApi.getChats);
+  app.post('/api/ai-portal/chats', requireAiPortalAuth, aiPortalApi.createChat);
+  app.get('/api/ai-portal/chats/:chatId/messages', requireAiPortalAuth, aiPortalApi.getChatMessages);
+  app.post('/api/ai-portal/chat/send', requireAiPortalAuth, aiPortalApi.chat);
 
   // Critical Tier Suite API Routes
   
@@ -8459,30 +8477,8 @@ Format as JSON:
     }
   });
 
-  app.get('/api/ai-portal/projects', async (req, res) => {
-    try {
-      const projects = [
-        {
-          id: 'project-1',
-          name: 'AI Development',
-          description: 'Main AI development project',
-          chats: [
-            {
-              id: 'chat-1',
-              title: 'Welcome Chat',
-              messages: [],
-              createdAt: new Date()
-            }
-          ]
-        }
-      ];
-      res.json({ ok: true, projects });
-    } catch (error: any) {
-      res.status(500).json({ ok: false, error: error.message });
-    }
-  });
-
-  app.get('/api/ai-portal/me', async (req, res) => {
+  // AI Portal /me endpoint - keep this one as it provides user info
+  app.get('/api/ai-portal/me', requireAiPortalAuth, async (req, res) => {
     try {
       // Mock user data for development
       const user = {
@@ -8498,52 +8494,7 @@ Format as JSON:
     }
   });
 
-  app.post('/api/ai-portal/chat', async (req, res) => {
-    try {
-      const { messages, model = 'gpt-4o' } = req.body;
-      
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ ok: false, error: 'Messages array is required' });
-      }
-
-      // Prepare messages for OpenAI
-      const openaiMessages = messages.map((msg: any) => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-
-      // Add system message
-      openaiMessages.unshift({
-        role: 'system',
-        content: 'You are an AI assistant in the Advanta AI Portal. You help users with AI development, code execution, data analysis, and automation tasks. Be helpful, accurate, and professional. Format your responses in markdown when appropriate for better readability.'
-      });
-
-      const completion = await openai.chat.completions.create({
-        model: model,
-        messages: openaiMessages,
-        max_tokens: 2000,
-        temperature: 0.7,
-      });
-
-      const response = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
-
-      res.json({ 
-        ok: true, 
-        response,
-        model,
-        usage: completion.usage
-      });
-
-    } catch (error: any) {
-      console.error('Chat error:', error);
-      res.status(500).json({ 
-        ok: false, 
-        error: error.message || 'An error occurred while processing your request'
-      });
-    }
-  });
-
-  app.put('/api/ai-portal/model', async (req, res) => {
+  app.put('/api/ai-portal/model', requireAiPortalAuth, async (req, res) => {
     try {
       const { model } = req.body;
       

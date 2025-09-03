@@ -149,7 +149,11 @@ export function AIPortal() {
 
   const loadUsage = async () => {
     try {
-      const response = await fetch('/api/ai-portal/usage');
+      const response = await fetch('/api/ai-portal/usage', {
+        headers: {
+          'Authorization': 'Bearer admin123'
+        }
+      });
       const data = await response.json();
       if (data.ok) {
         setUsage(data.usage);
@@ -161,7 +165,11 @@ export function AIPortal() {
 
   const loadProjects = async () => {
     try {
-      const response = await fetch('/api/ai-portal/projects');
+      const response = await fetch('/api/ai-portal/projects', {
+        headers: {
+          'Authorization': 'Bearer admin123'
+        }
+      });
       const data = await response.json();
       if (data.ok) {
         setProjects(data.projects);
@@ -181,7 +189,10 @@ export function AIPortal() {
     try {
       const response = await fetch('/api/ai-portal/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({ name, description: '' })
       });
       const data = await response.json();

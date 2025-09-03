@@ -88,7 +88,11 @@ export default function ChatLLMHome() {
 
   const loadProjects = async () => {
     try {
-      const response = await fetch('/api/ai-portal/projects');
+      const response = await fetch('/api/ai-portal/projects', {
+        headers: {
+          'Authorization': 'Bearer admin123'
+        }
+      });
       const data = await response.json();
       if (data.ok) {
         setProjects(data.projects);
@@ -104,7 +108,11 @@ export default function ChatLLMHome() {
 
   const loadChats = async (projectId: number) => {
     try {
-      const response = await fetch(`/api/ai-portal/projects/${projectId}/chats`);
+      const response = await fetch(`/api/ai-portal/projects/${projectId}/chats`, {
+        headers: {
+          'Authorization': 'Bearer admin123'
+        }
+      });
       const data = await response.json();
       if (data.ok) {
         setChats(data.chats);
@@ -120,7 +128,11 @@ export default function ChatLLMHome() {
 
   const loadMessages = async (chatId: number) => {
     try {
-      const response = await fetch(`/api/ai-portal/chats/${chatId}/messages`);
+      const response = await fetch(`/api/ai-portal/chats/${chatId}/messages`, {
+        headers: {
+          'Authorization': 'Bearer admin123'
+        }
+      });
       const data = await response.json();
       if (data.ok) {
         setMessages(data.messages);
@@ -134,7 +146,10 @@ export default function ChatLLMHome() {
     try {
       const response = await fetch('/api/ai-portal/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({
           name: `Project ${projects.length + 1}`,
           description: 'New AI project'
@@ -157,7 +172,10 @@ export default function ChatLLMHome() {
     try {
       const response = await fetch('/api/ai-portal/chats', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({
           projectId: currentProject.id,
           title: `Chat ${chats.length + 1}`,
