@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QuickActionTools } from "./QuickActionTools";
-import CriticalTierSuite from "./CriticalTierSuite";
+import { useLocation } from "wouter";
 import { 
   Search,
   Plus,
@@ -71,7 +71,7 @@ export default function ChatLLMHome() {
   const [showDataAnalysis, setShowDataAnalysis] = useState(false);
   const [showPlayground, setShowPlayground] = useState(false);
   const [showPowerPoint, setShowPowerPoint] = useState(false);
-  const [showDeepAgent, setShowDeepAgent] = useState(false);
+  const [, setLocation] = useLocation();
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -462,7 +462,7 @@ export default function ChatLLMHome() {
           {/* Tools section (bottom) */}
           <div className="p-4 space-y-3">
             <button 
-              onClick={() => setShowDeepAgent(true)}
+              onClick={() => setLocation('/deepagent')}
               className="w-full h-10 rounded-full bg-indigo-600 text-white font-medium shadow-sm flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
             >
               <span className="text-lg">🤖</span> 
@@ -661,21 +661,6 @@ export default function ChatLLMHome() {
       </div>
       <div ref={messagesEndRef} />
 
-      {/* DeepAgent Suite Modal */}
-      {showDeepAgent && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowDeepAgent(false)} />
-          <div className="relative z-10 w-full h-full">
-            <CriticalTierSuite />
-            <button 
-              onClick={() => setShowDeepAgent(false)}
-              className="absolute top-4 right-4 z-20 bg-gray-800/50 hover:bg-gray-700/50 text-white p-2 rounded-lg transition-colors"
-            >
-              <span className="text-lg">✕</span>
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
