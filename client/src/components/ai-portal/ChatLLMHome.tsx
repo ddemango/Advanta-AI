@@ -710,13 +710,12 @@ export default function ChatLLMHome() {
                 <div className="flex items-center gap-3 flex-wrap justify-center mb-4">
                   <button 
                     onClick={() => { 
-                      const isActive = selectedTool === 'image';
-                      setShowImageGen(!showImageGen); 
-                      setSelectedTool(isActive ? null : 'image');
+                      const isActive = activeTool === 'image';
                       setActiveTool(isActive ? null : 'image');
+                      setSelectedTool(isActive ? null : 'image');
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      selectedTool === 'image' 
+                      activeTool === 'image' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
@@ -726,13 +725,12 @@ export default function ChatLLMHome() {
                   </button>
                   <button 
                     onClick={() => { 
-                      const isActive = selectedTool === 'code';
-                      setShowCodeRunner(!showCodeRunner); 
-                      setSelectedTool(isActive ? null : 'code');
+                      const isActive = activeTool === 'code';
                       setActiveTool(isActive ? null : 'code');
+                      setSelectedTool(isActive ? null : 'code');
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      selectedTool === 'code' 
+                      activeTool === 'code' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
@@ -742,13 +740,12 @@ export default function ChatLLMHome() {
                   </button>
                   <button 
                     onClick={() => { 
-                      const isActive = selectedTool === 'playground';
-                      setShowPlayground(!showPlayground); 
-                      setSelectedTool(isActive ? null : 'playground');
+                      const isActive = activeTool === 'playground';
                       setActiveTool(isActive ? null : 'playground');
+                      setSelectedTool(isActive ? null : 'playground');
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      selectedTool === 'playground' 
+                      activeTool === 'playground' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
@@ -758,13 +755,12 @@ export default function ChatLLMHome() {
                   </button>
                   <button 
                     onClick={() => { 
-                      const isActive = selectedTool === 'powerpoint';
-                      setShowPowerPoint(!showPowerPoint); 
-                      setSelectedTool(isActive ? null : 'powerpoint');
+                      const isActive = activeTool === 'powerpoint';
                       setActiveTool(isActive ? null : 'powerpoint');
+                      setSelectedTool(isActive ? null : 'powerpoint');
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      selectedTool === 'powerpoint' 
+                      activeTool === 'powerpoint' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
@@ -774,13 +770,12 @@ export default function ChatLLMHome() {
                   </button>
                   <button 
                     onClick={() => { 
-                      const isActive = selectedTool === 'research';
-                      setShowResearch(!showResearch); 
-                      setSelectedTool(isActive ? null : 'research');
+                      const isActive = activeTool === 'research';
                       setActiveTool(isActive ? null : 'research');
+                      setSelectedTool(isActive ? null : 'research');
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      selectedTool === 'research' 
+                      activeTool === 'research' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
@@ -790,13 +785,12 @@ export default function ChatLLMHome() {
                   </button>
                   <button 
                     onClick={() => { 
-                      const isActive = selectedTool === 'data';
-                      setShowDataAnalysis(!showDataAnalysis); 
-                      setSelectedTool(isActive ? null : 'data');
+                      const isActive = activeTool === 'data';
                       setActiveTool(isActive ? null : 'data');
+                      setSelectedTool(isActive ? null : 'data');
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      selectedTool === 'data' 
+                      activeTool === 'data' 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
@@ -806,7 +800,7 @@ export default function ChatLLMHome() {
                   </button>
                   <div className="relative">
                     <button 
-                      onClick={() => setShowMoreMenu(!showMoreMenu)}
+                      onClick={() => alert('More tools coming soon!')}
                       className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
                     >
                       <span className="text-sm">⋯</span>
