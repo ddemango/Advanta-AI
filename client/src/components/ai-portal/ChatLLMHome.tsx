@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { QuickActionTools } from "./QuickActionTools";
 import { 
   Search,
   Plus,
@@ -44,17 +45,31 @@ function ToolChip({ icon, label }: { icon: string; label: string }) {
 
 export default function ChatLLMHome() {
   const [model, setModel] = useState("gpt-4o");
+  const [availableModels, setAvailableModels] = useState([
+    { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
+    { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
+    { id: 'gemini-2.5', name: 'Gemini 2.5', provider: 'Google' },
+    { id: 'grok', name: 'Grok', provider: 'xAI' },
+    { id: 'claude-3', name: 'Claude 3', provider: 'Anthropic' },
+    { id: 'cohere', name: 'Cohere', provider: 'Cohere' }
+  ]);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }
   ]);
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [chats, setChats] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
+  const [currentChat, setCurrentChat] = useState(null);
   const [showImageGen, setShowImageGen] = useState(false);
   const [showCodeRunner, setShowCodeRunner] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
   const [showDataAnalysis, setShowDataAnalysis] = useState(false);
+  const [showPlayground, setShowPlayground] = useState(false);
+  const [showPowerPoint, setShowPowerPoint] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -77,60 +92,124 @@ export default function ChatLLMHome() {
       const data = await response.json();
       if (data.ok) {
         setProjects(data.projects);
-        if (data.projects.length > 0) {
+        if (data.projects.length > 0 && !currentProject) {
           setCurrentProject(data.projects[0]);
+          loadChats(data.projects[0].id);
         }
       }
     } catch (error) {
-      console.error('Failed to load projects:', error);
+      console.error('Error loading projects:', error);
+    }
+  };
+
+  const loadChats = async (projectId: number) => {
+    try {
+      const response = await fetch(`/api/ai-portal/projects/${projectId}/chats`);
+      const data = await response.json();
+      if (data.ok) {
+        setChats(data.chats);
+        if (data.chats.length > 0 && !currentChat) {
+          setCurrentChat(data.chats[0]);
+          loadMessages(data.chats[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading chats:', error);
+    }
+  };
+
+  const loadMessages = async (chatId: number) => {
+    try {
+      const response = await fetch(`/api/ai-portal/chats/${chatId}/messages`);
+      const data = await response.json();
+      if (data.ok) {
+        setMessages(data.messages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
     }
   };
 
   const createNewProject = async () => {
-    const name = prompt('Enter project name:');
-    if (!name) return;
-    
     try {
       const response = await fetch('/api/ai-portal/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description: '' })
+        body: JSON.stringify({
+          name: `Project ${projects.length + 1}`,
+          description: 'New AI project'
+        })
       });
       const data = await response.json();
       if (data.ok) {
-        await loadProjects();
+        setProjects(prev => [...prev, data.project]);
         setCurrentProject(data.project);
-        setMessages([{ role: "assistant", content: "Welcome to your new project! How can I help you today?" }]);
+        setChats([]);
+        setMessages([{ role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }]);
       }
     } catch (error) {
-      console.error('Failed to create project:', error);
+      console.error('Error creating project:', error);
     }
   };
 
   const createNewChat = async () => {
     if (!currentProject) return;
-    
     try {
       const response = await fetch('/api/ai-portal/chats', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          projectId: currentProject?.id, 
-          title: 'New Chat',
+        body: JSON.stringify({
+          projectId: currentProject.id,
+          title: `Chat ${chats.length + 1}`,
           model: model
         })
       });
       const data = await response.json();
       if (data.ok) {
+        setChats(prev => [...prev, data.chat]);
+        setCurrentChat(data.chat);
         setMessages([{ role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }]);
       }
     } catch (error) {
-      console.error('Failed to create chat:', error);
+      console.error('Error creating chat:', error);
     }
   };
 
+  const switchProject = (project: any) => {
+    setCurrentProject(project);
+    loadChats(project.id);
+  };
+
+  const switchChat = (chat: any) => {
+    setCurrentChat(chat);
+    loadMessages(chat.id);
+    setModel(chat.model || 'gpt-4o');
+  };
+
+  const loadProjectsLegacy = async () => {
+    try {
+      const response = await fetch('/api/ai-portal/projects');
+      const data = await response.json();
+      if (data.ok) {
+        setProjects(data.projects);
+        if (data.projects.length > 0) {
+          setCurrentProject(data.projects[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load projects (legacy):', error);
+    }
+  };
+
+
+
   const handleSendMessage = async () => {
     if (!message.trim() || loading) return;
+    
+    // Ensure we have a current chat
+    if (!currentChat && currentProject) {
+      await createNewChat();
+    }
     
     const userMessage = { role: "user", content: message };
     setMessages(prev => [...prev, userMessage]);
@@ -138,32 +217,65 @@ export default function ChatLLMHome() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/ai-portal/chat', {
+      // Use Server-Sent Events for streaming responses
+      const response = await fetch('/api/ai-portal/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          chatId: currentChat?.id,
           messages: [...messages, userMessage],
-          model: model,
-          temperature: 0.7
+          model: model
         })
       });
 
-      const data = await response.json();
-      
-      if (data.ok) {
-        const assistantMessage = {
-          role: "assistant",
-          content: data.response || data.message,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-      } else {
-        const errorMessage = {
-          role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantResponse = '';
+
+      // Add an empty assistant message to start streaming
+      setMessages(prev => [...prev, { role: "assistant", content: "", streaming: true }]);
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            break;
+          }
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              
+              if (data === '[DONE]') {
+                setMessages(prev => prev.map((msg, index) => 
+                  index === prev.length - 1 ? { ...msg, streaming: false } : msg
+                ));
+                setLoading(false);
+                return;
+              }
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  assistantResponse += parsed.content;
+                  setMessages(prev => prev.map((msg, index) => 
+                    index === prev.length - 1 ? { ...msg, content: assistantResponse } : msg
+                  ));
+                }
+              } catch (e) {
+                // Ignore JSON parse errors
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -201,10 +313,11 @@ export default function ChatLLMHome() {
               onChange={(e) => setModel(e.target.value)}
               className="bg-white border border-zinc-200 rounded-lg px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="gpt-4o">GPT‑4o</option>
-              <option value="gpt-4o-mini">GPT‑4o Mini</option>
-              <option value="gpt-4">GPT‑4</option>
-              <option value="gpt-3.5-turbo">GPT‑3.5 Turbo</option>
+              {availableModels.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.provider})
+                </option>
+              ))}
             </select>
             <ChevronDown className="h-4 w-4 text-zinc-400" />
           </div>
@@ -234,12 +347,35 @@ export default function ChatLLMHome() {
                 <button className="hover:text-zinc-700">
                   <Search className="h-4 w-4" />
                 </button>
-                <button className="hover:text-zinc-700">
+                <button 
+                  onClick={createNewProject}
+                  className="hover:text-zinc-700"
+                  title="Create new project"
+                >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
             </div>
-            <div className="h-8 rounded-lg bg-zinc-100" />
+            <div className="space-y-2">
+              {projects.map((project: any) => (
+                <button
+                  key={project.id}
+                  onClick={() => switchProject(project)}
+                  className={`w-full text-left p-2 rounded-lg text-sm transition-colors ${
+                    currentProject?.id === project.id
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      : 'hover:bg-zinc-50 text-zinc-700'
+                  }`}
+                >
+                  {project.name}
+                </button>
+              ))}
+              {projects.length === 0 && (
+                <div className="text-xs text-zinc-500 text-center py-4">
+                  No projects yet. Click + to create one.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Chats */}
@@ -250,15 +386,43 @@ export default function ChatLLMHome() {
                 <button className="hover:text-zinc-700">
                   <Search className="h-4 w-4" />
                 </button>
-                <button className="hover:text-zinc-700">
+                <button 
+                  onClick={createNewChat}
+                  className="hover:text-zinc-700"
+                  title="Create new chat"
+                  disabled={!currentProject}
+                >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
             </div>
             <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-8 rounded-lg bg-zinc-100" />
+              {chats.map((chat: any) => (
+                <button
+                  key={chat.id}
+                  onClick={() => switchChat(chat)}
+                  className={`w-full text-left p-2 rounded-lg text-sm transition-colors ${
+                    currentChat?.id === chat.id
+                      ? 'bg-green-50 text-green-700 border border-green-200'
+                      : 'hover:bg-zinc-50 text-zinc-700'
+                  }`}
+                >
+                  {chat.title || `Chat ${chat.id}`}
+                  <div className="text-xs text-zinc-500 mt-1">
+                    {chat.model || 'gpt-4o'}
+                  </div>
+                </button>
               ))}
+              {chats.length === 0 && currentProject && (
+                <div className="text-xs text-zinc-500 text-center py-4">
+                  No chats yet. Click + to create one.
+                </div>
+              )}
+              {!currentProject && (
+                <div className="text-xs text-zinc-500 text-center py-4">
+                  Select a project first.
+                </div>
+              )}
             </div>
           </div>
 
@@ -441,11 +605,23 @@ export default function ChatLLMHome() {
 
         </main>
 
-        {/* Tool Panels */}
-        {showImageGen && <ImageGenerationPanel onClose={() => setShowImageGen(false)} />}
-        {showCodeRunner && <CodeRunnerPanel onClose={() => setShowCodeRunner(false)} />}
-        {showResearch && <DeepResearchPanel onClose={() => setShowResearch(false)} />}
-        {showDataAnalysis && <DataAnalysisPanel onClose={() => setShowDataAnalysis(false)} />}
+        {/* Quick Action Tools integrated into main panel */}
+        <div className="absolute top-4 right-4 w-80 max-h-[calc(100vh-120px)] overflow-auto">
+          <QuickActionTools 
+            showImageGen={showImageGen}
+            setShowImageGen={setShowImageGen}
+            showCodeRunner={showCodeRunner}
+            setShowCodeRunner={setShowCodeRunner}
+            showResearch={showResearch}
+            setShowResearch={setShowResearch}
+            showDataAnalysis={showDataAnalysis}
+            setShowDataAnalysis={setShowDataAnalysis}
+            showPlayground={showPlayground}
+            setShowPlayground={setShowPlayground}
+            showPowerPoint={showPowerPoint}
+            setShowPowerPoint={setShowPowerPoint}
+          />
+        </div>
       </div>
       <div ref={messagesEndRef} />
     </div>

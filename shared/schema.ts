@@ -117,6 +117,19 @@ export const aiMessages = pgTable("ai_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// AI Portal Artifacts (images, documents, etc.)
+export const aiArtifacts = pgTable("ai_artifacts", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => aiProjects.id),
+  chatId: integer("chat_id").references(() => aiChats.id),
+  type: varchar("type").notNull(), // 'image', 'document', 'code', 'research', 'data_analysis'
+  title: varchar("title").notNull(),
+  content: text("content"), // JSON or text content
+  url: varchar("url"), // For external files
+  metadata: jsonb("metadata"), // Additional data like dimensions, format, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // AI Portal Datasets
 export const aiDatasets = pgTable("ai_datasets", {
   id: serial("id").primaryKey(),
@@ -128,15 +141,7 @@ export const aiDatasets = pgTable("ai_datasets", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// AI Portal Artifacts (generated content)
-export const aiArtifacts = pgTable("ai_artifacts", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id").references(() => aiProjects.id).notNull(),
-  name: varchar("name").notNull(),
-  type: varchar("type").notNull(), // 'chart', 'report', 'code', 'document'
-  data: jsonb("data").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+
 
 // Teams for collaborative work
 export const teams = pgTable("teams", {
@@ -201,6 +206,7 @@ export const insertQuoteSchema = createInsertSchema(quotes).omit({
 });
 
 // Insert schemas for AI Portal tables
+// Insert schemas for AI Portal
 export const insertAiUsageSchema = createInsertSchema(aiUsage).omit({
   id: true,
   createdAt: true,
@@ -221,15 +227,17 @@ export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({
   createdAt: true,
 });
 
+export const insertAiArtifactSchema = createInsertSchema(aiArtifacts).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertAiDatasetSchema = createInsertSchema(aiDatasets).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertAiArtifactSchema = createInsertSchema(aiArtifacts).omit({
-  id: true,
-  createdAt: true,
-});
+
 
 // Insert schemas for new tables
 export const insertTeamSchema = createInsertSchema(teams).omit({

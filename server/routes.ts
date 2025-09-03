@@ -8319,6 +8319,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced AI Portal Tool Endpoints
+  app.post('/api/ai-portal/tools/image/generate', async (req, res) => {
+    try {
+      const { prompt, size = "1024x1024" } = req.body;
+
+      if (!prompt) {
+        return res.status(400).json({ ok: false, error: 'Prompt is required' });
+      }
+
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt,
+        n: 1,
+        size: size as "1024x1024" | "1024x1792" | "1792x1024",
+        quality: "standard",
+      });
+
+      const imageUrl = response.data[0]?.url;
+      if (!imageUrl) {
+        throw new Error('No image generated');
+      }
+
+      res.json({ ok: true, imageUrl });
+    } catch (error: any) {
+      console.error('Image generation error:', error);
+      res.status(500).json({ ok: false, error: error.message || 'Failed to generate image' });
+    }
+  });
+
+  app.post('/api/ai-portal/tools/research', async (req, res) => {
+    try {
+      const { query, depth = "fast" } = req.body;
+
+      if (!query) {
+        return res.status(400).json({ ok: false, error: 'Query is required' });
+      }
+
+      const researchPrompt = `Perform comprehensive research on: "${query}". 
+      
+Please provide:
+1. A detailed summary of key findings
+2. 5-15 relevant sources with titles, URLs, and brief descriptions
+3. Key insights and analysis
+
+Research depth: ${depth}
+
+Format the response as JSON with structure:
+{
+  "summary": "detailed summary here",
+  "sources": [
+    {
+      "id": 1,
+      "title": "Source Title",
+      "url": "https://example.com",
+      "snippet": "Brief description of the source content"
+    }
+  ]
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: researchPrompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      });
+
+      const results = JSON.parse(response.choices[0].message.content || '{}');
+      
+      res.json({ ok: true, results });
+    } catch (error: any) {
+      console.error('Research error:', error);
+      res.status(500).json({ ok: false, error: 'Failed to perform research' });
+    }
+  });
+
+  app.post('/api/ai-portal/tools/ppt', async (req, res) => {
+    try {
+      const { outline } = req.body;
+
+      if (!outline) {
+        return res.status(400).json({ ok: false, error: 'Outline is required' });
+      }
+
+      const pptPrompt = `Create a PowerPoint presentation based on this outline: "${outline}"
+
+Generate 5-10 slides with:
+1. Title slide
+2. Overview/agenda slide
+3. Main content slides (3-6 slides)
+4. Conclusion slide
+
+For each slide, provide:
+- Title
+- 3-5 bullet points of content
+
+Format as JSON:
+{
+  "slides": [
+    {
+      "title": "Slide Title",
+      "content": ["Point 1", "Point 2", "Point 3"]
+    }
+  ]
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: pptPrompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.7,
+      });
+
+      const results = JSON.parse(response.choices[0].message.content || '{"slides": []}');
+      
+      res.json({ ok: true, slides: results.slides });
+    } catch (error: any) {
+      console.error('PowerPoint generation error:', error);
+      res.status(500).json({ ok: false, error: 'Failed to generate PowerPoint' });
+    }
+  });
+
   app.post('/api/search/save', async (req, res) => {
     try {
       const { provider, query, results } = req.body;
