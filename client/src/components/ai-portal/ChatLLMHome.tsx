@@ -109,6 +109,7 @@ export default function ChatLLMHome() {
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [chatMode, setChatMode] = useState('Chat');
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [, setLocation] = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -372,9 +373,9 @@ export default function ChatLLMHome() {
             <span className="text-zinc-800 font-semibold tracking-tight">ADVANTA AI</span>
           </div>
           <button 
-            onClick={() => alert('Document feature coming soon!')}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
             className="ml-3 text-zinc-400 hover:text-zinc-600 text-lg"
-            title="Documents"
+            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >📄</button>
           <button 
             onClick={() => alert('Edit feature coming soon!')}
@@ -422,9 +423,9 @@ export default function ChatLLMHome() {
       </header>
 
       {/* Body: Sidebar + Main */}
-      <div className="grid grid-cols-[280px_1fr] gap-0 min-h-[calc(100vh-56px)]">
+      <div className={`grid ${sidebarOpen ? 'grid-cols-[280px_1fr]' : 'grid-cols-[0px_1fr]'} gap-0 min-h-[calc(100vh-56px)]`}>
         {/* Left Sidebar */}
-        <aside className="border-r border-zinc-200 bg-white flex flex-col">
+        <aside className={`border-r border-zinc-200 bg-white flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-[280px] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
           {/* Projects */}
           <div className="p-4 border-b border-zinc-200">
             <div className="flex items-center justify-between mb-3">
