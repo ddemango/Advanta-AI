@@ -1,0 +1,138 @@
+You are required to fully implement the Advanta-AI Portal into a production-ready platform that matches or exceeds ChatLLM (apps.abacus.ai/chatllm).
+
+⚠️ This is non-negotiable:
+
+You must not skip or ignore any feature.
+
+You must not mark any item complete until it is working, tested, and confirmed in the UI.
+
+Every feature below must be checked off when complete.
+
+Dead UI elements, broken buttons, or missing functionality are unacceptable.
+
+Failure to meet any requirement means the build is incomplete.
+
+✅ ADVANTA-AI PORTAL MASTER CHECKLIST
+1. Core Chat & Persistence
+
+ Functional chat box: typing + send = streamed responses.
+
+ Backend routing: connect to GPT-5, GPT-4, Gemini 2.5, Grok, Claude, Cohere.
+
+ Supabase DB: store users, projects, chats, messages.
+
+ Sidebar “+” icons create new chats/projects (persisted).
+
+ Model selector dropdown exposes all models and switches correctly.
+
+2. Quick-Action Tools
+
+ Image: prompt → image generated (DALL·E / Stable Diffusion).
+
+ Code: Monaco editor → run code → output visible in chat.
+
+ Playground: full multi-model freeform tester with sliders (temp, tokens).
+
+ PowerPoint: input outline → generates downloadable .pptx/.pdf.
+
+ Deep Research: live web search (Bing/Brave/Serper) → scrape → RAG → citations returned.
+
+ More button expands into future tools.
+
+3. DeepAgent & Workflows
+
+ Visual DAG editor (React Flow): nodes, edges, export JSON.
+
+ Graph executor: executes DAG node-by-node with retries.
+
+ Results Composer: merges outputs into polished Markdown/PDF reports.
+
+ DeepAgent sub-tabs (Apps, Tasks, CodeLLM) open and function.
+
+ CodeLLM tab: Monaco editor + explain/fix/generate/run features.
+
+4. Advanced Capabilities
+
+ Document ingestion (PDF, DOCX, TXT upload → parsed + queryable).
+
+ Data analysis (CSV/XLSX → Pandas sandbox → chart + table).
+
+ Text humanization/tone rewrite tool with selectable styles.
+
+ Image generation variations + negative prompts supported.
+
+ Video generation integration (Pika / Runway).
+
+ Real web search connector: results + artifacts saved.
+
+5. Integrations
+
+ Slack: OAuth connect → send message from portal → visible in Slack.
+
+ Google Drive: OAuth → pick doc → ingest + query.
+
+ Google Calendar: OAuth → list events.
+
+ Gmail: OAuth → query inbox + summarize.
+
+ Teams/Confluence connectors stubbed and ready.
+
+ App Store & Play Store buttons link correctly.
+
+6. UI/UX Parity
+
+ Prompt suggestion buttons auto-insert text and trigger chat.
+
+ Projects/chats persist across sessions.
+
+ Results Composer exports Markdown & PDF correctly.
+
+ Sidebar drag/drop + rename + archive.
+
+ Polished dark/light theme + brand colors.
+
+ No dead UI — every button/panel must perform an action.
+
+7. Security & Stability
+
+ Supabase Row Level Security enforced per user.
+
+ OAuth flows working (Google, Slack, etc.).
+
+ Rate limiting (chat: 60/min, search: 20/min).
+
+ CSP headers correct (no unsafe eval).
+
+ Signed URLs for downloads (15 min expiry).
+
+8. Observability & Costs
+
+ Log every provider call (tokens, latency, cost).
+
+ Sentry integrated for error monitoring.
+
+ Cost guardrails (disable expensive models if spend cap reached).
+
+ Run history visible in DB and linked to UI.
+
+9. Deployment & QA
+
+ Deploy to Vercel + Supabase.
+
+ Playwright tests: UI interactions (chat, tools, sidebar).
+
+ Vitest: API routes (chat/send, research, docs, DAG executor).
+
+ Confirm each button produces output in live environment.
+
+ Cross-check parity against ChatLLM features.
+
+🔥 Final Instructions
+
+Work through this checklist in order.
+
+Only check off items when they are fully functional and tested.
+
+Provide confirmation logs or test outputs for each completed feature.
+
+When the entire checklist is complete, the Advanta-AI portal must behave like ChatLLM with no broken functionality.

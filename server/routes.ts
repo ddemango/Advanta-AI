@@ -8456,6 +8456,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Legacy compatibility endpoints
   app.post('/api/ai-portal/run-code', aiPortalApi.runCode);
   app.post('/api/ai-portal/search', aiPortalApi.search);
+  
+  // Quick-Action Tools endpoints
+  app.post('/api/ai-portal/tools/image/generate', aiPortalApi.generateImage);
+  app.post('/api/ai-portal/tools/code/run', aiPortalApi.quickRunCode);
+  app.post('/api/ai-portal/tools/research', aiPortalApi.performResearch);
   app.post('/api/ai-portal/tts', aiPortalApi.textToSpeech);
 
   // Agent Management APIs

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -9,7 +9,16 @@ import {
   Mic,
   Send,
   ChevronDown,
-  Settings
+  Settings,
+  Image as ImageIcon,
+  Code2,
+  FlaskConical,
+  FileBarChart2,
+  Download,
+  Upload,
+  MoreHorizontal,
+  Play,
+  Zap
 } from "lucide-react";
 
 // ChatLLM Home-like UI (light theme) to match the screenshot specification
@@ -40,6 +49,85 @@ export default function ChatLLMHome() {
     { role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }
   ]);
   const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [currentProject, setCurrentProject] = useState(null);
+  const [showImageGen, setShowImageGen] = useState(false);
+  const [showCodeRunner, setShowCodeRunner] = useState(false);
+  const [showResearch, setShowResearch] = useState(false);
+  const [showDataAnalysis, setShowDataAnalysis] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      const response = await fetch('/api/ai-portal/projects');
+      const data = await response.json();
+      if (data.ok) {
+        setProjects(data.projects);
+        if (data.projects.length > 0) {
+          setCurrentProject(data.projects[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    }
+  };
+
+  const createNewProject = async () => {
+    const name = prompt('Enter project name:');
+    if (!name) return;
+    
+    try {
+      const response = await fetch('/api/ai-portal/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: '' })
+      });
+      const data = await response.json();
+      if (data.ok) {
+        await loadProjects();
+        setCurrentProject(data.project);
+        setMessages([{ role: "assistant", content: "Welcome to your new project! How can I help you today?" }]);
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    }
+  };
+
+  const createNewChat = async () => {
+    if (!currentProject) return;
+    
+    try {
+      const response = await fetch('/api/ai-portal/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          projectId: currentProject?.id, 
+          title: 'New Chat',
+          model: model
+        })
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setMessages([{ role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }]);
+      }
+    } catch (error) {
+      console.error('Failed to create chat:', error);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!message.trim() || loading) return;
@@ -287,6 +375,41 @@ export default function ChatLLMHome() {
                   disabled={loading}
                 />
                 
+                {/* Quick Action Tools */}
+                <div className="flex items-center gap-3 flex-wrap justify-center mb-4">
+                  <button 
+                    onClick={() => setShowImageGen(!showImageGen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">🖼️</span>
+                    <span className="text-sm font-medium">Image</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowCodeRunner(!showCodeRunner)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">💻</span>
+                    <span className="text-sm font-medium">Code</span>
+                  </button>
+                  <ToolChip icon="🧪" label="Playground" />
+                  <ToolChip icon="📊" label="PowerPoint" />
+                  <button 
+                    onClick={() => setShowResearch(!showResearch)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">🔍</span>
+                    <span className="text-sm font-medium">Deep Research</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowDataAnalysis(!showDataAnalysis)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">📈</span>
+                    <span className="text-sm font-medium">Data Analysis</span>
+                  </button>
+                  <ToolChip icon="⋯" label="More" />
+                </div>
+
                 {/* Controls row */}
                 <div className="flex items-center gap-3">
                   <button className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors">
@@ -317,6 +440,360 @@ export default function ChatLLMHome() {
           </div>
 
         </main>
+
+        {/* Tool Panels */}
+        {showImageGen && <ImageGenerationPanel onClose={() => setShowImageGen(false)} />}
+        {showCodeRunner && <CodeRunnerPanel onClose={() => setShowCodeRunner(false)} />}
+        {showResearch && <DeepResearchPanel onClose={() => setShowResearch(false)} />}
+        {showDataAnalysis && <DataAnalysisPanel onClose={() => setShowDataAnalysis(false)} />}
+      </div>
+      <div ref={messagesEndRef} />
+    </div>
+  );
+}
+
+// Image Generation Panel
+function ImageGenerationPanel({ onClose }: { onClose: () => void }) {
+  const [prompt, setPrompt] = useState("");
+  const [size, setSize] = useState("1024x1024");
+  const [loading, setLoading] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+
+  const generateImage = async () => {
+    if (!prompt.trim()) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/ai-portal/tools/image/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, size })
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setGeneratedImages(prev => [...prev, data.imageUrl]);
+      }
+    } catch (error) {
+      console.error('Image generation failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">🖼️ Image Generation</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Prompt</label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe the image you want to generate..."
+              className="w-full p-3 border border-gray-200 rounded-lg resize-none h-24"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-2">Size</label>
+            <select
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              className="w-full p-3 border border-gray-200 rounded-lg"
+            >
+              <option value="1024x1024">1024×1024 (Square)</option>
+              <option value="1024x1792">1024×1792 (Portrait)</option>
+              <option value="1792x1024">1792×1024 (Landscape)</option>
+            </select>
+          </div>
+          
+          <button
+            onClick={generateImage}
+            disabled={loading || !prompt.trim()}
+            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Generating...' : 'Generate Image'}
+          </button>
+          
+          {generatedImages.length > 0 && (
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              {generatedImages.map((url, idx) => (
+                <div key={idx} className="relative">
+                  <img src={url} alt={`Generated ${idx + 1}`} className="w-full rounded-lg" />
+                  <button
+                    onClick={() => window.open(url, '_blank')}
+                    className="absolute top-2 right-2 bg-white/90 p-2 rounded-lg text-sm hover:bg-white"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Code Runner Panel
+function CodeRunnerPanel({ onClose }: { onClose: () => void }) {
+  const [language, setLanguage] = useState("javascript");
+  const [code, setCode] = useState("console.log('Hello World!');");
+  const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const runCode = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/ai-portal/tools/code/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, code })
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setOutput(data.output);
+      }
+    } catch (error) {
+      setOutput('Error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">💻 Code Runner</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-sm font-medium">Language:</label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="p-2 border border-gray-200 rounded"
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="typescript">TypeScript</option>
+                <option value="bash">Bash</option>
+              </select>
+              <button
+                onClick={runCode}
+                disabled={loading}
+                className="ml-auto bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                <Play className="h-4 w-4 inline mr-1" />
+                {loading ? 'Running...' : 'Run'}
+              </button>
+            </div>
+            <textarea
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full h-64 p-3 border border-gray-200 rounded-lg font-mono text-sm"
+              placeholder="Write your code here..."
+            />
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium mb-2">Output:</h3>
+            <div className="h-64 p-3 bg-gray-900 text-green-400 rounded-lg font-mono text-sm overflow-y-auto whitespace-pre-wrap">
+              {output || 'Run code to see output...'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Deep Research Panel
+function DeepResearchPanel({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [depth, setDepth] = useState("fast");
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const runResearch = async () => {
+    if (!query.trim()) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/ai-portal/tools/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, depth })
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setResults(data.results);
+      }
+    } catch (error) {
+      console.error('Research failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">🔍 Deep Research</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Research Query</label>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="What would you like to research?"
+              className="w-full p-3 border border-gray-200 rounded-lg"
+            />
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Depth</label>
+              <select
+                value={depth}
+                onChange={(e) => setDepth(e.target.value)}
+                className="p-3 border border-gray-200 rounded-lg"
+              >
+                <option value="fast">Fast (5 sources)</option>
+                <option value="deep">Deep (15+ sources)</option>
+              </select>
+            </div>
+            
+            <button
+              onClick={runResearch}
+              disabled={loading || !query.trim()}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
+            >
+              {loading ? 'Researching...' : 'Start Research'}
+            </button>
+          </div>
+          
+          {results && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold mb-2">Research Results:</h3>
+              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: results.summary }} />
+              
+              {results.sources && (
+                <div className="mt-4">
+                  <h4 className="font-medium mb-2">Sources:</h4>
+                  <div className="space-y-2">
+                    {results.sources.map((source, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-600">[{idx + 1}]</span>
+                        <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          {source.title}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Data Analysis Panel
+function DataAnalysisPanel({ onClose }: { onClose: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [analysisPrompt, setAnalysisPrompt] = useState("");
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const analyzeData = async () => {
+    if (!file || !analysisPrompt.trim()) return;
+    
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('prompt', analysisPrompt);
+    
+    try {
+      const response = await fetch('/api/ai-portal/tools/data/analyze', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.ok) {
+        setResults(data.results);
+      }
+    } catch (error) {
+      console.error('Data analysis failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">📈 Data Analysis</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Upload CSV/Excel File</label>
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="w-full p-3 border border-gray-200 rounded-lg"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-2">Analysis Request</label>
+            <textarea
+              value={analysisPrompt}
+              onChange={(e) => setAnalysisPrompt(e.target.value)}
+              placeholder="What would you like to analyze? (e.g., 'Create a bar chart of sales by month')"
+              className="w-full p-3 border border-gray-200 rounded-lg h-24 resize-none"
+            />
+          </div>
+          
+          <button
+            onClick={analyzeData}
+            disabled={loading || !file || !analysisPrompt.trim()}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Analyzing...' : 'Analyze Data'}
+          </button>
+          
+          {results && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold mb-2">Analysis Results:</h3>
+              {results.chart && (
+                <img src={results.chart} alt="Generated Chart" className="w-full rounded-lg mb-4" />
+              )}
+              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: results.summary }} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

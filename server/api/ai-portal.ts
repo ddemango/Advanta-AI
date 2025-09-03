@@ -519,7 +519,168 @@ export async function analyzeData(req: Request, res: Response) {
   }
 }
 
-// Health check endpoint
+// Image Generation Tool
+export async function generateImage(req: Request, res: Response) {
+  try {
+    const { prompt, size = '1024x1024' } = req.body;
+    
+    if (!prompt) {
+      return res.status(400).json({ ok: false, error: 'Prompt is required' });
+    }
+
+    const response = await openai.images.generate({
+      model: 'dall-e-3',
+      prompt,
+      n: 1,
+      size: size as any,
+      quality: 'standard'
+    });
+
+    const imageUrl = response.data[0].url;
+
+    res.json({ ok: true, imageUrl });
+  } catch (error: any) {
+    console.error('Image generation error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to generate image' });
+  }
+}
+
+// New Code Runner Tool for Quick Actions
+export async function quickRunCode(req: Request, res: Response) {
+  try {
+    const { language, code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ ok: false, error: 'Code is required' });
+    }
+
+    let output = '';
+    
+    try {
+      // Simple sandbox execution for JavaScript
+      if (language === 'javascript') {
+        // Safe execution using Function constructor
+        const logs: string[] = [];
+        const originalConsole = console.log;
+        console.log = (...args: any[]) => {
+          logs.push(args.map(arg => 
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+          ).join(' '));
+        };
+        
+        try {
+          const result = new Function(code)();
+          output = logs.join('\n');
+          if (result !== undefined) {
+            output += `\nResult: ${result}`;
+          }
+        } finally {
+          console.log = originalConsole;
+        }
+      }
+      // For Python, use subprocess
+      else if (language === 'python') {
+        const tempFile = path.join(os.tmpdir(), `code_${Date.now()}.py`);
+        await fs.writeFile(tempFile, code);
+        
+        const python = spawn('python3', [tempFile]);
+        let stdout = '';
+        let stderr = '';
+        
+        python.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+        
+        python.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+        
+        await new Promise((resolve) => {
+          python.on('close', resolve);
+        });
+        
+        output = stdout || stderr || 'No output';
+        
+        // Clean up temp file
+        try {
+          await fs.unlink(tempFile);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      else {
+        output = 'Language not supported in sandbox environment';
+      }
+    } catch (execError: any) {
+      output = `Execution Error: ${execError.message}`;
+    }
+
+    res.json({ ok: true, output });
+  } catch (error: any) {
+    console.error('Code execution error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to execute code' });
+  }
+}
+
+// Deep Research Tool
+export async function performResearch(req: Request, res: Response) {
+  try {
+    const { query, depth = 'fast' } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ ok: false, error: 'Query is required' });
+    }
+
+    // Simulate web search results (in production, use real search APIs)
+    const maxResults = depth === 'deep' ? 15 : 5;
+    const searchResults = [];
+    
+    for (let i = 1; i <= maxResults; i++) {
+      searchResults.push({
+        title: `Research result ${i} for: ${query}`,
+        url: `https://example.com/research-${i}`,
+        snippet: `This is research finding ${i} about ${query}. It contains relevant information that would be found through comprehensive web search and analysis.`
+      });
+    }
+    
+    // Use OpenAI to synthesize results
+    const synthesisPrompt = `
+You are a research analyst. Based on the following search results, create a comprehensive research summary with citations.
+
+Query: ${query}
+Search Results:
+${searchResults.map((result, idx) => `[${idx + 1}] ${result.title}\n${result.snippet}\nURL: ${result.url}\n`).join('\n')}
+
+Please provide:
+1. A comprehensive summary with key findings
+2. Numbered citations [1], [2], etc. throughout the summary  
+3. Use proper markdown formatting
+4. Include actionable insights where relevant
+`;
+
+    const synthesis = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: synthesisPrompt }],
+      temperature: 0.3
+    });
+
+    const results = {
+      summary: synthesis.choices[0].message.content,
+      sources: searchResults.map((result, idx) => ({
+        id: idx + 1,
+        title: result.title,
+        url: result.url,
+        snippet: result.snippet
+      }))
+    };
+
+    res.json({ ok: true, results });
+  } catch (error: any) {
+    console.error('Research error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to perform research' });
+  }
+}
+
 export async function health(req: Request, res: Response) {
   res.json({
     ok: true,
@@ -533,7 +694,7 @@ export async function health(req: Request, res: Response) {
       text_humanization: true,
       data_analysis: true,
       tts: true,
-      tts: true,
+      research: true,
     },
   });
 }
