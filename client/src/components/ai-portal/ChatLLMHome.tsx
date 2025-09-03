@@ -35,9 +35,12 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToolChip({ icon, label }: { icon: string; label: string }) {
+function ToolChip({ icon, label, onClick }: { icon: string; label: string; onClick?: () => void }) {
   return (
-    <button className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors">
+    <button 
+      className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+      onClick={onClick}
+    >
       <span className="text-sm">{icon}</span>
       <span className="text-sm font-medium">{label}</span>
     </button>
@@ -333,8 +336,16 @@ export default function ChatLLMHome() {
             <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
             <span className="text-zinc-800 font-semibold tracking-tight">ABACUS.AI</span>
           </div>
-          <button className="ml-3 text-zinc-400 hover:text-zinc-600 text-lg">📄</button>
-          <button className="text-zinc-400 hover:text-zinc-600 text-lg">✏️</button>
+          <button 
+            onClick={() => alert('Document feature coming soon!')}
+            className="ml-3 text-zinc-400 hover:text-zinc-600 text-lg"
+            title="Documents"
+          >📄</button>
+          <button 
+            onClick={() => alert('Edit feature coming soon!')}
+            className="text-zinc-400 hover:text-zinc-600 text-lg"
+            title="Edit"
+          >✏️</button>
         </div>
 
         {/* Model dropdown centered */}
@@ -358,13 +369,20 @@ export default function ChatLLMHome() {
 
         {/* Right controls */}
         <div className="flex items-center gap-3">
-          <button className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+          <button 
+            onClick={() => alert('Referral program coming soon!')}
+            className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+          >
             Refer ($) / Invite 
             <ChevronDown className="h-3 w-3" />
           </button>
-          <div className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm">
+          <button 
+            onClick={() => alert('User profile settings coming soon!')}
+            className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm hover:bg-emerald-300 transition-colors"
+            title="Profile"
+          >
             D
-          </div>
+          </button>
         </div>
       </header>
 
@@ -377,7 +395,11 @@ export default function ChatLLMHome() {
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-zinc-600">Projects</span>
               <div className="flex items-center gap-3 text-zinc-500">
-                <button className="hover:text-zinc-700">
+                <button 
+                  onClick={() => alert('Project search coming soon!')}
+                  className="hover:text-zinc-700"
+                  title="Search projects"
+                >
                   <Search className="h-4 w-4" />
                 </button>
                 <button 
@@ -416,7 +438,11 @@ export default function ChatLLMHome() {
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-zinc-600">Chats</span>
               <div className="flex items-center gap-3 text-zinc-500">
-                <button className="hover:text-zinc-700">
+                <button 
+                  onClick={() => alert('Chat search coming soon!')}
+                  className="hover:text-zinc-700"
+                  title="Search chats"
+                >
                   <Search className="h-4 w-4" />
                 </button>
                 <button 
@@ -470,13 +496,22 @@ export default function ChatLLMHome() {
             </button>
             
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-sm hover:bg-zinc-50 transition-colors">
+              <button 
+                onClick={() => alert('Apps feature coming soon!')}
+                className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-sm hover:bg-zinc-50 transition-colors"
+              >
                 Apps
               </button>
-              <button className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-sm hover:bg-zinc-50 transition-colors">
+              <button 
+                onClick={() => alert('Tasks feature coming soon!')}
+                className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-sm hover:bg-zinc-50 transition-colors"
+              >
                 Tasks
               </button>
-              <button className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-sm hover:bg-zinc-50 transition-colors">
+              <button 
+                onClick={() => alert('CodeLLM feature coming soon!')}
+                className="px-3 py-1.5 rounded-full bg-white border border-zinc-200 shadow-sm text-sm hover:bg-zinc-50 transition-colors"
+              >
                 CodeLLM
               </button>
             </div>
@@ -491,7 +526,8 @@ export default function ChatLLMHome() {
                 { emoji: "🧭" }
               ].map((item, i) => (
                 <button 
-                  key={i} 
+                  key={i}
+                  onClick={() => alert(`${item.emoji} feature coming soon!`)}
                   className="h-9 w-9 rounded-full bg-white border border-zinc-200 grid place-items-center shadow-sm hover:bg-zinc-50 transition-colors"
                 >
                   <span className="text-sm">{item.emoji}</span>
@@ -500,12 +536,18 @@ export default function ChatLLMHome() {
             </div>
             
             <div className="flex items-center gap-3 mt-3">
-              <div className="h-8 w-28 rounded-xl bg-black text-white grid place-items-center text-xs font-medium">
+              <button 
+                onClick={() => window.open('https://apps.apple.com/search?term=advanta+ai', '_blank')}
+                className="h-8 w-28 rounded-xl bg-black text-white grid place-items-center text-xs font-medium hover:bg-gray-800 transition-colors"
+              >
                 App Store
-              </div>
-              <div className="h-8 w-28 rounded-xl bg-black text-white grid place-items-center text-xs font-medium">
+              </button>
+              <button 
+                onClick={() => window.open('https://play.google.com/store/search?q=advanta+ai', '_blank')}
+                className="h-8 w-28 rounded-xl bg-black text-white grid place-items-center text-xs font-medium hover:bg-gray-800 transition-colors"
+              >
                 Google Play
-              </div>
+              </button>
             </div>
           </div>
         </aside>
@@ -591,8 +633,20 @@ export default function ChatLLMHome() {
                     <span className="text-sm">💻</span>
                     <span className="text-sm font-medium">Code</span>
                   </button>
-                  <ToolChip icon="🧪" label="Playground" />
-                  <ToolChip icon="📊" label="PowerPoint" />
+                  <button 
+                    onClick={() => setShowPlayground(!showPlayground)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">🧪</span>
+                    <span className="text-sm font-medium">Playground</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowPowerPoint(!showPowerPoint)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">📊</span>
+                    <span className="text-sm font-medium">PowerPoint</span>
+                  </button>
                   <button 
                     onClick={() => setShowResearch(!showResearch)}
                     className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
@@ -607,23 +661,44 @@ export default function ChatLLMHome() {
                     <span className="text-sm">📈</span>
                     <span className="text-sm font-medium">Data Analysis</span>
                   </button>
-                  <ToolChip icon="⋯" label="More" />
+                  <button 
+                    onClick={() => alert('More tools coming soon!')}
+                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                  >
+                    <span className="text-sm">⋯</span>
+                    <span className="text-sm font-medium">More</span>
+                  </button>
                 </div>
 
                 {/* Controls row */}
                 <div className="flex items-center gap-3">
-                  <button className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors">
+                  <button 
+                    onClick={() => alert('File attachment coming soon!')}
+                    className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                    title="Attach file"
+                  >
                     <Paperclip className="h-4 w-4 text-zinc-600" />
                   </button>
-                  <button className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors">
+                  <button 
+                    onClick={() => alert('Web browsing coming soon!')}
+                    className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                    title="Web search"
+                  >
                     <Globe className="h-4 w-4 text-zinc-600" />
                   </button>
 
                   <div className="ml-auto flex items-center gap-2">
-                    <button className="px-3 py-2 rounded-xl bg-white border border-zinc-200 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-1">
+                    <button 
+                      onClick={() => alert('Chat settings coming soon!')}
+                      className="px-3 py-2 rounded-xl bg-white border border-zinc-200 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-1"
+                    >
                       Chat <ChevronDown className="h-3 w-3" />
                     </button>
-                    <button className="h-10 w-10 grid place-items-center rounded-full bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors">
+                    <button 
+                      onClick={() => alert('Voice input coming soon!')}
+                      className="h-10 w-10 grid place-items-center rounded-full bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                      title="Voice input"
+                    >
                       <Mic className="h-4 w-4 text-zinc-600" />
                     </button>
                     <button 
