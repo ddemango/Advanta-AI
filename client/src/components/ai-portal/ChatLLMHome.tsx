@@ -48,16 +48,19 @@ function ToolChip({ icon, label, onClick }: { icon: string; label: string; onCli
 }
 
 export default function ChatLLMHome() {
-  const [model, setModel] = useState("gpt-4o");
+  const [model, setModel] = useState("openai:gpt-4o");
   const [availableModels, setAvailableModels] = useState([
-    { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
-    { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
-    { id: 'gemini-2.5', name: 'Gemini 2.5', provider: 'Google' },
-    { id: 'grok', name: 'Grok', provider: 'xAI' },
-    { id: 'claude-3', name: 'Claude 3', provider: 'Anthropic' },
-    { id: 'cohere', name: 'Cohere', provider: 'Cohere' }
+    { id: 'openai:gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
+    { id: 'openai:gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
+    { id: 'openai:gpt-4', name: 'GPT-4', provider: 'OpenAI' },
+    { id: 'openai:gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
+    { id: 'anthropic:claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
+    { id: 'anthropic:claude-3-haiku', name: 'Claude 3 Haiku', provider: 'Anthropic' },
+    { id: 'google:gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'Google' },
+    { id: 'google:gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google' },
+    { id: 'xai:grok-beta', name: 'Grok Beta', provider: 'xAI' },
+    { id: 'cohere:command-r-plus', name: 'Command R+', provider: 'Cohere' },
+    { id: 'router:RouteLLM', name: 'RouteLLM (Smart Router)', provider: 'Router' }
   ]);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([

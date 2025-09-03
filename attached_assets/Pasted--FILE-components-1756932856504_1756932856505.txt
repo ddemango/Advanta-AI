@@ -1,0 +1,280 @@
+// ============================================================================
+// FILE: components/ModelSelector.tsx — adds All / LLMs tabs + searchable list
+// ============================================================================
+"use client";
+import * as React from "react";
+import { ProviderModel } from "@/lib/types";
+
+const MODELS: { key: string; label: string; provider: string }[] = [
+  { key: "route-llm", label: "RouteLLM", provider: "router" },
+  { key: "gpt-5", label: "GPT-5", provider: "openai" },
+  { key: "gpt-5-thinking", label: "GPT-5 Thinking", provider: "openai" },
+  { key: "claude-sonnet-4", label: "Claude Sonnet 4", provider: "anthropic" },
+  { key: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "google" },
+  { key: "grok-4", label: "Grok 4", provider: "xai" },
+];
+
+export function ModelSelector({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (m: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [tab, setTab] = React.useState<"all" | "llms">("all");
+
+  const filtered = MODELS.filter((m) =>
+    m.label.toLowerCase().includes(search.toLowerCase())
+  ).filter((m) => (tab === "llms" ? m.provider !== "router" : true));
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="rounded-full border px-3 py-2 text-sm"
+      >
+        {MODELS.find((m) => m.key === value)?.label || "Select Model"} ▾
+      </button>
+      {open && (
+        <div className="absolute right-0 z-20 mt-2 w-64 rounded-xl border bg-white shadow-xl">
+          <div className="flex border-b text-sm">
+            <button
+              className={`flex-1 px-3 py-2 ${tab === "all" ? "border-b-2 border-black font-medium" : ""}`}
+              onClick={() => setTab("all")}
+            >
+              All
+            </button>
+            <button
+              className={`flex-1 px-3 py-2 ${tab === "llms" ? "border-b-2 border-black font-medium" : ""}`}
+              onClick={() => setTab("llms")}
+            >
+              LLMs
+            </button>
+          </div>
+          <div className="p-2">
+            <input
+              type="text"
+              placeholder="Search Bot..."
+              className="mb-2 w-full rounded-lg border px-2 py-1 text-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className="max-h-60 overflow-y-auto">
+              {filtered.map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => {
+                    onChange(m.key);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 ${
+                    value === m.key ? "bg-purple-100" : ""
+                  }`}
+                >
+                  <span className="h-2 w-2 rounded-full bg-gray-400" />
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// UPDATE ChatComposer to include ModelSelector
+// ============================================================================
+// In ChatComposer.tsx, replace the inline model display with:
+// <ModelSelector value={model} onChange={setModel} />
+// ============================================================================
+
+// ============================================================================
+// FILE: app/api/models/route.ts — returns models list for selector tabs
+// ============================================================================
+import { NextRequest } from "next/server";
+
+export async function GET(_req: NextRequest) {
+  const models = [
+    { id: "router:RouteLLM", label: "RouteLLM", provider: "router", family: "router", tags: ["Router"] },
+    { id: "openai:gpt-5", label: "GPT-5", provider: "openai", family: "gpt", tags: ["LLM"] },
+    { id: "openai:gpt-5-thinking", label: "GPT-5 Thinking", provider: "openai", family: "gpt", tags: ["LLM"] },
+    { id: "anthropic:claude-3.7-sonnet", label: "Claude Sonnet 4", provider: "anthropic", family: "claude", tags: ["LLM"] },
+    { id: "google:gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "google", family: "gemini", tags: ["LLM"] },
+    { id: "xai:grok-4", label: "Grok 4", provider: "xai", family: "grok", tags: ["LLM"] },
+  ];
+  return Response.json({ models });
+}
+
+// ============================================================================
+// FILE: components/ModelSelector.tsx — with All / LLMs tabs + search
+// ============================================================================
+"use client";
+import * as React from "react";
+
+type ModelMeta = {
+  id: string;
+  label: string;
+  provider: string;
+  family: string;
+  tags?: string[];
+};
+
+type ModelCategory = "all" | "llms";
+
+export default function ModelSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const [tab, setTab] = React.useState<ModelCategory>("all");
+  const [query, setQuery] = React.useState("");
+  const [models, setModels] = React.useState<ModelMeta[]>([]);
+
+  React.useEffect(() => {
+    fetch("/api/models").then((r) => r.json()).then((j) => setModels(j.models as ModelMeta[]));
+  }, []);
+
+  const filtered = models.filter((m) => {
+    const inTab = tab === "all" ? true : (m.tags || []).includes("LLM");
+    const q = query.toLowerCase();
+    const matches = !q || m.label.toLowerCase().includes(q) || m.id.toLowerCase().includes(q);
+    return inTab && matches;
+  });
+
+  function currentLabel() {
+    return models.find((m) => m.id === value)?.label || value || "RouteLLM";
+  }
+
+  return (
+    <div className="relative">
+      <button className="rounded-full border px-3 py-1 text-sm" onClick={() => setOpen((s) => !s)}>
+        {currentLabel()} ▾
+      </button>
+      {open && (
+        <div className="absolute right-0 z-30 mt-2 w-72 rounded-2xl border bg-white shadow-2xl">
+          <div className="p-3 border-b">
+            <input
+              className="w-full rounded-lg border px-3 py-2 text-sm"
+              placeholder="Search Bot..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="mt-2 flex items-center gap-3 text-xs">
+              <button className={`rounded-full px-2.5 py-1 ${tab === "all" ? "bg-purple-100" : ""}`} onClick={() => setTab("all")}>All <span className="ml-1 opacity-60">{models.length}</span></button>
+              <button className={`rounded-full px-2.5 py-1 ${tab === "llms" ? "bg-purple-100" : ""}`} onClick={() => setTab("llms")}>LLMs <span className="ml-1 opacity-60">{models.filter(m=> (m.tags||[]).includes("LLM")).length}</span></button>
+            </div>
+          </div>
+          <div className="max-h-80 overflow-auto p-2">
+            {filtered.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => { onChange(m.id); setOpen(false); }}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left hover:bg-gray-50 ${value === m.id ? "bg-purple-50" : ""}`}
+              >
+                <span className="inline-block h-6 w-6 rounded-full bg-gray-200" />
+                <div>
+                  <div className="text-sm font-medium">{m.label}</div>
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">{m.provider}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: components/ChatComposer_v2.tsx — Chat composer using ModelSelector tabs
+// ============================================================================
+"use client";
+import * as React from "react";
+import { AttachmentMenu } from "./AttachmentMenu";
+import { ModeDropdown } from "./ModeDropdown";
+import { QuickActionsBar } from "./QuickActionsBar";
+import { MoreMenu } from "./MoreMenu";
+import ModelSelector from "./ModelSelector";
+
+type ChatMode = "chat" | "deepAgent" | "study";
+
+type QuickAction = "chat" | "image" | "code" | "playground" | "powerpoint" | "deepResearch" | "more";
+
+type MoreAction = "videoGen" | "lipSync" | "humanize" | "docGen" | "editor" | "scrapeUrl" | "screenshot" | "videoAnalysis" | "task" | "tts" | "stt" | "s2s";
+
+export default function ChatComposer_v2({ onResult }: { onResult: (r: any) => void }) {
+  const [mode, setMode] = React.useState<ChatMode>("chat");
+  const [action, setAction] = React.useState<QuickAction | null>(null);
+  const [morePicked, setMorePicked] = React.useState<MoreAction | null>(null);
+  const [prompt, setPrompt] = React.useState("");
+  const [model, setModel] = React.useState("router:RouteLLM");
+  const [streaming, setStreaming] = React.useState(false);
+
+  function placeholder() {
+    if (action === "deepResearch") return "Write a task or topic to research on...";
+    if (action === "playground") return "Create a playground of...";
+    if (action === "code") return "Describe the code to generate...";
+    return "Type your message...";
+  }
+
+  async function handleSend() {
+    if (!prompt.trim()) return;
+    setStreaming(true);
+    try {
+      if (action === "image") {
+        const r = await fetch("/api/tools/image/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) }).then((r) => r.json());
+        onResult({ kind: "image", ...r });
+      } else if (action === "powerpoint") {
+        const r = await fetch("/api/tools/ppt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ outline: prompt }) }).then((r) => r.json());
+        onResult({ kind: "markdown", ...r });
+      } else if (action === "deepResearch") {
+        const res = await fetch("/api/tools/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+        const reader = res.body?.getReader();
+        if (reader) await readStream(reader, onResult);
+      } else if (morePicked === "humanize") {
+        const res = await fetch("/api/chat/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: `Rewrite the following to be more natural, clear, and friendly while keeping meaning: "${prompt}"`, mode, action: null, model }) });
+        const reader = res.body?.getReader();
+        if (reader) await readStream(reader, onResult);
+      } else {
+        const res = await fetch("/api/chat/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, mode, action, model }) });
+        const reader = res.body?.getReader();
+        if (reader) await readStream(reader, onResult);
+      }
+    } finally {
+      setStreaming(false);
+      setMorePicked(null);
+      setAction(null);
+      setPrompt("");
+    }
+  }
+
+  function onUpload(file: File) { onResult({ kind: "attachment", name: file.name, size: file.size }); }
+
+  return (
+    <div className="rounded-3xl border p-3 shadow-sm">
+      <div className="flex items-center gap-2">
+        <AttachmentMenu onUpload={onUpload} onConnectApps={() => onResult({ kind: "connectApps" })} />
+        <div className="flex-1">
+          <input className="w-full rounded-xl border px-4 py-3 outline-none" placeholder={placeholder()} value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} />
+        </div>
+        <div className="hidden sm:flex items-center gap-2">
+          <ModeDropdown value={mode} onChange={setMode} />
+          <ModelSelector value={model} onChange={setModel} />
+        </div>
+        <button onClick={handleSend} disabled={streaming} className="ml-2 rounded-full bg-black px-4 py-3 text-white disabled:opacity-50" title="Send">➤</button>
+      </div>
+      <div className="mt-2 flex items-center justify-between">
+        <QuickActionsBar active={action} onChange={(a) => setAction(a)} onMore={() => {}} />
+        <MoreMenu onPick={(k) => setMorePicked(k)} />
+      </div>
+    </div>
+  );
+}
+
+async function readStream(reader: ReadableStreamDefaultReader<Uint8Array>, onResult: (r: any) => void) {
+  const decoder = new TextDecoder();
+  while (true) { const { value, done } = await reader.read(); if (done) break; const chunk = decoder.decode(value); const lines = chunk.split("
+"); for (const line of lines) { if (line.startsWith("data: ")) onResult({ kind: "stream", text: line.slice(6) }); } }
+}
+

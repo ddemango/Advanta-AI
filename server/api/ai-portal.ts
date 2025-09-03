@@ -5,6 +5,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { JSDOM } from 'jsdom';
+import { streamByModelId } from '../../lib/providers';
 import { db } from '../db';
 import { 
   aiProjects, 
@@ -24,16 +25,19 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+// Available models with provider prefixes
 const AVAILABLE_MODELS = {
-  'gpt-4o': 'gpt-4o',
-  'gpt-4o-mini': 'gpt-4o-mini', 
-  'gpt-4': 'gpt-4',
-  'gpt-3.5-turbo': 'gpt-3.5-turbo',
-  'gemini-2.5': 'gpt-4o', // Fallback to GPT-4o for now
-  'grok': 'gpt-4o', // Fallback to GPT-4o for now
-  'claude-3': 'gpt-4o', // Fallback to GPT-4o for now  
-  'cohere': 'gpt-4o' // Fallback to GPT-4o for now
+  'openai:gpt-4o': 'openai:gpt-4o',
+  'openai:gpt-4o-mini': 'openai:gpt-4o-mini', 
+  'openai:gpt-4': 'openai:gpt-4',
+  'openai:gpt-3.5-turbo': 'openai:gpt-3.5-turbo',
+  'anthropic:claude-3-5-sonnet': 'anthropic:claude-3-5-sonnet',
+  'anthropic:claude-3-haiku': 'anthropic:claude-3-haiku',
+  'google:gemini-2.0-flash': 'google:gemini-2.0-flash',
+  'google:gemini-1.5-pro': 'google:gemini-1.5-pro',
+  'xai:grok-beta': 'xai:grok-beta',
+  'cohere:command-r-plus': 'cohere:command-r-plus',
+  'router:RouteLLM': 'router:RouteLLM'
 };
 
 // Get user projects
@@ -156,7 +160,7 @@ export async function chat(req: Request, res: Response) {
     }
 
     // Validate model
-    const validModel = AVAILABLE_MODELS[model as keyof typeof AVAILABLE_MODELS] || 'gpt-4o';
+    const validModel = AVAILABLE_MODELS[model as keyof typeof AVAILABLE_MODELS] || 'openai:gpt-4o';
 
     // Set up Server-Sent Events headers
     res.writeHead(200, {
@@ -181,19 +185,13 @@ export async function chat(req: Request, res: Response) {
 
     let fullResponse = '';
 
-    const stream = await openai.chat.completions.create({
-      model: validModel,
-      messages,
-      temperature,
-      max_tokens,
-      stream: true,
-    });
+    // Use the new provider router for streaming
+    const stream = streamByModelId(validModel, messages, temperature);
 
     for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        fullResponse += content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      if (chunk) {
+        fullResponse += chunk;
+        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
       }
     }
 
