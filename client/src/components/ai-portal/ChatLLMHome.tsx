@@ -1,4 +1,31 @@
 import React, { useState, useEffect, useRef } from "react";
+
+// TypeScript interfaces for type safety
+interface Message {
+  role: string;
+  content: string;
+  timestamp?: Date;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
+interface Chat {
+  id: string;
+  title?: string;
+  model?: string;
+  project_id?: string;
+  created_at?: string;
+}
+
+interface ToolResult {
+  summary?: string;
+  sources?: Array<{ url: string; title: string; snippet: string }>;
+  chart?: any;
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QuickActionTools } from "./QuickActionTools";
@@ -67,10 +94,10 @@ export default function ChatLLMHome() {
     { role: "assistant", content: "Hello! I'm your AI assistant. How can I help you today?" }
   ]);
   const [loading, setLoading] = useState(false);
-  const [projects, setProjects] = useState([]);
-  const [chats, setChats] = useState([]);
-  const [currentProject, setCurrentProject] = useState(null);
-  const [currentChat, setCurrentChat] = useState(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [currentChat, setCurrentChat] = useState<Chat | null>(null);
   const [showImageGen, setShowImageGen] = useState(false);
   const [showCodeRunner, setShowCodeRunner] = useState(false);
   const [showResearch, setShowResearch] = useState(false);
@@ -83,7 +110,7 @@ export default function ChatLLMHome() {
   const [chatMode, setChatMode] = useState('Chat');
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [, setLocation] = useLocation();
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProjects();
@@ -342,7 +369,7 @@ export default function ChatLLMHome() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
-            <span className="text-zinc-800 font-semibold tracking-tight">ABACUS.AI</span>
+            <span className="text-zinc-800 font-semibold tracking-tight">ADVANTA AI</span>
           </div>
           <button 
             onClick={() => alert('Document feature coming soon!')}
@@ -989,7 +1016,7 @@ function CodeRunnerPanel({ onClose }: { onClose: () => void }) {
         setOutput(data.output);
       }
     } catch (error) {
-      setOutput('Error: ' + error.message);
+      setOutput('Error: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -1050,7 +1077,7 @@ function CodeRunnerPanel({ onClose }: { onClose: () => void }) {
 function DeepResearchPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [depth, setDepth] = useState("fast");
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<ToolResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const runResearch = async () => {
@@ -1119,7 +1146,7 @@ function DeepResearchPanel({ onClose }: { onClose: () => void }) {
           {results && (
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold mb-2">Research Results:</h3>
-              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: results.summary }} />
+              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: results.summary || '' }} />
               
               {results.sources && (
                 <div className="mt-4">
@@ -1148,7 +1175,7 @@ function DeepResearchPanel({ onClose }: { onClose: () => void }) {
 function DataAnalysisPanel({ onClose }: { onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [analysisPrompt, setAnalysisPrompt] = useState("");
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState<ToolResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const analyzeData = async () => {
@@ -1218,7 +1245,7 @@ function DataAnalysisPanel({ onClose }: { onClose: () => void }) {
               {results.chart && (
                 <img src={results.chart} alt="Generated Chart" className="w-full rounded-lg mb-4" />
               )}
-              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: results.summary }} />
+              <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: results.summary || '' }} />
             </div>
           )}
         </div>
