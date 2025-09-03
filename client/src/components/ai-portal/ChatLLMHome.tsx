@@ -641,50 +641,54 @@ export default function ChatLLMHome() {
             </div>
           )}
 
+          {/* Active tool indicator above input - positioned above the input card */}
+          {activeTool && (
+            <div className="p-4 pb-0">
+              <div className="mx-auto max-w-[820px]">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-full">
+                    <span className="text-sm">
+                      {activeTool === 'image' && '🖼️'}
+                      {activeTool === 'code' && '💻'}
+                      {activeTool === 'playground' && '🧪'}
+                      {activeTool === 'powerpoint' && '📊'}
+                      {activeTool === 'research' && '🔍'}
+                      {activeTool === 'data' && '📈'}
+                    </span>
+                    <span className="text-sm font-medium text-indigo-700">
+                      {activeTool === 'image' && 'Image'}
+                      {activeTool === 'code' && 'Code'}
+                      {activeTool === 'playground' && 'Playground'}
+                      {activeTool === 'powerpoint' && 'PowerPoint'}
+                      {activeTool === 'research' && 'Deep Research'}
+                      {activeTool === 'data' && 'Data Analysis'}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setActiveTool(null);
+                        setSelectedTool(null);
+                        // Reset all tool states
+                        setShowImageGen(false);
+                        setShowCodeRunner(false);
+                        setShowPlayground(false);
+                        setShowPowerPoint(false);
+                        setShowResearch(false);
+                        setShowDataAnalysis(false);
+                      }}
+                      className="text-indigo-400 hover:text-indigo-600 ml-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Input card - always at bottom */}
           <div className="p-4 border-t border-zinc-200 bg-white">
             <div className="mx-auto rounded-3xl bg-white border border-zinc-200 shadow-sm max-w-[820px]">
               <div className="p-6">
-                {/* Active tool indicator */}
-                {activeTool && (
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-full">
-                      <span className="text-sm">
-                        {activeTool === 'image' && '🖼️'}
-                        {activeTool === 'code' && '💻'}
-                        {activeTool === 'playground' && '🧪'}
-                        {activeTool === 'powerpoint' && '📊'}
-                        {activeTool === 'research' && '🔍'}
-                        {activeTool === 'data' && '📈'}
-                      </span>
-                      <span className="text-sm font-medium text-indigo-700">
-                        {activeTool === 'image' && 'Image'}
-                        {activeTool === 'code' && 'Code'}
-                        {activeTool === 'playground' && 'Playground'}
-                        {activeTool === 'powerpoint' && 'PowerPoint'}
-                        {activeTool === 'research' && 'Deep Research'}
-                        {activeTool === 'data' && 'Data Analysis'}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setActiveTool(null);
-                          setSelectedTool(null);
-                          // Reset all tool states
-                          setShowImageGen(false);
-                          setShowCodeRunner(false);
-                          setShowPlayground(false);
-                          setShowPowerPoint(false);
-                          setShowResearch(false);
-                          setShowDataAnalysis(false);
-                        }}
-                        className="text-indigo-400 hover:text-indigo-600 ml-1"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
