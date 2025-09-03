@@ -1,0 +1,162 @@
+// ============================================================================
+// FILE: components/ProfileMenu.tsx — User profile dropdown menu
+// ============================================================================
+"use client";
+import * as React from "react";
+
+export default function ProfileMenu() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-medium"
+        onClick={() => setOpen((o) => !o)}
+        title="Profile"
+      >
+        D
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-64 rounded-xl border bg-white shadow-xl z-40">
+          <div className="p-4 border-b">
+            <div className="font-medium">Davide</div>
+            <div className="text-xs text-gray-500">Advanta AI</div>
+          </div>
+          <div className="flex flex-col text-sm">
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">👤 Profile</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🔧 Customize ChatLLM</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🧠 Memories</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🔗 RouteLLM API</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🌐 Connectors</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">❓ Help</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">⚙️ Custom Bot Settings</button>
+          </div>
+          <div className="border-t">
+            <button className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Sign Out</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// USAGE: Place <ProfileMenu /> in your top-right navbar/header component.
+// This mimics the screenshot with Profile, Customize, Memories, RouteLLM API,
+// Connectors, Help, Custom Bot Settings, and Sign Out.
+// ============================================================================
+
+// ============================================================================
+// FILE: components/ProfileMenu.tsx — Top‑right profile dropdown (screenshot parity)
+// ============================================================================
+"use client";
+import * as React from "react";
+import { useTheme } from "next-themes";
+
+export interface ProfileMenuProps {
+  user: { name: string; org?: string; avatarUrl?: string };
+  onProfile?: () => void;
+  onCustomize?: () => void; // Customize ChatLLM
+  onMemories?: () => void;
+  onRouteLLM?: () => void; // RouteLLM API
+  onConnectors?: () => void;
+  onHelp?: () => void;
+  onCustomBot?: () => void;
+  onInvite?: () => void; // Refer($)/Invite
+  onSignOut?: () => void;
+}
+
+export default function ProfileMenu({ user, onProfile, onCustomize, onMemories, onRouteLLM, onConnectors, onHelp, onCustomBot, onInvite, onSignOut, }: ProfileMenuProps) {
+  const { theme, setTheme } = useTheme();
+  const [open, setOpen] = React.useState(false);
+  const isDark = theme === "dark";
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen((o) => !o)} className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-medium">
+        {user.name?.[0]?.toUpperCase() || "U"}
+      </button>
+      {open && (
+        <div className="absolute right-0 z-40 mt-2 w-72 rounded-2xl border bg-white shadow-2xl">
+          {/* Header: Invite + Identity + Theme toggle */}
+          <div className="flex items-center justify-between gap-2 border-b p-3">
+            <button onClick={onInvite} className="rounded-full border px-2.5 py-1 text-xs">Refer ($) / Invite ▾</button>
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 rounded-full bg-gray-200 text-center leading-9">{user.name?.[0]?.toUpperCase()}</div>
+              <div>
+                <div className="text-sm font-semibold">{user.name}</div>
+                {user.org && <div className="text-xs text-gray-500">{user.org}</div>}
+              </div>
+              <button
+                aria-label="Toggle Theme"
+                onClick={() => setTheme(isDark ? "light" : "dark")}
+                className="ml-2 rounded-full border px-2.5 py-1 text-xs"
+              >
+                {isDark ? "🌙" : "☀️"}
+              </button>
+            </div>
+          </div>
+
+          {/* Menu items */}
+          <div className="p-2">
+            <MenuItem label="Profile" onClick={() => { setOpen(false); onProfile?.(); }} />
+            <MenuItem label="Customize ChatLLM" onClick={() => { setOpen(false); onCustomize?.(); }} />
+            <MenuItem label="Memories" onClick={() => { setOpen(false); onMemories?.(); }} />
+            <MenuItem label="RouteLLM API" onClick={() => { setOpen(false); onRouteLLM?.(); }} />
+            <MenuItem label="Connectors" onClick={() => { setOpen(false); onConnectors?.(); }} />
+            <MenuItem label="Help" onClick={() => { setOpen(false); onHelp?.(); }} />
+            <MenuItem label="Custom Bot Settings" onClick={() => { setOpen(false); onCustomBot?.(); }} />
+          </div>
+
+          <div className="border-t p-2">
+            <button
+              onClick={() => { setOpen(false); onSignOut?.(); }}
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50">
+      {label}
+    </button>
+  );
+}
+
+// ============================================================================
+// FILE: app/Header.tsx — Example header consumption of ProfileMenu
+// ============================================================================
+"use client";
+import * as React from "react";
+import ProfileMenu from "@/components/ProfileMenu";
+
+export default function Header() {
+  return (
+    <header className="flex items-center justify-between border-b bg-white px-4 py-2">
+      <div className="font-semibold">Advanta‑AI</div>
+      <div className="flex items-center gap-2">
+        <button className="rounded-full border px-3 py-1 text-sm">Refer ($) / Invite ▾</button>
+        <ProfileMenu
+          user={{ name: "Davide", org: "Advanta AI" }}
+          onProfile={() => alert("Open Profile modal")}
+          onCustomize={() => alert("Open Customize ChatLLM")}
+          onMemories={() => alert("Open Memories")}
+          onRouteLLM={() => alert("Open RouteLLM API docs")}
+          onConnectors={() => alert("Open Connectors")}
+          onHelp={() => alert("Open Help")}
+          onCustomBot={() => alert("Open Custom Bot Settings")}
+          onInvite={() => alert("Open Invite dialog")}
+          onSignOut={() => alert("Sign out")}
+        />
+      </div>
+    </header>
+  );
+}
+

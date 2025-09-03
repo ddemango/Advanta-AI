@@ -692,7 +692,15 @@ export default function ChatLLMHome() {
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Write something…"
+                  placeholder={
+                    activeTool === 'image' ? 'Describe the image to generate...' :
+                    activeTool === 'code' ? 'Describe the code to generate...' :
+                    activeTool === 'playground' ? 'Create a playground of...' :
+                    activeTool === 'powerpoint' ? 'Describe the Powerpoint to generate...' :
+                    activeTool === 'research' ? 'Write a task or topic to research on...' :
+                    activeTool === 'data' ? 'Upload data or describe analysis to perform...' :
+                    'Write something…'
+                  }
                   className="h-12 rounded-xl bg-zinc-50 border-dashed border-zinc-200 mb-4 text-zinc-600 placeholder:text-zinc-400"
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                   disabled={loading}
