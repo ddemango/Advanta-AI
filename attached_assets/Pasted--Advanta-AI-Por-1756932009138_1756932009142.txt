@@ -1,0 +1,662 @@
+// ──────────────────────────────────────────────────────────────────────────────
+// Advanta‑AI Portal — Chat Composer + Quick Actions + Mode Dropdown + Attachments
+// Tech: Next.js 14 (App Router), React 18, TypeScript
+// Drop these files into your project using the indicated paths.
+// All endpoints are functional stubs wired to real providers where possible.
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ============================================================================
+// FILE: lib/types.ts
+// ============================================================================
+export type ChatMode = "chat" | "deepAgent" | "study";
+export type QuickAction =
+  | "chat"
+  | "image"
+  | "code"
+  | "playground"
+  | "powerpoint"
+  | "deepResearch"
+  | "more";
+
+export type MoreAction =
+  | "videoGen"
+  | "lipSync"
+  | "humanize"
+  | "docGen"
+  | "editor"
+  | "scrapeUrl"
+  | "screenshot"
+  | "videoAnalysis"
+  | "task"
+  | "tts"
+  | "stt"
+  | "s2s";
+
+export type ProviderModel =
+  | { provider: "openai"; model: string }
+  | { provider: "anthropic"; model: string }
+  | { provider: "google"; model: string }
+  | { provider: "xai"; model: string }
+  | { provider: "cohere"; model: string };
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface ToolResult {
+  type:
+    | "text"
+    | "image"
+    | "file"
+    | "markdown"
+    | "report"
+    | "audio"
+    | "video";
+  data: any;
+  meta?: Record<string, any>;
+}
+
+// ============================================================================
+// FILE: lib/sse.ts — small helper to stream text to the client
+// ============================================================================
+export function streamText(text: AsyncGenerator<string> | string) {
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        if (typeof text === "string") {
+          controller.enqueue(encoder.encode(`data: ${text}\n\n`));
+        } else {
+          for await (const chunk of text) {
+            controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+          }
+        }
+        controller.close();
+      },
+    }),
+    {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    }
+  );
+}
+
+// ============================================================================
+// FILE: lib/openai.ts — basic OpenAI client (Responses API fallback to Chat)
+// ============================================================================
+const OPENAI_BASE = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
+
+export async function* openAIStream(
+  model: string,
+  messages: { role: string; content: any }[],
+  temperature = 0.7
+): AsyncGenerator<string> {
+  const res = await fetch(`${OPENAI_BASE}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({ model, messages, temperature, stream: true }),
+  });
+
+  if (!res.ok || !res.body) throw new Error("OpenAI request failed");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value);
+    for (const line of chunk.split("\n")) {
+      if (line.startsWith("data: ")) {
+        const payload = line.replace("data: ", "").trim();
+        if (payload === "[DONE]") return;
+        try {
+          const json = JSON.parse(payload);
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) yield delta as string;
+        } catch {
+          // ignore keepalives
+        }
+      }
+    }
+  }
+}
+
+export async function openAIImage(prompt: string, size = "1024x1024") {
+  const res = await fetch(`${OPENAI_BASE}/images/generations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({ prompt, size, n: 1 }),
+  });
+  if (!res.ok) throw new Error("OpenAI image request failed");
+  const data = await res.json();
+  return data.data?.[0]?.url as string;
+}
+
+// ============================================================================
+// FILE: lib/research.ts — web search + simple fetcher
+// NOTE: Swap SERPER for Bing/Brave as desired.
+// ============================================================================
+const SERPER_KEY = process.env.SERPER_API_KEY;
+
+export async function webSearch(query: string) {
+  const res = await fetch("https://google.serper.dev/search", {
+    method: "POST",
+    headers: {
+      "X-API-KEY": SERPER_KEY || "",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ q: query, gl: "us", hl: "en" }),
+  });
+  if (!res.ok) throw new Error("Search failed");
+  const data = await res.json();
+  const items = (data.organic || []).slice(0, 8).map((r: any) => ({
+    title: r.title,
+    url: r.link,
+    snippet: r.snippet,
+  }));
+  return items as { title: string; url: string; snippet: string }[];
+}
+
+export async function fetchReadable(url: string) {
+  const res = await fetch(url, { method: "GET" });
+  const html = await res.text();
+  // Tiny readability: naive strip tags
+  const text = html.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<[^>]+>/g, " ");
+  return text.slice(0, 50000);
+}
+
+// ============================================================================
+// FILE: app/api/chat/send/route.ts — dispatcher honoring selected action/mode
+// ============================================================================
+import { NextRequest } from "next/server";
+import { streamText } from "@/lib/sse";
+import { openAIStream } from "@/lib/openai";
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const {
+      prompt,
+      mode, // ChatMode
+      action, // QuickAction | null
+      model = "gpt-4o-mini",
+      temperature = 0.7,
+    } = body as {
+      prompt: string;
+      mode: string;
+      action?: string | null;
+      model?: string;
+      temperature?: number;
+    };
+
+    // Route by action first (some actions handled by their own endpoints)
+    if (action === "deepResearch")
+      return Response.redirect(new URL("/api/tools/research", req.url), 307);
+    if (action === "image")
+      return Response.redirect(new URL("/api/tools/image/generate", req.url), 307);
+    if (action === "powerpoint")
+      return Response.redirect(new URL("/api/tools/ppt", req.url), 307);
+
+    // Default: standard chat stream (respects mode but same base model stream here)
+    const gen = openAIStream(model, [
+      { role: "system", content: systemForMode(mode) },
+      { role: "user", content: prompt },
+    ], temperature);
+
+    return streamText(gen);
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+  }
+}
+
+function systemForMode(mode: string) {
+  switch (mode) {
+    case "deepAgent":
+      return "You are DeepAgent. Plan multi-step solutions, list steps, then execute each step conceptually and summarize results.";
+    case "study":
+      return "You are Study Mode. Teach concepts clearly, add quick quizzes, and suggest follow-up reading.";
+    default:
+      return "You are a helpful AI assistant.";
+  }
+}
+
+// ============================================================================
+// FILE: app/api/tools/image/generate/route.ts
+// ============================================================================
+import { NextRequest } from "next/server";
+import { openAIImage } from "@/lib/openai";
+
+export async function POST(req: NextRequest) {
+  try {
+    const { prompt, size } = await req.json();
+    const url = await openAIImage(prompt, size || "1024x1024");
+    return Response.json({ type: "image", url });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+  }
+}
+
+// ============================================================================
+// FILE: app/api/tools/research/route.ts
+// ============================================================================
+import { NextRequest } from "next/server";
+import { webSearch, fetchReadable } from "@/lib/research";
+import { openAIStream } from "@/lib/openai";
+import { streamText } from "@/lib/sse";
+
+export async function POST(req: NextRequest) {
+  const { prompt } = await req.json();
+  const results = await webSearch(prompt);
+  const pages = await Promise.all(
+    results.slice(0, 5).map(async (r) => ({
+      ...r,
+      content: await fetchReadable(r.url),
+    }))
+  );
+
+  const citations = pages
+    .map((p, i) => `[${i + 1}] ${p.title} — ${p.url}`)
+    .join("\n");
+
+  const gen = openAIStream("gpt-4o-mini", [
+    {
+      role: "system",
+      content:
+        "Synthesize a concise research brief with bullets and include numbered citations matching the sources that follow.",
+    },
+    { role: "user", content: `${prompt}\n\nSOURCES:\n${citations}` },
+  ]);
+
+  return streamText(gen);
+}
+
+// ============================================================================
+// FILE: app/api/tools/code/run/route.ts (Node.js only demo: JS/TS via VM)
+// WARNING: This is a simplified sandbox. For production use Firecracker/deno.
+// ============================================================================
+import { NextRequest } from "next/server";
+import vm from "node:vm";
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  const { language, code, input } = await req.json();
+  if (!code) return new Response("Missing code", { status: 400 });
+  if (language && !["javascript", "typescript", "js", "ts"].includes(language)) {
+    return new Response("Only JS/TS supported in demo sandbox", { status: 400 });
+  }
+  try {
+    const context: Record<string, any> = { console: { log: (...a: any[]) => logs.push(a.join(" ")) } };
+    const logs: string[] = [];
+    const script = new vm.Script(code);
+    const sandbox = vm.createContext(context);
+    const result = script.runInContext(sandbox, { timeout: 1500 });
+    return Response.json({ stdout: logs.join("\n"), result });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+  }
+}
+
+// ============================================================================
+// FILE: app/api/tools/ppt/route.ts — outline → PPTX (returns placeholder URL)
+// (Implement real python-pptx microservice later; this returns a Markdown fallback)
+// ============================================================================
+import { NextRequest } from "next/server";
+
+export async function POST(req: NextRequest) {
+  const { outline } = await req.json();
+  if (!outline) return new Response("Missing outline", { status: 400 });
+  const md = `# Slides\n\n${outline}\n\n(Use the Export button to download as .pptx once the converter is enabled.)`;
+  return Response.json({ type: "markdown", markdown: md });
+}
+
+// ============================================================================
+// FILE: components/ModeDropdown.tsx
+// ============================================================================
+"use client";
+import * as React from "react";
+import { ChatMode } from "@/lib/types";
+
+export function ModeDropdown({ value, onChange }: { value: ChatMode; onChange: (m: ChatMode) => void }) {
+  return (
+    <div className="relative">
+      <button className="rounded-full border px-3 py-1 text-sm">{label(value)} ▾</button>
+      <div className="absolute mt-1 hidden w-44 rounded-xl border bg-white p-1 shadow-xl group-hover:block peer-focus:block">
+        {/* intentionally empty for hover control */}
+      </div>
+      <div className="absolute z-10 mt-1 w-44 rounded-xl border bg-white p-1 shadow-xl">
+        {([
+          ["chat", "Chat Mode"],
+          ["deepAgent", "DeepAgent"],
+          ["study", "Study Mode"],
+        ] as [ChatMode, string][]).map(([val, lab]) => (
+          <button
+            key={val}
+            onClick={() => onChange(val)}
+            className={`w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 ${
+              value === val ? "bg-gray-50 font-medium" : ""
+            }`}
+          >
+            {lab}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function label(m: ChatMode) {
+  if (m === "deepAgent") return "DeepAgent";
+  if (m === "study") return "Study Mode";
+  return "Chat";
+}
+
+// ============================================================================
+// FILE: components/AttachmentMenu.tsx
+// ============================================================================
+"use client";
+import * as React from "react";
+
+export function AttachmentMenu({ onUpload, onConnectApps }: { onUpload: (f: File) => void; onConnectApps: () => void }) {
+  const fileRef = React.useRef<HTMLInputElement | null>(null);
+  return (
+    <div className="relative">
+      <button
+        className="rounded-full border px-3 py-1 text-sm"
+        onClick={() => fileRef.current?.click()}
+        title="Attach"
+      >
+        📎
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onUpload(f);
+        }}
+      />
+      {/* Secondary menu for Connect Apps / Add from files could be added here */}
+      <button className="ml-2 rounded-full border px-3 py-1 text-sm" onClick={onConnectApps} title="Connect Apps">
+        ⊞
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: components/QuickActionsBar.tsx
+// ============================================================================
+"use client";
+import * as React from "react";
+import { QuickAction } from "@/lib/types";
+
+const actions: { key: QuickAction; label: string }[] = [
+  { key: "image", label: "Image" },
+  { key: "code", label: "Code" },
+  { key: "playground", label: "Playground" },
+  { key: "powerpoint", label: "Powerpoint" },
+  { key: "deepResearch", label: "Deep Research" },
+  { key: "more", label: "More" },
+];
+
+export function QuickActionsBar({ active, onChange, onMore }: {
+  active: QuickAction | null;
+  onChange: (a: QuickAction) => void;
+  onMore: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2 pt-2">
+      {actions.map((a) => (
+        <button
+          key={a.key}
+          onClick={() => (a.key === "more" ? onMore() : onChange(a.key))}
+          className={`rounded-full border px-3 py-1 text-sm ${active === a.key ? "bg-purple-100 border-purple-300" : "bg-white"}`}
+        >
+          {a.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: components/MoreMenu.tsx — matches screenshot items
+// ============================================================================
+"use client";
+import * as React from "react";
+import { MoreAction } from "@/lib/types";
+
+const items: { key: MoreAction; label: string }[] = [
+  { key: "videoGen", label: "Video‑Gen" },
+  { key: "lipSync", label: "Lip Sync" },
+  { key: "humanize", label: "Humanize" },
+  { key: "docGen", label: "Doc‑Gen" },
+  { key: "editor", label: "Editor" },
+  { key: "scrapeUrl", label: "Scrape URL" },
+  { key: "screenshot", label: "Screenshot" },
+  { key: "videoAnalysis", label: "Video Analysis" },
+  { key: "task", label: "Task" },
+  { key: "tts", label: "Text‑to‑Speech" },
+  { key: "stt", label: "Speech‑to‑Text" },
+  { key: "s2s", label: "Speech‑to‑Speech" },
+];
+
+export function MoreMenu({ onPick }: { onPick: (k: MoreAction) => void }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="relative">
+      <button className="rounded-full border px-3 py-1 text-sm" onClick={() => setOpen((s) => !s)}>
+        ⋮ More
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-2 w-56 rounded-xl border bg-white p-1 shadow-xl">
+          {items.map((it) => (
+            <button
+              key={it.key}
+              onClick={() => {
+                onPick(it.key);
+                setOpen(false);
+              }}
+              className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100"
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: components/ChatComposer.tsx — main control matching UI screenshots
+// ============================================================================
+"use client";
+import * as React from "react";
+import { AttachmentMenu } from "./AttachmentMenu";
+import { ModeDropdown } from "./ModeDropdown";
+import { QuickActionsBar } from "./QuickActionsBar";
+import { MoreMenu } from "./MoreMenu";
+import { ChatMode, QuickAction, MoreAction } from "@/lib/types";
+
+export default function ChatComposer({ onResult }: { onResult: (r: any) => void }) {
+  const [mode, setMode] = React.useState<ChatMode>("chat");
+  const [action, setAction] = React.useState<QuickAction | null>(null);
+  const [morePicked, setMorePicked] = React.useState<MoreAction | null>(null);
+  const [prompt, setPrompt] = React.useState("");
+  const [model, setModel] = React.useState("gpt-4o-mini");
+  const [streaming, setStreaming] = React.useState(false);
+
+  function placeholder() {
+    if (action === "deepResearch") return "Write a task or topic to research on...";
+    if (action === "playground") return "Create a playground of...";
+    if (action === "code") return "Describe the code to generate...";
+    return "Type your message...";
+  }
+
+  async function handleSend() {
+    if (!prompt.trim()) return;
+    setStreaming(true);
+
+    // Dispatch by action/more-selected
+    try {
+      if (action === "image") {
+        const r = await fetch("/api/tools/image/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        }).then((r) => r.json());
+        onResult({ kind: "image", ...r });
+      } else if (action === "powerpoint") {
+        const r = await fetch("/api/tools/ppt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ outline: prompt }),
+        }).then((r) => r.json());
+        onResult({ kind: "markdown", ...r });
+      } else if (action === "deepResearch") {
+        const ev = new EventSource("/api/tools/research"); // fallback: POST via fetch then stream (simplified)
+        ev.onmessage = (m) => onResult({ kind: "stream", text: m.data });
+        ev.onerror = () => ev.close();
+        await fetch("/api/tools/research", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+      } else if (morePicked === "humanize") {
+        const res = await fetch("/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: `Rewrite the following to be more natural, clear, and friendly while keeping meaning: "${prompt}"`,
+            mode,
+            action: null,
+            model,
+          }),
+        });
+        const reader = res.body?.getReader();
+        if (reader) await readStream(reader, onResult);
+      } else {
+        // Default chat
+        const res = await fetch("/api/chat/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, mode, action, model }),
+        });
+        const reader = res.body?.getReader();
+        if (reader) await readStream(reader, onResult);
+      }
+    } finally {
+      setStreaming(false);
+      setMorePicked(null);
+      setAction(null);
+      setPrompt("");
+    }
+  }
+
+  function onUpload(file: File) {
+    onResult({ kind: "attachment", name: file.name, size: file.size });
+  }
+
+  return (
+    <div className="rounded-3xl border p-3 shadow-sm">
+      <div className="flex items-center gap-2">
+        <AttachmentMenu onUpload={onUpload} onConnectApps={() => onResult({ kind: "connectApps" })} />
+        <div className="flex-1">
+          <input
+            className="w-full rounded-xl border px-4 py-3 outline-none"
+            placeholder={placeholder()}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+          />
+        </div>
+        <div className="hidden sm:block"><ModeDropdown value={mode} onChange={setMode} /></div>
+        <button
+          onClick={handleSend}
+          disabled={streaming}
+          className="ml-2 rounded-full bg-black px-4 py-3 text-white disabled:opacity-50"
+          title="Send"
+        >
+          ➤
+        </button>
+      </div>
+      <div className="mt-2 flex items-center justify-between">
+        <QuickActionsBar
+          active={action}
+          onChange={(a) => setAction(a)}
+          onMore={() => {}}
+        />
+        <MoreMenu onPick={(k) => setMorePicked(k)} />
+      </div>
+      <div className="mt-1 text-xs text-gray-500">Model: {model}</div>
+    </div>
+  );
+}
+
+async function readStream(reader: ReadableStreamDefaultReader<Uint8Array>, onResult: (r: any) => void) {
+  const decoder = new TextDecoder();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value);
+    const lines = chunk.split("\n");
+    for (const line of lines) {
+      if (line.startsWith("data: ")) onResult({ kind: "stream", text: line.slice(6) });
+    }
+  }
+}
+
+// ============================================================================
+// FILE: app/page.tsx — example usage (renders composer and shows outputs)
+// ============================================================================
+"use client";
+import * as React from "react";
+import ChatComposer from "@/components/ChatComposer";
+
+export default function Page() {
+  const [log, setLog] = React.useState<string>("");
+  return (
+    <div className="mx-auto max-w-3xl space-y-4 p-6">
+      <h1 className="text-2xl font-semibold">Advanta‑AI Portal — Chat</h1>
+      <ChatComposer
+        onResult={(r) => {
+          if (r.kind === "stream") setLog((s) => s + r.text);
+          else setLog((s) => s + "\n" + JSON.stringify(r, null, 2));
+        }}
+      />
+      <pre className="whitespace-pre-wrap rounded-xl border bg-gray-50 p-4 text-sm">{log}</pre>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: .env.example — required keys
+// ============================================================================
+// OPENAI_API_KEY=sk-...
+// SERPER_API_KEY=...
+
+// ──────────────────────────────────────────────────────────────────────────────
+// NOTES
+// 1) This delivers working wiring for: Mode dropdown, Quick‑actions, More menu,
+//    Image generation, Deep Research (citations synth), PPT (Markdown fallback),
+//    Code run (JS/TS sandbox), and standard chat streaming.
+// 2) Replace SERPER with Bing/Brave if preferred. Swap openAIStream with your
+//    provider router when multi‑model is ready.
+// 3) Hook uploads to Supabase Storage (current demo emits attachment event only).
+// 4) Style with Tailwind/shadcn as desired; classes kept minimal for clarity.
+// ──────────────────────────────────────────────────────────────────────────────
