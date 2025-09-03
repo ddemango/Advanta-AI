@@ -56,7 +56,7 @@ export default function ChatLLMHome() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
-            <span className="text-zinc-800 font-semibold tracking-tight">ADVANTA.AI</span>
+            <span className="text-zinc-800 font-semibold tracking-tight">ABACUS.AI</span>
           </div>
           <button className="ml-3 text-zinc-400 hover:text-zinc-600 text-lg">📄</button>
           <button className="text-zinc-400 hover:text-zinc-600 text-lg">✏️</button>

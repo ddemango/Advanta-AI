@@ -1,0 +1,81 @@
+Advanta Ai Portal — Chat Llm-style Wireframe (react + Tailwind)
+· typescript
+import React, { useState } from "react";
+
+
+// ChatLLM Home-like UI (light theme) to match the screenshot you shared.
+// Notes:
+// - Pure front-end mock (no APIs). Tailwind required.
+// - Layout: Header (logo/model/profile), Left Sidebar (Projects/Chats + Tools),
+//   Center Stage (suggestion chips, big input, tool chips row).
+
+
+function Chip({ children }) {
+  return (
+    <button className="px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm">
+      {children}
+    </button>
+  );
+}
+
+
+function ToolChip({ icon, label }) {
+  return (
+    <button className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm">
+      <span className="text-sm">{icon}</span>
+      <span className="text-sm font-medium">{label}</span>
+    </button>
+  );
+}
+
+
+export default function ChatLLMHomeReplica() {
+  const [model, setModel] = useState("RouteLLM");
+
+
+  return (
+    <div className="min-h-screen bg-zinc-50 text-zinc-900">
+      {/* Header */}
+      <header className="h-14 border-b border-zinc-200 bg-white flex items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
+            <span className="text-zinc-800 font-semibold tracking-tight">ABACUS.AI</span>
+          </div>
+          <button className="ml-3 text-zinc-400 hover:text-zinc-600">📄</button>
+          <button className="text-zinc-400 hover:text-zinc-600">✏️</button>
+        </div>
+
+
+        {/* Model dropdown centered */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-indigo-600" />
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="bg-white border border-zinc-200 rounded-lg px-3 py-1 text-sm shadow-sm"
+            >
+              <option>RouteLLM</option>
+              <option>GPT‑5</option>
+              <option>GPT‑4o</option>
+              <option>Gemini 2.5</option>
+            </select>
+            <span className="text-zinc-400">▾</span>
+          </div>
+        </div>
+
+
+        {/* Right controls */}
+        <div className="flex items-center gap-3">
+          <button className="text-sm text-indigo-600 hover:text-indigo-700">Refer ($) / Invite ▾</button>
+          <div className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold">D</div>
+        </div>
+      </header>
+
+
+      {/* Body: Sidebar + Main */}
+      <div className="grid grid-cols-[280px_1fr] gap-0 min-h-[calc(100vh-56px)]">
+
+Thanks for the heads up — I swapped in a new light-theme replica that matches your screenshot’s layout (logo/header, centered model dropdown, left sidebar with Projects/Chats + Tools, big input card with chips, tool chip row, “Prompting Tips and Tricks” link). It’s in the canvas now.
