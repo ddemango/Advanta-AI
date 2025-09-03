@@ -172,7 +172,7 @@ export async function chat(req: Request, res: Response) {
     });
 
     // Save user message to database first
-    if (chatId) {
+    if (chatId && !isNaN(parseInt(chatId))) {
       const lastUserMessage = messages[messages.length - 1];
       if (lastUserMessage?.role === 'user') {
         await db.insert(aiMessages).values({
@@ -199,7 +199,7 @@ export async function chat(req: Request, res: Response) {
     res.write(`data: [DONE]\n\n`);
 
     // Save complete assistant message to database
-    if (chatId && fullResponse) {
+    if (chatId && !isNaN(parseInt(chatId)) && fullResponse) {
       await db.insert(aiMessages).values({
         chatId: parseInt(chatId),
         role: 'assistant',
@@ -556,7 +556,11 @@ export async function generateImage(req: Request, res: Response) {
       quality: 'standard'
     });
 
-    const imageUrl = response.data[0].url;
+    const imageUrl = response.data[0]?.url;
+    
+    if (!imageUrl) {
+      throw new Error('No image URL returned from OpenAI');
+    }
 
     res.json({ ok: true, imageUrl });
   } catch (error: any) {

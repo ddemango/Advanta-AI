@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 
 // ChatLLM Home-like UI (light theme) to match the screenshot specification
-// Layout: Header (logo/model/profile), Left Sidebar (Projects/Chats + Tools),
+// Layout: Header (logo/model/profile), Left Sidebar (Projects/Chats + Tools),  
 // Center Stage (suggestion chips, big input, tool chips row).
 
 function Chip({ children }: { children: React.ReactNode }) {
