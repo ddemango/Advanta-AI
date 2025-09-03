@@ -9,12 +9,7 @@ import {
   Mic,
   Send,
   ChevronDown,
-  Settings,
-  Puzzle,
-  Briefcase,
-  Lock,
-  Clock,
-  Compass
+  Settings
 } from "lucide-react";
 
 // ChatLLM Home-like UI (light theme) to match the screenshot specification
@@ -200,12 +195,12 @@ export default function ChatLLMHome() {
             
             <div className="flex items-center gap-2 flex-wrap">
               {[
-                { icon: Settings, emoji: "⚙️" },
-                { icon: Puzzle, emoji: "🧩" },
-                { icon: Paperclip, emoji: "📎" },
-                { icon: Lock, emoji: "🔒" },
-                { icon: Clock, emoji: "⌚" },
-                { icon: Compass, emoji: "🧭" }
+                { emoji: "⚙️" },
+                { emoji: "🧩" },
+                { emoji: "📎" },
+                { emoji: "🔒" },
+                { emoji: "⌚" },
+                { emoji: "🧭" }
               ].map((item, i) => (
                 <button 
                   key={i} 

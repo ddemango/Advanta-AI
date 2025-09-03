@@ -87,7 +87,7 @@ const SpeechRecognition = typeof window !== "undefined" ?
 
 export function AIPortal() {
   // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Auto-authenticate for demo
   const [password, setPassword] = useState('');
   
   // Chat state
