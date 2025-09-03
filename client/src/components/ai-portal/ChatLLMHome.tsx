@@ -710,12 +710,10 @@ export default function ChatLLMHome() {
                 <div className="flex items-center gap-3 flex-wrap justify-center mb-4">
                   <button 
                     onClick={() => { 
-                      const isActive = activeTool === 'image';
-                      setActiveTool(isActive ? null : 'image');
-                      setSelectedTool(isActive ? null : 'image');
+                      setShowImageGen(true);
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
-                      activeTool === 'image' 
+                      showImageGen 
                         ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
                         : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
                     }`}
