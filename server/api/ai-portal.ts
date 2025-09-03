@@ -703,6 +703,42 @@ Please provide:
   }
 }
 
+// PowerPoint Generation Tool
+export async function generatePowerPoint(req: Request, res: Response) {
+  try {
+    const { outline } = req.body;
+    
+    if (!outline) {
+      return res.status(400).json({ ok: false, error: 'Outline is required' });
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are a PowerPoint expert. Create detailed slide content from outlines.' 
+        },
+        { 
+          role: 'user', 
+          content: `Create a PowerPoint presentation from this outline: "${outline}"\n\nGenerate 5-10 slides with:\n1. Slide titles\n2. Bullet points for content\n3. Speaker notes\n4. Suggested visuals\n\nFormat as JSON with slides array.`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7,
+      max_tokens: 2000,
+    });
+
+    const slidesContent = response.choices[0]?.message?.content || '{"slides": []}';
+    const slides = JSON.parse(slidesContent);
+
+    res.json({ ok: true, slides });
+  } catch (error: any) {
+    console.error('PowerPoint generation error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to generate PowerPoint' });
+  }
+}
+
 export async function health(req: Request, res: Response) {
   res.json({
     ok: true,
@@ -717,6 +753,7 @@ export async function health(req: Request, res: Response) {
       data_analysis: true,
       tts: true,
       research: true,
+      powerpoint: true,
     },
   });
 }

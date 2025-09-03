@@ -91,7 +91,10 @@ export function QuickActionTools({
     try {
       const response = await fetch('/api/ai-portal/tools/image/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({ prompt: imagePrompt, size: imageSize })
       });
       
@@ -116,7 +119,10 @@ export function QuickActionTools({
     try {
       const response = await fetch('/api/ai-portal/tools/code/run', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({ language: codeLanguage, code })
       });
       
@@ -141,7 +147,10 @@ export function QuickActionTools({
     try {
       const response = await fetch('/api/ai-portal/tools/research', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({ query: researchQuery, depth: researchDepth })
       });
       
@@ -170,6 +179,9 @@ export function QuickActionTools({
     try {
       const response = await fetch('/api/ai-portal/tools/data/analyze', {
         method: 'POST',
+        headers: {
+          'Authorization': 'Bearer admin123'
+        },
         body: formData
       });
       
@@ -194,7 +206,10 @@ export function QuickActionTools({
     try {
       const response = await fetch('/api/ai-portal/tools/ppt', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({ outline: pptOutline })
       });
       
@@ -219,7 +234,10 @@ export function QuickActionTools({
     try {
       const response = await fetch('/api/ai-portal/chat/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin123'
+        },
         body: JSON.stringify({
           messages: [{ role: 'user', content: playgroundPrompt }],
           model: playgroundModel,

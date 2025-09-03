@@ -8530,10 +8530,12 @@ Format as JSON:
   app.post('/api/ai-portal/search', aiPortalApi.search);
   
   // Quick-Action Tools endpoints
-  app.post('/api/ai-portal/tools/image/generate', aiPortalApi.generateImage);
-  app.post('/api/ai-portal/tools/code/run', aiPortalApi.quickRunCode);
-  app.post('/api/ai-portal/tools/research', aiPortalApi.performResearch);
-  app.post('/api/ai-portal/tts', aiPortalApi.textToSpeech);
+  app.post('/api/ai-portal/tools/image/generate', requireAiPortalAuth, aiPortalApi.generateImage);
+  app.post('/api/ai-portal/tools/code/run', requireAiPortalAuth, aiPortalApi.quickRunCode);
+  app.post('/api/ai-portal/tools/research', requireAiPortalAuth, aiPortalApi.performResearch);
+  app.post('/api/ai-portal/tools/data/analyze', requireAiPortalAuth, aiPortalApi.analyzeData);
+  app.post('/api/ai-portal/tools/ppt', requireAiPortalAuth, aiPortalApi.generatePowerPoint);
+  app.post('/api/ai-portal/tts', requireAiPortalAuth, aiPortalApi.textToSpeech);
 
   // Agent Management APIs
   app.get('/api/agents', async (req, res) => {
