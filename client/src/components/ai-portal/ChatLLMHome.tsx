@@ -964,7 +964,7 @@ export default function ChatLLMHome() {
         {/* Quick Action Tools integrated into main panel */}
         <div className="absolute top-4 right-4 w-80 max-h-[calc(100vh-120px)] overflow-auto">
           <QuickActionTools 
-            showImageGen={showImageGen}
+            showImageGen={false}
             setShowImageGen={setShowImageGen}
             showCodeRunner={showCodeRunner}
             setShowCodeRunner={setShowCodeRunner}
@@ -980,6 +980,11 @@ export default function ChatLLMHome() {
         </div>
       </div>
       <div ref={messagesEndRef} />
+
+      {/* Image Generation Modal - ONLY tool that opens as popup */}
+      {showImageGen && (
+        <ImageGenerationPanel onClose={() => setShowImageGen(false)} />
+      )}
 
     </div>
   );
