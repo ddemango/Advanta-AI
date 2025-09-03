@@ -1,0 +1,97 @@
+You are tasked with bringing the Advanta-AI portal (advanta-ai.com) fully to life. The current portal is only a static mock-up and does not implement features. You must ensure that no feature is missed and that the final product matches (and ideally surpasses) ChatLLM (apps.abacus.ai/chatllm) in both functionality and polish.
+
+Follow this checklist and do not skip any step:
+
+1. Core Chat & Persistence
+
+Implement functional chat box with streaming responses (SSE/WebSockets).
+
+Connect to multiple models (GPT-5, GPT-4, Gemini 2.5, Grok, Claude, Cohere).
+
+Ensure chat history is saved in Supabase (projects, chats, messages).
+
+Fix “+” icons in sidebar for new projects/chats.
+
+Model selector must be fully functional.
+
+2. Quick-Action Tools
+
+Image generation (DALL·E, Stable Diffusion).
+
+Code execution & inline Monaco editor.
+
+Playground for freeform model testing.
+
+PowerPoint generator (python-pptx → .pptx/PDF).
+
+Deep Research (Bing/Brave/Serper search → crawl → RAG → citations).
+
+“More” button expands correctly.
+
+3. DeepAgent & Workflow Automation
+
+Visual DAG editor (React Flow).
+
+Graph executor (edge → steps pipeline).
+
+Results Composer (summarized Markdown, PDF, report).
+
+DeepAgent tabs (Apps, Tasks, CodeLLM) must all function.
+
+4. Advanced Capabilities
+
+Document analysis (PDF, DOCX, TXT).
+
+Data analysis (CSV/XLSX → Pandas sandbox → charts, tables).
+
+Text humanization/tone rewriting.
+
+Image/video generation (Pika/Runway integration).
+
+Web search connector with artifact saving.
+
+5. Integrations
+
+Slack, Teams, Confluence.
+
+Google Drive, Gmail, Calendar.
+
+App Store/Play Store links functional.
+
+6. UI/UX Features
+
+Prompt suggestion buttons insert text or auto-run.
+
+Projects/chats persist across sessions.
+
+Results Composer outputs to Markdown/PDF.
+
+Mobile/voice endpoints supported.
+
+Sidebar, theming, dark/light mode, polished UI parity with ChatLLM.
+
+7. Security & Stability
+
+Supabase Row Level Security (per user).
+
+CSP compliance (no unsafe eval).
+
+OAuth flows for Google/Slack integrations.
+
+Rate limiting (prevent abuse).
+
+Observability: log tokens, latency, cost, error rates.
+
+8. Deployment & QA
+
+Deploy to Vercel + Supabase.
+
+Run Playwright tests for UI, Vitest for APIs.
+
+Confirm every button and panel is functional.
+
+Validate all integrations work end-to-end.
+
+No dead UI elements allowed.
+
+Important: Do not miss any of these features. Everything listed here must be implemented. If something is unclear, research the reference product (ChatLLM) and replicate parity. Document your progress, validate against the acceptance tests, and confirm all features are working before declaring the build complete.

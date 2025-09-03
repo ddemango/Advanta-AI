@@ -1,0 +1,463 @@
+Advanta-AI Portal — Full Implementation Plan (ChatLLM Parity)
+0) Baseline Tech Stack
+
+Frontend: Next.js 14 (App Router), React 18, TypeScript, Tailwind, shadcn/ui, React Query (TanStack), React Flow (DAG), Monaco Editor (CodeLLM)
+
+Backend: Next.js API routes (Edge + Node), WebSockets (Socket.IO), tRPC optional
+
+DB/Auth/Storage: Supabase (Postgres, Row Level Security), Supabase Auth (OAuth + email), Supabase Storage (files)
+
+Queues/Workers: Cloudflare Queues or Supabase functions; cron via Vercel/Cloudflare
+
+Vector Search: pgvector in Supabase
+
+Monitoring: Sentry (web + node), Logtail/Better Stack
+
+E2E Tests: Playwright; Unit: Vitest; API contract: OpenAPI + zod
+
+Deploy: Vercel (frontend + APIs) + Supabase (DB/storage)
+
+Secrets: Vercel env + Supabase vault
+
+Env vars (Vercel)
+
+OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, COHERE_API_KEY
+
+BING_SEARCH_KEY or SERPER_API_KEY or BRAVE_API_KEY
+
+SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+SLACK_CLIENT_ID/SECRET, GOOGLE_OAUTH_CLIENT_ID/SECRET, MS_CLIENT_ID/SECRET
+
+SENTRY_DSN
+
+1) Core Chat (Critical Path)
+Data Models (Supabase)
+
+profiles: id (uuid, pk), email, name, plan, created_at
+
+projects: id, owner_id (fk profiles.id), name, settings (jsonb), created_at
+
+chats: id, project_id (fk projects.id), title, model, created_at, updated_at
+
+messages: id, chat_id (fk chats.id), role (‘user’|’assistant’|’system’), content (text), tool_calls (jsonb), created_at
+
+files: id, owner_id, project_id, chat_id, name, type, size, storage_path, meta (jsonb), created_at
+
+runs: id, chat_id, status (‘queued’|’running’|’succeeded’|’failed’), input (jsonb), output (jsonb), tokens (int), cost_usd (numeric), created_at
+
+web_artifacts: id, run_id, title, url, snippet, content_hash, created_at
+
+API Endpoints
+
+POST /api/chat/send → body {chatId, messages[], model, tools?} → streams SSE tokens; persists assistant message
+
+POST /api/chat/new → body {projectId, title?, model?} → returns chatId
+
+POST /api/project/new → body {name} → returns projectId
+
+GET /api/chat/:id/messages → paginated history
+
+POST /api/upload → multipart upload to Supabase Storage; returns file record
+
+GET /api/models → returns routeable models list
+
+Model Router (multi-provider)
+
+Routing rules:
+
+If image input → OpenAI gpt-4o-mini or Stability for img gen
+
+If code tool enabled → Anthropic or OpenAI with tool use
+
+If web_search flag → route to Deep Research chain (section 4)
+
+Allow manual override via dropdown
+
+Expose models in UI:
+
+OpenAI: gpt-4.1, gpt-4o-mini, o3-mini
+
+Anthropic: claude-3.7-sonnet
+
+Google: gemini-2.5-flash/pro
+
+xAI: grok-2-mini
+
+Cohere: command-r-plus
+
+UI Wiring
+
+Send button/Enter → call /api/chat/send (SSE) → stream tokens to chat window
+
+“+ New Chat/Project” icons → /api/chat.new & /api/project.new → sidebar updates
+
+Model selector → updates chat.model; persist to chats.model
+
+Prompt suggestions → onClick inserts text into input (or triggers send with template)
+
+Acceptance Tests
+
+Type and send returns streamed tokens within 1s (mock provider)
+
+New chat/project creates DB rows; sidebar reflects instantly
+
+Switching models changes provider call
+
+Prompt suggestion inserts/executes
+
+2) Quick-Action Tools (Image, Code, Playground, PowerPoint, Deep Research, More)
+Image
+
+POST /api/tools/image/generate → {prompt, size} → calls OpenAI Images or Stability; saves to Storage; returns file
+
+UI: opens a right-pane modal with prompt → “Generate” → gallery view with save to chat
+
+Code (inline CodeLLM)
+
+Monaco Editor panel with language select
+
+POST /api/tools/code/run → {language, code, input?} → server sandbox (Node+pyodide container or Fly.io micro-VM) → stdout/stderr + artifacts
+
+Save runnable snippet + output to messages.tool_calls
+
+Playground
+
+Freeform multi-model playground reusing /api/chat/send; supports system prompt, temperature, max tokens, seed; save as chat
+
+PowerPoint
+
+POST /api/tools/ppt → {outline markdown or bullets} → generate slides via python-pptx in worker → store .pptx → attach to chat
+
+Optional: export PDF
+
+Deep Research (web search chain)
+
+POST /api/tools/research → {query, depth: ‘fast’|’deep’} → pipeline:
+
+search via Bing/Brave/Serper
+
+fetch top N pages (scraper w/ readability)
+
+chunk + embed (pgvector)
+
+synthesize report (LLM with citations)
+
+write artifacts to web_artifacts; return Markdown + refs
+
+Acceptance Tests
+
+Each button opens a working panel
+
+Image returns an actual image file; appears in chat
+
+Code tool runs sample program and returns stdout
+
+PPT returns a downloadable file
+
+Research returns a Markdown brief with at least 5 citations
+
+3) DeepAgent + DAG (Apps / Tasks / CodeLLM)
+Visual DAG Editor
+
+React Flow nodes: LLM, WebSearch, CodeRun, DocParse, Summarize, Export, Wait, Branch, ToolCall
+
+Edge schema: {from, to, condition?}
+
+Export JSON: agent.graph saved to projects.settings.agent_graph
+
+Node schema (example)
+
+id, type, name, params (json), inputs[], outputs[]
+
+Graph Executor
+
+POST /api/agent/execute → {graph, inputs} → executes node-by-node
+
+Supports parallel branches, retries, per-node timeouts
+
+Persists each node’s output to runs.output.nodes[]
+
+Emits progress via WebSocket
+
+Results Composer
+
+POST /api/agent/compose → {runId, style: ‘exec_summary’|‘report’|‘markdown’|‘pdf’} → merges node outputs; optional template system → returns artifact (.md/.pdf)
+
+CodeLLM Tab
+
+Monaco with inline “Explain/Fix/Generate Tests/Optimize” actions → toolcalls to LLM
+
+“Run” delegates to /api/tools/code/run
+
+Acceptance Tests
+
+Create simple 3-node graph (Search → Summarize → Export PDF) and get a PDF
+
+Failed node retries 2x then marks run as failed with error reason
+
+Compose merges outputs into a single artifact with headings
+
+4) Document & Data Analysis
+Upload & Parse
+
+POST /api/docs/ingest → accepts PDF/DOCX/CSV/XLSX/TXT → parses (pdfminer/docx/xlsx libraries) → chunks + embeds → links to project
+
+POST /api/docs/query → {projectId, query} → RAG over pgvector; returns answer with sources
+
+Data Analysis Notebook
+
+Lightweight Py sandbox with pandas, numpy, matplotlib
+
+POST /api/data/analyze → {csv_file_id, prompt} → LLM → code generation → execute in sandbox → return chart image + table snapshot
+
+Acceptance Tests
+
+Ingest 10MB PDF; query returns snippet + citation
+
+CSV analysis produces a chart image and a short explanation
+
+5) Real Web Search Connector
+Provider Options (pick one now, keep others behind a flag)
+
+Bing Web Search API OR Brave Search API OR Serper.dev (Google SERP)
+
+GET /api/search?q=… → returns {title,url,snippet}[] normalized
+
+Crawler fetcher: GET /api/fetch?url=… (server fetch with readability, anti-loop, 1MB limit)
+
+Store artifacts to web_artifacts
+
+Acceptance Tests
+
+Search “site:vercel.com v0” returns >=5 results within 2s
+
+Deep Research uses search+fetch and produces citations
+
+6) Integrations (phase 1)
+Slack
+
+OAuth (chat:write, files:write, channels:history)
+
+POST /api/integrations/slack/send → {channel, text, attachments?}
+
+Ingest channel messages to project on demand
+
+Google Drive/Docs
+
+OAuth (drive.readonly)
+
+List files, pick doc, fetch content → ingest → RAG
+
+Calendar/Gmail (read-only) for later: upcoming events; search inbox for docs; summarize threads
+
+Microsoft Teams/Confluence (optional later)
+
+Similar read scopes → ingest content
+
+Acceptance Tests
+
+Connect Slack → send a message from portal → appears in Slack
+
+Connect Google Drive → select a doc → query doc content
+
+7) Image & Video Generation
+Image
+
+OpenAI Images or Stability SDK; support negative prompts, size (1024/768/512), variations from uploaded image
+
+Video (phase 2)
+
+Pika or Runway API: POST /api/tools/video → {prompt, seconds} → poll status → store mp4
+
+Acceptance Tests
+
+Generate 2 image variations from same prompt
+
+Generate a 4–8s clip (stub acceptable if provider quota limited)
+
+8) Text Humanization & Tone Control
+
+Presets: Casual, Professional, Friendly, Persuasive, Concise
+
+POST /api/text/rewrite → {text, tone, length_hint?} → returns rewrite with diff (word-level changes)
+
+UI: right-pane “Humanize” drawer; “Replace in message” button
+
+Acceptance Tests
+
+Feed robotic paragraph → get humanized output ≤ 30% longer unless expanded mode
+
+9) Mobile/Voice Endpoints (phase 3)
+
+Voice: Realtime voice via LiveKit or Twilio Programmable Voice → streams to OpenAI Realtime API or Whisper → responds TTS
+
+Mobile: expose JSON APIs for chat, tools, auth; add deep links for App Store/Play badges
+
+Acceptance Tests
+
+Test /api/mobile/chat with token returns streaming JSON
+
+Voice echo demo: call → ASR → LLM → TTS round-trip works
+
+10) Security, Permissions, CSP
+
+RLS: projects.owner_id = auth.uid() checks; chats/messages/files scoped by project_id
+
+Signed URLs for downloads; 15-minute expiry
+
+CSP: script-src ‘self’ vercel .googleapis .openai; add nonce for inline scripts; disallow eval
+
+Rate limiting: /api/chat/send per user 60/min; /api/search 20/min
+
+11) Observability & Cost Guardrails
+
+Log each provider call: tokens_in/out, latency, cost_usd → runs table
+
+Sentry for exceptions; alert on error rate > 2%/5m
+
+Kill switch: disable high-cost models on monthly spend cap
+
+12) UI Polish & UX Parity
+
+Sidebar: draggable projects/chats, context menu (rename, archive)
+
+Messages: copy, quote-reply, regenerate, pin
+
+Downloads: Markdown/PDF/CSV/PPT
+
+Theming: dark/light, brand colors
+
+App Store/Play badges: link to placeholder landing pages (until real apps shipped)
+
+13) Build Order (for the Agent)
+
+Core chat + models + persistence
+
+Quick-actions (Image, Code, Playground)
+
+Deep Research (search, fetch, RAG store)
+
+Document/Data analysis (ingest, RAG, notebook)
+
+DeepAgent (DAG editor + executor + composer)
+
+Integrations (Slack, Google Drive)
+
+PowerPoint export + Results Composer polish
+
+Image/Video gen advanced
+
+Mobile/Voice + final UX polish
+
+14) QA & Acceptance Suite (copy into your test plan)
+
+Core Chat
+
+Create project → create chat → send prompt → streamed tokens appear; DB rows exist in projects/chats/messages
+
+Switch model → provider actually changes (logged)
+
+Prompt suggestion inserts text and executes on click
+
+Quick Actions
+
+Image: prompt → returns image file; visible in chat + download works
+
+Code: run JS “console.log(42)” → stdout contains “42”
+
+Playground: temperature slider affects output variance
+
+Deep Research
+
+Query “Compare Claude vs GPT-4.1 for tool use” → returns 5+ citations + bulleted summary
+
+Artifacts table populated with normalized results
+
+Docs & Data
+
+Upload PDF (≥100 pages) → querying returns citations with page refs
+
+Upload CSV → “plot revenue by month” produces a PNG chart + short narrative
+
+DAG/DeepAgent
+
+Build 3-node graph; run → outputs stored per node; final composed Markdown exists; optional PDF export
+
+Integrations
+
+Slack: send message from portal → appears in chosen channel
+
+Google Drive: pick a doc → ask question → answer references doc
+
+Security & Rate Limits
+
+Non-owner cannot read another user’s project
+
+Hard-refresh preserves session; 429 responses on abusive loops
+
+Observability
+
+Sentry captures a forced error; runs entries show cost_usd and token counts
+
+15) Minimal File Map (guide, not exhaustive)
+
+app/(routes)
+
+page.tsx (portal shell)
+
+api/chat/send/route.ts
+
+api/chat/new/route.ts
+
+api/project/new/route.ts
+
+api/models/route.ts
+
+api/tools/image/generate/route.ts
+
+api/tools/code/run/route.ts
+
+api/tools/ppt/route.ts
+
+api/tools/research/route.ts
+
+api/docs/ingest/route.ts
+
+api/docs/query/route.ts
+
+api/agent/execute/route.ts
+
+api/agent/compose/route.ts
+
+api/search/route.ts
+
+api/fetch/route.ts
+
+api/integrations/slack/send/route.ts
+
+api/integrations/google/*
+
+lib/ (providers, router, embeddings, scraper, storage, auth)
+
+components/ (ChatPane, Sidebar, ModelSelector, QuickActions, ImagePanel, CodePanel, PlaygroundPanel, ResearchPanel, DagEditor, ResultsComposer)
+
+db/ (schema.sql, types.ts, supabaseClient.ts)
+
+16) Provider Hints (so the agent doesn’t stall)
+
+Chat/Tools: OpenAI Responses API with tool_calls; Anthropic Messages with Tools; Gemini function calling
+
+Embeddings: text-embedding-3-large or Cohere embed; store in pgvector
+
+Images: OpenAI Images or Stability v2
+
+Video: Pika API v1
+
+Search: Bing Web Search v7 OR Brave Search HTTP; fall back to Serper
+
+Parsing: pdfminer.six, mammoth (docx), xlsx (SheetJS)
+
+PPT: python-pptx (via serverless function or micro-service)
+
+Voice (later): OpenAI Realtime or ElevenLabs for TTS

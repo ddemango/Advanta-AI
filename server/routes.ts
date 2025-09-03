@@ -8438,6 +8438,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced AI Portal API endpoints for full functionality
+  app.get('/api/ai-portal/models', async (req, res) => {
+    try {
+      const models = [
+        { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', context: 128000 },
+        { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', context: 128000 },
+        { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', context: 8192 },
+        { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', context: 16384 },
+      ];
+      res.json({ ok: true, models });
+    } catch (error: any) {
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  });
+  
+  // Legacy compatibility endpoints
+  app.post('/api/ai-portal/run-code', aiPortalApi.runCode);
+  app.post('/api/ai-portal/search', aiPortalApi.search);
+  app.post('/api/ai-portal/tts', aiPortalApi.textToSpeech);
+
   // Agent Management APIs
   app.get('/api/agents', async (req, res) => {
     try {

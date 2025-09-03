@@ -5,32 +5,197 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { JSDOM } from 'jsdom';
+import { db } from '../db';
+import { 
+  aiProjects, 
+  aiChats, 
+  aiMessages, 
+  aiUsage, 
+  aiDatasets, 
+  aiArtifacts,
+  insertAiProjectSchema,
+  insertAiChatSchema,
+  insertAiMessageSchema,
+  insertAiUsageSchema
+} from '@shared/schema';
+import { eq, desc } from 'drizzle-orm';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Chat endpoint
+// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+const AVAILABLE_MODELS = {
+  'gpt-4o': 'gpt-4o',
+  'gpt-4o-mini': 'gpt-4o-mini', 
+  'gpt-4': 'gpt-4',
+  'gpt-3.5-turbo': 'gpt-3.5-turbo'
+};
+
+// Get user projects
+export async function getProjects(req: Request, res: Response) {
+  try {
+    const userId = (req as any).session?.userId || 1; // Default to demo user
+
+    const projects = await db
+      .select()
+      .from(aiProjects)
+      .where(eq(aiProjects.userId, userId))
+      .orderBy(desc(aiProjects.createdAt));
+
+    res.json({ ok: true, projects });
+  } catch (error: any) {
+    console.error('Get projects error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to load projects' });
+  }
+}
+
+// Create new project
+export async function createProject(req: Request, res: Response) {
+  try {
+    const userId = (req as any).session?.userId || 1;
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ ok: false, error: 'Project name is required' });
+    }
+
+    const [project] = await db
+      .insert(aiProjects)
+      .values({
+        userId,
+        name,
+        description: description || '',
+        defaultModel: 'gpt-4o'
+      })
+      .returning();
+
+    res.json({ ok: true, project });
+  } catch (error: any) {
+    console.error('Create project error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to create project' });
+  }
+}
+
+// Get project chats
+export async function getChats(req: Request, res: Response) {
+  try {
+    const userId = (req as any).session?.userId || 1;
+    const { projectId } = req.params;
+
+    const chats = await db
+      .select()
+      .from(aiChats)
+      .where(eq(aiChats.projectId, parseInt(projectId)))
+      .orderBy(desc(aiChats.createdAt));
+
+    res.json({ ok: true, chats });
+  } catch (error: any) {
+    console.error('Get chats error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to load chats' });
+  }
+}
+
+// Create new chat
+export async function createChat(req: Request, res: Response) {
+  try {
+    const userId = (req as any).session?.userId || 1;
+    const { projectId, title, model } = req.body;
+
+    if (!projectId) {
+      return res.status(400).json({ ok: false, error: 'Project ID is required' });
+    }
+
+    const [chat] = await db
+      .insert(aiChats)
+      .values({
+        projectId,
+        userId,
+        title: title || 'New Chat',
+        model: model || 'gpt-4o'
+      })
+      .returning();
+
+    res.json({ ok: true, chat });
+  } catch (error: any) {
+    console.error('Create chat error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to create chat' });
+  }
+}
+
+// Get chat messages
+export async function getChatMessages(req: Request, res: Response) {
+  try {
+    const { chatId } = req.params;
+    
+    const messages = await db
+      .select()
+      .from(aiMessages)
+      .where(eq(aiMessages.chatId, parseInt(chatId)))
+      .orderBy(aiMessages.createdAt);
+
+    res.json({ ok: true, messages });
+  } catch (error: any) {
+    console.error('Get messages error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to load messages' });
+  }
+}
+
+// Enhanced chat endpoint with persistence
 export async function chat(req: Request, res: Response) {
   try {
-    const { messages, model = 'gpt-4o', temperature = 0.7, max_tokens = 1024 } = req.body;
+    const userId = (req as any).session?.userId || 1;
+    const { messages, model = 'gpt-4o', temperature = 0.7, max_tokens = 1024, chatId } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ ok: false, error: 'Invalid messages format' });
     }
 
+    // Validate model
+    const validModel = AVAILABLE_MODELS[model as keyof typeof AVAILABLE_MODELS] || 'gpt-4o';
+
     const response = await openai.chat.completions.create({
-      model,
+      model: validModel,
       messages,
       temperature,
       max_tokens,
     });
 
-    const message = response.choices[0]?.message?.content || 'No response generated';
+    const assistantMessage = response.choices[0]?.message?.content || 'No response generated';
+
+    // Save messages to database if chatId provided
+    if (chatId) {
+      // Save user message
+      const lastUserMessage = messages[messages.length - 1];
+      if (lastUserMessage?.role === 'user') {
+        await db.insert(aiMessages).values({
+          chatId: parseInt(chatId),
+          role: 'user',
+          content: lastUserMessage.content
+        });
+      }
+
+      // Save assistant message
+      await db.insert(aiMessages).values({
+        chatId: parseInt(chatId),
+        role: 'assistant',
+        content: assistantMessage
+      });
+
+      // Track usage
+      await db.insert(aiUsage).values({
+        userId,
+        model: validModel,
+        inputTokens: response.usage?.prompt_tokens || 0,
+        outputTokens: response.usage?.completion_tokens || 0,
+        totalTokens: response.usage?.total_tokens || 0,
+        operationType: 'chat'
+      });
+    }
 
     res.json({
       ok: true,
-      message,
+      message: assistantMessage,
       usage: response.usage,
     });
   } catch (error: any) {
@@ -39,6 +204,41 @@ export async function chat(req: Request, res: Response) {
       ok: false,
       error: error.message || 'Failed to process chat request',
     });
+  }
+}
+
+// Get available models
+export async function getModels(req: Request, res: Response) {
+  try {
+    const models = Object.keys(AVAILABLE_MODELS).map(key => ({
+      id: key,
+      name: key.toUpperCase().replace(/-/g, '‑'),
+      provider: 'OpenAI'
+    }));
+
+    res.json({ ok: true, models });
+  } catch (error: any) {
+    console.error('Get models error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to load models' });
+  }
+}
+
+// Get usage analytics
+export async function getUsage(req: Request, res: Response) {
+  try {
+    const userId = (req as any).session?.userId || 1;
+
+    const usage = await db
+      .select()
+      .from(aiUsage)
+      .where(eq(aiUsage.userId, userId))
+      .orderBy(desc(aiUsage.createdAt))
+      .limit(100);
+
+    res.json({ ok: true, usage });
+  } catch (error: any) {
+    console.error('Get usage error:', error);
+    res.status(500).json({ ok: false, error: 'Failed to load usage data' });
   }
 }
 
@@ -253,6 +453,72 @@ export async function textToSpeech(req: Request, res: Response) {
   }
 }
 
+// Data analysis endpoint
+export async function analyzeData(req: Request, res: Response) {
+  try {
+    const userId = (req as any).session?.userId || 1;
+    const { data, analysisType = 'summary', prompt } = req.body;
+
+    if (!data) {
+      return res.status(400).json({ ok: false, error: 'Data is required' });
+    }
+
+    // Convert data to text format for analysis
+    let dataText = '';
+    if (Array.isArray(data)) {
+      dataText = JSON.stringify(data, null, 2);
+    } else if (typeof data === 'object') {
+      dataText = JSON.stringify(data, null, 2);
+    } else {
+      dataText = String(data);
+    }
+
+    const analysisPrompts = {
+      summary: 'Provide a clear summary of this data, highlighting key insights and patterns',
+      insights: 'Analyze this data and provide actionable insights and recommendations',
+      trends: 'Identify trends, patterns, and anomalies in this data',
+      visualization: 'Suggest the best ways to visualize this data and what charts would be most effective'
+    };
+
+    const analysisPrompt = prompt || analysisPrompts[analysisType as keyof typeof analysisPrompts] || analysisPrompts.summary;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a data analysis expert. Provide clear, actionable insights from data.' },
+        { role: 'user', content: `${analysisPrompt}:\n\n${dataText}` }
+      ],
+      temperature: 0.3,
+      max_tokens: 1000,
+    });
+
+    const analysis = response.choices[0]?.message?.content || 'No analysis generated';
+
+    // Track usage
+    await db.insert(aiUsage).values({
+      userId,
+      model: 'gpt-4o',
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      totalTokens: response.usage?.total_tokens || 0,
+      operationType: 'data_analysis'
+    });
+
+    res.json({
+      ok: true,
+      analysis,
+      analysisType,
+      dataSize: dataText.length
+    });
+  } catch (error: any) {
+    console.error('Data analysis error:', error);
+    res.status(500).json({
+      ok: false,
+      error: error.message || 'Failed to analyze data',
+    });
+  }
+}
+
 // Health check endpoint
 export async function health(req: Request, res: Response) {
   res.json({
@@ -263,6 +529,10 @@ export async function health(req: Request, res: Response) {
       chat: true,
       code_execution: true,
       search: true,
+      image_generation: true,
+      text_humanization: true,
+      data_analysis: true,
+      tts: true,
       tts: true,
     },
   });

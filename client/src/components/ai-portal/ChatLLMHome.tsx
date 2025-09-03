@@ -70,7 +70,7 @@ export default function ChatLLMHome() {
       if (data.ok) {
         const assistantMessage = {
           role: "assistant",
-          content: data.message,
+          content: data.response || data.message,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, assistantMessage]);
