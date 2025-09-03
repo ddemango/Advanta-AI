@@ -74,6 +74,11 @@ export default function ChatLLMHome() {
   const [showDataAnalysis, setShowDataAnalysis] = useState(false);
   const [showPlayground, setShowPlayground] = useState(false);
   const [showPowerPoint, setShowPowerPoint] = useState(false);
+  const [showChatModeDropdown, setShowChatModeDropdown] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [chatMode, setChatMode] = useState('Chat');
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const messagesEndRef = useRef(null);
 
@@ -620,65 +625,172 @@ export default function ChatLLMHome() {
                 {/* Quick Action Tools */}
                 <div className="flex items-center gap-3 flex-wrap justify-center mb-4">
                   <button 
-                    onClick={() => setShowImageGen(!showImageGen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    onClick={() => { setShowImageGen(!showImageGen); setSelectedTool(selectedTool === 'image' ? null : 'image'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
+                      selectedTool === 'image' 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                    }`}
                   >
                     <span className="text-sm">🖼️</span>
                     <span className="text-sm font-medium">Image</span>
                   </button>
                   <button 
-                    onClick={() => setShowCodeRunner(!showCodeRunner)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    onClick={() => { setShowCodeRunner(!showCodeRunner); setSelectedTool(selectedTool === 'code' ? null : 'code'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
+                      selectedTool === 'code' 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                    }`}
                   >
                     <span className="text-sm">💻</span>
                     <span className="text-sm font-medium">Code</span>
                   </button>
                   <button 
-                    onClick={() => setShowPlayground(!showPlayground)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    onClick={() => { setShowPlayground(!showPlayground); setSelectedTool(selectedTool === 'playground' ? null : 'playground'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
+                      selectedTool === 'playground' 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                    }`}
                   >
                     <span className="text-sm">🧪</span>
                     <span className="text-sm font-medium">Playground</span>
                   </button>
                   <button 
-                    onClick={() => setShowPowerPoint(!showPowerPoint)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    onClick={() => { setShowPowerPoint(!showPowerPoint); setSelectedTool(selectedTool === 'powerpoint' ? null : 'powerpoint'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
+                      selectedTool === 'powerpoint' 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                    }`}
                   >
                     <span className="text-sm">📊</span>
                     <span className="text-sm font-medium">PowerPoint</span>
                   </button>
                   <button 
-                    onClick={() => setShowResearch(!showResearch)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    onClick={() => { setShowResearch(!showResearch); setSelectedTool(selectedTool === 'research' ? null : 'research'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
+                      selectedTool === 'research' 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                    }`}
                   >
                     <span className="text-sm">🔍</span>
                     <span className="text-sm font-medium">Deep Research</span>
                   </button>
                   <button 
-                    onClick={() => setShowDataAnalysis(!showDataAnalysis)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    onClick={() => { setShowDataAnalysis(!showDataAnalysis); setSelectedTool(selectedTool === 'data' ? null : 'data'); }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border shadow-sm transition-colors ${
+                      selectedTool === 'data' 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50'
+                    }`}
                   >
                     <span className="text-sm">📈</span>
                     <span className="text-sm font-medium">Data Analysis</span>
                   </button>
-                  <button 
-                    onClick={() => alert('More tools coming soon!')}
-                    className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
-                  >
-                    <span className="text-sm">⋯</span>
-                    <span className="text-sm font-medium">More</span>
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowMoreMenu(!showMoreMenu)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+                    >
+                      <span className="text-sm">⋯</span>
+                      <span className="text-sm font-medium">More</span>
+                    </button>
+                    
+                    {showMoreMenu && (
+                      <div className="absolute bottom-full mb-2 right-0 w-48 bg-white border border-zinc-200 rounded-lg shadow-lg py-2 z-50">
+                        <button onClick={() => { alert('Video-Gen coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🎥</span> Video-Gen
+                        </button>
+                        <button onClick={() => { alert('Lip Sync coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>👄</span> Lip Sync
+                        </button>
+                        <button onClick={() => { alert('Humanize coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🤖</span> Humanize
+                        </button>
+                        <button onClick={() => { alert('Doc-Gen coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>📄</span> Doc-Gen
+                        </button>
+                        <button onClick={() => { alert('Editor coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>✏️</span> Editor
+                        </button>
+                        <button onClick={() => { alert('Scrape URL coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🕷️</span> Scrape URL
+                        </button>
+                        <button onClick={() => { alert('Screenshot coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>📸</span> Screenshot
+                        </button>
+                        <button onClick={() => { alert('Video Analysis coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🎬</span> Video Analysis
+                        </button>
+                        <button onClick={() => { alert('Task coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>📋</span> Task
+                        </button>
+                        <button onClick={() => { alert('Text-to-Speech coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🔊</span> Text-to-Speech
+                        </button>
+                        <button onClick={() => { alert('Speech-to-text coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🎙️</span> Speech-to-text
+                        </button>
+                        <button onClick={() => { alert('Speech-to-Speech coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
+                          <span>🗣️</span> Speech-to-Speech
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Controls row */}
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => alert('File attachment coming soon!')}
-                    className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
-                    title="Attach file"
-                  >
-                    <Paperclip className="h-4 w-4 text-zinc-600" />
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowAttachmentMenu(!showAttachmentMenu)}
+                      className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
+                      title="Attach file"
+                    >
+                      <Paperclip className="h-4 w-4 text-zinc-600" />
+                    </button>
+                    
+                    {showAttachmentMenu && (
+                      <div className="absolute bottom-full mb-2 right-0 w-52 bg-white border border-zinc-200 rounded-lg shadow-lg py-2 z-50">
+                        <button 
+                          onClick={() => { alert('Connect Apps coming soon!'); setShowAttachmentMenu(false); }}
+                          className="w-full text-left px-4 py-3 hover:bg-zinc-50 transition-colors border-b border-zinc-100"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 bg-zinc-100 rounded grid place-items-center">
+                              <span className="text-sm">🔗</span>
+                            </div>
+                            <span className="text-sm font-medium">Connect Apps</span>
+                          </div>
+                        </button>
+                        
+                        <div className="px-4 py-2">
+                          <button 
+                            onClick={() => { alert('Add from files coming soon!'); setShowAttachmentMenu(false); }}
+                            className="w-full text-left py-2 hover:bg-zinc-50 transition-colors rounded flex items-center gap-3"
+                          >
+                            <div className="h-6 w-6 bg-purple-100 rounded grid place-items-center">
+                              <span className="text-xs">📁</span>
+                            </div>
+                            <span className="text-sm">Add from files</span>
+                          </button>
+                          
+                          <button 
+                            onClick={() => { alert('Upload from computer coming soon!'); setShowAttachmentMenu(false); }}
+                            className="w-full text-left py-2 hover:bg-zinc-50 transition-colors rounded flex items-center gap-3"
+                          >
+                            <div className="h-6 w-6 bg-zinc-100 rounded grid place-items-center">
+                              <span className="text-xs">💻</span>
+                            </div>
+                            <span className="text-sm">Upload from computer</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <button 
                     onClick={() => alert('Web browsing coming soon!')}
                     className="h-10 w-10 grid place-items-center rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
@@ -688,12 +800,37 @@ export default function ChatLLMHome() {
                   </button>
 
                   <div className="ml-auto flex items-center gap-2">
-                    <button 
-                      onClick={() => alert('Chat settings coming soon!')}
-                      className="px-3 py-2 rounded-xl bg-white border border-zinc-200 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-1"
-                    >
-                      Chat <ChevronDown className="h-3 w-3" />
-                    </button>
+                    <div className="relative">
+                      <button 
+                        onClick={() => setShowChatModeDropdown(!showChatModeDropdown)}
+                        className="px-3 py-2 rounded-xl bg-white border border-zinc-200 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-1"
+                      >
+                        {chatMode} <ChevronDown className="h-3 w-3" />
+                      </button>
+                      
+                      {showChatModeDropdown && (
+                        <div className="absolute bottom-full mb-2 right-0 w-36 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-50">
+                          <button 
+                            onClick={() => { setChatMode('Chat Mode'); setShowChatModeDropdown(false); }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors"
+                          >
+                            Chat Mode
+                          </button>
+                          <button 
+                            onClick={() => { setChatMode('DeepAgent'); setShowChatModeDropdown(false); }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors"
+                          >
+                            DeepAgent
+                          </button>
+                          <button 
+                            onClick={() => { setChatMode('Study Mode'); setShowChatModeDropdown(false); }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors"
+                          >
+                            Study Mode
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button 
                       onClick={() => alert('Voice input coming soon!')}
                       className="h-10 w-10 grid place-items-center rounded-full bg-white border border-zinc-200 hover:bg-zinc-50 transition-colors"
