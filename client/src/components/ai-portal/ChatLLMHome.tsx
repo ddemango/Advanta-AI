@@ -34,7 +34,7 @@ import ProfileMenu from "./ProfileMenu";
 import { useProfile } from "@/contexts/ProfileContext";
 import { ROUTES } from "@/lib/routes";
 import { MobileComposer } from "@/components/ui/mobile-composer";
-import newChatIcon from '@assets/image_1757000443747.png';
+import sidebarIcon from '@assets/image_1757000443747.png';
 import editIcon from '@assets/image_1757000453257.png';
 import { 
   Search,
@@ -391,14 +391,14 @@ export default function ChatLLMHome() {
             className="hidden sm:block ml-3 text-zinc-400 hover:text-zinc-600"
             title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >
-            <img src={newChatIcon} alt="Toggle sidebar" className="h-5 w-5" />
+            <img src={sidebarIcon} alt="Toggle sidebar" className="h-4 w-4" />
           </button>
           <button 
             onClick={() => alert('Edit feature coming soon!')}
             className="hidden sm:block text-zinc-400 hover:text-zinc-600"
             title="Edit"
           >
-            <img src={editIcon} alt="Edit" className="h-5 w-5" />
+            <img src={editIcon} alt="Edit" className="h-4 w-4" />
           </button>
         </div>
 
