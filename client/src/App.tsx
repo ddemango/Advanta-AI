@@ -115,6 +115,9 @@ import HelpPage from "@/pages/HelpPage";
 import RouteLLMPage from "@/pages/RouteLLMPage";
 import CustomBotPage from "@/pages/CustomBotPage";
 
+// Context
+import { ProfileProvider } from "@/contexts/ProfileContext";
+
 function Router() {
   const [location] = useLocation();
   const [sessionInitialized, setSessionInitialized] = useState(false);
@@ -287,11 +290,13 @@ function App() {
   const showChatButton = !location.includes('/chatbot-builder');
   
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Router />
-      {showChatButton && <ChatButton />}
-    </TooltipProvider>
+    <ProfileProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Router />
+        {showChatButton && <ChatButton />}
+      </TooltipProvider>
+    </ProfileProvider>
   );
 }
 

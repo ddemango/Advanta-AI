@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { QuickActionTools } from "./QuickActionTools";
 import { useLocation } from "wouter";
 import ProfileMenu from "./ProfileMenu";
+import { useProfile } from "@/contexts/ProfileContext";
 import { ROUTES } from "@/lib/routes";
 import { 
   Search,
@@ -79,6 +80,7 @@ function ToolChip({ icon, label, onClick }: { icon: string; label: string; onCli
 export default function ChatLLMHome() {
   const [, setLocation] = useLocation();
   const [model, setModel] = useState("openai:gpt-4o");
+  const { profile } = useProfile();
   const [availableModels, setAvailableModels] = useState([
     { id: 'openai:gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
     { id: 'openai:gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
@@ -409,7 +411,11 @@ export default function ChatLLMHome() {
         {/* Right controls */}
         <div className="flex items-center gap-3">
           <ProfileMenu
-            user={{ name: "Davide", org: "Advanta AI" }}
+            user={{ 
+              name: `${profile.firstName} ${profile.lastName}`, 
+              org: profile.organization,
+              avatarUrl: profile.avatar || undefined
+            }}
             onProfile={() => setLocation(ROUTES.profile)}
             onCustomize={() => setLocation(ROUTES.customize)}
             onMemories={() => setLocation(ROUTES.memories)}

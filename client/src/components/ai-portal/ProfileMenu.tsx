@@ -41,10 +41,18 @@ export default function ProfileMenu({
     <div className="relative">
       <button 
         onClick={() => setOpen((o) => !o)} 
-        className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm hover:bg-emerald-300 transition-colors"
+        className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm hover:bg-emerald-300 transition-colors overflow-hidden"
         title="Profile"
       >
-        {user.name?.[0]?.toUpperCase() || "U"}
+        {user.avatarUrl ? (
+          <img 
+            src={user.avatarUrl} 
+            alt={user.name} 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          user.name?.[0]?.toUpperCase() || "U"
+        )}
       </button>
       
       {open && (
@@ -66,8 +74,16 @@ export default function ProfileMenu({
                 Refer ($) / Invite ▾
               </button>
               <div className="flex items-center gap-2">
-                <div className="h-9 w-9 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm">
-                  {user.name?.[0]?.toUpperCase()}
+                <div className="h-9 w-9 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm overflow-hidden">
+                  {user.avatarUrl ? (
+                    <img 
+                      src={user.avatarUrl} 
+                      alt={user.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user.name?.[0]?.toUpperCase()
+                  )}
                 </div>
                 <div>
                   <div className="text-sm font-semibold">{user.name}</div>

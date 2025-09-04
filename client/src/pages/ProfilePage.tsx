@@ -4,21 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Mail, Building, Upload, Camera } from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState({
-    firstName: "Davide",
-    lastName: "DeMango", 
-    email: "davide@advanta.ai",
-    organization: "Advanta AI"
-  });
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const { profile, updateProfile } = useProfile();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleInputChange = (field: string, value: string) => {
-    setProfile(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof typeof profile, value: string) => {
+    updateProfile({ [field]: value });
   };
 
   const handleSave = async () => {
@@ -41,9 +36,9 @@ export default function ProfilePage() {
       setUploading(true);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setAvatar(e.target?.result as string);
+        const avatarData = e.target?.result as string;
+        updateProfile({ avatar: avatarData });
         setUploading(false);
-        // TODO: Upload to server
         console.log("Avatar uploaded:", file.name);
       };
       reader.readAsDataURL(file);
@@ -135,9 +130,9 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <div className="relative">
-                  {avatar ? (
+                  {profile.avatar ? (
                     <img 
-                      src={avatar} 
+                      src={profile.avatar} 
                       alt="Profile" 
                       className="w-24 h-24 rounded-full object-cover"
                     />
@@ -173,11 +168,11 @@ export default function ProfilePage() {
                     <Upload className="h-4 w-4 mr-2" />
                     {uploading ? "Uploading..." : "Change Avatar"}
                   </Button>
-                  {avatar && (
+                  {profile.avatar && (
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setAvatar(null)}
+                      onClick={() => updateProfile({ avatar: null })}
                     >
                       Remove
                     </Button>

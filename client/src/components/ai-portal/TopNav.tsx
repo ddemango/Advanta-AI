@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ProfileMenu from "./ProfileMenu";
 import { ROUTES } from "@/lib/routes";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface ModelSelectorProps {
   value?: string;
@@ -46,6 +47,7 @@ function PlanBadge({ plan = "Enterprise" }: { plan?: string }) {
 export default function TopNav() {
   const [selectedModel, setSelectedModel] = useState("gpt-5");
   const [, setLocation] = useLocation();
+  const { profile } = useProfile();
   
   const handleSignOut = () => {
     // Clear any stored auth tokens/session data
@@ -67,7 +69,11 @@ export default function TopNav() {
           <ModelSelector value={selectedModel} onChange={setSelectedModel} />
           <PlanBadge />
           <ProfileMenu
-            user={{ name: "Davide", org: "Advanta AI" }}
+            user={{ 
+              name: `${profile.firstName} ${profile.lastName}`, 
+              org: profile.organization,
+              avatarUrl: profile.avatar || undefined
+            }}
             onProfile={() => setLocation(ROUTES.profile)}
             onCustomize={() => setLocation(ROUTES.customize)}
             onMemories={() => setLocation(ROUTES.memories)}
