@@ -1,174 +1,121 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  User, 
-  Settings, 
-  Brain, 
-  Route, 
-  Link2, 
-  HelpCircle, 
-  Bot, 
-  LogOut,
-  ChevronDown,
-  Moon,
-  Sun,
-  UserPlus
-} from "lucide-react";
+"use client";
+import * as React from "react";
 
-interface ProfileMenuProps {
-  user: {
-    name: string;
-    org: string;
-  };
-  onProfile: () => void;
-  onCustomize: () => void;
-  onMemories: () => void;
-  onRouteLLM: () => void;
-  onConnectors: () => void;
-  onHelp: () => void;
-  onCustomBot: () => void;
-  onInvite: () => void;
-  onSignOut: () => void;
+export interface ProfileMenuProps {
+  user: { name: string; org?: string; avatarUrl?: string };
+  onProfile?: () => void;
+  onCustomize?: () => void; // Customize ChatLLM
+  onMemories?: () => void;
+  onRouteLLM?: () => void; // RouteLLM API
+  onConnectors?: () => void;
+  onHelp?: () => void;
+  onCustomBot?: () => void;
+  onInvite?: () => void; // Refer($)/Invite
+  onSignOut?: () => void;
 }
 
-export default function ProfileMenu({
-  user,
-  onProfile,
-  onCustomize,
-  onMemories,
-  onRouteLLM,
-  onConnectors,
-  onHelp,
-  onCustomBot,
-  onInvite,
-  onSignOut
+export default function ProfileMenu({ 
+  user, 
+  onProfile, 
+  onCustomize, 
+  onMemories, 
+  onRouteLLM, 
+  onConnectors, 
+  onHelp, 
+  onCustomBot, 
+  onInvite, 
+  onSignOut 
 }: ProfileMenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [theme, setTheme] = useState("light");
+  const [open, setOpen] = React.useState(false);
+  const [theme, setTheme] = React.useState("light");
+  const isDark = theme === "dark";
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
+    const newTheme = isDark ? "light" : "dark";
     setTheme(newTheme);
-    document.documentElement.classList.toggle("dark");
+    // Apply theme to document if needed
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
-
-  const menuItems = [
-    { icon: User, label: "Profile", onClick: onProfile },
-    { icon: Settings, label: "Customize ChatLLM", onClick: onCustomize },
-    { icon: Brain, label: "Memories", onClick: onMemories },
-    { icon: Route, label: "RouteLLM API", onClick: onRouteLLM },
-    { icon: Link2, label: "Connectors", onClick: onConnectors },
-    { icon: HelpCircle, label: "Help", onClick: onHelp },
-    { icon: Bot, label: "Custom Bot Settings", onClick: onCustomBot }
-  ];
 
   return (
     <div className="relative">
-      {/* Refer/Invite Button */}
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={onInvite}
-          variant="outline"
-          size="sm"
-          className="text-xs bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
-        >
-          <UserPlus className="h-3 w-3 mr-1" />
-          Refer ($) / Invite
-          <ChevronDown className="h-3 w-3 ml-1" />
-        </Button>
-
-        {/* Profile Avatar & Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm font-medium">
-              {user.name.charAt(0)}
-            </div>
-            <div className="hidden sm:block text-left">
-              <div className="text-sm font-medium">{user.name}</div>
-              <div className="text-xs text-zinc-400">{user.org}</div>
-            </div>
-            <ChevronDown className="h-4 w-4" />
-          </button>
-
-          {/* Dropdown Menu */}
-          {isOpen && (
-            <>
-              {/* Backdrop */}
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setIsOpen(false)}
-              />
-              
-              {/* Menu */}
-              <div className="absolute right-0 top-12 z-20 w-64 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 py-2">
-                {/* User Info Header */}
-                <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
-                      {user.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-medium text-zinc-900 dark:text-zinc-100">{user.name}</div>
-                      <div className="text-sm text-zinc-500 dark:text-zinc-400">{user.org}</div>
-                    </div>
-                  </div>
+      <button 
+        onClick={() => setOpen((o) => !o)} 
+        className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm hover:bg-emerald-300 transition-colors"
+        title="Profile"
+      >
+        {user.name?.[0]?.toUpperCase() || "U"}
+      </button>
+      
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-30" 
+            onClick={() => setOpen(false)} 
+          />
+          
+          {/* Menu */}
+          <div className="absolute right-0 z-40 mt-2 w-72 rounded-2xl border bg-white shadow-2xl">
+            {/* Header: Invite + Identity + Theme toggle */}
+            <div className="flex items-center justify-between gap-2 border-b p-3">
+              <button 
+                onClick={() => { setOpen(false); onInvite?.(); }}
+                className="rounded-full border px-2.5 py-1 text-xs hover:bg-gray-50 transition-colors"
+              >
+                Refer ($) / Invite ▾
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm">
+                  {user.name?.[0]?.toUpperCase()}
                 </div>
-
-                {/* Theme Toggle */}
-                <div className="px-4 py-2 border-b border-zinc-200 dark:border-zinc-700">
-                  <button
-                    onClick={toggleTheme}
-                    className="flex items-center gap-3 w-full text-left px-2 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
-                  >
-                    {theme === "light" ? (
-                      <Moon className="h-4 w-4" />
-                    ) : (
-                      <Sun className="h-4 w-4" />
-                    )}
-                    <span className="text-sm">
-                      {theme === "light" ? "Dark" : "Light"} theme
-                    </span>
-                  </button>
+                <div>
+                  <div className="text-sm font-semibold">{user.name}</div>
+                  {user.org && <div className="text-xs text-gray-500">{user.org}</div>}
                 </div>
-
-                {/* Menu Items */}
-                <div className="py-2">
-                  {menuItems.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => {
-                        item.onClick();
-                        setIsOpen(false);
-                      }}
-                      className="flex items-center gap-3 w-full text-left px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span className="text-sm">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Sign Out */}
-                <div className="border-t border-zinc-200 dark:border-zinc-700 pt-2">
-                  <button
-                    onClick={() => {
-                      onSignOut();
-                      setIsOpen(false);
-                    }}
-                    className="flex items-center gap-3 w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="text-sm">Sign Out</span>
-                  </button>
-                </div>
+                <button
+                  aria-label="Toggle Theme"
+                  onClick={toggleTheme}
+                  className="ml-2 rounded-full border px-2.5 py-1 text-xs hover:bg-gray-50 transition-colors"
+                >
+                  {isDark ? "🌙" : "☀️"}
+                </button>
               </div>
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+
+            {/* Menu items */}
+            <div className="p-2">
+              <MenuItem label="Profile" onClick={() => { setOpen(false); onProfile?.(); }} />
+              <MenuItem label="Customize ChatLLM" onClick={() => { setOpen(false); onCustomize?.(); }} />
+              <MenuItem label="Memories" onClick={() => { setOpen(false); onMemories?.(); }} />
+              <MenuItem label="RouteLLM API" onClick={() => { setOpen(false); onRouteLLM?.(); }} />
+              <MenuItem label="Connectors" onClick={() => { setOpen(false); onConnectors?.(); }} />
+              <MenuItem label="Help" onClick={() => { setOpen(false); onHelp?.(); }} />
+              <MenuItem label="Custom Bot Settings" onClick={() => { setOpen(false); onCustomBot?.(); }} />
+            </div>
+
+            <div className="border-t p-2">
+              <button
+                onClick={() => { setOpen(false); onSignOut?.(); }}
+                className="w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
+  );
+}
+
+function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick} 
+      className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+    >
+      {label}
+    </button>
   );
 }

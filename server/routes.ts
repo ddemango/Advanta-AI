@@ -47,6 +47,7 @@ import { statusRouter } from './status-routes';
 import { adminRouter } from './admin-routes';
 import trendingContentRoutes from './trending-content-routes';
 import * as aiPortalApi from './api/ai-portal';
+import aiPortalToolsRouter from './routes/ai-portal/tools';
 import Stripe from "stripe";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -8529,12 +8530,8 @@ Format as JSON:
   app.post('/api/ai-portal/run-code', aiPortalApi.runCode);
   app.post('/api/ai-portal/search', aiPortalApi.search);
   
-  // Quick-Action Tools endpoints
-  app.post('/api/ai-portal/tools/image/generate', requireAiPortalAuth, aiPortalApi.generateImage);
-  app.post('/api/ai-portal/tools/code/run', requireAiPortalAuth, aiPortalApi.quickRunCode);
-  app.post('/api/ai-portal/tools/research', requireAiPortalAuth, aiPortalApi.performResearch);
-  app.post('/api/ai-portal/tools/data/analyze', requireAiPortalAuth, aiPortalApi.analyzeData);
-  app.post('/api/ai-portal/tools/ppt', requireAiPortalAuth, aiPortalApi.generatePowerPoint);
+  // Quick-Action Tools endpoints - using comprehensive tools router
+  app.use('/api/ai-portal/tools', requireAiPortalAuth, aiPortalToolsRouter);
   app.post('/api/ai-portal/tts', requireAiPortalAuth, aiPortalApi.textToSpeech);
 
   // Agent Management APIs
