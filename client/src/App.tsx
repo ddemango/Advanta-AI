@@ -106,6 +106,15 @@ import NotFound from "@/pages/not-found";
 import { AnimatedBackground } from "@/components/ui/animated-background";
 import { ChatButton } from "@/components/chat/ChatButton";
 
+// Profile Menu Pages
+import ProfilePage from "@/pages/ProfilePage";
+import CustomizePage from "@/pages/CustomizePage";
+import MemoriesPage from "@/pages/MemoriesPage";
+import ConnectorsPage from "@/pages/ConnectorsPage";
+import HelpPage from "@/pages/HelpPage";
+import RouteLLMPage from "@/pages/RouteLLMPage";
+import CustomBotPage from "@/pages/CustomBotPage";
+
 function Router() {
   const [location] = useLocation();
   const [sessionInitialized, setSessionInitialized] = useState(false);
@@ -232,6 +241,16 @@ function Router() {
       <Route path="/flight-finder" component={FlightFinder} />
       <Route path="/fantasy-football-tools" component={FantasyFootballTools} />
       <Route path="/ai-portal" component={AIPortal} />
+      
+      {/* AI Portal Profile Menu Routes */}
+      <Route path="/ai-portal/profile" component={ProfilePage} />
+      <Route path="/ai-portal/settings/customize" component={CustomizePage} />
+      <Route path="/ai-portal/memories" component={MemoriesPage} />
+      <Route path="/ai-portal/developer/route-llm" component={RouteLLMPage} />
+      <Route path="/ai-portal/connectors" component={ConnectorsPage} />
+      <Route path="/ai-portal/help" component={HelpPage} />
+      <Route path="/ai-portal/bots/settings" component={CustomBotPage} />
+      
       <Route path="/deepagent" component={AbacusDeepAgent} />
       <Route path="/abacus-demo" component={AbacusDemo} />
       <Route path="/tv-matchmaker" component={TVMatchmaker} />

@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ProfileMenu from "./ProfileMenu";
+import { ROUTES } from "@/lib/routes";
 
 interface ModelSelectorProps {
   value?: string;
@@ -42,6 +45,14 @@ function PlanBadge({ plan = "Enterprise" }: { plan?: string }) {
 
 export default function TopNav() {
   const [selectedModel, setSelectedModel] = useState("gpt-5");
+  const [, setLocation] = useLocation();
+  
+  const handleSignOut = () => {
+    // Clear any stored auth tokens/session data
+    localStorage.removeItem('authToken');
+    // Redirect to home page
+    setLocation('/');
+  };
   
   return (
     <header className="sticky top-0 z-40 bg-black/70 backdrop-blur border-b border-zinc-900">
@@ -55,9 +66,18 @@ export default function TopNav() {
         <div className="flex items-center gap-4">
           <ModelSelector value={selectedModel} onChange={setSelectedModel} />
           <PlanBadge />
-          <Button variant="ghost" size="sm" className="text-zinc-300 hover:text-white">
-            AI Portal / Team
-          </Button>
+          <ProfileMenu
+            user={{ name: "Davide", org: "Advanta AI" }}
+            onProfile={() => setLocation(ROUTES.profile)}
+            onCustomize={() => setLocation(ROUTES.customize)}
+            onMemories={() => setLocation(ROUTES.memories)}
+            onRouteLLM={() => setLocation(ROUTES.routeLLM)}
+            onConnectors={() => setLocation(ROUTES.connectors)}
+            onHelp={() => setLocation(ROUTES.help)}
+            onCustomBot={() => setLocation(ROUTES.customBot)}
+            onInvite={() => alert("Invite flow coming soon")}
+            onSignOut={handleSignOut}
+          />
         </div>
       </div>
     </header>
