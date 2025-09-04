@@ -463,7 +463,7 @@ export default function ChatLLMHome() {
       </header>
 
       {/* Body: Sidebar + Main */}
-      <div className="relative min-h-[calc(100vh-56px)]">
+      <div className="flex min-h-[calc(100vh-56px)]">
         {/* Mobile drawer backdrop */}
         <div
           onClick={() => setSidebarOpen(false)}
@@ -639,7 +639,7 @@ export default function ChatLLMHome() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 sm:ml-[280px] bg-zinc-50 flex flex-col min-h-screen">
+        <main className="flex-1 bg-zinc-50 flex flex-col min-h-full">
           {messages.length > 1 ? (
             // Chat view
             <div className="flex-1 overflow-y-auto p-4">
