@@ -1,0 +1,104 @@
+// ============================================================================
+      {open && (
+// ============================================================================
+// FILE: app/memories/page.tsx — Memories page stub
+// ============================================================================
+export default function MemoriesPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Memories</h1>
+      <p className="mt-2 text-gray-600">Your saved AI memories will show here.</p>
+    </div>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/developer/route-llm/page.tsx — RouteLLM API docs stub
+// ============================================================================
+export default function RouteLLMPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">RouteLLM API</h1>
+      <p className="mt-2 text-gray-600">Developer docs for routing LLMs.</p>
+    </div>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/connectors/page.tsx — Connectors page stub
+// ============================================================================
+export default function ConnectorsPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Connectors</h1>
+      <p className="mt-2 text-gray-600">Integrate Slack, Drive, Gmail, and more here.</p>
+    </div>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/help/page.tsx — Help page stub
+// ============================================================================
+export default function HelpPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Help</h1>
+      <p className="mt-2 text-gray-600">FAQs, docs, and support resources.</p>
+    </div>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/bots/settings/page.tsx — Custom Bot Settings page stub
+// ============================================================================
+export default function CustomBotSettingsPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Custom Bot Settings</h1>
+      <p className="mt-2 text-gray-600">Configure your custom chatbots and workflows.</p>
+    </div>
+  );
+}
+
+
+
+
+// ============================================================================
+// FILE: lib/routes.ts — Centralized route constants
+// ============================================================================
+export const ROUTES = {
+  profile: "/profile",
+  customize: "/settings/customize",
+  memories: "/memories",
+  routeLLM: "/developer/route-llm",
+  connectors: "/connectors",
+  help: "/help",
+  customBot: "/bots/settings",
+};
+
+
+// Example usage in ProfileMenu callbacks:
+// import { useRouter } from "next/navigation";
+// import { ROUTES } from "@/lib/routes";
+// const router = useRouter();
+// <ProfileMenu onProfile={() => router.push(ROUTES.profile)} ... />
+
+
+
+
+
+Done ✅ — added a lib/routes.ts file with all your menu destinations centralized:
+
+export const ROUTES = {
+  profile: "/profile",
+  customize: "/settings/customize",
+  memories: "/memories",
+  routeLLM: "/developer/route-llm",
+  connectors: "/connectors",
+  help: "/help",
+  customBot: "/bots/settings",
+};
