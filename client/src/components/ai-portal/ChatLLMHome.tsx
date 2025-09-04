@@ -30,6 +30,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QuickActionTools } from "./QuickActionTools";
 import { useLocation } from "wouter";
+import ProfileMenu from "./ProfileMenu";
+import { ROUTES } from "@/lib/routes";
 import { 
   Search,
   Plus,
@@ -75,6 +77,7 @@ function ToolChip({ icon, label, onClick }: { icon: string; label: string; onCli
 }
 
 export default function ChatLLMHome() {
+  const [, setLocation] = useLocation();
   const [model, setModel] = useState("openai:gpt-4o");
   const [availableModels, setAvailableModels] = useState([
     { id: 'openai:gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
@@ -111,7 +114,6 @@ export default function ChatLLMHome() {
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [, setLocation] = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -406,20 +408,18 @@ export default function ChatLLMHome() {
 
         {/* Right controls */}
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => alert('Referral program coming soon!')}
-            className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-          >
-            Refer ($) / Invite 
-            <ChevronDown className="h-3 w-3" />
-          </button>
-          <button 
-            onClick={() => alert('User profile settings coming soon!')}
-            className="h-8 w-8 rounded-full bg-emerald-200 text-emerald-800 grid place-items-center font-semibold text-sm hover:bg-emerald-300 transition-colors"
-            title="Profile"
-          >
-            D
-          </button>
+          <ProfileMenu
+            user={{ name: "Davide", org: "Advanta AI" }}
+            onProfile={() => setLocation(ROUTES.profile)}
+            onCustomize={() => setLocation(ROUTES.customize)}
+            onMemories={() => setLocation(ROUTES.memories)}
+            onRouteLLM={() => setLocation(ROUTES.routeLLM)}
+            onConnectors={() => setLocation(ROUTES.connectors)}
+            onHelp={() => setLocation(ROUTES.help)}
+            onCustomBot={() => setLocation(ROUTES.customBot)}
+            onInvite={() => alert("Invite flow coming soon")}
+            onSignOut={() => setLocation('/')}
+          />
         </div>
       </header>
 
