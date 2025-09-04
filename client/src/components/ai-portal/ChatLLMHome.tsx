@@ -639,7 +639,7 @@ export default function ChatLLMHome() {
         </aside>
 
         {/* Main content */}
-        <main className="sm:ml-[280px] bg-zinc-50 flex flex-col h-full">
+        <main className="flex-1 sm:ml-[280px] bg-zinc-50 flex flex-col min-h-screen">
           {messages.length > 1 ? (
             // Chat view
             <div className="flex-1 overflow-y-auto p-4">
@@ -670,9 +670,15 @@ export default function ChatLLMHome() {
           ) : (
             // Welcome view
             <div className="flex-1 flex flex-col justify-center">
-              <div className="max-w-[1100px] mx-auto p-8">
+              <div className="max-w-[1100px] mx-auto p-8 text-center">
+                <h1 className="text-3xl font-bold text-zinc-900 mb-2">
+                  Hello {profile.firstName || 'there'}!
+                </h1>
+                <p className="text-zinc-600 mb-8">
+                  What can I help you with today?
+                </p>
                 {/* Suggestion chips row */}
-                <div className="flex flex-wrap gap-3 justify-center mt-8">
+                <div className="flex flex-wrap gap-3 justify-center">
                   <button onClick={() => setMessage("💡 Tell me a fun fact about Rome")} className="px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors">
                     💡 Fun fact about Rome
                   </button>
