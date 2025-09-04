@@ -386,6 +386,20 @@ export default function ChatLLMHome() {
             <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
             <span className="text-zinc-800 font-semibold tracking-tight">ADVANTA AI</span>
           </div>
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="hidden sm:block ml-3 text-zinc-400 hover:text-zinc-600"
+            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+          >
+            <img src={newChatIcon} alt="Toggle sidebar" className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={() => alert('Edit feature coming soon!')}
+            className="hidden sm:block text-zinc-400 hover:text-zinc-600"
+            title="Edit"
+          >
+            <img src={editIcon} alt="Edit" className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Model dropdown centered on desktop, hidden on mobile */}
@@ -479,7 +493,7 @@ export default function ChatLLMHome() {
                   className="hover:text-zinc-700"
                   title="Create new project"
                 >
-                  <img src={newChatIcon} alt="New project" className="h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -523,7 +537,7 @@ export default function ChatLLMHome() {
                   title="Create new chat"
                   disabled={!currentProject}
                 >
-                  <img src={newChatIcon} alt="New chat" className="h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                 </button>
               </div>
             </div>
