@@ -35,7 +35,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { ROUTES } from "@/lib/routes";
 import { MobileComposer } from "@/components/ui/mobile-composer";
 import sidebarIcon from '@assets/image_1757000443747.png';
-import editIcon from '@assets/image_1757000453257.png';
+import editIcon from '@assets/6543495_1757001985080.png';
 import { 
   Search,
   Plus,
