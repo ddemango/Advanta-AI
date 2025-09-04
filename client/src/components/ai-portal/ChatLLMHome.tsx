@@ -472,9 +472,9 @@ export default function ChatLLMHome() {
           className={`fixed inset-0 bg-black/40 z-40 sm:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
         />
         
-        {/* Sidebar: fixed on mobile, static on desktop */}
+        {/* Sidebar: fixed on mobile, toggleable on desktop */}
         <aside
-          className={`fixed z-50 top-14 bottom-0 left-0 w-[82vw] max-w-[320px] bg-white border-r border-zinc-200 transition-transform duration-300 sm:static sm:translate-x-0 sm:w-[280px] flex flex-col
+          className={`fixed z-50 top-14 bottom-0 left-0 w-[82vw] max-w-[320px] bg-white border-r border-zinc-200 transition-transform duration-300 sm:w-[280px] flex flex-col
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
@@ -641,7 +641,7 @@ export default function ChatLLMHome() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 bg-zinc-50 flex flex-col min-h-full">
+        <main className={`flex-1 bg-zinc-50 flex flex-col min-h-full transition-all duration-300 ${sidebarOpen ? 'sm:ml-[280px]' : 'sm:ml-0'}`}>
           {messages.length > 1 ? (
             // Chat view
             <div className="flex-1 overflow-y-auto p-4">
