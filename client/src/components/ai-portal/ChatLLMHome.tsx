@@ -34,6 +34,8 @@ import ProfileMenu from "./ProfileMenu";
 import { useProfile } from "@/contexts/ProfileContext";
 import { ROUTES } from "@/lib/routes";
 import { MobileComposer } from "@/components/ui/mobile-composer";
+import newChatIcon from '@assets/image_1757000443747.png';
+import editIcon from '@assets/image_1757000453257.png';
 import { 
   Search,
   Plus,
@@ -487,7 +489,7 @@ export default function ChatLLMHome() {
                   className="hover:text-zinc-700"
                   title="Create new project"
                 >
-                  <Plus className="h-4 w-4" />
+                  <img src={newChatIcon} alt="New project" className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -531,7 +533,7 @@ export default function ChatLLMHome() {
                   title="Create new chat"
                   disabled={!currentProject}
                 >
-                  <Plus className="h-4 w-4" />
+                  <img src={newChatIcon} alt="New chat" className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -863,7 +865,7 @@ export default function ChatLLMHome() {
                           <span>📄</span> Doc-Gen
                         </button>
                         <button onClick={() => { alert('Editor coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
-                          <span>✏️</span> Editor
+                          <img src={editIcon} alt="Edit" className="h-4 w-4" /> Editor
                         </button>
                         <button onClick={() => { alert('Scrape URL coming soon!'); setShowMoreMenu(false); }} className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 transition-colors flex items-center gap-2">
                           <span>🕷️</span> Scrape URL
