@@ -386,16 +386,6 @@ export default function ChatLLMHome() {
             <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
             <span className="text-zinc-800 font-semibold tracking-tight">ADVANTA AI</span>
           </div>
-          <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="hidden sm:block ml-3 text-zinc-400 hover:text-zinc-600 text-lg"
-            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-          >📄</button>
-          <button 
-            onClick={() => alert('Edit feature coming soon!')}
-            className="hidden sm:block text-zinc-400 hover:text-zinc-600 text-lg"
-            title="Edit"
-          >✏️</button>
         </div>
 
         {/* Model dropdown centered on desktop, hidden on mobile */}
