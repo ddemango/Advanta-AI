@@ -4,6 +4,8 @@
 
 @layer base {
   :root {
+    --safe-bottom: env(safe-area-inset-bottom);
+    --safe-top: env(safe-area-inset-top);
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -77,25 +79,23 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-}
 
-/* Safe area padding for mobile devices */
-@layer utilities {
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom);
+  .safe-bottom {
+    padding-bottom: max(var(--safe-bottom), 8px);
   }
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top);
+  
+  .safe-top {
+    padding-top: max(var(--safe-top), 8px);
+  }
+  
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 
 /* Mobile touch optimization */
 @layer utilities {
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
   input {
     -webkit-user-select: text !important;
     user-select: text !important;

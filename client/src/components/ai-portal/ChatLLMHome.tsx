@@ -33,6 +33,7 @@ import { useLocation } from "wouter";
 import ProfileMenu from "./ProfileMenu";
 import { useProfile } from "@/contexts/ProfileContext";
 import { ROUTES } from "@/lib/routes";
+import { MobileComposer } from "@/components/ui/mobile-composer";
 import { 
   Search,
   Plus,
@@ -59,7 +60,7 @@ import {
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
-    <button className="px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors">
+    <button className="touch-target px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors text-[15px] sm:text-sm">
       {children}
     </button>
   );
@@ -68,11 +69,11 @@ function Chip({ children }: { children: React.ReactNode }) {
 function ToolChip({ icon, label, onClick }: { icon: string; label: string; onClick?: () => void }) {
   return (
     <button 
-      className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
+      className="flex items-center gap-2 touch-target px-3 py-2 rounded-2xl bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm transition-colors"
       onClick={onClick}
     >
       <span className="text-sm">{icon}</span>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-[15px] sm:text-sm font-medium">{label}</span>
     </button>
   );
 }
@@ -370,27 +371,33 @@ export default function ChatLLMHome() {
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       {/* Header */}
-      <header className="h-14 border-b border-zinc-200 bg-white flex items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
+      <header className="h-14 border-b border-zinc-200 bg-white flex items-center justify-between px-3 sm:px-4 safe-top">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setSidebarOpen(v => !v)} 
+            className="sm:hidden touch-target rounded-xl border grid place-items-center" 
+            aria-label="Toggle sidebar"
+          >
+            ☰
+          </button>
+          <div className="hidden sm:flex items-center gap-2">
             <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
             <span className="text-zinc-800 font-semibold tracking-tight">ADVANTA AI</span>
           </div>
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-3 text-zinc-400 hover:text-zinc-600 text-lg"
+            className="hidden sm:block ml-3 text-zinc-400 hover:text-zinc-600 text-lg"
             title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >📄</button>
           <button 
             onClick={() => alert('Edit feature coming soon!')}
-            className="text-zinc-400 hover:text-zinc-600 text-lg"
+            className="hidden sm:block text-zinc-400 hover:text-zinc-600 text-lg"
             title="Edit"
           >✏️</button>
         </div>
 
-        {/* Model dropdown centered */}
-        <div className="flex-1 flex items-center justify-center">
+        {/* Model dropdown centered on desktop, hidden on mobile */}
+        <div className="hidden sm:flex flex-1 items-center justify-center">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-indigo-600" />
             <select
@@ -409,30 +416,60 @@ export default function ChatLLMHome() {
         </div>
 
         {/* Right controls */}
-        <div className="flex items-center gap-3">
-          <ProfileMenu
-            user={{ 
-              name: `${profile.firstName} ${profile.lastName}`, 
-              org: profile.organization,
-              avatarUrl: profile.avatar || undefined
-            }}
-            onProfile={() => setLocation(ROUTES.profile)}
-            onCustomize={() => setLocation(ROUTES.customize)}
-            onMemories={() => setLocation(ROUTES.memories)}
-            onRouteLLM={() => setLocation(ROUTES.routeLLM)}
-            onConnectors={() => setLocation(ROUTES.connectors)}
-            onHelp={() => setLocation(ROUTES.help)}
-            onCustomBot={() => setLocation(ROUTES.customBot)}
-            onInvite={() => alert("Invite flow coming soon")}
-            onSignOut={() => setLocation('/')}
-          />
+        <div className="flex items-center">
+          <div className="hidden sm:flex items-center gap-3">
+            <ProfileMenu
+              user={{ 
+                name: `${profile.firstName} ${profile.lastName}`, 
+                org: profile.organization,
+                avatarUrl: profile.avatar || undefined
+              }}
+              onProfile={() => setLocation(ROUTES.profile)}
+              onCustomize={() => setLocation(ROUTES.customize)}
+              onMemories={() => setLocation(ROUTES.memories)}
+              onRouteLLM={() => setLocation(ROUTES.routeLLM)}
+              onConnectors={() => setLocation(ROUTES.connectors)}
+              onHelp={() => setLocation(ROUTES.help)}
+              onCustomBot={() => setLocation(ROUTES.customBot)}
+              onInvite={() => alert("Invite flow coming soon")}
+              onSignOut={() => setLocation('/')}
+            />
+          </div>
+          <div className="sm:hidden">
+            <ProfileMenu
+              user={{ 
+                name: `${profile.firstName} ${profile.lastName}`, 
+                org: profile.organization,
+                avatarUrl: profile.avatar || undefined
+              }}
+              onProfile={() => setLocation(ROUTES.profile)}
+              onCustomize={() => setLocation(ROUTES.customize)}
+              onMemories={() => setLocation(ROUTES.memories)}
+              onRouteLLM={() => setLocation(ROUTES.routeLLM)}
+              onConnectors={() => setLocation(ROUTES.connectors)}
+              onHelp={() => setLocation(ROUTES.help)}
+              onCustomBot={() => setLocation(ROUTES.customBot)}
+              onInvite={() => alert("Invite flow coming soon")}
+              onSignOut={() => setLocation('/')}
+            />
+          </div>
         </div>
       </header>
 
       {/* Body: Sidebar + Main */}
-      <div className={`grid ${sidebarOpen ? 'grid-cols-[280px_1fr]' : 'grid-cols-[0px_1fr]'} gap-0 min-h-[calc(100vh-56px)]`}>
-        {/* Left Sidebar */}
-        <aside className={`border-r border-zinc-200 bg-white flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-[280px] opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
+      <div className="relative min-h-[calc(100vh-56px)]">
+        {/* Mobile drawer backdrop */}
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className={`fixed inset-0 bg-black/40 z-40 sm:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+        />
+        
+        {/* Sidebar: fixed on mobile, static on desktop */}
+        <aside
+          className={`fixed z-50 top-14 bottom-0 left-0 w-[82vw] max-w-[320px] bg-white border-r border-zinc-200 transition-transform duration-300 sm:static sm:translate-x-0 sm:w-[280px] flex flex-col
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
           {/* Projects */}
           <div className="p-4 border-b border-zinc-200">
             <div className="flex items-center justify-between mb-3">
@@ -596,7 +633,7 @@ export default function ChatLLMHome() {
         </aside>
 
         {/* Main content */}
-        <main className="bg-zinc-50 flex flex-col h-full">
+        <main className="sm:ml-[280px] bg-zinc-50 flex flex-col h-full">
           {messages.length > 1 ? (
             // Chat view
             <div className="flex-1 overflow-y-auto p-4">
@@ -691,8 +728,8 @@ export default function ChatLLMHome() {
             </div>
           )}
 
-          {/* Input card - always at bottom */}
-          <div className="p-4 border-t border-zinc-200 bg-white">
+          {/* Desktop Input card - hidden on mobile */}
+          <div className="hidden sm:block p-4 border-t border-zinc-200 bg-white">
             <div className="mx-auto rounded-3xl bg-white border border-zinc-200 shadow-sm max-w-[820px]">
               <div className="p-6">
                 <Input
@@ -963,6 +1000,16 @@ export default function ChatLLMHome() {
             </div>
           </div>
 
+          {/* Mobile Composer - only visible on mobile */}
+          <div className="sm:hidden">
+            <MobileComposer
+              value={message}
+              setValue={setMessage}
+              onSend={handleSendMessage}
+              disabled={loading}
+            />
+          </div>
+
         </main>
 
         {/* Quick Action Tools integrated into main panel */}
@@ -994,12 +1041,13 @@ export default function ChatLLMHome() {
   );
 }
 
-// Image Generation Panel
+// Image Generation Panel  
 function ImageGenerationPanel({ onClose }: { onClose: () => void }) {
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState("1024x1024");
   const [loading, setLoading] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
 
   const generateImage = async () => {
     if (!prompt.trim()) return;
@@ -1023,12 +1071,21 @@ function ImageGenerationPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">🖼️ Image Generation</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
-        </div>
+    <div className={`fixed z-50 inset-0 ${isMobile ? 'bg-white' : 'bg-black/50'} flex ${isMobile ? 'items-stretch' : 'items-center'} justify-center`}>
+      <div className={`${isMobile ? 'w-full h-full rounded-none safe-top safe-bottom' : 'bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto'}`}>
+        {isMobile && (
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-xl font-semibold">🖼️ Image Generation</h2>
+            <button onClick={onClose} className="touch-target text-gray-500 hover:text-gray-700">✕</button>
+          </div>
+        )}
+        <div className={`${isMobile ? 'p-4 flex-1 overflow-y-auto' : ''}`}>
+          {!isMobile && (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">🖼️ Image Generation</h2>
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+          )}
         
         <div className="space-y-4">
           <div>
@@ -1077,6 +1134,7 @@ function ImageGenerationPanel({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

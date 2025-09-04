@@ -1,0 +1,265 @@
+make ai-portal feel great on phones—plus drop-in code you can paste into your current components.
+
+Mobile UX checklist (quick wins first)
+
+Viewport & scaling
+
+Add: <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+Respect safe areas on iOS (use env(safe-area-inset-*)).
+
+Layout
+
+Collapse the left sidebar to a slide-in drawer on <sm screens.
+
+Keep the header slim; move secondary buttons into an overflow menu.
+
+Make the composer a sticky bottom bar; grow to a sheet when focused.
+
+Touch targets
+
+Buttons/chips ≥ 44×44 px; spacing with min-h-[44px] px-3.
+
+Avoid hover-only affordances; always provide tap UI.
+
+Typography & wrapping
+
+Use fluid text: text-[15px] sm:text-sm; wrap long code/URLs using break-words.
+
+Scrolling & keyboard
+
+Use a sticky composer with padding-bottom: env(safe-area-inset-bottom).
+
+Scroll the message list to bottom on input focus; avoid body scroll lock bugs.
+
+Modals → Sheets
+
+On mobile, render full-screen sheets (not centered modals) for Image Gen, Research, Code Runner, etc.
+
+Performance
+
+Lazy-load heavy panels; defer icons; compress images.
+
+Virtualize long chat histories (>100 bubbles).
+
+Accessibility
+
+Provide labels, roles; visible focus states; dark/light contrast.
+
+Testing
+
+Run Lighthouse (mobile), Chrome device toolbar, and test on iOS Safari (the strict one).
+
+Targeted changes for your codebase
+1) Layout: collapse sidebar to a drawer
+
+Your main grid uses grid-cols-[280px_1fr]. Make it responsive and add a slide-in:
+
+// Wrap main layout
+<div className="relative min-h-[calc(100vh-56px)]">
+  {/* Mobile drawer backdrop */}
+  <div
+    onClick={() => setSidebarOpen(false)}
+    className={`fixed inset-0 bg-black/40 z-40 sm:hidden ${sidebarOpen ? 'block' : 'hidden'}`}
+  />
+  {/* Sidebar: fixed on mobile, static on desktop */}
+  <aside
+    className={`fixed z-50 top-14 bottom-0 left-0 w-[82vw] max-w-[320px] bg-white border-r transition-transform duration-300 sm:static sm:translate-x-0 sm:w-[280px]
+    ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+    style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+  >
+    {/* ...sidebar content... */}
+  </aside>
+
+  {/* Main column */}
+  <main className="sm:ml-[280px]">
+    {/* On desktop, reserve space with ml; on mobile, aside is overlayed */}
+    {/* ...chat content... */}
+  </main>
+</div>
+
+
+Toggle with a hamburger in the header:
+
+<button
+  onClick={() => setSidebarOpen(v => !v)}
+  className="sm:hidden h-10 w-10 rounded-xl border grid place-items-center"
+  aria-label="Toggle sidebar"
+>
+  ☰
+</button>
+
+2) Sticky bottom composer that expands on focus
+
+Replace your chat input bar with a mobile-aware composer:
+
+function MobileComposer({ value, setValue, onSend, disabled }: any) {
+  const [expanded, setExpanded] = React.useState(false);
+  return (
+    <div
+      className={`fixed inset-x-0 bottom-0 z-40 border-t bg-white transition-all
+      ${expanded ? 'pt-3' : ''}`}
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
+    >
+      <div className="mx-auto max-w-[800px] px-3">
+        <div className={`flex items-end gap-2 ${expanded ? 'mb-2' : ''}`}>
+          <button className="hidden sm:inline-flex h-10 w-10 rounded-xl border grid place-items-center">📎</button>
+          <textarea
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onFocus={() => setExpanded(true)}
+            onBlur={() => setExpanded(false)}
+            placeholder="Message ChatLLM…"
+            rows={expanded ? 4 : 1}
+            className="flex-1 resize-none rounded-2xl border px-3 py-2 outline-none max-h-[40vh]"
+          />
+          <button
+            onClick={onSend}
+            disabled={!value.trim() || disabled}
+            className="h-10 min-w-10 rounded-2xl bg-indigo-600 text-white px-4 disabled:opacity-50"
+            aria-label="Send"
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+Use it on mobile only:
+
+{/* Desktop composer */}
+<div className="hidden sm:block border-t bg-white p-4">
+  {/* existing desktop input bar */}
+</div>
+{/* Mobile composer */}
+<div className="block sm:hidden">
+  <MobileComposer
+    value={message}
+    setValue={setMessage}
+    onSend={handleSendMessage}
+    disabled={loading}
+  />
+</div>
+
+3) Sheets instead of modals on mobile
+
+Turn your tool modals into full-screen sheets on <sm:
+
+<div className={`fixed z-50 inset-0 ${isMobile ? 'bg-white' : 'bg-black/50'} flex ${isMobile ? 'items-stretch' : 'items-center'} justify-center`}>
+  <div className={`${isMobile ? 'w-full h-full rounded-none' : 'bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto'}`}>
+    {/* panel content */}
+  </div>
+</div>
+
+
+Where:
+
+const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+
+
+(Or compute once with a useIsMobile() hook.)
+
+4) Message list: safe scrolling & virtualization
+
+Wrap chat with:
+
+<div className="flex-1 overflow-y-auto overscroll-contain"
+     style={{ WebkitOverflowScrolling: 'touch' }}>
+
+
+For large histories, integrate a small virtualizer (e.g., react-virtual):
+
+Only render visible bubbles.
+
+Add scroll-margin-bottom to avoid keyboard overlap on iOS.
+
+5) Tailwind breakpoints & sizes
+
+Use sm: for desktop toggles (sm:block, sm:hidden).
+
+Switch paddings/gaps:
+
+px-3 sm:px-4, py-2 sm:py-3
+
+Chips:
+
+className="min-h-[44px] px-3 py-2 rounded-2xl text-[15px] sm:text-sm"
+
+6) Safe-area utilities
+
+Add a small CSS file (e.g., app/globals.css):
+
+:root {
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: max(var(--safe-bottom), 8px);
+}
+.safe-top {
+  padding-top: max(var(--safe-top), 8px);
+}
+
+
+Use className="safe-bottom" on fixed footers and safe-top on sticky headers.
+
+7) Image & video
+
+Use responsive containers and max-w-full h-auto.
+
+Lazy-load previews (loading="lazy").
+
+For code blocks, add horizontal scroll: overflow-x-auto.
+
+8) Accessibility & focus
+
+Every icon button needs aria-label.
+
+Visible focus ring: focus:outline-none focus:ring-2 focus:ring-indigo-500.
+
+9) Performance tune
+
+Defer non-critical icons:
+
+const SendIcon = React.lazy(() => import("lucide-react").then(m => ({ default: m.Send })));
+
+
+Memoize heavy components (React.memo) and use useDeferredValue for large lists.
+
+Minimal diffs you can paste today
+Header (mobile controls + hamburger)
+
+Replace your header buttons:
+
+<header className="h-14 border-b bg-white flex items-center justify-between px-3 sm:px-4 safe-top">
+  <div className="flex items-center gap-2">
+    <button onClick={() => setSidebarOpen(v => !v)} className="sm:hidden h-10 w-10 rounded-xl border grid place-items-center" aria-label="Toggle sidebar">☰</button>
+    <div className="hidden sm:flex items-center gap-2">
+      <div className="h-6 w-6 rounded-sm bg-gradient-to-br from-fuchsia-500 to-cyan-500" />
+      <span className="font-semibold tracking-tight">ADVANTA AI</span>
+    </div>
+  </div>
+  <div className="hidden sm:flex items-center">
+    {/* model selector & profile menu stay here on desktop */}
+  </div>
+  <div className="sm:hidden">
+    {/* compact profile icon only on mobile */}
+    <ProfileMenu
+      user={{ name: "Davide", org: "Advanta AI" }}
+      onProfile={() => setLocation('/profile')}
+      // ...
+    />
+  </div>
+</header>
+
+Message bubble wrapping
+<div className={`max-w-[85%] sm:max-w-[70%] rounded-2xl p-3 sm:p-4 break-words`}>
+  {/* content */}
+</div>
+
+Markdown block scroll
+<pre className="overflow-x-auto text-[13px] sm:text-sm leading-5 px-3 py-2 rounded-lg bg-zinc-900 
