@@ -1,0 +1,1051 @@
+// ============================================================================
+// FILE: components/ProfileMenu.tsx — User profile dropdown menu
+// ============================================================================
+"use client";
+import * as React from "react";
+
+export default function ProfileMenu() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-medium"
+        onClick={() => setOpen((o) => !o)}
+        title="Profile"
+      >
+        D
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-64 rounded-xl border bg-white shadow-xl z-40">
+          <div className="p-4 border-b">
+            <div className="font-medium">Davide</div>
+            <div className="text-xs text-gray-500">Advanta AI</div>
+          </div>
+          <div className="flex flex-col text-sm">
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">👤 Profile</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🔧 Customize ChatLLM</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🧠 Memories</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🔗 RouteLLM API</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">🌐 Connectors</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">❓ Help</button>
+            <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50">⚙️ Custom Bot Settings</button>
+          </div>
+          <div className="border-t">
+            <button className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Sign Out</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// USAGE: Place <ProfileMenu /> in your top-right navbar/header component.
+// This mimics the screenshot with Profile, Customize, Memories, RouteLLM API,
+// Connectors, Help, Custom Bot Settings, and Sign Out.
+// ============================================================================
+
+// ============================================================================
+// FILE: components/ProfileMenu.tsx — Top‑right profile dropdown (screenshot parity)
+// ============================================================================
+"use client";
+import * as React from "react";
+import { useTheme } from "next-themes";
+
+export interface ProfileMenuProps {
+  user: { name: string; org?: string; avatarUrl?: string };
+  onProfile?: () => void;
+  onCustomize?: () => void; // Customize ChatLLM
+  onMemories?: () => void;
+  onRouteLLM?: () => void; // RouteLLM API
+  onConnectors?: () => void;
+  onHelp?: () => void;
+  onCustomBot?: () => void;
+  onInvite?: () => void; // Refer($)/Invite
+  onSignOut?: () => void;
+}
+
+export default function ProfileMenu({ user, onProfile, onCustomize, onMemories, onRouteLLM, onConnectors, onHelp, onCustomBot, onInvite, onSignOut, }: ProfileMenuProps) {
+  const { theme, setTheme } = useTheme();
+  const [open, setOpen] = React.useState(false);
+  const isDark = theme === "dark";
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen((o) => !o)} className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-sm font-medium">
+        {user.name?.[0]?.toUpperCase() || "U"}
+      </button>
+      {open && (
+        <div className="absolute right-0 z-40 mt-2 w-72 rounded-2xl border bg-white shadow-2xl">
+          {/* Header: Invite + Identity + Theme toggle */}
+          <div className="flex items-center justify-between gap-2 border-b p-3">
+            <button onClick={onInvite} className="rounded-full border px-2.5 py-1 text-xs">Refer ($) / Invite ▾</button>
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 rounded-full bg-gray-200 text-center leading-9">{user.name?.[0]?.toUpperCase()}</div>
+              <div>
+                <div className="text-sm font-semibold">{user.name}</div>
+                {user.org && <div className="text-xs text-gray-500">{user.org}</div>}
+              </div>
+              <button
+                aria-label="Toggle Theme"
+                onClick={() => setTheme(isDark ? "light" : "dark")}
+                className="ml-2 rounded-full border px-2.5 py-1 text-xs"
+              >
+                {isDark ? "🌙" : "☀️"}
+              </button>
+            </div>
+          </div>
+
+          {/* Menu items */}
+          <div className="p-2">
+            <MenuItem label="Profile" onClick={() => { setOpen(false); onProfile?.(); }} />
+            <MenuItem label="Customize ChatLLM" onClick={() => { setOpen(false); onCustomize?.(); }} />
+            <MenuItem label="Memories" onClick={() => { setOpen(false); onMemories?.(); }} />
+            <MenuItem label="RouteLLM API" onClick={() => { setOpen(false); onRouteLLM?.(); }} />
+            <MenuItem label="Connectors" onClick={() => { setOpen(false); onConnectors?.(); }} />
+            <MenuItem label="Help" onClick={() => { setOpen(false); onHelp?.(); }} />
+            <MenuItem label="Custom Bot Settings" onClick={() => { setOpen(false); onCustomBot?.(); }} />
+          </div>
+
+          <div className="border-t p-2">
+            <button
+              onClick={() => { setOpen(false); onSignOut?.(); }}
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50">
+      {label}
+    </button>
+  );
+}
+
+// ============================================================================
+// FILE: app/Header.tsx — Example header consumption of ProfileMenu
+// ============================================================================
+"use client";
+import * as React from "react";
+import ProfileMenu from "@/components/ProfileMenu";
+
+export default function Header() {
+  return (
+    <header className="flex items-center justify-between border-b bg-white px-4 py-2">
+      <div className="font-semibold">Advanta‑AI</div>
+      <div className="flex items-center gap-2">
+        <button className="rounded-full border px-3 py-1 text-sm">Refer ($) / Invite ▾</button>
+        <ProfileMenu
+          user={{ name: "Davide", org: "Advanta AI" }}
+          onProfile={() => alert("Open Profile modal")}
+          onCustomize={() => alert("Open Customize ChatLLM")}
+          onMemories={() => alert("Open Memories")}
+          onRouteLLM={() => alert("Open RouteLLM API docs")}
+          onConnectors={() => alert("Open Connectors")}
+          onHelp={() => alert("Open Help")}
+          onCustomBot={() => alert("Open Custom Bot Settings")}
+          onInvite={() => alert("Open Invite dialog")}
+          onSignOut={() => alert("Sign out")}
+        />
+      </div>
+    </header>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/profile/page.tsx — Profile page stub
+// ============================================================================
+export default function ProfilePage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Profile</h1>
+      <p className="mt-2 text-gray-600">User profile settings will appear here.</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: app/settings/customize/page.tsx — Customize ChatLLM page stub
+// ============================================================================
+export default function CustomizePage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Customize ChatLLM</h1>
+      <p className="mt-2 text-gray-600">Set custom instructions and preferences.</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: app/memories/page.tsx — Memories page stub
+// ============================================================================
+export default function MemoriesPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Memories</h1>
+      <p className="mt-2 text-gray-600">Your saved AI memories will show here.</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: app/developer/route-llm/page.tsx — RouteLLM API docs stub
+// ============================================================================
+export default function RouteLLMPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">RouteLLM API</h1>
+      <p className="mt-2 text-gray-600">Developer docs for routing LLMs.</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: app/connectors/page.tsx — Connectors page stub
+// ============================================================================
+export default function ConnectorsPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Connectors</h1>
+      <p className="mt-2 text-gray-600">Integrate Slack, Drive, Gmail, and more here.</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: app/help/page.tsx — Help page stub
+// ============================================================================
+export default function HelpPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Help</h1>
+      <p className="mt-2 text-gray-600">FAQs, docs, and support resources.</p>
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: app/bots/settings/page.tsx — Custom Bot Settings page stub
+// ============================================================================
+export default function CustomBotSettingsPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Custom Bot Settings</h1>
+      <p className="mt-2 text-gray-600">Configure your custom chatbots and workflows.</p>
+    </div>
+  );
+}
+
+
+// ============================================================================
+// FILE: lib/routes.ts — Centralized route constants
+// ============================================================================
+export const ROUTES = {
+  profile: "/profile",
+  customize: "/settings/customize",
+  memories: "/memories",
+  routeLLM: "/developer/route-llm",
+  connectors: "/connectors",
+  help: "/help",
+  customBot: "/bots/settings",
+};
+
+// Example usage in ProfileMenu callbacks:
+// import { useRouter } from "next/navigation";
+// import { ROUTES } from "@/lib/routes";
+// const router = useRouter();
+// <ProfileMenu onProfile={() => router.push(ROUTES.profile)} ... />
+
+
+// ============================================================================
+// FILE: app/Header_v2.tsx — Header wired to centralized ROUTES (functional)
+// ============================================================================
+"use client";
+import * as React from "react";
+import ProfileMenu from "@/components/ProfileMenu";
+import { useRouter } from "next/navigation";
+import { ROUTES } from "@/lib/routes";
+
+export default function Header_v2() {
+  const router = useRouter();
+  return (
+    <header className="flex items-center justify-between border-b bg-white px-4 py-2">
+      <div className="font-semibold">Advanta‑AI</div>
+      <div className="flex items-center gap-2">
+        <button className="rounded-full border px-3 py-1 text-sm" onClick={() => alert("Invite flow coming soon")}>Refer ($) / Invite ▾</button>
+        <ProfileMenu
+          user={{ name: "Davide", org: "Advanta AI" }}
+          onProfile={() => router.push(ROUTES.profile)}
+          onCustomize={() => router.push(ROUTES.customize)}
+          onMemories={() => router.push(ROUTES.memories)}
+          onRouteLLM={() => router.push(ROUTES.routeLLM)}
+          onConnectors={() => router.push(ROUTES.connectors)}
+          onHelp={() => router.push(ROUTES.help)}
+          onCustomBot={() => router.push(ROUTES.customBot)}
+          onInvite={() => alert("Invite flow coming soon")}
+          onSignOut={() => alert("Sign out (wire to auth)")}
+        />
+      </div>
+    </header>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/api/ai-portal/models/route.ts — model list for selector (All / LLMs)
+// ============================================================================
+import { NextRequest } from "next/server";
+
+export async function GET(_req: NextRequest) {
+  const models = [
+    { id: "openai:gpt-5", label: "GPT-5", provider: "openai", family: "gpt", tags: ["LLM"] },
+    { id: "router:RouteLLM", label: "RouteLLM (Smart Router)", provider: "router", family: "router", tags: ["Router"] },
+    { id: "openai:gpt-4o", label: "GPT-4o", provider: "openai", family: "gpt", tags: ["LLM", "Vision"] },
+    { id: "openai:gpt-4o-mini", label: "GPT-4o Mini", provider: "openai", family: "gpt", tags: ["LLM"] },
+    { id: "openai:gpt-4", label: "GPT-4", provider: "openai", family: "gpt", tags: ["LLM"] },
+    { id: "openai:gpt-3.5-turbo", label: "GPT-3.5 Turbo", provider: "openai", family: "gpt", tags: ["LLM"] },
+    { id: "anthropic:claude-3-5-sonnet", label: "Claude 3.5 Sonnet", provider: "anthropic", family: "claude", tags: ["LLM"] },
+    { id: "anthropic:claude-3-haiku", label: "Claude 3 Haiku", provider: "anthropic", family: "claude", tags: ["LLM"] },
+    { id: "google:gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "google", family: "gemini", tags: ["LLM"] },
+    { id: "google:gemini-1.5-pro", label: "Gemini 1.5 Pro", provider: "google", family: "gemini", tags: ["LLM"] },
+    { id: "xai:grok-beta", label: "Grok (beta)", provider: "xai", family: "grok", tags: ["LLM"] },
+    { id: "cohere:command-r-plus", label: "Command R+", provider: "cohere", family: "cohere", tags: ["LLM"] },
+  ];
+  return Response.json({ models });
+}
+
+// ============================================================================
+// FILE: lib/providers.ts — multi‑provider streaming router (for /api/ai-portal)
+// ============================================================================
+export type ProviderID = "openai" | "anthropic" | "google" | "xai" | "cohere" | "router";
+export interface ProviderCall {
+  provider: ProviderID;
+  model: string; // provider-native name: gpt-4o, claude-3-5-sonnet, gemini-1.5-pro
+  messages: { role: string; content: any }[];
+  temperature?: number;
+}
+
+// OpenAI (re-uses your lib/openai.ts helper if present)
+async function* streamOpenAI(p: ProviderCall): AsyncGenerator<string> {
+  const res = await fetch((process.env.OPENAI_BASE_URL || "https://api.openai.com/v1") + "/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY || ""}`,
+    },
+    body: JSON.stringify({ model: p.model, messages: p.messages, temperature: p.temperature ?? 0.7, stream: true }),
+  });
+  if (!res.ok || !res.body) throw new Error("OpenAI request failed");
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunk = dec.decode(value);
+    for (const line of chunk.split("
+")) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        const j = JSON.parse(payload);
+        const delta = j.choices?.[0]?.delta?.content;
+        if (delta) yield delta as string;
+      } catch {}
+    }
+  }
+}
+
+// Anthropic (Claude)
+async function* streamAnthropic(p: ProviderCall): AsyncGenerator<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({ model: p.model, max_tokens: 4096, temperature: p.temperature ?? 0.7, messages: p.messages, stream: true }),
+  });
+  if (!res.ok || !res.body) throw new Error("Anthropic request failed");
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunk = dec.decode(value);
+    for (const line of chunk.split("
+")) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        const evt = JSON.parse(payload);
+        if (evt.type === "content_block_delta" && evt.delta?.text) yield evt.delta.text as string;
+      } catch {}
+    }
+  }
+}
+
+// Google (Gemini)
+async function* streamGemini(p: ProviderCall): AsyncGenerator<string> {
+  const key = process.env.GOOGLE_API_KEY || "";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${p.model}:streamGenerateContent?key=${key}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: p.messages.find(m=>m.role==="user")?.content || "" }] }], generationConfig: { temperature: p.temperature ?? 0.7 } }),
+  });
+  if (!res.ok || !res.body) throw new Error("Gemini request failed");
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  while (true) { const { value, done } = await reader.read(); if (done) break; const s = dec.decode(value); try { const lines = s.trim().split("
+"); for (const l of lines) { const j = JSON.parse(l); const txt = j.candidates?.[0]?.content?.parts?.[0]?.text; if (txt) yield txt; } } catch {} }
+}
+
+// xAI (Grok)
+async function* streamGrok(p: ProviderCall): AsyncGenerator<string> {
+  const res = await fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", Authorization: `Bearer ${process.env.XAI_API_KEY || ""}` },
+    body: JSON.stringify({ model: p.model, messages: p.messages, stream: true }),
+  });
+  if (!res.ok || !res.body) throw new Error("xAI request failed");
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  while (true) { const { value, done } = await reader.read(); if (done) break; const chunk = dec.decode(value); for (const line of chunk.split("
+")) { if (!line.startsWith("data: ")) continue; const payload = line.slice(6).trim(); if (payload === "[DONE]") return; try { const j = JSON.parse(payload); const delta = j.choices?.[0]?.delta?.content; if (delta) yield delta; } catch {} } }
+}
+
+// Cohere (chunked fallback)
+async function* streamCohere(p: ProviderCall): AsyncGenerator<string> {
+  const res = await fetch("https://api.cohere.ai/v2/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json", Authorization: `Bearer ${process.env.COHERE_API_KEY || ""}` },
+    body: JSON.stringify({ model: p.model, messages: p.messages }),
+  });
+  if (!res.ok) throw new Error("Cohere request failed");
+  const data = await res.json();
+  const text = data?.message?.content?.map((x: any) => x.text).join("") || "";
+  for (let i = 0; i < text.length; i += 120) yield text.slice(i, i + 120);
+}
+
+// Router — choose a provider dynamically
+export async function* streamByModelId(modelId: string, messages: { role: string; content: any }[], temperature = 0.7): AsyncGenerator<string> {
+  const [provider, model] = modelId.split(":", 2) as [ProviderID, string];
+  const p: ProviderCall = { provider, model, messages, temperature };
+  switch (provider) {
+    case "openai":    return yield* streamOpenAI(p);
+    case "anthropic": return yield* streamAnthropic(p);
+    case "google":    return yield* streamGemini(p);
+    case "xai":       return yield* streamGrok(p);
+    case "cohere":    return yield* streamCohere(p);
+    case "router": {
+      // trivial heuristic router: long → Claude, short → GPT
+      const text = (messages.find(m=>m.role==="user")?.content || "") as string;
+      const prefer = text.length > 1200 ? "anthropic:claude-3-5-sonnet" : "openai:gpt-4o";
+      return yield* streamByModelId(prefer, messages, temperature);
+    }
+    default: throw new Error(`Unknown provider: ${provider}`);
+  }
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/chat/send/route.ts — SSE server using router
+// ============================================================================
+import { NextRequest } from "next/server";
+import { streamByModelId } from "@/lib/providers";
+
+export const runtime = "nodejs";
+
+export async function POST(req: NextRequest) {
+  const { messages, model = "openai:gpt-4o", temperature = 0.7 } = await req.json();
+  if (!messages?.length) return new Response("Missing messages", { status: 400 });
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const chunk of streamByModelId(model, messages, temperature)) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}
+
+`));
+        }
+        controller.enqueue(encoder.encode(`data: [DONE]
+
+`));
+        controller.close();
+      } catch (e: any) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: e.message })}
+
+`));
+        controller.enqueue(encoder.encode(`data: [DONE]
+
+`));
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
+}
+
+// ============================================================================
+// FILE: components/ModelSelector.tsx — dropdown with All/LLMs tabs + search
+// ============================================================================
+"use client";
+import * as React from "react";
+
+type ModelMeta = { id: string; label: string; provider: string; family: string; tags?: string[] };
+type Tab = "all" | "llms";
+
+export default function ModelSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const [tab, setTab] = React.useState<Tab>("all");
+  const [query, setQuery] = React.useState("");
+  const [models, setModels] = React.useState<ModelMeta[]>([]);
+
+  React.useEffect(() => {
+    fetch("/api/ai-portal/models").then(r => r.json()).then(j => setModels(j.models));
+  }, []);
+
+  const filtered = models.filter(m => {
+    const okTab = tab === "all" ? true : (m.tags || []).includes("LLM");
+    const q = query.toLowerCase();
+    const okQ = !q || m.label.toLowerCase().includes(q) || m.id.toLowerCase().includes(q);
+    return okTab && okQ;
+  });
+
+  const current = models.find(m => m.id === value);
+
+  return (
+    <div className="relative">
+      <button className="rounded-full border px-3 py-1 text-sm" onClick={() => setOpen(o => !o)}>
+        {current?.label || "RouteLLM"} ▾
+      </button>
+      {open && (
+        <div className="absolute right-0 z-40 mt-2 w-80 rounded-2xl border bg-white shadow-2xl">
+          <div className="border-b p-3">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Bot..." className="w-full rounded-lg border px-3 py-2 text-sm" />
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <button className={`rounded-full px-2.5 py-1 ${tab === "all" ? "bg-purple-100" : ""}`} onClick={() => setTab("all")}>
+                All <span className="ml-1 opacity-60">{models.length}</span>
+              </button>
+              <button className={`rounded-full px-2.5 py-1 ${tab === "llms" ? "bg-purple-100" : ""}`} onClick={() => setTab("llms")}>
+                LLMs <span className="ml-1 opacity-60">{models.filter(m => (m.tags||[]).includes("LLM")).length}</span>
+              </button>
+            </div>
+          </div>
+          <div className="max-h-80 overflow-auto p-2">
+            {filtered.map(m => (
+              <button key={m.id} onClick={() => { onChange(m.id); setOpen(false); }} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-gray-50 ${value === m.id ? "bg-purple-50" : ""}`}>
+                <span className="inline-block h-6 w-6 rounded-full bg-gray-200" />
+                <div>
+                  <div className="text-sm font-medium">{m.label}</div>
+                  <div className="text-[11px] uppercase tracking-wide text-gray-500">{m.provider}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// FILE: components/MoreMenu.tsx — popover with extra tools
+// ============================================================================
+"use client";
+import * as React from "react";
+
+const items = [
+  { key: "videoGen", label: "Video‑Gen" },
+  { key: "lipSync", label: "Lip Sync" },
+  { key: "humanize", label: "Humanize" },
+  { key: "docGen", label: "Doc‑Gen" },
+  { key: "editor", label: "Editor" },
+  { key: "scrapeUrl", label: "Scrape URL" },
+  { key: "screenshot", label: "Screenshot" },
+  { key: "videoAnalysis", label: "Video Analysis" },
+  { key: "task", label: "Task" },
+  { key: "tts", label: "Text‑to‑Speech" },
+  { key: "stt", label: "Speech‑to‑Text" },
+  { key: "s2s", label: "Speech‑to‑Speech" },
+] as const;
+
+type Key = typeof items[number]["key"];
+
+export default function MoreMenu({ onPick }: { onPick: (key: Key) => void }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="relative">
+      <button className="rounded-full border px-3 py-1 text-sm" onClick={() => setOpen(o => !o)}>⋮ More</button>
+      {open && (
+        <div className="absolute right-0 z-40 mt-2 w-60 rounded-2xl border bg-white shadow-2xl p-1">
+          {items.map(it => (
+            <button key={it.key} onClick={() => { onPick(it.key); setOpen(false); }} className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50">
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/code/run/route.ts — Code Runner stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { language, code } = await req.json();
+  return Response.json({ ok: true, output: `Executed ${language} code: ${code.slice(0,50)}...` });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/research/route.ts — Deep Research stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { query, depth } = await req.json();
+  return Response.json({ ok: true, results: { summary: `<p>Research summary for: ${query}</p>`, sources: [] } });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/data/analyze/route.ts — Data Analysis stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  return Response.json({ ok: true, results: { summary: "<p>Data analysis result placeholder</p>", chart: null } });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/playground/route.ts — AI Playground stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { prompt } = await req.json();
+  return Response.json({ ok: true, output: `Playground ran with prompt: ${prompt}` });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/ppt/route.ts — PowerPoint stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { topic } = await req.json();
+  return Response.json({ ok: true, downloadUrl: `/fake/path/${encodeURIComponent(topic)}.pptx` });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/humanize/route.ts — Humanize text stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { text, tone } = await req.json();
+  return Response.json({ ok: true, result: `Humanized (${tone}): ${text}` });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/docgen/route.ts — Document Generator stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { template, data } = await req.json();
+  return Response.json({ ok: true, docUrl: "/fake/doc/url.docx" });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/editor/route.ts — Editor stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { text, edits } = await req.json();
+  return Response.json({ ok: true, result: text + " (edited)" });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/scrape/route.ts — Scrape URL stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { url } = await req.json();
+  return Response.json({ ok: true, html: `<html><body>Scraped from ${url}</body></html>` });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/screenshot/route.ts — Screenshot stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { url } = await req.json();
+  return Response.json({ ok: true, imageUrl: `/fake/screenshot/${encodeURIComponent(url)}.png` });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/video/gen/route.ts — VideoGen stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { prompt } = await req.json();
+  return Response.json({ ok: true, videoUrl: "/fake/video.mp4" });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/video/lipsync/route.ts — Lip Sync stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  return Response.json({ ok: true, videoUrl: "/fake/lipsync.mp4" });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/video/analyze/route.ts — Video Analysis stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  return Response.json({ ok: true, results: { summary: "<p>Video analysis placeholder</p>" } });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/task/route.ts — Task creator stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { task, schedule } = await req.json();
+  return Response.json({ ok: true, taskId: "task_123", status: "scheduled", task, schedule });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/audio/tts/route.ts — Text-to-Speech stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const { text, voice } = await req.json();
+  return Response.json({ ok: true, audioUrl: "/fake/audio/tts.mp3" });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/audio/stt/route.ts — Speech-to-Text stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  return Response.json({ ok: true, transcript: "This is a fake transcription." });
+}
+
+// ============================================================================
+// FILE: app/api/ai-portal/tools/audio/s2s/route.ts — Speech-to-Speech stub
+// ============================================================================
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  return Response.json({ ok: true, audioUrl: "/fake/audio/s2s.mp3" });
+}
+
+// ============================================================================
+// TOOL API ROUTE STUBS — Consistent JSON contracts for Quick Actions & More
+// Base path: /app/api/ai-portal/tools/*
+// Contract (success): { ok: true, tool: string, data: any }
+// Contract (error):   { ok: false, tool: string, error: string }
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/image/generate/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "image.generate";
+  try {
+    const { prompt, size = "1024x1024" } = await req.json();
+    // TODO: call your image provider (OpenAI Images / Stability / etc.)
+    // const imageUrl = await provider.generateImage({ prompt, size });
+    const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(prompt || "advanta")}/${size.split("x")[0]}/${size.split("x")[1]}`;
+    return Response.json({ ok: true, tool, data: { imageUrl, prompt, size } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Image generation failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/code/run/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "code.run";
+  try {
+    const { language = "javascript", code = "" } = await req.json();
+    // TODO: send to sandbox/executor service instead of eval
+    const mocked = `Executed ${language} code (mock).`;
+    return Response.json({ ok: true, tool, data: { output: mocked, language } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Code run failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/research/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "research";
+  try {
+    const { query = "", depth = "fast" } = await req.json();
+    // TODO: call your web search pipeline (Serper/Brave/Bing + LLM synth)
+    const mock = {
+      summary: `<p><strong>Summary for:</strong> ${query}</p><ul><li>Finding A</li><li>Finding B</li></ul>`,
+      sources: [
+        { url: "https://example.com/a", title: "Source A", snippet: "…" },
+        { url: "https://example.com/b", title: "Source B", snippet: "…" },
+      ],
+    };
+    return Response.json({ ok: true, tool, data: mock });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Research failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/data/analyze/route.ts
+// ----------------------------------------------------------------------------
+export async function POST(req: Request) {
+  const tool = "data.analyze";
+  try {
+    const form = await req.formData();
+    const file = form.get("file") as File | null;
+    const prompt = String(form.get("prompt") || "");
+    if (!file) throw new Error("Missing file");
+    // TODO: parse file (CSV/XLSX), run analysis/chart gen
+    const chart = "https://placehold.co/800x400/png?text=Chart+Preview";
+    const summary = `<p>Analysis for <em>${file.name}</em> with prompt: ${prompt}</p>`;
+    return Response.json({ ok: true, tool, data: { summary, chart } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Data analysis failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/ppt/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "ppt";
+  try {
+    const { outline = "" } = await req.json();
+    // TODO: generate .pptx and return signed URL
+    const downloadUrl = "https://placehold.co/1x1/fff/fff.png?text=pptx";
+    const markdown = `# Deck Outline
+
+${outline}`;
+    return Response.json({ ok: true, tool, data: { downloadUrl, markdown } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "PPT generation failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/playground/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "playground";
+  try {
+    const { spec = {} } = await req.json();
+    // TODO: create a saved playground entity
+    return Response.json({ ok: true, tool, data: { id: "pg_123", spec } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Playground creation failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/text/humanize/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "text.humanize";
+  try {
+    const { text = "" } = await req.json();
+    // TODO: call LLM rewrite
+    const rewritten = `Humanized: ${text}`;
+    return Response.json({ ok: true, tool, data: { text: rewritten } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Humanize failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/editor/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "editor";
+  try {
+    const { text = "", instruction = "Rewrite for clarity" } = await req.json();
+    // TODO: call LLM edit API
+    const edited = `${instruction}: ${text}`;
+    return Response.json({ ok: true, tool, data: { text: edited } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Editor failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/scrape/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "scrape";
+  try {
+    const { url = "" } = await req.json();
+    // TODO: fetch & sanitize HTML, extract main content
+    const title = `Mocked: ${url}`;
+    const content = "<p>Sample scraped content…</p>";
+    return Response.json({ ok: true, tool, data: { title, content } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Scrape failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/screenshot/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "screenshot";
+  try {
+    const { url = "" } = await req.json();
+    // TODO: call screenshot service (Puppeteer/Playwright)
+    const imageUrl = "https://placehold.co/1200x720/png?text=Screenshot";
+    return Response.json({ ok: true, tool, data: { imageUrl, url } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Screenshot failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/video/gen/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "video.gen";
+  try {
+    const { prompt = "" } = await req.json();
+    // TODO: call video generation provider
+    const videoUrl = "https://example.com/mock-video.mp4";
+    return Response.json({ ok: true, tool, data: { videoUrl, prompt } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Video generation failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/video/lipsync/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "video.lipsync";
+  try {
+    const { audioUrl = "", faceImageUrl = "" } = await req.json();
+    // TODO: call lipsync provider
+    const outputUrl = "https://example.com/mock-lipsync.mp4";
+    return Response.json({ ok: true, tool, data: { outputUrl, audioUrl, faceImageUrl } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Lip sync failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/video/analyze/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "video.analyze";
+  try {
+    const { videoUrl = "" } = await req.json();
+    // TODO: call video analysis (caption/objects/scenes)
+    const report = { duration: 42, captions: ["…"], objects: ["person", "car"] };
+    return Response.json({ ok: true, tool, data: { report, videoUrl } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Video analysis failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/task/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "task";
+  try {
+    const { title = "Untitled", when = "soon" } = await req.json();
+    // TODO: persist task + scheduler
+    return Response.json({ ok: true, tool, data: { id: "task_123", title, when } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "Task creation failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/audio/tts/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "audio.tts";
+  try {
+    const { text = "", voice = "alloy" } = await req.json();
+    // TODO: call TTS provider
+    const audioUrl = "https://example.com/mock-tts.mp3";
+    return Response.json({ ok: true, tool, data: { audioUrl, voice } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "TTS failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/audio/stt/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "audio.stt";
+  try {
+    const { audioUrl = "" } = await req.json();
+    // TODO: call STT provider
+    const transcript = "Transcribed text (mock)";
+    return Response.json({ ok: true, tool, data: { transcript } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "STT failed" }, { status: 500 });
+  }
+}
+
+// ----------------------------------------------------------------------------
+// FILE: app/api/ai-portal/tools/audio/s2s/route.ts
+// ----------------------------------------------------------------------------
+import { NextRequest } from "next/server";
+export async function POST(req: NextRequest) {
+  const tool = "audio.s2s";
+  try {
+    const { audioUrl = "", targetVoice = "alloy" } = await req.json();
+    // TODO: call voice conversion provider
+    const outputUrl = "https://example.com/mock-s2s.mp3";
+    return Response.json({ ok: true, tool, data: { outputUrl, targetVoice } });
+  } catch (e: any) {
+    return Response.json({ ok: false, tool, error: e.message || "S2S failed" }, { status: 500 });
+  }
+}
+

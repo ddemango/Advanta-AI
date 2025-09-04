@@ -1,0 +1,93 @@
+I added a complete set of tool API route stubs under /api/ai-portal/tools/* with a consistent JSON contract:
+
+Success: { ok: true, tool: "<name>", data: { ... } }
+
+Error: { ok: false, tool: "<name>", error: "<message>" }
+
+Endpoints included
+
+Quick Actions
+
+POST /tools/image/generate → { data: { imageUrl, prompt, size } }
+
+POST /tools/code/run → { data: { output, language } }
+
+POST /tools/research → { data: { summary (HTML), sources[] } }
+
+POST /tools/data/analyze (multipart) → { data: { summary (HTML), chart } }
+
+POST /tools/ppt → { data: { downloadUrl, markdown } }
+
+POST /tools/playground → { data: { id, spec } }
+
+More menu
+
+POST /tools/text/humanize → { data: { text } }
+
+POST /tools/editor → { data: { text } }
+
+POST /tools/scrape → { data: { title, content (HTML) } }
+
+POST /tools/screenshot → { data: { imageUrl, url } }
+
+POST /tools/video/gen → { data: { videoUrl, prompt } }
+
+POST /tools/video/lipsync → { data: { outputUrl, audioUrl, faceImageUrl } }
+
+POST /tools/video/analyze → { data: { report, videoUrl } }
+
+POST /tools/task → { data: { id, title, when } }
+
+POST /tools/audio/tts → { data: { audioUrl, voice } }
+
+POST /tools/audio/stt → { data: { transcript } }
+
+POST /tools/audio/s2s → { data: { outputUrl, targetVoice } }
+
+These stubs return mock data so your UI can be wired now. You can swap each “TODO” with your real provider calls later.
+
+How to wire from your UI
+
+Image Generation Modal
+
+Already calls: POST /api/ai-portal/tools/image/generate
+
+Expects: { ok, data.imageUrl } — you're good.
+
+CodeRunnerPanel
+
+Already calls: POST /api/ai-portal/tools/code/run
+
+Expects: { ok, data.output } — you're good.
+
+DeepResearchPanel
+
+Update to read: data.summary (HTML) and data.sources (array)
+
+DataAnalysisPanel
+
+Multipart body: file + prompt
+
+Reads: data.summary (HTML) and optional data.chart image URL
+
+PowerPoint (Quick action)
+
+Call: POST /api/ai-portal/tools/ppt with { outline }
+
+Reads: data.downloadUrl (pptx) and data.markdown for preview
+
+MoreMenu
+
+On pick, call corresponding endpoint and insert data.* into chat.
+
+Notes
+
+All routes share the same response shape, so your client can centralize handling:
+
+const res = await fetch(url, { method: 'POST', ... });
+const json = await res.json();
+if (!json.ok) throw new Error(json.error);
+// json.data has the payload
+
+
+Replace the placeholder providers (picsum, placehold.co, example.com) with your actual services as you go.
