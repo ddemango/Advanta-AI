@@ -242,6 +242,9 @@ function Router() {
       <Route path="/fantasy-football-tools" component={FantasyFootballTools} />
       <Route path="/ai-portal" component={AIPortal} />
       
+      {/* Profile Routes */}
+      <Route path="/profile" component={ProfilePage} />
+      
       {/* AI Portal Profile Menu Routes */}
       <Route path="/ai-portal/profile" component={ProfilePage} />
       <Route path="/ai-portal/settings/customize" component={CustomizePage} />
