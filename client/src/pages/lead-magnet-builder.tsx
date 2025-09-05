@@ -1408,8 +1408,8 @@ export default function LeadMagnetBuilder() {
       
       <NewHeader />
       
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-24">
-        <div className="flex h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="flex" style={{ height: 'calc(100vh - 56px)', marginTop: '56px' }}>
           <Sidebar />
           
           <main className="flex-1 overflow-auto">
