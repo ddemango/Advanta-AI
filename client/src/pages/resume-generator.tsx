@@ -514,7 +514,7 @@ Please create a professional resume with proper formatting, strong action verbs,
       
       <NewHeader />
       
-      <main className="min-h-screen bg-background py-12">
+      <main className="min-h-screen bg-background pt-24 pb-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             variants={staggerContainer}
