@@ -217,7 +217,7 @@ export default function SocialClipAnalyzer() {
         <NewHeader />
         
         {/* Hero Section */}
-        <section className="pt-20 pb-16 bg-gradient-to-b from-background to-muted/20">
+        <section className="pt-24 pb-16 bg-gradient-to-b from-background to-muted/20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               variants={staggerContainer}

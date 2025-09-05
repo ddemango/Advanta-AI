@@ -75,7 +75,7 @@ export default function CompetitorIntelScanner() {
 
       <NewHeader />
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-24">
         <div className="max-w-6xl mx-auto p-6 space-y-6">
           {/* Header */}
           <div className="text-center mb-8">

@@ -91,7 +91,7 @@ export default function BrandKitGenerator() {
       <NewHeader />
       
       <main className="min-h-screen bg-background">
-        <section className="py-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">
+        <section className="pt-24 pb-20 bg-gradient-to-b from-background to-black/50 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-white/5 bg-[length:40px_40px] opacity-10"></div>
           
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
