@@ -1,0 +1,54 @@
+{
+  "summary": {
+    "totalEndpoints": 5,
+    "workingEndpoints": 5,
+    "failedEndpoints": 0
+  },
+  "results": [
+    {
+      "endpoint": "/api/health",
+      "name": "Health Check",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html; charset=utf-8",
+      "result": "OK"
+    },
+    {
+      "endpoint": "/api/blog/posts",
+      "name": "Blog Posts API",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "contentType": "application/json; charset=utf-8",
+      "result": "OK"
+    },
+    {
+      "endpoint": "/api/auth/status",
+      "name": "Auth Status",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html; charset=utf-8",
+      "result": "OK"
+    },
+    {
+      "endpoint": "/api/tools/ai-stack",
+      "name": "AI Stack Tool",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html; charset=utf-8",
+      "result": "OK"
+    },
+    {
+      "endpoint": "/api/analytics",
+      "name": "Analytics",
+      "method": "GET",
+      "status": 200,
+      "ok": true,
+      "contentType": "text/html; charset=utf-8",
+      "result": "OK"
+    }
+  ]
+}

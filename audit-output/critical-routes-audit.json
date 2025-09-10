@@ -1,0 +1,219 @@
+{
+  "summary": {
+    "totalRoutes": 11,
+    "successfulRoutes": 11,
+    "failedRoutes": 0,
+    "spaDetected": true
+  },
+  "results": [
+    {
+      "route": "/",
+      "name": "Homepage",
+      "type": "landing",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/about",
+      "name": "About Page",
+      "type": "content",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/services",
+      "name": "Services",
+      "type": "content",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/contact",
+      "name": "Contact",
+      "type": "form",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/ai-tool-quiz",
+      "name": "AI Tool Quiz",
+      "type": "interactive",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/ai-stack-builder",
+      "name": "AI Stack Builder",
+      "type": "tool",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/lead-magnet-builder",
+      "name": "Lead Magnet Builder",
+      "type": "tool",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/competitor-intel-scanner",
+      "name": "Competitor Scanner",
+      "type": "tool",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/ai-portal",
+      "name": "AI Portal",
+      "type": "app",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/blog",
+      "name": "Blog",
+      "type": "content",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    },
+    {
+      "route": "/login",
+      "name": "Login",
+      "type": "auth",
+      "status": 200,
+      "ok": true,
+      "hasTitle": true,
+      "hasMetaDescription": true,
+      "hasH1": false,
+      "spaFindings": [
+        "SPA Framework detected - requires JavaScript execution for full functionality",
+        "React root element detected",
+        "JavaScript bundles found",
+        "Vite development server detected",
+        "React framework references found"
+      ],
+      "htmlSize": 45134,
+      "result": "ACCESSIBLE"
+    }
+  ]
+}
