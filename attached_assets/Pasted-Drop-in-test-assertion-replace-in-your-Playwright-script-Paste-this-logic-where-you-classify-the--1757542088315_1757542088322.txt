@@ -1,0 +1,97 @@
+Drop-in test assertion (replace in your Playwright script)
+
+Paste this logic where you classify the click result—this turns “meh” behavior into explicit FAIL:
+
+// After click + waits:
+const preHTML = preDomHTML; // capture before click using: const preDomHTML = await page.content();
+const postHTML = await page.content();
+const domChanged = preHTML !== postHTML;
+
+// Simple modal/drawer heuristic: aria-modal, role=dialog, expanded sections
+const modalOpen = await page.$('[role="dialog"], [aria-modal="true"], .modal, .drawer, [aria-expanded="true"]');
+
+// Track console problems
+let hadConsoleIssue = false;
+page.on('console', msg => {
+  if (['error','warning'].includes(msg.type())) hadConsoleIssue = true;
+});
+
+// Classify strict outcomes
+if (popup) {
+  result = 'OK (New Tab)';
+} else if (postURL !== preURL) {
+  result = /^https?:/.test(postURL) ? 'OK (Navigated)' : 'OK (Hash/Client Route)';
+} else if (modalOpen) {
+  result = 'OK (Opened Modal/Drawer)';
+} else if (domChanged) {
+  result = 'OK (In-Place Action)';
+} else {
+  result = 'FAIL (No Nav, No Modal, No DOM Change)';
+}
+
+// HTTP & network failure amplification
+if (!httpStatus || Number(httpStatus) >= 400) {
+  result = `FAIL (HTTP ${httpStatus || 'NoResp'})`;
+}
+
+if (hadConsoleIssue) {
+  notes += ' CONSOLE_ISSUE';
+  if (!result.startsWith('FAIL')) result = 'FAIL (Console Error/Warning)';
+}
+
+Extra guardrails (quick adds)
+
+Block “phantom passes” (hidden/zero-size):
+
+const box = await el.boundingBox();
+if (!box || box.width < 2 || box.height < 2) {
+  rows.push({ /* ... */ Result: 'FAIL (Hidden/Zero-size)', Notes: 'Element not interactable' });
+  continue;
+}
+
+
+XHR/Fetch status scan after click (surface API errors even if page “looks fine”):
+
+const reqErrors: string[] = [];
+page.on('response', async r => {
+  try {
+    const s = r.status();
+    if (s >= 400) reqErrors.push(`${s} ${r.url()}`);
+  } catch {}
+});
+// …after click/waits:
+if (reqErrors.length) {
+  notes += ` API_FAILS:${reqErrors.slice(0,5).join(' | ')}`;
+  result = result.startsWith('FAIL') ? result : 'FAIL (API Error After Click)';
+}
+
+How to re-run (fast)
+
+Pull latest script with the strict classification above.
+
+Run desktop + mobile:
+
+npx ts-node audit-buttons.ts
+
+
+Check the new outputs:
+
+click-results.csv → filter Result for FAIL.
+
+broken.txt → any 4xx/5xx navigations.
+
+artifacts/* → before/after screenshots for each FAIL.
+
+fake-data.txt → any placeholders (verify and fix).
+
+Triage guide (what I’ll look for first)
+
+Top-nav / footer items that don’t route or open the wrong context (same tab vs new tab).
+
+Hero CTAs that keep the same URL with no modal/DOM change (common on SPAs).
+
+Blog/article cards that point to 404s or drafts.
+
+Login/Portal buttons without a live backend (should show error or friendly state, not hang).
+
+Forms with success toasts but no XHR sent (false-positive UI).

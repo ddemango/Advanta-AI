@@ -1,0 +1,46 @@
+CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION
+============================================================
+
+PAGE: / - Found 0 buttons, 0 links, 0 forms
+PAGE: / - Potential JS errors detected: 57 instances
+PAGE: /about - Found 0 buttons, 0 links, 0 forms
+PAGE: /about - Potential JS errors detected: 57 instances
+PAGE: /services - Found 0 buttons, 0 links, 0 forms
+PAGE: /services - Potential JS errors detected: 57 instances
+PAGE: /contact - Found 0 buttons, 0 links, 0 forms
+PAGE: /contact - Potential JS errors detected: 57 instances
+PAGE: /blog - Found 0 buttons, 0 links, 0 forms
+PAGE: /blog - Potential JS errors detected: 57 instances
+PAGE: /login - Found 0 buttons, 0 links, 0 forms
+PAGE: /login - Potential JS errors detected: 57 instances
+PAGE: /signup - Found 0 buttons, 0 links, 0 forms
+PAGE: /signup - Potential JS errors detected: 57 instances
+PAGE: /ai-tool-quiz - Found 0 buttons, 0 links, 0 forms
+PAGE: /ai-tool-quiz - Potential JS errors detected: 57 instances
+PAGE: /ai-stack-builder - Found 0 buttons, 0 links, 0 forms
+PAGE: /ai-stack-builder - Potential JS errors detected: 57 instances
+PAGE: /build-my-ai-stack - Found 0 buttons, 0 links, 0 forms
+PAGE: /build-my-ai-stack - Potential JS errors detected: 57 instances
+PAGE: /calculator - Found 0 buttons, 0 links, 0 forms
+PAGE: /calculator - Potential JS errors detected: 57 instances
+PAGE: /roi-calculator - Found 0 buttons, 0 links, 0 forms
+PAGE: /roi-calculator - Potential JS errors detected: 57 instances
+PAGE: /cold-email-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /cold-email-generator - Potential JS errors detected: 57 instances
+PAGE: /content-calendar-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /content-calendar-generator - Potential JS errors detected: 57 instances
+PAGE: /headline-split-test-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /headline-split-test-generator - Potential JS errors detected: 57 instances
+PAGE: /slide-deck-maker - Found 0 buttons, 0 links, 0 forms
+PAGE: /slide-deck-maker - Potential JS errors detected: 57 instances
+PAGE: /voiceover-script-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /voiceover-script-generator - Potential JS errors detected: 57 instances
+PAGE: /business-name-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /business-name-generator - Potential JS errors detected: 57 instances
+PAGE: /resume-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /resume-generator - Potential JS errors detected: 57 instances
+PAGE: /marketing-copy-generator - Found 0 buttons, 0 links, 0 forms
+PAGE: /marketing-copy-generator - Potential JS errors detected: 57 instances
+API: /api/contact - Critical API failing: 400 Bad Request
+
+These issues are blocking core functionality and must be fixed immediately.
