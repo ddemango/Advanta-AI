@@ -1,0 +1,50 @@
+[
+  {
+    "page": "http://localhost:5000",
+    "viewport": "desktop",
+    "finding": "dummy",
+    "context": "st hot = createHotContext(\"/__dummy__runtime-error-plugin\"); function sendError(error) { if (!(er"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "desktop",
+    "finding": "placeholder",
+    "context": ":ot(i?.fetch?.bypassingCache),placeholderImage:\"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BA"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "desktop",
+    "finding": "placeholder",
+    "context": ":ot(i?.fetch?.bypassingCache),placeholderImage:\"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BA"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "desktop",
+    "finding": "placeholder",
+    "context": ":ot(i?.fetch?.bypassingCache),placeholderImage:\"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BA"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "mobile",
+    "finding": "dummy",
+    "context": "st hot = createHotContext(\"/__dummy__runtime-error-plugin\"); function sendError(error) { if (!(er"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "mobile",
+    "finding": "placeholder",
+    "context": ":ot(i?.fetch?.bypassingCache),placeholderImage:\"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BA"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "mobile",
+    "finding": "placeholder",
+    "context": ":ot(i?.fetch?.bypassingCache),placeholderImage:\"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BA"
+  },
+  {
+    "page": "http://localhost:5000",
+    "viewport": "mobile",
+    "finding": "placeholder",
+    "context": ":ot(i?.fetch?.bypassingCache),placeholderImage:\"data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///yH5BA"
+  }
+]

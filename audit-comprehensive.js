@@ -1,9 +1,9 @@
 // Comprehensive Site Audit Script
 // Crawls entire site and tests every interactive element
 
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
+import { chromium } from 'playwright';
+import fs from 'fs';
+import path from 'path';
 
 const BASE_URL = 'http://localhost:5000';
 const MAX_DEPTH = 5;
@@ -399,8 +399,4 @@ Total Test Coverage: ${allResults.length} interactions tested across desktop and
 }
 
 // Run the audit
-if (require.main === module) {
-  runComprehensiveAudit().catch(console.error);
-}
-
-module.exports = { runComprehensiveAudit };
+runComprehensiveAudit().catch(console.error);
