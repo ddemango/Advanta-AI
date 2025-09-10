@@ -1,0 +1,333 @@
+Role: Senior Full-Stack Engineer + QA Lead
+Target: https://www.advanta-ai.com/
+Objective: Enumerate every page, then click every button and link on each page. Verify destinations, capture evidence, and flag issues. No guesses—only verifiable results.
+
+Scope & Rules
+
+Crawl sources: sitemap.xml, homepage, and all internally linked pages (max depth 5; same origin only).
+
+Treat SPA routes as distinct “pages” after navigation completes.
+
+Test desktop (1440×900) and mobile (375×812).
+
+Click coverage: All interactive elements:
+
+a[href], button, [role="button"], elements with onclick/pointer listeners, custom components with tabindex="0" and Enter/Space activation.
+
+For each element, in a fresh page state:
+
+Scroll into view, 2) capture pre-click URL & DOM snapshot, 3) click, 4) wait for navigation or modal/DOM mutation, 5) capture post-click URL & DOM snapshot.
+
+Record: element text, aria-label, CSS/XPath selector, href (if any), expected intent (heuristic from label), actual destination/result, HTTP status, whether new tab opened, console errors, failed requests.
+
+Handle modals, drawers, accordions, dropdown menus (open, verify content, close).
+
+Treat hash changes and in-page anchors as valid if content focus shifts; otherwise mark as No-Op.
+
+Do not execute destructive actions (e.g., purchases, deletes). If found, mark Skipped (Destructive).
+
+Evidence: screenshots (before/after), console logs, network HAR (or request list), and final CSV/JSON.
+
+Fake/Placeholder Data Check
+
+Scan rendered text & common attributes for:
+lorem|ipsum|placeholder|dummy|TBD|REPLACEME|NaN|0\.00|\{\{.*?\}\}|YYYY|MM/DD/YYYY|example\.com|your@email|123-456-7890|XXX-XXX-XXXX|image-placeholder|#
+If found, include snippet, selector, page URL, and fix suggestion (real data source/path).
+
+Output (Required)
+
+Executive Summary (top risks + quick wins).
+
+Click Results CSV with headers (one row per click attempt):
+Page_URL, Viewport, Element_Text, Aria_Label, Selector, Element_Type, Href, Opens_New_Tab, Pre_Click_URL, Post_Click_URL, HTTP_Status, Result (OK/Redirect/404/No-Op/Error), Notes
+
+Issues Table (Blocker/High/Med/Low): steps, expected vs actual, evidence (screenshot filenames + console/network excerpts), fix.
+
+Broken/Misrouted Links list (Label → Actual → Expected/Context).
+
+Fake Data Findings (snippet, where found, recommended replacement).
+
+Artifacts: /artifacts/desktop/…png, /artifacts/mobile/…png, and network-[page].har (or request export).
+
+Acceptance Criteria:
+
+100% of discoverable buttons/links attempted on desktop & mobile.
+
+All non-destructive clicks verified with status code and destination URL.
+
+0 placeholder/fake strings remain unresolved.
+
+Optional: One-Command Kickoff Line
+
+Crawl https://www.advanta-ai.com/, enumerate all internal pages, and on each page click every interactive control (buttons, links, role=button, clickable divs). For each click, capture pre/post URLs, HTTP status, screenshot evidence, console errors, and network failures. Export CSV + artifacts. Flag any fake/placeholder data.
+
+(Optional) Playwright Script (Node/TS) — Full Click Coverage
+
+Save as audit-buttons.ts, then run: npx playwright test audit-buttons.ts --headed (or adapt to your runner).
+
+// audit-buttons.ts
+import { chromium, devices } from 'playwright';
+import fs from 'fs';
+import path from 'path';
+
+const BASE = 'https://www.advanta-ai.com/';
+const MAX_DEPTH = 5;
+const OUT = 'audit-output';
+const VIEWPORTS = [
+  { name: 'desktop', width: 1440, height: 900, mobile: false },
+  { name: 'mobile', ...devices['iPhone 12'] },
+];
+
+const FAKE_PAT = new RegExp(
+  '(lorem|ipsum|placeholder|dummy|TBD|REPLACEME|NaN|0\\.00|\\{\\{.*?\\}\\}|YYYY|MM\\/DD\\/YYYY|example\\.com|your@email|123-456-7890|XXX-XXX-XXXX|image-placeholder|^#)$',
+  'i'
+);
+
+type Row = {
+  Page_URL: string; Viewport: string; Element_Text: string; Aria_Label: string;
+  Selector: string; Element_Type: string; Href: string; Opens_New_Tab: string;
+  Pre_Click_URL: string; Post_Click_URL: string; HTTP_Status: string;
+  Result: string; Notes: string;
+};
+
+const rows: Row[] = [];
+const broken: string[] = [];
+const fakeFindings: string[] = [];
+const visited = new Set<string>();
+
+function ensureDir(p: string) { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); }
+
+async function crawl(context, start: string) {
+  const queue: Array<{ url: string; depth: number }> = [{ url: start, depth: 0 }];
+  const pages: string[] = [];
+
+  while (queue.length) {
+    const { url, depth } = queue.shift()!;
+    if (visited.has(url) || depth > MAX_DEPTH) continue;
+    visited.add(url);
+
+    const page = await context.newPage();
+    page.setDefaultTimeout(15000);
+
+    try {
+      const resp = await page.goto(url, { waitUntil: 'domcontentloaded' });
+      if (!resp) continue;
+      const status = resp.status();
+      if (status >= 400) broken.push(`${status} ${url}`);
+
+      // Wait for network to settle a bit (SPA hydration)
+      await page.waitForLoadState('networkidle').catch(() => {});
+      pages.push(url);
+
+      // Collect internal links
+      const hrefs = await page.$$eval('a[href]', as =>
+        as.map(a => (a as HTMLAnchorElement).href).filter(Boolean)
+      );
+      for (const h of hrefs) {
+        try {
+          const u = new URL(h);
+          const b = new URL(BASE);
+          if (u.origin === b.origin) queue.push({ url: u.toString().split('#')[0], depth: depth + 1 });
+        } catch {}
+      }
+    } catch {}
+    await page.close();
+  }
+  return Array.from(new Set(pages));
+}
+
+async function clickAllOnPage(page, pageUrl: string, vpName: string) {
+  // Select candidates
+  const selectors = [
+    'a[href]',
+    'button',
+    '[role="button"]',
+    '[onclick]',
+    '[tabindex="0"]',
+    '[data-testid*=button]',
+    '[class*=btn], [class*=button], [class*=cta]'
+  ].join(',');
+
+  const candidates = await page.$$(selectors);
+  // Deduplicate by bounding box + text
+  const elements = [];
+  for (const el of candidates) {
+    const box = await el.boundingBox().catch(() => null);
+    if (!box) continue;
+    const text = (await el.innerText().catch(() => '')).trim();
+    const key = `${Math.round(box.x)}_${Math.round(box.y)}_${Math.round(box.width)}_${Math.round(box.height)}_${text}`;
+    if (!elements.find((e: any) => e.key === key)) elements.push({ handle: el, key });
+  }
+
+  for (let i = 0; i < elements.length; i++) {
+    // Fresh state for each click
+    await page.goto(pageUrl, { waitUntil: 'domcontentloaded' }).catch(() => {});
+    await page.waitForLoadState('networkidle').catch(() => {});
+
+    const el = (await page.$$(selectors))[i];
+    if (!el) continue;
+
+    const [txt, aria, href, tag, target] = await Promise.all([
+      el.innerText().catch(() => ''), el.getAttribute('aria-label').catch(() => ''),
+      el.getAttribute('href').catch(() => ''), el.evaluate(e => e.tagName).catch(() => ''),
+      el.getAttribute('target').catch(() => ''),
+    ]);
+
+    const selector = await el.evaluate((e:any) => {
+      const gen = (n: Element): string => {
+        if (!n) return '';
+        if (n.id) return `#${n.id}`;
+        let s = n.tagName.toLowerCase();
+        if (n.className) s += '.' + Array.from((n.className as string).split(' ')).filter(Boolean).join('.');
+        const parent = n.parentElement;
+        if (!parent) return s;
+        const index = Array.from(parent.children).indexOf(n);
+        return gen(parent) + '>' + s + `:nth-child(${index+1})`;
+      };
+      return gen(e);
+    }).catch(() => '');
+
+    const preURL = page.url();
+    const ssDir = path.join(OUT, 'artifacts', vpName);
+    ensureDir(ssDir);
+    const beforeSS = path.join(ssDir, `before-${Date.now()}-${i}.png`);
+    await el.scrollIntoViewIfNeeded().catch(() => {});
+    await page.screenshot({ path: beforeSS, fullPage: true }).catch(() => {});
+
+    const [popupPromise] = [
+      page.waitForEvent('popup', { timeout: 5000 }).catch(() => null),
+    ];
+
+    let httpStatus: string = '';
+    let result = 'OK';
+    let notes = '';
+
+    // Track main request
+    page.on('requestfailed', (r:any) => {
+      notes += `REQ_FAIL:${r.url()} `;
+    });
+
+    // Perform click
+    try {
+      await el.click({ force: true });
+    } catch (e:any) {
+      result = 'Error';
+      notes += `CLICK_ERR:${e.message}`;
+    }
+
+    // Wait for something meaningful
+    const nav = await Promise.race([
+      page.waitForNavigation({ timeout: 6000 }).catch(() => null),
+      page.waitForLoadState('networkidle', { timeout: 6000 }).catch(() => null),
+      new Promise(res => setTimeout(res, 1500)).then(() => null),
+    ]);
+
+    // Popup/new tab?
+    const popup = await popupPromise;
+    if (popup) {
+      await popup.waitForLoadState('domcontentloaded').catch(() => {});
+      const resp = popup.mainFrame().response();
+      httpStatus = resp ? String(resp.status()) : '';
+      await popup.close().catch(() => {});
+    } else {
+      const resp = page.mainFrame().response();
+      httpStatus = resp ? String(resp.status()) : '';
+    }
+
+    const postURL = page.url();
+    const afterSS = path.join(ssDir, `after-${Date.now()}-${i}.png`);
+    await page.screenshot({ path: afterSS, fullPage: true }).catch(() => {});
+
+    // Result classification
+    if (postURL === preURL && !popup) {
+      // Check if modal/DOM changed
+      const bodyHTML = await page.content();
+      if (!bodyHTML) {
+        result = 'No-Op';
+      } else {
+        result = 'No Nav (Possible Modal/Action)';
+      }
+    }
+    if (target === '_blank') result += ' (New Tab)';
+
+    rows.push({
+      Page_URL: pageUrl,
+      Viewport: vpName,
+      Element_Text: (txt || '').trim(),
+      Aria_Label: (aria || '').trim(),
+      Selector: selector,
+      Element_Type: tag,
+      Href: href || '',
+      Opens_New_Tab: target === '_blank' ? 'Yes' : 'No',
+      Pre_Click_URL: preURL,
+      Post_Click_URL: postURL,
+      HTTP_Status: httpStatus,
+      Result: result,
+      Notes: notes.trim(),
+    });
+  }
+
+  // Fake/placeholder scan
+  const allText = (await page.innerText('body').catch(() => '')) || '';
+  if (FAKE_PAT.test(allText)) {
+    const snippet = (allText.match(FAKE_PAT) || [''])[0];
+    fakeFindings.push(`FAKE "${snippet}" on ${pageUrl}`);
+  }
+}
+
+(async () => {
+  ensureDir(OUT);
+  ensureDir(path.join(OUT, 'artifacts'));
+
+  for (const vp of VIEWPORTS) {
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext(vp.mobile ? vp : { viewport: { width: 1440, height: 900 } });
+
+    // Crawl pages
+    const pages = await crawl(context, BASE);
+
+    // Visit each page and click everything
+    for (const url of pages) {
+      const page = await context.newPage();
+      page.setDefaultTimeout(15000);
+      try {
+        await page.goto(url, { waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle').catch(() => {});
+        await clickAllOnPage(page, url, vp.name);
+      } catch (e) {
+        broken.push(`LOAD_ERR ${url}`);
+      }
+      await page.close();
+    }
+
+    await context.close();
+    await browser.close();
+  }
+
+  // Write CSV
+  const csvPath = path.join(OUT, 'click-results.csv');
+  const headers = Object.keys(rows[0] || {
+    Page_URL:'', Viewport:'', Element_Text:'', Aria_Label:'', Selector:'', Element_Type:'',
+    Href:'', Opens_New_Tab:'', Pre_Click_URL:'', Post_Click_URL:'', HTTP_Status:'', Result:'', Notes:''
+  });
+  const csv = [headers.join(',')]
+    .concat(rows.map(r => headers.map(h => `"${String((r as any)[h]).replace(/"/g,'""')}"`).join(',')))
+    .join('\n');
+  fs.writeFileSync(csvPath, csv, 'utf8');
+
+  fs.writeFileSync(path.join(OUT, 'broken.txt'), broken.join('\n'), 'utf8');
+  fs.writeFileSync(path.join(OUT, 'fake-data.txt'), Array.from(new Set(fakeFindings)).join('\n'), 'utf8');
+
+  console.log(`Done. See ${OUT}/click-results.csv, artifacts/, broken.txt, fake-data.txt`);
+})();
+
+
+What you get:
+
+A crawl of your whole site, page list, and every clickable attempted on desktop & mobile.
+
+CSV proof of where each button/link went, with screenshots and notes about errors or no-ops.
+
+A simple fake-data detector pass.
+
+Want me to tailor this to your exact stack (Next.js routing, protected pages, auth bypass for staging, or to exclude destructive endpoints)? I can tighten the selectors and add allow/deny lists in the script.

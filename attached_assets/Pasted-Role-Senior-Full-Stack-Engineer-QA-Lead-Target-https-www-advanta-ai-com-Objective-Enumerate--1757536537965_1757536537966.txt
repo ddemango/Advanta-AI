@@ -1,0 +1,62 @@
+Role: Senior Full-Stack Engineer + QA Lead
+Target: https://www.advanta-ai.com/
+Objective: Enumerate every page, then click every button and link on each page. Verify destinations, capture evidence, and flag issues. No guesses—only verifiable results.
+
+Scope & Rules
+
+Crawl sources: sitemap.xml, homepage, and all internally linked pages (max depth 5; same origin only).
+
+Treat SPA routes as distinct “pages” after navigation completes.
+
+Test desktop (1440×900) and mobile (375×812).
+
+Click coverage: All interactive elements:
+
+a[href], button, [role="button"], elements with onclick/pointer listeners, custom components with tabindex="0" and Enter/Space activation.
+
+For each element, in a fresh page state:
+
+Scroll into view, 2) capture pre-click URL & DOM snapshot, 3) click, 4) wait for navigation or modal/DOM mutation, 5) capture post-click URL & DOM snapshot.
+
+Record: element text, aria-label, CSS/XPath selector, href (if any), expected intent (heuristic from label), actual destination/result, HTTP status, whether new tab opened, console errors, failed requests.
+
+Handle modals, drawers, accordions, dropdown menus (open, verify content, close).
+
+Treat hash changes and in-page anchors as valid if content focus shifts; otherwise mark as No-Op.
+
+Do not execute destructive actions (e.g., purchases, deletes). If found, mark Skipped (Destructive).
+
+Evidence: screenshots (before/after), console logs, network HAR (or request list), and final CSV/JSON.
+
+Fake/Placeholder Data Check
+
+Scan rendered text & common attributes for:
+lorem|ipsum|placeholder|dummy|TBD|REPLACEME|NaN|0\.00|\{\{.*?\}\}|YYYY|MM/DD/YYYY|example\.com|your@email|123-456-7890|XXX-XXX-XXXX|image-placeholder|#
+If found, include snippet, selector, page URL, and fix suggestion (real data source/path).
+
+Output (Required)
+
+Executive Summary (top risks + quick wins).
+
+Click Results CSV with headers (one row per click attempt):
+Page_URL, Viewport, Element_Text, Aria_Label, Selector, Element_Type, Href, Opens_New_Tab, Pre_Click_URL, Post_Click_URL, HTTP_Status, Result (OK/Redirect/404/No-Op/Error), Notes
+
+Issues Table (Blocker/High/Med/Low): steps, expected vs actual, evidence (screenshot filenames + console/network excerpts), fix.
+
+Broken/Misrouted Links list (Label → Actual → Expected/Context).
+
+Fake Data Findings (snippet, where found, recommended replacement).
+
+Artifacts: /artifacts/desktop/…png, /artifacts/mobile/…png, and network-[page].har (or request export).
+
+Acceptance Criteria:
+
+100% of discoverable buttons/links attempted on desktop & mobile.
+
+All non-destructive clicks verified with status code and destination URL.
+
+0 placeholder/fake strings remain unresolved.
+
+Optional: One-Command Kickoff Line
+
+Crawl https://www.advanta-ai.com/, enumerate all internal pages, and on each page click every interactive control (buttons, links, role=button, clickable divs). For each click, capture pre/post URLs, HTTP status, screenshot evidence, console errors, and network failures. Export CSV + artifacts. Flag any fake/placeholder data.
