@@ -1892,20 +1892,47 @@ Return as JSON with keys: headline, subhead, features, ctaOptions, valueProps, h
     }
   });
   
-  // Get a specific blog post by slug
+  // Get a specific blog post by slug (file-based)
   app.get('/api/blog/:slug', async (req, res) => {
     try {
       const { slug } = req.params;
-      const post = await storage.getBlogPostBySlug(slug);
+      // Get all posts and find by slug
+      const allPosts = await buildEnhancedIndex();
+      const post = allPosts.find(p => p.slug === slug);
       
       if (!post) {
         return res.status(404).json({ message: 'Blog post not found' });
       }
       
-      // Increment view count
-      await storage.incrementBlogPostViewCount(post.id);
+      // Load the full content from the HTML file
+      const postsDir = path.join(process.cwd(), 'posts');
+      const filepath = path.join(postsDir, post.filename);
       
-      return res.json(post);
+      try {
+        const content = await fs.promises.readFile(filepath, 'utf-8');
+        
+        // Extract body content from HTML
+        const bodyMatch = content.match(/<div class="content">([\s\S]*?)<\/div>/);
+        const bodyHtml = bodyMatch ? bodyMatch[1] : content;
+        
+        // Return enriched post data
+        const enrichedPost = {
+          ...post,
+          content: bodyHtml,
+          contentHtml: bodyHtml,
+          markdown: bodyHtml, // Fallback for MDX rendering
+          created_at: post.date,
+          author: {
+            firstName: 'Advanta',
+            lastName: 'AI'
+          }
+        };
+        
+        return res.json(enrichedPost);
+      } catch (fileError) {
+        console.error(`Error reading blog post file ${post.filename}:`, fileError);
+        return res.status(500).json({ message: 'Error loading blog post content' });
+      }
     } catch (error) {
       console.error(`Error fetching blog post with slug ${req.params.slug}:`, error);
       return res.status(500).json({ message: 'Error fetching blog post' });
