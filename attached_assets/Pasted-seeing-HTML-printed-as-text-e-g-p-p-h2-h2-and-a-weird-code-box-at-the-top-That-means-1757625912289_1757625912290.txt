@@ -1,0 +1,141 @@
+seeing HTML printed as text (e.g., <p>…</p>, <h2>…</h2>) and a weird code box at the top. That means your blog body is being double-escaped / wrapped as code, or you’re mixing Markdown → HTML incorrectly.
+
+Here’s a clean, safe fix you can drop in.
+
+1) Pick ONE canonical content type
+
+If your generator returns Markdown, store it in post.markdown.
+
+If it returns HTML, store it in post.html (already rendered).
+
+Do not pass HTML into a Markdown renderer and do not wrap the body in ``` fences.
+
+2) Blog page: robust renderer (Next.js App Router)
+// app/blog/[slug]/page.tsx
+import { notFound } from "next/navigation";
+import { MDXRemote } from "next-mdx-remote/rsc";
+import DOMPurify from "isomorphic-dompurify"; // sanitize raw HTML
+import he from "he"; // decode &amp;lt;p&amp;gt; → <p>
+
+type Post = {
+  title: string;
+  markdown?: string;   // canonical if using Markdown
+  html?: string;       // canonical if using rendered HTML
+  // ...other fields
+};
+
+async function getPost(slug: string): Promise<Post | null> {
+  const r = await fetch(`${process.env.API_URL}/blog/${slug}`, { cache: "no-store" });
+  if (!r.ok) return null;
+  const p: Post = await r.json();
+  return p ?? null;
+}
+
+// helper: strip accidental code fences and decode entities
+function normalizeBody(p: Post) {
+  // 1) if markdown is actually code-fenced, unwrap it
+  if (p.markdown && /^```/m.test(p.markdown.trim())) {
+    const m = p.markdown.trim().match(/^```(?:md|markdown|)\n([\s\S]*?)\n```$/m);
+    if (m?.[1]) p.markdown = m[1];
+  }
+
+  // 2) if html is entity-escaped (shows <p> as text), decode then sanitize
+  if (p.html && /&lt;\/?([a-z][a-z0-9]*)\b[^&]*&gt;/i.test(p.html)) {
+    const decoded = he.decode(p.html);             // &lt;p&gt; → <p>
+    p.html = DOMPurify.sanitize(decoded, { USE_PROFILES: { html: true } });
+  }
+
+  return p;
+}
+
+export default async function Page({ params }: { params: { slug: string } }) {
+  let post = await getPost(params.slug);
+  if (!post) notFound();
+
+  post = normalizeBody(post);
+
+  const hasMarkdown = !!post.markdown && post.markdown.trim().length > 0;
+  const hasHtml = !!post.html && post.html.trim().length > 0;
+
+  if (!hasMarkdown && !hasHtml) notFound();
+
+  return (
+    <article className="prose max-w-none">
+      <h1>{post.title}</h1>
+
+      {hasMarkdown ? (
+        // Render Markdown/MDX
+        <MDXRemote
+          source={post.markdown!}
+          options={{
+            mdxOptions: {
+              remarkPlugins: [/* remark-gfm, etc. */],
+              // If your markdown legitimately includes raw HTML, enable rehype-raw:
+              // rehypePlugins: [require('rehype-raw')]
+            },
+          }}
+        />
+      ) : (
+        // Render safe HTML
+        <div dangerouslySetInnerHTML={{ __html: post!.html! }} />
+      )}
+    </article>
+  );
+}
+
+
+Why this fixes it
+
+Removes accidental ``` code-fences around the whole article.
+
+Decodes &lt;p&gt; → <p> if your backend double-escaped HTML.
+
+Sanitizes HTML to avoid XSS.
+
+Uses MDX only for real Markdown; uses dangerouslySetInnerHTML only for real HTML.
+
+3) Publishing quality gate (prevents empty/HTML-as-text posts)
+// lib/blog/quality.ts
+export function assertValidBody({
+  markdown,
+  html,
+  minWords = 250,
+}: { markdown?: string; html?: string; minWords?: number }) {
+  const src = markdown ?? html ?? "";
+  const text = src
+    .replace(/```[\s\S]*?```/g, "")    // drop code fences
+    .replace(/<[^>]+>/g, " ")          // strip tags if HTML
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = text.split(" ").filter(Boolean).length;
+  if (words < minWords) throw new Error(`QUALITY_FAIL: body too short (${words} words)`);
+
+  // Don’t allow entire body wrapped as a single code block
+  if (/^```/.test((markdown || "").trim())) {
+    throw new Error("QUALITY_FAIL: body is code-fenced; remove ``` wrapper");
+  }
+}
+
+
+Call this in your blog generator before saving.
+
+4) One Playwright check (catches this regression)
+// tests/blog-body.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('blog detail shows real article content', async ({ page }) => {
+  await page.goto('https://www.advanta-ai.com/blog/navigating-ai-ethics-in-business-practical-guidelines-for-2025');
+  await page.waitForLoadState('networkidle');
+
+  await expect(page.locator('h1')).toContainText(/AI Ethics/i);
+
+  // There should be no leading fenced code block
+  const hasCodeFence = await page.locator('article pre code').first().isVisible();
+  const firstBlockText = await page.locator('article pre code').first().innerText().catch(()=>'');
+  expect(hasCodeFence && /^<p>/.test(firstBlockText)).toBeFalsy();
+
+  // Body has substance
+  const bodyText = await page.locator('article').innerText();
+  expect(bodyText.split(/\s+/).length).toBeGreaterThan(200);
+});

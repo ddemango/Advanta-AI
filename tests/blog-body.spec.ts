@@ -101,4 +101,36 @@ test.describe('Blog Detail Body Rendering', () => {
     const contentBox = await articleContent.boundingBox();
     expect(contentBox?.width).toBeLessThanOrEqual(375);
   });
+
+  test('blog post renders without double-escaping HTML', async ({ page }) => {
+    await page.goto('/blog/ai-automation-transforming-modern-business-operations');
+    await page.waitForLoadState('networkidle');
+
+    // Should not show raw HTML tags as text
+    const bodyText = await page.locator('article .prose').innerText();
+    expect(bodyText).not.toContain('&lt;p&gt;');
+    expect(bodyText).not.toContain('&lt;/p&gt;');
+    expect(bodyText).not.toContain('&amp;lt;');
+    
+    // Should have proper content length
+    expect(bodyText.split(/\s+/).length).toBeGreaterThan(150);
+  });
+
+  test('blog detail shows no code fence wrapper', async ({ page }) => {
+    await page.goto('/blog/navigating-ai-ethics-in-business-practical-guidelines-for-20');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('h1')).toContainText(/AI Ethics/i);
+
+    // There should be no leading fenced code block wrapping the entire article
+    const hasCodeFence = await page.locator('article pre code').first().isVisible().catch(() => false);
+    if (hasCodeFence) {
+      const firstBlockText = await page.locator('article pre code').first().innerText().catch(() => '');
+      expect(/^<p>/.test(firstBlockText)).toBeFalsy();
+    }
+
+    // Body has substance (>200 words)
+    const bodyText = await page.locator('article').innerText();
+    expect(bodyText.split(/\s+/).length).toBeGreaterThan(200);
+  });
 });

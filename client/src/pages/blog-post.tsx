@@ -12,6 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Clock, Twitter, Linkedin, Facebook, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import DOMPurify from 'isomorphic-dompurify';
+import he from 'he';
 
 // Types
 interface BlogPost {
@@ -95,7 +97,42 @@ const RelatedPostCard = ({ post }: { post: BlogPost }) => {
   );
 };
 
-// Article Content Component with MDX rendering and fallbacks
+// Helper: normalize content and fix common issues
+function normalizeContent(post: BlogPost): BlogPost {
+  const normalized = { ...post };
+
+  // 1) If markdown is accidentally code-fenced, unwrap it
+  if (normalized.markdown && /^```/m.test(normalized.markdown.trim())) {
+    const match = normalized.markdown.trim().match(/^```(?:md|markdown|html|)\n([\s\S]*?)\n```$/m);
+    if (match?.[1]) {
+      normalized.markdown = match[1];
+    }
+  }
+
+  // 2) If HTML content is entity-escaped (shows <p> as text), decode and sanitize
+  if (normalized.contentHtml && /&lt;\/?([a-z][a-z0-9]*)\b[^&]*&gt;/i.test(normalized.contentHtml)) {
+    const decoded = he.decode(normalized.contentHtml);
+    normalized.contentHtml = DOMPurify.sanitize(decoded, { 
+      USE_PROFILES: { html: true },
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'blockquote', 'code', 'pre', 'img'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'title', 'class']
+    });
+  }
+
+  // 3) Same for generic content field
+  if (normalized.content && /&lt;\/?([a-z][a-z0-9]*)\b[^&]*&gt;/i.test(normalized.content)) {
+    const decoded = he.decode(normalized.content);
+    normalized.content = DOMPurify.sanitize(decoded, { 
+      USE_PROFILES: { html: true },
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'blockquote', 'code', 'pre', 'img'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'title', 'class']
+    });
+  }
+
+  return normalized;
+}
+
+// Article Content Component with robust rendering
 const ArticleContent = ({ post }: { post: BlogPost }) => {
   const [renderError, setRenderError] = useState<string | null>(null);
   
@@ -103,8 +140,31 @@ const ArticleContent = ({ post }: { post: BlogPost }) => {
     setRenderError(null);
   }, [post]);
 
-  // Try MDX rendering first if markdown is available
-  if (post.markdown && !renderError) {
+  // Normalize the post to fix common issues
+  const normalizedPost = normalizeContent(post);
+
+  const hasMarkdown = !!normalizedPost.markdown && normalizedPost.markdown.trim().length > 0;
+  const hasHtml = !!(normalizedPost.contentHtml || normalizedPost.content) && 
+    (normalizedPost.contentHtml || normalizedPost.content || '').trim().length > 0;
+
+  if (!hasMarkdown && !hasHtml) {
+    return (
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 my-8">
+        <div className="flex items-center space-x-3 text-orange-800">
+          <AlertTriangle className="h-5 w-5" />
+          <div>
+            <h3 className="font-semibold">No Content Available</h3>
+            <p className="text-sm mt-1">
+              This article appears to have no content. Please contact support if this persists.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Prefer Markdown rendering if available
+  if (hasMarkdown && !renderError) {
     try {
       return (
         <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline">
@@ -139,27 +199,29 @@ const ArticleContent = ({ post }: { post: BlogPost }) => {
               }
             }}
           >
-            {post.markdown}
+            {normalizedPost.markdown}
           </ReactMarkdown>
         </div>
       );
     } catch (error) {
-      console.error('MDX rendering failed:', error);
-      setRenderError('MDX rendering failed');
+      console.error('Markdown rendering failed:', error);
+      setRenderError('Markdown rendering failed');
+      // Fall through to HTML rendering
     }
   }
 
-  // Fallback to HTML content if available
-  if (post.contentHtml || post.content) {
+  // Fallback to HTML content (already sanitized)
+  if (hasHtml) {
+    const htmlContent = normalizedPost.contentHtml || normalizedPost.content || '';
     return (
       <div 
         className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline"
-        dangerouslySetInnerHTML={{ __html: post.contentHtml || post.content || '' }}
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
     );
   }
 
-  // Graceful error fallback
+  // Final graceful error fallback
   return (
     <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 my-8">
       <div className="flex items-center space-x-3 text-orange-800">

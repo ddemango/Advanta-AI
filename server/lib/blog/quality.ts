@@ -29,3 +29,24 @@ export function assertBodyHasContent(markdown: string, minWords = 250) {
   
   return true;
 }
+
+export function assertValidBody({
+  markdown,
+  html,
+  minWords = 250,
+}: { markdown?: string; html?: string; minWords?: number }) {
+  const src = markdown ?? html ?? "";
+  const text = src
+    .replace(/```[\s\S]*?```/g, "")    // drop code fences
+    .replace(/<[^>]+>/g, " ")          // strip tags if HTML
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = text.split(" ").filter(Boolean).length;
+  if (words < minWords) throw new Error(`QUALITY_FAIL: body too short (${words} words)`);
+
+  // Don't allow entire body wrapped as a single code block
+  if (/^```/.test((markdown || "").trim())) {
+    throw new Error("QUALITY_FAIL: body is code-fenced; remove ``` wrapper");
+  }
+}
