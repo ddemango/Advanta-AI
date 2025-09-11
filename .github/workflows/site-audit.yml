@@ -1,0 +1,53 @@
+name: Site Audit
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'URL to audit'
+        required: true
+        default: 'https://www.advanta-ai.com/'
+  schedule:
+    - cron: '0 13 * * *'  # daily 8am CT
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci || npm i
+          npx playwright install --with-deps
+      
+      - name: Prepare audit environment
+        env:
+          TARGET_URL: ${{ github.event.inputs.target || 'https://www.advanta-ai.com/' }}
+        run: |
+          mkdir -p audit-output
+          echo "TARGET_URL=$TARGET_URL" >> $GITHUB_ENV
+          node scripts/prepare-audit.js "$TARGET_URL" || true
+      
+      - name: Run comprehensive site audit
+        env:
+          CI: true
+        run: |
+          npx playwright test --config=tests/audit.config.ts --reporter=list,html
+      
+      - name: Archive audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-artifacts
+          path: |
+            audit-output/**
+            playwright-report/**
+            test-results/**
+            
+      - name: Generate issue summaries
+        if: always()
+        run: node scripts/process-audit-results.js

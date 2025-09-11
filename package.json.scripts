@@ -1,0 +1,6 @@
+{
+  "audit:github": "node run-github-audit.js",
+  "audit:local": "node node-enhanced-audit.js", 
+  "audit:playwright": "npx playwright test --config=tests/audit.config.ts",
+  "audit:prepare": "node scripts/prepare-audit.js"
+}
