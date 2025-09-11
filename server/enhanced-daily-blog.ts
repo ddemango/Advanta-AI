@@ -6,7 +6,7 @@ import { buildRSSandSitemap } from './feeds';
 import { getBaseUrl } from './lib/web';
 import { mdToSafeHtml } from './lib/markdown';
 import { getReadingTime } from './lib/blog/readingTime';
-import { ensureHeadings } from './lib/blog/quality';
+import { ensureHeadings, assertBodyHasContent } from './lib/blog/quality';
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -448,6 +448,16 @@ Ensure the content is actionable, includes specific examples, and positions AI a
       
       // Generate enhanced tags
       const tags = generateEnhancedTags(content, category);
+      
+      // Assert content has sufficient body length (quality gate)
+      try {
+        assertBodyHasContent(content, 250);
+      } catch (error: any) {
+        if (error.message.includes('QUALITY_FAIL')) {
+          blogLog.generation.error(error, { topic, category, title });
+          throw error; // Fail the job if content is too short
+        }
+      }
       
       // Run quality gates
       const qualityResult = await runQualityGates(content, content);

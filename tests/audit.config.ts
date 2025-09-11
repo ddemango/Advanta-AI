@@ -26,14 +26,14 @@ export default defineConfig({
     {
       name: 'desktop-chrome',
       use: { 
-        ...require('@playwright/test').devices['Desktop Chrome'],
+        ...import('@playwright/test').then(m => m.devices)['Desktop Chrome'],
         viewport: { width: 1440, height: 900 }
       },
     },
     {
       name: 'mobile-safari',
       use: { 
-        ...require('@playwright/test').devices['iPhone 12'],
+        ...import('@playwright/test').then(m => m.devices)['iPhone 12'],
         viewport: { width: 375, height: 812 }
       },
     },

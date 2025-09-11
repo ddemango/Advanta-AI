@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
@@ -9,13 +9,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Clock, Twitter, Linkedin, Facebook, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Clock, Twitter, Linkedin, Facebook, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Types
 interface BlogPost {
   slug: string;
   title: string;
-  content: string;
+  content?: string;
+  contentHtml?: string;
+  markdown?: string;
   category: string;
   tags: string[];
   created_at: string;
@@ -91,18 +95,123 @@ const RelatedPostCard = ({ post }: { post: BlogPost }) => {
   );
 };
 
+// Article Content Component with MDX rendering and fallbacks
+const ArticleContent = ({ post }: { post: BlogPost }) => {
+  const [renderError, setRenderError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    setRenderError(null);
+  }, [post]);
+
+  // Try MDX rendering first if markdown is available
+  if (post.markdown && !renderError) {
+    try {
+      return (
+        <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline">
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={{
+              // Enhance code blocks
+              code({ className, children, ...props }: any) {
+                const isInline = !className?.includes('language-');
+                return (
+                  <code 
+                    className={`${className || ''} ${isInline ? 'bg-muted px-1 py-0.5 rounded text-sm' : 'block bg-muted p-4 rounded-lg overflow-x-auto'}`} 
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              },
+              // Enhance links
+              a({ href, children, ...props }) {
+                return (
+                  <a 
+                    href={href} 
+                    className="text-primary hover:underline" 
+                    target={href?.startsWith('http') ? '_blank' : undefined}
+                    rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    {...props}
+                  >
+                    {children}
+                  </a>
+                );
+              }
+            }}
+          >
+            {post.markdown}
+          </ReactMarkdown>
+        </div>
+      );
+    } catch (error) {
+      console.error('MDX rendering failed:', error);
+      setRenderError('MDX rendering failed');
+    }
+  }
+
+  // Fallback to HTML content if available
+  if (post.contentHtml || post.content) {
+    return (
+      <div 
+        className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline"
+        dangerouslySetInnerHTML={{ __html: post.contentHtml || post.content || '' }}
+      />
+    );
+  }
+
+  // Graceful error fallback
+  return (
+    <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 my-8">
+      <div className="flex items-center space-x-3 text-orange-800">
+        <AlertTriangle className="h-5 w-5" />
+        <div>
+          <h3 className="font-semibold">Content Rendering Issue</h3>
+          <p className="text-sm mt-1">
+            We're fixing a rendering issue for this article. Please check back soon or contact support if this persists.
+          </p>
+          {renderError && (
+            <p className="text-xs mt-2 opacity-75">
+              Technical details: {renderError}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Blog Post Page
 export default function BlogPostPage() {
   const [location] = useLocation();
   const slug = location.split('/').pop() || '';
   
-  // Fetch the blog post
+  // Fetch the blog post with strict error handling
   const { data: post, isLoading, error } = useQuery<BlogPost>({
-    queryKey: ['/api/blog/file', slug],
-    queryFn: () => fetch(`/api/blog/file/${slug}`).then(r => r.json()),
+    queryKey: ['/api/blog', slug],
+    queryFn: async () => {
+      const response = await fetch(`/api/blog/${slug}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load post: ${response.status}`);
+      }
+      const data = await response.json();
+      
+      // Strict validation - ensure we have content
+      if (!data?.title || !(data.markdown || data.content || data.contentHtml)) {
+        throw new Error('MISSING_BODY: Post has no content');
+      }
+      
+      return data;
+    },
     enabled: !!slug,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      // Don't retry on 404 or missing content
+      if (error?.message?.includes('404') || error?.message?.includes('MISSING_BODY')) {
+        return false;
+      }
+      return failureCount < 2;
+    }
   });
 
   // Fetch other blog posts for related content
@@ -292,11 +401,8 @@ export default function BlogPostPage() {
               )}
             </header>
 
-            {/* Article content */}
-            <div 
-              className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-h2:text-2xl prose-h3:text-xl prose-p:text-base prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline"
-              dangerouslySetInnerHTML={{ __html: post.content || '' }}
-            />
+            {/* Article content with MDX support and fallbacks */}
+            <ArticleContent post={post} />
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (

@@ -15,6 +15,7 @@
     "@axe-core/playwright": "^4.10.2",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
+    "@mdx-js/react": "^3.1.1",
     "@monaco-editor/react": "^4.7.0",
     "@neondatabase/serverless": "^0.10.4",
     "@notionhq/client": "^3.1.3",

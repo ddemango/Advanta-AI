@@ -1,0 +1,76 @@
+Code-level fixes (Next.js App Router examples)
+A) Guard the fetch & fail loudly (no silent empty states)
+// app/blog/[slug]/page.tsx
+import { notFound } from "next/navigation";
+import { MDXRemote } from "next-mdx-remote/rsc"; // if using MDX RSC
+
+async function getPost(slug: string) {
+  const res = await fetch(`${process.env.API_URL}/blog/${slug}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load post: ${res.status}`);
+  const post = await res.json();
+
+  // minimal contract
+  if (!post?.title || !(post.markdown || post.contentHtml)) {
+    // optional: log to Sentry here
+    return null;
+  }
+  return post;
+}
+
+export default async function Page({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug);
+  if (!post) notFound(); // shows 404 instead of empty page shell
+
+  return (
+    <article className="prose max-w-none">
+      <h1>{post.title}</h1>
+
+      {/* Prefer MDX; else safe HTML; else plaintext */}
+      {"markdown" in post && post.markdown ? (
+        <MDXRemote source={post.markdown} />
+      ) : "contentHtml" in post && post.contentHtml ? (
+        <div dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
+      ) : (
+        <p>Sorry, this article has no content.</p>
+      )}
+    </article>
+  );
+}
+
+B) If you render HTML (no MDX), ensure you’re wiring the body, not the excerpt
+<div dangerouslySetInnerHTML={{ __html: post.bodyHtml /* not post.excerpt */ }} />
+
+C) Add a quality gate at publish time so empty posts can’t go live
+// lib/blog/quality.ts
+export function assertBodyHasContent(markdown: string, minWords = 250) {
+  const words = (markdown || "").trim().split(/\s+/).length;
+  if (words < minWords) {
+    throw new Error(`QUALITY_FAIL: body too short (${words} words)`);
+  }
+}
+
+
+Use this in your generator/publisher before saving.
+
+D) If MDX fails, show a graceful error & log
+let body: JSX.Element;
+try {
+  body = <MDXRemote source={post.markdown} />;
+} catch (e) {
+  // log to Sentry/Pino
+  body = <p>We’re fixing a rendering issue for this article. Check back soon.</p>;
+}
+
+3) E2E test to prevent regressions
+
+Have Playwright assert the body exists and has length:
+
+test('blog detail renders body', async ({ page }) => {
+  await page.goto('https://www.advanta-ai.com/blog/navigating-ai-ethics-in-business-practical-guidelines-for-20');
+  await page.waitForLoadState('networkidle');
+  // Accept title present
+  await expect(page.locator('h1')).toContainText(/AI Insights|AI Ethics/i);
+  // Body must have substantial text
+  const bodyText = await page.locator('article').innerText();
+  expect(bodyText.split(/\s+/).length).toBeGreaterThan(200);
+});
