@@ -1,0 +1,116 @@
+Best option: run the audit in GitHub Actions (containerized Playwright) and let your AI agent trigger it, fetch artifacts, and open fix tickets. It’s the most reliable (no Replit/Nix headaches), repeatable, and CI-friendly.
+
+Here’s the fastest path:
+
+A) Set up CI audit (once)
+
+Add Playwright + tests
+
+npm i -D playwright @playwright/test
+npx playwright install --with-deps
+
+
+Create tests/audit.spec.ts with the stricter logic (consent check, DOM-change/HTTP/console fail rules).
+
+Add workflow .github/workflows/site-audit.yml
+
+name: Site Audit
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'URL to audit'
+        required: true
+        default: 'https://www.advanta-ai.com/'
+  schedule:
+    - cron: '0 13 * * *'  # daily 8am CT
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install deps
+        run: |
+          npm ci || npm i
+          npx playwright install --with-deps
+      - name: Run audit
+        env:
+          TARGET_URL: ${{ github.event.inputs.target || 'https://www.advanta-ai.com/' }}
+        run: |
+          node scripts/prepare-audit.js "$TARGET_URL" || true
+          npx playwright test --reporter=list
+      - name: Archive artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-artifacts
+          path: |
+            audit-output/**
+            playwright-report/**
+            test-results/**
+
+
+Emit CSV/JSON + screenshots
+
+Make your Playwright test write to audit-output/:
+
+click-results.csv, fake-data.txt, broken.txt, final-comprehensive-audit-report.md.
+
+B) Let your AI agent run it end-to-end
+
+Have the agent do four things via the GitHub API:
+
+Dispatch the workflow
+
+POST /repos/{owner}/{repo}/actions/workflows/site-audit.yml/dispatches
+
+{ "ref": "main", "inputs": { "target": "https://www.advanta-ai.com/" } }
+
+
+Poll job status
+
+GET /repos/{owner}/{repo}/actions/runs?event=workflow_dispatch
+
+Wait for conclusion in success | failure.
+
+Download artifacts
+
+GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts
+
+Download audit-artifacts.zip, extract audit-output/*.
+
+Act on results
+
+Parse click-results.csv → collect Result=FAIL.
+
+Parse fake-data.txt and broken.txt.
+
+Create GitHub Issues/PRs with labels bug, high, attach screenshots.
+
+Optional: Post a Slack/Email summary.
+
+Minimal “agent prompt” to automate all of this
+
+Run the Site Audit GitHub Action with input target=https://www.advanta-ai.com/. Poll until it completes. Download the audit-artifacts bundle, parse audit-output/click-results.csv, broken.txt, and fake-data.txt. Create GitHub issues for each FAIL (one per unique page), include failing selectors, Expected vs Actual, and link to screenshots. Tag severity: Blocker for 5xx/404 on primary routes; High for No-Op clicks; Medium for wrong targets; Low for text/content nits. Post a summary comment with totals and attach the CSV.
+
+C) Optional: Auto-run blog job & verify
+
+Add another job (or a second workflow) that:
+
+Runs node jobs/generateBlog.js on staging.
+
+Fails if it logs QUALITY_FAIL, readingTime is not defined, or schema parse errors.
+
+Uploads blog-job.log as an artifact.
+Your agent can dispatch this before the UI audit and block deploys if it fails.
+
+D) If you must stay on Replit (fallback)
+
+Keep your audit script, but have the agent:
+
+git push the current repo state.
+
+Dispatch the GitHub Actions workflow from Replit (so the heavy lifting happens in Actions).
+This dodges Replit’s browser dependency issues while preserving your Replit-first flow.

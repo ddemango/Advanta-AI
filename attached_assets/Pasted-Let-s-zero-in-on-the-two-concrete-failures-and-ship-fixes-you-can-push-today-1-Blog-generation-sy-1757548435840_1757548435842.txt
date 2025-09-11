@@ -1,0 +1,220 @@
+Let’s zero in on the two concrete failures and ship fixes you can push today.
+
+1) Blog generation system — immediate fixes
+A. readingTime is not defined
+
+Add a proper import (or safe fallback) wherever you compute reading time.
+
+// lib/blog/readingTime.ts
+import rt from "reading-time";
+
+export function getReadingTime(text: string) {
+  try {
+    return rt(text).text;          // e.g., "5 min read"
+  } catch {
+    const words = (text || "").trim().split(/\s+/).length;
+    const mins = Math.max(1, Math.round(words / 200));
+    return `${mins} min read`;
+  }
+}
+
+
+Use it:
+
+import { getReadingTime } from "@/lib/blog/readingTime";
+// ...
+const reading_time = getReadingTime(fullMarkdownOrPlainText);
+
+B. “Failed to parse generated content structure”
+
+Enforce schema at the boundary and reject/repair bad payloads before saving. (Replace field names to match your pipeline.)
+
+// lib/blog/schema.ts
+import { z } from "zod";
+
+export const SectionSchema = z.object({
+  heading: z.string().min(3),
+  content: z.string().min(50),
+});
+
+export const BlogSchema = z.object({
+  title: z.string().min(8),
+  slug: z.string().regex(/^[a-z0-9-]+$/),
+  excerpt: z.string().min(40),
+  hero_image: z.string().url().optional(),
+  tags: z.array(z.string()).default([]),
+  sections: z.array(SectionSchema).min(3),  // require structure
+  conclusion: z.string().min(50),
+});
+
+export type BlogPayload = z.infer<typeof BlogSchema>;
+
+
+Safe parse + repair:
+
+// lib/blog/normalize.ts
+import { BlogSchema, type BlogPayload } from "./schema";
+
+export function normalizeBlogPayload(raw: unknown): BlogPayload {
+  // If your LLM returns Markdown, first convert to structured JSON
+  // or run an extraction step. This is a strict JSON path:
+  const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const res = BlogSchema.safeParse(parsed);
+
+  if (res.success) return res.data;
+
+  // Attempt minimal repairs (example)
+  const issues = res.error.flatten();
+  // e.g., ensure sections array
+  const candidate: any = { ...(parsed as any) };
+  candidate.sections = Array.isArray(candidate.sections) ? candidate.sections : [];
+  while (candidate.sections.length < 3) {
+    candidate.sections.push({
+      heading: "Additional Insights",
+      content:
+        "This section expands on the topic and provides further context to the reader.",
+    });
+  }
+
+  const secondTry = BlogSchema.parse(candidate); // throws if still invalid
+  return secondTry;
+}
+
+C. “Quality gates failed – Missing H2 sections”
+
+If you’re storing Markdown/MDX, assert there are at least N h2s (##).
+
+// lib/blog/quality.ts
+export function ensureHeadings(markdown: string, minH2 = 3) {
+  const h2s = (markdown.match(/^\s*##\s+/gm) || []).length;
+  if (h2s < minH2) {
+    throw new Error(`QUALITY_FAIL: Need at least ${minH2} H2 headings, found ${h2s}`);
+  }
+}
+
+
+Use it right before persisting:
+
+import { ensureHeadings } from "@/lib/blog/quality";
+// ...
+ensureHeadings(markdown, 3);
+
+D. Hardening the end-to-end job (retry, circuit breaker, logs)
+// jobs/generateBlog.ts
+import pino from "pino";
+const log = pino({ name: "bloggen", level: process.env.LOG_LEVEL || "info" });
+
+async function backoff<T>(fn: () => Promise<T>, retries = 3) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (e) {
+      attempt++;
+      log.warn({ attempt, err: String(e) }, "generateBlog attempt failed");
+      if (attempt > retries) throw e;
+      await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt) + Math.random()*250));
+    }
+  }
+}
+
+export async function runBlogJob() {
+  return backoff(async () => {
+    log.info("blog job start");
+    // 1) generate draft (LLM or template)
+    const raw = await generateDraft();      // your function
+    // 2) normalize/validate
+    const payload = normalizeBlogPayload(raw);
+    // 3) render Markdown and enforce headings
+    const md = renderMarkdownFromSections(payload); // your function
+    ensureHeadings(md, 3);
+    // 4) compute extras
+    const reading_time = getReadingTime(md);
+    // 5) persist/publish
+    await savePost({ ...payload, reading_time, markdown: md });
+    log.info("blog job success");
+  }, 2);
+}
+
+
+Observability: emit a single-line JSON log for each step; in your scheduler, alert if any log line contains QUALITY_FAIL, FAILED TO PARSE, readingTime error, or if the job exits non-zero.
+
+2) Contact form — consent validation (frontend + API)
+
+Frontend (React/Next.js):
+
+// components/ContactForm.tsx
+const [consent, setConsent] = useState(false);
+
+<form onSubmit={onSubmit}>
+  {/* ... your inputs ... */}
+  <label className="flex gap-2 items-start">
+    <input
+      type="checkbox"
+      checked={consent}
+      onChange={e => setConsent(e.target.checked)}
+      aria-required="true"
+      required
+    />
+    <span>I agree to the Privacy Policy and consent to be contacted.</span>
+  </label>
+
+  <button type="submit" disabled={!consent}>Send</button>
+</form>
+
+// submit handler
+async function onSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  const payload = { /* fields */, consent: true };
+  const res = await fetch("/api/contact", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 400) {
+    const msg = await res.text();
+    // Show inline error toast
+  }
+}
+
+
+API route:
+
+// app/api/contact/route.ts
+import { z } from "zod";
+
+const ContactSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  message: z.string().min(10),
+  consent: z.literal(true), // must be true
+});
+
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => ({}));
+  const parsed = ContactSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response("Consent is required", { status: 400 });
+  }
+  // process...
+  return new Response("OK", { status: 200 });
+}
+
+3) Re-running the stricter audit
+
+Once the above patches are in:
+
+Unit checks
+
+normalizeBlogPayload with malformed inputs (should repair or throw).
+
+ensureHeadings on draft markdown (expect failure if <3 h2).
+
+Job dry-run
+
+Run runBlogJob() against a staging post; verify it publishes or fails with clear error.
+
+End-to-end audit
+
+Re-run your enhanced Playwright audit.
+
+In the CSV, filter Result for FAIL to confirm the blog/contact items moved to OK.

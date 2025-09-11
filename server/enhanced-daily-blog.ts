@@ -5,6 +5,8 @@ import { shareToAllPlatforms } from './social';
 import { buildRSSandSitemap } from './feeds';
 import { getBaseUrl } from './lib/web';
 import { mdToSafeHtml } from './lib/markdown';
+import { getReadingTime } from './lib/blog/readingTime';
+import { ensureHeadings } from './lib/blog/quality';
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -74,7 +76,8 @@ function createEnhancedHtmlTemplate({
   tags,
   bodyHtml,
   canonicalSlug,
-  dateStr
+  dateStr,
+  readingTime
 }: {
   title: string;
   description: string;
@@ -468,9 +471,10 @@ Ensure the content is actionable, includes specific examples, and positions AI a
         fs.mkdirSync(postsDir, { recursive: true });
       }
       
-      // Calculate reading time
-      const wordCount = content.replace(/<[^>]*>/g, '').split(/\s+/).length;
-      const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+      // Calculate reading time using enhanced utility
+      const plainText = content.replace(/<[^>]*>/g, '');
+      const readingTimeText = getReadingTime(plainText);
+      const readingTime = Math.max(1, Math.ceil(plainText.split(/\s+/).length / 200));
       
       // Create enhanced HTML
       const description = content.substring(0, 160).replace(/<[^>]*>/g, '') + '...';

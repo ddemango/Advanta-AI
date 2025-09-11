@@ -27,6 +27,7 @@ interface FormData {
   email: string;
   company: string;
   message: string;
+  consent: boolean;
 }
 
 export default function ContactPage() {
@@ -35,13 +36,14 @@ export default function ContactPage() {
     name: '',
     email: '',
     company: '',
-    message: ''
+    message: '',
+    consent: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (error) setError(null);
   };
@@ -57,6 +59,12 @@ export default function ContactPage() {
       setIsSubmitting(false);
       return;
     }
+    
+    if (!formData.consent) {
+      setError('You must agree to the Privacy Policy to continue.');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/contact', {
@@ -69,9 +77,10 @@ export default function ContactPage() {
 
       if (response.ok) {
         setIsSubmitted(true);
-        setFormData({ name: '', email: '', company: '', message: '' });
+        setFormData({ name: '', email: '', company: '', message: '', consent: false });
       } else {
-        setError('Failed to send message. Please try again.');
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || 'Failed to send message. Please try again.');
       }
     } catch (error) {
       setError('Network error. Please try again.');
@@ -238,10 +247,34 @@ export default function ContactPage() {
                           />
                         </div>
 
+                        <div className="flex items-start space-x-3">
+                          <input
+                            type="checkbox"
+                            id="consent"
+                            checked={formData.consent}
+                            onChange={(e) => handleInputChange('consent', e.target.checked)}
+                            className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                            required
+                            aria-required="true"
+                          />
+                          <Label htmlFor="consent" className="text-sm text-gray-700">
+                            I agree to the{' '}
+                            <a 
+                              href="/privacy-policy" 
+                              className="text-blue-600 hover:text-blue-700 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Privacy Policy
+                            </a>{' '}
+                            and consent to be contacted about my inquiry.*
+                          </Label>
+                        </div>
+
                         <Button
                           type="submit"
-                          disabled={isSubmitting}
-                          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg flex items-center justify-center space-x-2"
+                          disabled={isSubmitting || !formData.consent}
+                          className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold text-lg flex items-center justify-center space-x-2"
                         >
                           {isSubmitting ? (
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
