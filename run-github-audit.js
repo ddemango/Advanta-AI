@@ -5,7 +5,8 @@
  * This script runs the containerized audit and fetches results
  */
 
-const GitHubAuditRunner = require('./scripts/trigger-audit');
+import GitHubAuditRunner from './scripts/trigger-audit.js';
+import { execSync } from 'child_process';
 
 async function main() {
   console.log('🚀 GITHUB ACTIONS AUDIT RUNNER');
@@ -29,7 +30,6 @@ async function main() {
     console.log('\nFor now, running local audit...');
     
     // Fallback to local audit
-    const { execSync } = require('child_process');
     try {
       execSync('node node-enhanced-audit.js', { stdio: 'inherit' });
     } catch (error) {
@@ -57,7 +57,6 @@ async function main() {
     console.log('\nFalling back to local audit...');
     
     // Fallback to local audit
-    const { execSync } = require('child_process');
     try {
       execSync('node node-enhanced-audit.js', { stdio: 'inherit' });
     } catch (localError) {
@@ -66,6 +65,6 @@ async function main() {
   }
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }

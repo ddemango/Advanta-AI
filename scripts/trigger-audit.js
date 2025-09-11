@@ -5,9 +5,9 @@
  * Triggers site audit, polls for completion, and downloads artifacts
  */
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 
 class GitHubAuditRunner {
   constructor(owner, repo, token) {
@@ -260,8 +260,8 @@ async function main() {
   process.exit(success ? 0 : 1);
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }
 
-module.exports = GitHubAuditRunner;
+export default GitHubAuditRunner;
