@@ -9,10 +9,29 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
+  const [error, setError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setSending(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setSent(true); setSending(false);
+    e.preventDefault();
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong. Please try again.");
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError("Could not send message. Please email us at hello@advanta-ai.com");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -45,6 +64,7 @@ export default function ContactPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                     <textarea required rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Tell us about your project..." />
                   </div>
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
                   <button type="submit" disabled={sending} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-all disabled:opacity-50">
                     {sending ? "Sending..." : "Send Message"}
                   </button>

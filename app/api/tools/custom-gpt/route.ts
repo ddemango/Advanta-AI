@@ -1,26 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "@/lib/ai";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const rl = rateLimit(ip, { max: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+  }
+
   try {
     const { bot_name, purpose, industry, personality, capabilities, restrictions } = await req.json();
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are an AI prompt engineer specializing in custom GPT creation. Return JSON only." },
-        { role: "user", content: `Create a custom GPT/chatbot configuration for:
+    if (!bot_name || !purpose) return NextResponse.json({ error: "Bot name and purpose are required." }, { status: 400 });
+
+    const content = await callAI([
+      { role: "system", content: "You are an AI prompt engineer specializing in custom GPT creation. Return JSON only." },
+      { role: "user", content: `Create a custom GPT/chatbot configuration for:
 Bot Name: ${bot_name}
 Purpose: ${purpose}
-Industry: ${industry}
+Industry: ${industry || "General"}
 Personality: ${personality || "professional and helpful"}
-Capabilities: ${capabilities}
+Capabilities: ${capabilities || "general assistance"}
 Restrictions: ${restrictions || "none"}
 
-Return JSON: { "system_prompt": "string", "starter_messages": ["string"], "example_conversations": [{"user":"string","assistant":"string"}], "suggested_knowledge": ["string"], "deployment_tips": ["string"], "name": "${bot_name}" }` }
-      ],
-      response_format: { type: "json_object" },
-    });
-    return NextResponse.json(JSON.parse(res.choices[0].message.content || "{}"));
-  } catch (e) { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+Return JSON: { "system_prompt": "string", "starter_messages": ["string"], "example_conversations": [{"user":"string","assistant":"string"}], "suggested_knowledge": ["string"], "deployment_tips": ["string"], "name": "${bot_name}" }` },
+    ]);
+
+    return NextResponse.json(JSON.parse(content));
+  } catch (err: unknown) {
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error("[custom-gpt]", err);
+    return NextResponse.json(
+      { error: isTimeout ? "Request timed out. Please try again." : "Failed to generate bot config. Please try again." },
+      { status: isTimeout ? 504 : 500 }
+    );
+  }
 }

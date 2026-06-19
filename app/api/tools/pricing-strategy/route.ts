@@ -1,26 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "@/lib/ai";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const rl = rateLimit(ip, { max: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+  }
+
   try {
     const { product, industry, current_price, competitors, costs, target_market } = await req.json();
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a pricing strategist and business consultant. Return JSON only." },
-        { role: "user", content: `Analyze pricing strategy for:
-Product/Service: ${product}
-Industry: ${industry}
-Current Price: ${current_price || "Not set"}
-Competitors: ${competitors}
-Cost Structure: ${costs}
-Target Market: ${target_market}
+    if (!product) return NextResponse.json({ error: "Product or service name is required." }, { status: 400 });
 
-Return JSON: { "recommended_price": "string", "strategy": "string", "tiers": [{"name":"string","price":"string","features":["string"]}], "rationale": "string", "psychological_tactics": ["string"], "risks": ["string"], "revenue_projection": "string" }` }
-      ],
-      response_format: { type: "json_object" },
-    });
-    return NextResponse.json(JSON.parse(res.choices[0].message.content || "{}"));
-  } catch (e) { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+    const content = await callAI([
+      { role: "system", content: "You are a pricing strategist and business consultant. Return JSON only." },
+      { role: "user", content: `Analyze pricing strategy for:
+Product/Service: ${product}
+Industry: ${industry || "General"}
+Current Price: ${current_price || "Not set"}
+Competitors: ${competitors || "Not specified"}
+Cost Structure: ${costs || "Not specified"}
+Target Market: ${target_market || "General market"}
+
+Return JSON: { "recommended_price": "string", "strategy": "string", "tiers": [{"name":"string","price":"string","features":["string"]}], "rationale": "string", "psychological_tactics": ["string"], "risks": ["string"], "revenue_projection": "string" }` },
+    ]);
+
+    return NextResponse.json(JSON.parse(content));
+  } catch (err: unknown) {
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error("[pricing-strategy]", err);
+    return NextResponse.json(
+      { error: isTimeout ? "Request timed out. Please try again." : "Failed to generate strategy. Please try again." },
+      { status: isTimeout ? 504 : 500 }
+    );
+  }
 }

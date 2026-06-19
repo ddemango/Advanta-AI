@@ -1,42 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "@/lib/ai";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const rl = rateLimit(ip, { max: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+  }
+
   try {
     const { company, industry, description, goals, challenges } = await req.json();
-    if (!company) return NextResponse.json({ error: "Company name is required" }, { status: 400 });
+    if (!company) return NextResponse.json({ error: "Company name is required." }, { status: 400 });
 
-    const prompt = `Generate a comprehensive SWOT analysis for:
+    const content = await callAI([
+      { role: "system", content: "You are a strategic business analyst. Return only valid JSON." },
+      { role: "user", content: `Generate a comprehensive SWOT analysis for:
 Company: ${company}
 Industry: ${industry || "General"}
 Description: ${description || ""}
 Goals: ${goals || ""}
 Challenges: ${challenges || ""}
 
-Return valid JSON:
-{
-  "company": "string",
-  "strengths": ["string","string","string","string"],
-  "weaknesses": ["string","string","string"],
-  "opportunities": ["string","string","string","string"],
-  "threats": ["string","string","string"]
-}`;
+Return JSON: { "company": "string", "strengths": ["string","string","string","string"], "weaknesses": ["string","string","string"], "opportunities": ["string","string","string","string"], "threats": ["string","string","string"] }` },
+    ]);
 
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a strategic business analyst. Return only valid JSON." },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    const result = JSON.parse(res.choices[0]?.message?.content || "{}");
-    return NextResponse.json(result);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to generate SWOT" }, { status: 500 });
+    return NextResponse.json(JSON.parse(content));
+  } catch (err: unknown) {
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error("[swot]", err);
+    return NextResponse.json(
+      { error: isTimeout ? "Request timed out. Please try again." : "Failed to generate SWOT. Please try again." },
+      { status: isTimeout ? 504 : 500 }
+    );
   }
 }

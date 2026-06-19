@@ -1,25 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "@/lib/ai";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const rl = rateLimit(ip, { max: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+  }
+
   try {
     const { product, audience, benefit, tone, format } = await req.json();
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a world-class copywriter. Return JSON only." },
-        { role: "user", content: `Write marketing copy for:
+    if (!product || !audience) return NextResponse.json({ error: "Product and target audience are required." }, { status: 400 });
+
+    const content = await callAI([
+      { role: "system", content: "You are a world-class copywriter. Return JSON only." },
+      { role: "user", content: `Write marketing copy for:
 Product/Service: ${product}
 Target Audience: ${audience}
-Key Benefit: ${benefit}
+Key Benefit: ${benefit || ""}
 Tone: ${tone || "persuasive"}
 Format: ${format || "all"}
 
-Return JSON: { "headline": "string", "subheadline": "string", "hero_copy": "string", "ad_copies": [{"platform":"string","copy":"string"}], "email_subject_lines": ["string"], "cta_variations": ["string"], "tagline": "string" }` }
-      ],
-      response_format: { type: "json_object" },
-    });
-    return NextResponse.json(JSON.parse(res.choices[0].message.content || "{}"));
-  } catch (e) { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+Return JSON: { "headline": "string", "subheadline": "string", "hero_copy": "string", "ad_copies": [{"platform":"string","copy":"string"}], "email_subject_lines": ["string"], "cta_variations": ["string"], "tagline": "string" }` },
+    ]);
+
+    return NextResponse.json(JSON.parse(content));
+  } catch (err: unknown) {
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error("[marketing-copy]", err);
+    return NextResponse.json(
+      { error: isTimeout ? "Request timed out. Please try again." : "Failed to generate copy. Please try again." },
+      { status: isTimeout ? 504 : 500 }
+    );
+  }
 }

@@ -27,7 +27,6 @@ const footerNav = {
     { name: "About Us", href: "/about" },
     { name: "Case Studies", href: "/case-studies" },
     { name: "Contact", href: "/contact" },
-    { name: "Partnerships", href: "/partnerships" },
   ],
   legal: [
     { name: "Privacy Policy", href: "/privacy" },
@@ -101,11 +100,10 @@ export default function Footer() {
         </div>
 
         <div className="pt-8 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-gray-400 text-sm">© 2025 Advanta AI. All rights reserved.</p>
+          <p className="text-gray-400 text-sm">© {new Date().getFullYear()} Advanta AI. All rights reserved.</p>
           <div className="flex gap-6 text-xs text-gray-500">
-            <span>SOC 2 Type II Certified</span>
-            <span>GDPR Compliant</span>
-            <span>ISO 27001</span>
+            <span>256-bit SSL Encrypted</span>
+            <span>Privacy First</span>
           </div>
         </div>
       </div>

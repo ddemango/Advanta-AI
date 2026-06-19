@@ -1,25 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { callAI } from "@/lib/ai";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const rl = rateLimit(ip, { max: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Please wait a moment." }, { status: 429 });
+  }
+
   try {
     const { niche, platform, content_type, audience } = await req.json();
-    const res = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a viral content strategist. Return JSON only." },
-        { role: "user", content: `Generate trending content ideas for:
+    if (!niche || !audience) return NextResponse.json({ error: "Niche and target audience are required." }, { status: 400 });
+
+    const content = await callAI([
+      { role: "system", content: "You are a viral content strategist. Return JSON only." },
+      { role: "user", content: `Generate trending content ideas for:
 Niche: ${niche}
 Platform: ${platform || "Instagram/TikTok/LinkedIn"}
 Content Type: ${content_type || "mixed"}
 Target Audience: ${audience}
 
 Return JSON: { "trending_hooks": ["string"], "content_ideas": [{ "title": "string", "format": "string", "hook": "string", "outline": ["string"], "viral_factor": "string", "hashtags": ["string"] }], "posting_strategy": "string", "best_times": ["string"] }
-Generate 5 content ideas with high viral potential.` }
-      ],
-      response_format: { type: "json_object" },
-    });
-    return NextResponse.json(JSON.parse(res.choices[0].message.content || "{}"));
-  } catch (e) { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
+Generate 5 content ideas with high viral potential.` },
+    ]);
+
+    return NextResponse.json(JSON.parse(content));
+  } catch (err: unknown) {
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error("[trending-content]", err);
+    return NextResponse.json(
+      { error: isTimeout ? "Request timed out. Please try again." : "Failed to generate content ideas. Please try again." },
+      { status: isTimeout ? 504 : 500 }
+    );
+  }
 }
