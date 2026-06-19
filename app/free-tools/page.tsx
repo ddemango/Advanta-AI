@@ -5,9 +5,9 @@ import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import {
-  Zap, Brain, BarChart3, Search, Mail, FileText, Users, TrendingUp,
-  Mic, Presentation, Bot, BookOpen, Film, Palette, Settings, Calendar,
-  DollarSign, Target, Building2, Eye, Lightbulb, Plane, Video, Workflow,
+  Zap, Brain, BarChart3, Search, Mail, FileText, TrendingUp,
+  Mic, Bot, BookOpen, Calendar,
+  DollarSign, Target, Building2, Eye, Lightbulb,
   Grid3X3, List, Star, CheckCircle, X,
 } from "lucide-react";
 
@@ -28,8 +28,7 @@ const tools: Tool[] = [
   { id: "sop-builder", name: "SOP Builder", description: "Build comprehensive Standard Operating Procedures with step-by-step instructions and tool requirements.", icon: FileText, category: "Business Strategy", href: "/tools/sop-builder", featured: true },
   { id: "competitor-lite", name: "Competitor Intel Scanner", description: "Analyze competitor websites for technology stack, performance metrics, and strategic insights.", icon: Search, category: "Market Research", href: "/tools/competitor-lite", featured: true, badge: "New" },
   { id: "rfp-response", name: "RFP Response Builder", description: "Generate professional RFP responses with structured outlines, timelines, and risk assessments.", icon: CheckCircle, category: "Business Strategy", href: "/tools/rfp-response-builder", featured: true },
-  { id: "build-ai-stack", name: "Build My AI Stack", description: "Get personalized AI tool recommendations based on your business needs and industry.", icon: Zap, category: "Business Strategy", href: "/ai-stack-builder", featured: true },
-  { id: "ai-tool-quiz", name: "AI Tool Quiz", description: "Discover which AI tools are perfect for your specific use case and workflow.", icon: Brain, category: "Assessment", href: "/ai-tool-quiz", featured: true },
+  { id: "ai-stack-builder", name: "AI Stack Builder", description: "Answer 4 questions and get a personalized AI tool recommendation with ROI estimates and quick wins.", icon: Zap, category: "Business Strategy", href: "/ai-stack-builder", featured: true, badge: "Popular" },
   { id: "trending-content", name: "Trending Content Generator", description: "Generate viral content based on real-time trend analysis across all platforms.", icon: TrendingUp, category: "Content Creation", href: "/trending-content-generator", featured: true },
   { id: "cold-email", name: "Cold Email Generator", description: "Create personalized cold email campaigns that convert prospects into customers.", icon: Mail, category: "Sales & Marketing", href: "/cold-email-generator" },
   { id: "resume-generator", name: "Resume Generator", description: "Build professional resumes optimized for ATS systems and specific job roles.", icon: FileText, category: "Career Tools", href: "/resume-generator" },
@@ -43,7 +42,6 @@ const tools: Tool[] = [
   { id: "marketing-copy", name: "Marketing Copy Generator", description: "Generate compelling marketing copy for ads, emails, and website content.", icon: Building2, category: "Copywriting", href: "/marketing-copy-generator" },
   { id: "headline-split", name: "Headline Split-Test Generator", description: "Create multiple headline variations for A/B testing and optimization.", icon: Eye, category: "Testing & Optimization", href: "/headline-split-test-generator" },
   { id: "business-idea", name: "Business Idea Validator", description: "Validate your business ideas with market research and feasibility analysis.", icon: Lightbulb, category: "Business Strategy", href: "/business-idea-validator" },
-  { id: "ai-stack-wizard", name: "AI Stack Builder Wizard", description: "Advanced multi-step wizard for building comprehensive AI infrastructure recommendations.", icon: Settings, category: "Business Strategy", href: "/ai-stack-builder" },
 ];
 
 const categories = ["All", ...Array.from(new Set(tools.map((t) => t.category)))];
