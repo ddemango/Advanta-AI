@@ -24,9 +24,9 @@ export default function SwotPage() {
     e.preventDefault(); setLoading(true); setError("");
     try {
       const res = await fetch("/api/tools/swot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to generate SWOT."); }
       setResult(await res.json());
-    } catch { setError("Failed to generate SWOT. Please try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to generate SWOT. Please try again."); }
     finally { setLoading(false); }
   };
 

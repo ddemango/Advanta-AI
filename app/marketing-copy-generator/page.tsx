@@ -14,9 +14,9 @@ export default function MarketingCopyPage() {
     e.preventDefault(); setLoading(true); setError("");
     try {
       const res = await fetch("/api/tools/marketing-copy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to generate copy."); }
       setResult(await res.json());
-    } catch { setError("Failed. Please try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to generate copy. Please try again."); }
     finally { setLoading(false); }
   };
 

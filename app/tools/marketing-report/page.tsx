@@ -31,9 +31,9 @@ export default function MarketingReportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to generate report."); }
       setReport(await res.json());
-    } catch { setError("Failed to generate report. Please check your API key and try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to generate report. Please try again."); }
     finally { setLoading(false); }
   };
 

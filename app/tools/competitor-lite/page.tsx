@@ -40,9 +40,9 @@ export default function CompetitorLitePage() {
     e.preventDefault(); setLoading(true); setError("");
     try {
       const res = await fetch("/api/tools/competitor-lite", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-      if (!res.ok) throw new Error();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to analyze competitor."); }
       setResult(await res.json());
-    } catch { setError("Failed to analyze. Please check the URL and try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to analyze. Please check the URL and try again."); }
     finally { setLoading(false); }
   };
 

@@ -25,9 +25,9 @@ export default function RfpPage() {
     e.preventDefault(); setLoading(true); setError("");
     try {
       const res = await fetch("/api/tools/rfp-response", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to generate RFP response."); }
       setResult(await res.json());
-    } catch { setError("Failed to generate RFP response. Please try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to generate RFP response. Please try again."); }
     finally { setLoading(false); }
   };
 

@@ -25,9 +25,9 @@ export default function SopBuilderPage() {
     e.preventDefault(); setLoading(true); setError("");
     try {
       const res = await fetch("/api/tools/sop", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to generate SOP."); }
       setResult(await res.json());
-    } catch { setError("Failed to generate SOP. Please try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to generate SOP. Please try again."); }
     finally { setLoading(false); }
   };
 

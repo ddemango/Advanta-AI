@@ -14,9 +14,9 @@ export default function TrendingContentPage() {
     e.preventDefault(); setLoading(true); setError("");
     try {
       const res = await fetch("/api/tools/trending-content", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error();
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Failed to generate content ideas."); }
       setResult(await res.json());
-    } catch { setError("Failed. Please try again."); }
+    } catch (err: any) { setError(err?.message || "Failed to generate content ideas. Please try again."); }
     finally { setLoading(false); }
   };
 
