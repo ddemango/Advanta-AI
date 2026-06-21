@@ -9,6 +9,7 @@ import {
   Mic, Bot, BookOpen, Calendar,
   DollarSign, Target, Building2, Eye, Lightbulb, Linkedin,
   Youtube, HelpCircle, User, ShoppingBag,
+  Film, Dumbbell, Globe, Plane, MapPin,
   Grid3X3, List, Star, CheckCircle, X,
 } from "lucide-react";
 
@@ -49,6 +50,11 @@ const tools: Tool[] = [
   { id: "faq-generator", name: "FAQ Generator", description: "Generate SEO-optimized FAQ sections with Google-ready schema markup included.", icon: HelpCircle, category: "SEO & Content", href: "/faq-generator", featured: true, badge: "New" },
   { id: "bio-generator", name: "Bio Generator", description: "Professional bios for LinkedIn, Twitter, your website, and speaker profiles.", icon: User, category: "Personal Branding", href: "/bio-generator", badge: "New" },
   { id: "product-desc", name: "Product Description Generator", description: "High-converting product descriptions, bullet points, and SEO copy for any platform.", icon: ShoppingBag, category: "E-Commerce", href: "/product-description-generator", badge: "New" },
+  { id: "movie-matchmaker", name: "Movie & TV Matchmaker", description: "Get personalized movie and TV show picks based on your mood, taste, and streaming services.", icon: Film, category: "Lifestyle", href: "/movie-tv-matchmaker", featured: true, badge: "New" },
+  { id: "workout-planner", name: "AI Workout Planner", description: "Get a personalized weekly workout plan based on your goal, fitness level, and equipment.", icon: Dumbbell, category: "Lifestyle", href: "/workout-planner", badge: "New" },
+  { id: "best-time-to-travel", name: "Best Time to Travel", description: "Month-by-month guide with weather, crowds, prices, and events for any destination.", icon: Globe, category: "Travel", href: "/best-time-to-travel", featured: true, badge: "New" },
+  { id: "best-time-to-book", name: "Best Time to Book Flights & Hotels", description: "Know exactly when to book to get the lowest prices — flights, hotels, and booking strategies.", icon: Plane, category: "Travel", href: "/best-time-to-book", badge: "New" },
+  { id: "travel-deal-finder", name: "Travel Deal Finder", description: "Find the best bang-for-your-buck destinations based on your budget, interests, and travel style.", icon: MapPin, category: "Travel", href: "/travel-deal-finder", featured: true, badge: "New" },
 ];
 
 const categories = ["All", ...Array.from(new Set(tools.map((t) => t.category)))];
