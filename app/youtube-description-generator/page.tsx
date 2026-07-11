@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Youtube, Loader2 } from "lucide-react";
+import { PlayCircle, Loader2 } from "lucide-react";
 import ToolLayout, { CopyButton, TagList, ResultCard } from "@/components/tools/ToolLayout";
 
 export default function YouTubeDescriptionPage() {
@@ -21,7 +21,7 @@ export default function YouTubeDescriptionPage() {
   };
 
   return (
-    <ToolLayout title="YouTube Description Generator" description="SEO-optimized YouTube descriptions, tags, chapters, and thumbnail ideas." icon={<Youtube className="w-6 h-6 text-red-500" />}>
+    <ToolLayout title="YouTube Description Generator" description="SEO-optimized YouTube descriptions, tags, chapters, and thumbnail ideas." icon={<PlayCircle className="w-6 h-6 text-red-500" />}>
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -44,7 +44,7 @@ export default function YouTubeDescriptionPage() {
             ))}
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button type="submit" disabled={loading || !form.title || !form.topic} className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Generating...</> : <><Youtube className="w-4 h-4" />Generate YouTube Package</>}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Generating...</> : <><PlayCircle className="w-4 h-4" />Generate YouTube Package</>}
             </button>
           </form>
         </div>
@@ -52,7 +52,7 @@ export default function YouTubeDescriptionPage() {
         <div className="space-y-4">
           {!result ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 h-full flex flex-col items-center justify-center p-8 text-center">
-              <Youtube className="w-12 h-12 text-gray-200 mb-3" />
+              <PlayCircle className="w-12 h-12 text-gray-200 mb-3" />
               <p className="text-gray-400">Description, tags, chapters & thumbnail ideas will appear here</p>
             </div>
           ) : (

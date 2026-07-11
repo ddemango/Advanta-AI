@@ -7,8 +7,8 @@ import Footer from "@/components/layout/Footer";
 import {
   Zap, Brain, BarChart3, Search, Mail, FileText, TrendingUp,
   Mic, Bot, BookOpen, Calendar,
-  DollarSign, Target, Building2, Eye, Lightbulb, Linkedin,
-  Youtube, HelpCircle, User, ShoppingBag,
+  DollarSign, Target, Building2, Eye, Lightbulb, Share2,
+  PlayCircle, HelpCircle, User, ShoppingBag,
   Film, Dumbbell, Globe, Plane, MapPin,
   Grid3X3, List, Star, CheckCircle, X,
 } from "lucide-react";
@@ -44,9 +44,9 @@ const tools: Tool[] = [
   { id: "marketing-copy", name: "Marketing Copy Generator", description: "Generate compelling marketing copy for ads, emails, and website content.", icon: Building2, category: "Copywriting", href: "/marketing-copy-generator" },
   { id: "headline-split", name: "Headline Split-Test Generator", description: "Create multiple headline variations for A/B testing and optimization.", icon: Eye, category: "Testing & Optimization", href: "/headline-split-test-generator" },
   { id: "business-idea", name: "Business Idea Validator", description: "Validate your business ideas with market research and feasibility analysis.", icon: Lightbulb, category: "Business Strategy", href: "/business-idea-validator" },
-  { id: "linkedin-post", name: "LinkedIn Post Generator", description: "Generate 3 viral LinkedIn post variations with hooks, hashtags, and engagement analysis.", icon: Linkedin, category: "Social Media", href: "/linkedin-post-generator", featured: true, badge: "New" },
+  { id: "linkedin-post", name: "LinkedIn Post Generator", description: "Generate 3 viral LinkedIn post variations with hooks, hashtags, and engagement analysis.", icon: Share2, category: "Social Media", href: "/linkedin-post-generator", featured: true, badge: "New" },
   { id: "cover-letter", name: "Cover Letter Generator", description: "AI-crafted cover letters tailored to the job, company, and your experience.", icon: FileText, category: "Career Tools", href: "/cover-letter-generator", badge: "New" },
-  { id: "youtube-desc", name: "YouTube Description Generator", description: "SEO-optimized YouTube descriptions, tags, chapter markers, and thumbnail ideas.", icon: Youtube, category: "Content Creation", href: "/youtube-description-generator", badge: "New" },
+  { id: "youtube-desc", name: "YouTube Description Generator", description: "SEO-optimized YouTube descriptions, tags, chapter markers, and thumbnail ideas.", icon: PlayCircle, category: "Content Creation", href: "/youtube-description-generator", badge: "New" },
   { id: "faq-generator", name: "FAQ Generator", description: "Generate SEO-optimized FAQ sections with Google-ready schema markup included.", icon: HelpCircle, category: "SEO & Content", href: "/faq-generator", featured: true, badge: "New" },
   { id: "bio-generator", name: "Bio Generator", description: "Professional bios for LinkedIn, Twitter, your website, and speaker profiles.", icon: User, category: "Personal Branding", href: "/bio-generator", badge: "New" },
   { id: "product-desc", name: "Product Description Generator", description: "High-converting product descriptions, bullet points, and SEO copy for any platform.", icon: ShoppingBag, category: "E-Commerce", href: "/product-description-generator", badge: "New" },

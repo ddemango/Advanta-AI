@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Linkedin, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Share2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import ToolLayout, { CopyButton, TagList } from "@/components/tools/ToolLayout";
 
 export default function LinkedInPostPage() {
@@ -22,7 +22,7 @@ export default function LinkedInPostPage() {
   };
 
   return (
-    <ToolLayout title="LinkedIn Post Generator" description="AI-crafted LinkedIn posts that drive engagement, followers, and leads." icon={<Linkedin className="w-6 h-6 text-blue-600" />}>
+    <ToolLayout title="LinkedIn Post Generator" description="AI-crafted LinkedIn posts that drive engagement, followers, and leads." icon={<Share2 className="w-6 h-6 text-blue-600" />}>
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -49,7 +49,7 @@ export default function LinkedInPostPage() {
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button type="submit" disabled={loading || !form.topic} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Writing 3 Posts...</> : <><Linkedin className="w-4 h-4" />Generate LinkedIn Posts</>}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Writing 3 Posts...</> : <><Share2 className="w-4 h-4" />Generate LinkedIn Posts</>}
             </button>
           </form>
         </div>
@@ -57,7 +57,7 @@ export default function LinkedInPostPage() {
         <div className="space-y-3">
           {!result ? (
             <div className="bg-white rounded-2xl border border-dashed border-gray-200 h-full flex flex-col items-center justify-center p-8 text-center">
-              <Linkedin className="w-12 h-12 text-gray-200 mb-3" />
+              <Share2 className="w-12 h-12 text-gray-200 mb-3" />
               <p className="text-gray-400">3 LinkedIn post variations will appear here</p>
               <p className="text-gray-300 text-sm mt-1">Each with hook, body, hashtags, and why it works</p>
             </div>
