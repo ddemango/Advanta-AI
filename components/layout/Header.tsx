@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -42,15 +41,30 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center group">
-            <Image
-              src="/logo.png"
-              alt="Advanta AI"
-              width={160}
-              height={40}
-              className="h-10 w-auto object-contain"
-              priority
-            />
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="circleGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#38BDF8"/>
+                  <stop offset="100%" stopColor="#6366F1"/>
+                </linearGradient>
+              </defs>
+              <circle cx="18" cy="18" r="18" fill="url(#circleGrad)"/>
+              {/* A shape */}
+              <path d="M11 26L18 10L25 26" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M13.5 21H22.5" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+              {/* Network nodes */}
+              <circle cx="26" cy="15" r="1.6" fill="white"/>
+              <circle cx="28" cy="21" r="1.6" fill="white"/>
+              <circle cx="24" cy="25" r="1.6" fill="white"/>
+              <line x1="25" y1="26" x2="26" y2="15" stroke="white" strokeWidth="1.2" strokeOpacity="0.7"/>
+              <line x1="25" y1="26" x2="28" y2="21" stroke="white" strokeWidth="1.2" strokeOpacity="0.7"/>
+              <line x1="26" y1="15" x2="28" y2="21" stroke="white" strokeWidth="1.2" strokeOpacity="0.7"/>
+            </svg>
+            <span className="text-[1.25rem] font-bold tracking-tight">
+              <span style={{background: "linear-gradient(90deg,#3B82F6,#6366F1)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>Advanta</span>
+              <span style={{background: "linear-gradient(90deg,#6366F1,#8B5CF6)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}> AI</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
