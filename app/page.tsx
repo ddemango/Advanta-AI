@@ -3,6 +3,7 @@ import Footer from "@/components/layout/Footer";
 import Hero from "@/components/home/Hero";
 import Services from "@/components/home/Services";
 import TrustSection from "@/components/home/TrustSection";
+import Founder from "@/components/home/Founder";
 import CTA from "@/components/home/CTA";
 import type { Metadata } from "next";
 
@@ -20,6 +21,7 @@ export default function Home() {
         <Hero />
         <Services />
         <TrustSection />
+        <Founder />
         <CTA />
       </main>
       {/* Hidden SEO text for crawlers */}
